@@ -137,6 +137,7 @@ export default function App() {
 
   // Dragging helpers
   const handlePointerDown = (e) => {
+    if (e && e.cancelable && (e.touches || e.type === 'touchstart')) e.preventDefault();
     if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const x = (e.clientX ?? e.touches?.[0]?.clientX) - rect.left;
@@ -155,6 +156,7 @@ export default function App() {
     else if (inText) setDragging({ type: "text", oy: y, startY: textY });
   };
   const handlePointerMove = (e) => {
+    if (e && e.cancelable && (e.touches || e.type === 'touchmove')) e.preventDefault();
     if (!dragging || !canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const x = (e.clientX ?? e.touches?.[0]?.clientX) - rect.left;
@@ -200,7 +202,7 @@ export default function App() {
       <div className="flex flex-col md:flex-row items-stretch gap-4 w-full max-w-5xl">
         <div className="flex-1 bg-white rounded-2xl shadow p-3 select-none">
           <div
-            className="relative w-full"
+            className="relative w-full touch-none"
             onMouseDown={handlePointerDown}
             onMouseMove={handlePointerMove}
             onMouseUp={handlePointerUp}
