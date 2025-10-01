@@ -232,7 +232,6 @@ export default function App() {
             <input type="range" min={24} max={120} step={1} value={textSize} onChange={(e) => setTextSize(parseInt(e.target.value))} className="w-full" />
             <div className="text-sm font-medium">テキスト縦位置</div>
             <input type="range" min={0.05} max={0.98} step={0.005} value={textY} onChange={(e) => setTextY(parseFloat(e.target.value))} className="w-full" />
-            <div className="text-xs opacity-70">※ テキストは固定文言「松村です！」です</div>
           </div>
 
           <div className="pt-2 flex gap-2">
