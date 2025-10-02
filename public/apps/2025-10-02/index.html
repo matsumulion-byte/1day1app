@@ -2,44 +2,61 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>松村スロット</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>松村スロット（モバイル対応）</title>
 <style>
-  :root { --reel-w: 120px; --reel-h: 120px; --gap: 12px; --speed: .9s; }
-  html,body{margin:0;height:100%;font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;background:#0b0c10;color:#fff}
-  .wrap{max-width:680px;margin:0 auto;padding:32px 16px;display:flex;flex-direction:column;gap:20px}
-  h1{font-size:20px;font-weight:700;margin:0;opacity:.9}
-  .machine{display:flex;flex-direction:column;align-items:center;gap:16px;background:#12141a;border:1px solid #2a2f3a;border-radius:16px;padding:20px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-  .reels{display:flex;gap:var(--gap);align-items:center;justify-content:center}
+  /* 基本スケールを画面幅で調整 */
+  :root{
+    --reel-size: clamp(84px, 26vw, 140px);
+    --gap: clamp(8px, 3vw, 16px);
+    --speed: .9s;
+  }
+  html,body{margin:0;height:100%;background:#0b0c10;color:#fff;-webkit-tap-highlight-color:transparent}
+  body{font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif}
+  .wrap{max-width:680px;margin:0 auto;padding:24px 16px calc(24px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:18px}
+  h1{font-size:clamp(16px,4vw,20px);font-weight:700;margin:0;opacity:.9}
+  .machine{display:flex;flex-direction:column;align-items:center;gap:14px;background:#12141a;border:1px solid #2a2f3a;border-radius:16px;padding:16px 12px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .reels{display:flex;gap:var(--gap);align-items:center;justify-content:center;touch-action:manipulation}
   .reel{
-    width:var(--reel-w);height:var(--reel-h);overflow:hidden;position:relative;
+    width:var(--reel-size);height:var(--reel-size);overflow:hidden;position:relative;
     border-radius:12px;background:linear-gradient(180deg,#181b22,#12141a);border:1px solid #2a2f3a;
     box-shadow: inset 0 6px 20px rgba(0,0,0,.45);
   }
   .strip{position:absolute;left:0;top:0;width:100%}
-  .cell{display:flex;align-items:center;justify-content:center;height:var(--reel-h);font-size:28px;font-weight:800;letter-spacing:.02em}
-  .cell span{transform:translateZ(0)}
-  .controls{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .cell{display:flex;align-items:center;justify-content:center;height:var(--reel-size);font-size:clamp(22px,6.5vw,28px);font-weight:800;letter-spacing:.02em}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
   button{
-    appearance:none;border:0;border-radius:12px;padding:14px 18px;font-weight:800;font-size:16px;
-    background:#ffd400;color:#121212;cursor:pointer;transition:filter .15s ease, transform .06s ease;
+    appearance:none;border:0;border-radius:14px;padding:16px 18px;font-weight:800;font-size:clamp(15px,4.2vw,16px);
+    background:#ffd400;color:#121212;cursor:pointer;transition:filter .15s ease, transform .06s ease;width:min(100%, 420px)
   }
   button:hover{filter:brightness(1.05)}
   button:active{transform:translateY(1px)}
   .muted{background:#2a2f3a;color:#d6d6d6}
-  .panel{display:flex;flex-direction:column;gap:8px;align-items:center}
-  .result{min-height:28px;font-size:18px;opacity:.95}
-  .badge{font-size:12px;opacity:.7}
-  .odds{font-size:12px;opacity:.7}
-  .hint{font-size:12px;opacity:.55;text-align:center}
+  .panel{display:flex;flex-direction:column;gap:6px;align-items:center;padding:2px 8px}
+  .result{min-height:28px;font-size:clamp(16px,4.2vw,18px);opacity:.95;text-align:center}
+  .badge,.odds,.hint{font-size:clamp(10px,3.2vw,12px)}
+  .hint{text-align:center;opacity:.6}
+  .odds{opacity:.7}
+  .badge{opacity:.7}
   .lightbar{
     height:6px;background:linear-gradient(90deg,#ffcf00,#ff7a00,#ff1f1f,#ff7a00,#ffcf00);
-    background-size:200% 100%;border-radius:999px;animation:flow 2.6s linear infinite;opacity:.9
+    background-size:200% 100%;border-radius:999px;animation:flow 2.6s linear infinite;opacity:.9;align-self:stretch
   }
   @keyframes flow{0%{background-position:0%}100%{background-position:200%}}
   .win{color:#7cffb3}
   .near{color:#ffd66e}
   .miss{color:#b6c0cd}
+
+  /* 片手操作しやすいよう、画面が狭い時は縦の余白を詰める */
+  @media (max-width:420px){
+    .machine{padding:14px 10px}
+  }
+
+  /* 動きが苦手な人向け */
+  @media (prefers-reduced-motion: reduce){
+    .lightbar{animation:none}
+    *{scroll-behavior:auto;transition:none!important}
+  }
 </style>
 </head>
 <body>
@@ -47,50 +64,43 @@
   <h1>松村スロット</h1>
   <div class="machine">
     <div class="lightbar" aria-hidden="true"></div>
-    <div class="reels" id="reels"></div>
+    <div class="reels" id="reels" aria-label="リール（タップで回転）" role="button"></div>
     <div class="controls">
-      <button id="spinBtn">SPIN（Space）</button>
+      <button id="spinBtn">SPIN（タップ / スペース）</button>
       <button id="muteBtn" class="muted">読み上げ ON/OFF</button>
     </div>
     <div class="panel">
       <div class="result" id="result"></div>
       <div class="odds" id="odds"></div>
-      <div class="hint">狙え：「松」「村」「です！」｜ニアミスでも専用ボイスが鳴るよ</div>
+      <div class="hint">狙え：「松」「村」「です！」｜どこでもタップで回るよ</div>
     </div>
   </div>
-  <div class="badge">© 1日1アプリ｜カスタム台詞はコード下部の <code>PATTERNS</code> を編集</div>
+  <div class="badge">© 1日1アプリ｜音量は端末のサイドボタンで調整</div>
 </div>
 
 <script>
 /** ========= 設定 ========= */
-// 各リールの絵柄。3リール構成： [姓の前半] / [姓の後半 or 変化] / [述部]
 const REELS = [
   ["松","村"],
   ["村","松","でしょう"],
   ["です！","ですか？","でしょう！"]
 ];
 
-// 当たり/ニアミスの判定と台詞。上から順に優先判定。
 const PATTERNS = [
-  { match: ["松","村","です！"], label:"大当たり", class:"win", say:"松村です！", weight: 3 },         // 3%
-  { match: ["松","村","ですか？"], label:"ニアミス", class:"near", say:"松村ですか？", weight: 10 },   // 10%
-  { match: ["村","松","でしょう!"], label:"ニアミス", class:"near", say:"村松でしょう！", weight: 8 }, // typo吸収のため "！"と"!"両対応
+  { match: ["松","村","です！"],  label:"大当たり", class:"win",  say:"松村です！", weight: 3 },
+  { match: ["松","村","ですか？"], label:"ニアミス", class:"near", say:"松村ですか？", weight:10 },
+  { match: ["村","松","でしょう!"], label:"ニアミス", class:"near", say:"村松でしょう！", weight: 8 },
   { match: ["村","松","でしょう！"], label:"ニアミス", class:"near", say:"村松でしょう！", weight: 8 },
-  // 2つ一致（前2つ一致・ラスト違い）
   { matchPrefix: ["松","村"], label:"惜しい！", class:"near", say:"惜しい！最後は『です！』！", weight: 15 },
-  // 2つ一致（1つ目違い・後ろ2つが “村・です！”）
-  { matchSuffix: ["村","です！"], label:"惜しい！", class:"near", say:"最初は『松』が欲しい！", weight: 12 }
+  { matchSuffix: ["村","です！"], label:"惜しい！", class:"near", say:"最初は『松』が欲しい！",   weight: 12 }
 ];
 
-// それ以外はハズレ（ランダムにセリフ）
 const MISS_LINES = [
   "村、松、でしょう…？",
   "今日は“村松”の日？",
   "次こそ“松村です！”で！",
   "うーん、ちょい違う！"
 ];
-
-// 確率制御：上のPATTERNSを優先抽選したい場合 true
 const BIASED_DRAW = true;
 
 /** ========= 内部実装 ========= */
@@ -101,16 +111,16 @@ const resultEl = document.getElementById("result");
 const oddsEl = document.getElementById("odds");
 let isSpinning = false;
 let speechMuted = false;
+const canVibrate = "vibrate" in navigator;
 
-// UI: リールDOMを構築
-const reelEls = REELS.map((symbols, i) => {
+// DOM構築
+const reelEls = REELS.map((symbols) => {
   const reel = document.createElement("div");
   reel.className = "reel";
   const strip = document.createElement("div");
   strip.className = "strip";
   reel.appendChild(strip);
   reelsEl.appendChild(reel);
-  // 十分な長さにして“回ってる感”
   const many = [...symbols, ...symbols, ...symbols];
   many.forEach(t => {
     const cell = document.createElement("div");
@@ -123,57 +133,45 @@ const reelEls = REELS.map((symbols, i) => {
   return { reel, strip, symbols: symbols, cellsCount: many.length };
 });
 
-// 現在位置を保持（末端からのindexを扱いやすく）
 const state = { indices: REELS.map(() => 0) };
 
 function speak(text){
   if (speechMuted) return;
+  // iOSはユーザー操作後のみ再生可：最初のタップで有効化される想定
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = "ja-JP";
-  u.rate = 1.05;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
+  u.lang = "ja-JP"; u.rate = 1.05;
+  try { speechSynthesis.cancel(); speechSynthesis.speak(u); } catch(e){}
 }
 
+function vibro(pattern){ if (canVibrate) navigator.vibrate(pattern); }
 function randomInt(n){ return Math.floor(Math.random()*n); }
-
 function weightedChoice(arr) {
-  const sum = arr.reduce((s,a)=>s+a.weight,0);
+  const sum = arr.reduce((s,a)=>s+(a.weight??5),0);
   let r = Math.random()*sum;
-  for (const a of arr){
-    if ((r -= a.weight) <= 0) return a;
-  }
+  for (const a of arr){ r -= (a.weight??5); if (r<=0) return a; }
   return arr[arr.length-1];
 }
-
-// 目標目（各リールのシンボル配列インデックス）を決める
 function decideTargets(){
-  // バイアス抽選：PATTERNSのうち 'match' を持つものを優先
-  if (BIASED_DRAW && Math.random() < 0.55){ // 55%は“それっぽい”結果に寄せる
+  if (BIASED_DRAW && Math.random() < 0.55){
     const candidates = PATTERNS.filter(p => p.match || p.matchPrefix || p.matchSuffix);
-    const chosen = weightedChoice(candidates.map(c=>({ ...c, weight: c.weight ?? 5 })));
-    // 完全一致
+    const chosen = weightedChoice(candidates);
     if (chosen.match){
-      return chosen.match.map((token, i) => REELS[i].indexOf(token)).map(i => (i<0? randomInt(REELS[0].length): i));
+      return chosen.match.map((token,i)=> Math.max(0,REELS[i].indexOf(token)));
     }
-    // 前方一致
     if (chosen.matchPrefix){
       const t = [];
       chosen.matchPrefix.forEach((tok,i)=> t[i] = Math.max(0, REELS[i].indexOf(tok)));
-      // 3つ目は prefix 以外から外し目を選ぶ
-      t[2] = (["です！"].includes(REELS[2][0])) ? 1 : (REELS[2].indexOf("です！")===0?1:0);
+      t[2] = (REELS[2].indexOf("です！") === 0) ? 1 : 0; // あえて外す
       return t;
     }
-    // 後方一致
     if (chosen.matchSuffix){
       const t = [];
-      t[1] = REELS[1].indexOf(chosen.matchSuffix[0]); // “村”
-      t[2] = REELS[2].indexOf(chosen.matchSuffix[1]); // “です！”
-      t[0] = REELS[0].indexOf("松") === -1 ? 0 : REELS[0].indexOf("村"); // あえて外す
-      return t.map(i => (i<0?0:i));
+      t[1] = REELS[1].indexOf(chosen.matchSuffix[0]);
+      t[2] = REELS[2].indexOf(chosen.matchSuffix[1]);
+      t[0] = REELS[0].indexOf("村"); // わざと外す
+      return t.map(i=>i<0?0:i);
     }
   }
-  // ランダム
   return REELS.map(list => randomInt(list.length));
 }
 
@@ -183,9 +181,12 @@ async function spin(){
   spinBtn.disabled = true;
   resultEl.textContent = "回転中…";
   resultEl.className = "result";
-  const targets = decideTargets(); // 目標目
+  vibro(10);
+
+  const targets = decideTargets();
   const promises = reelEls.map((r,i)=> animateReelTo(r, targets[i], i));
   await Promise.all(promises);
+
   const visible = targets.map((idx,i)=> REELS[i][idx]);
   showOutcome(visible);
   spinBtn.disabled = false;
@@ -193,29 +194,22 @@ async function spin(){
 }
 
 function animateReelTo(r, targetIndex, reelIndex){
-  // 回転距離：現インデックスから数周＋ターゲットまで
-  const rows = r.cellsCount;
   const symbols = r.symbols;
-  const cycles = 6 + reelIndex * 2; // 後ろのリールほど長く回る
-  const per = getComputedStyle(document.documentElement).getPropertyValue('--reel-h').replace('px','')|0 || 120;
-  // stripは 0px から正の方向へ translateY
-  // 末尾に向かって targetIndex の位置を計算（many中の先頭セットの該当行を狙う）
-  const targetRow = (symbols.length + targetIndex); // 2セット目の同シンボルで止める
+  const per = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--reel-size')) || 120;
+  const cycles = 5 + reelIndex * 2; // 後ろのリールほど長い
+  const targetRow = (symbols.length + targetIndex); // 2周目で止める
   const distanceRows = cycles * symbols.length + targetRow;
   const y = distanceRows * per;
   return new Promise(res=>{
     r.strip.style.transition = `transform var(--speed) cubic-bezier(.25,.9,.2,1)`;
-    // リール毎に少し遅延
     setTimeout(()=>{
       r.strip.style.transform = `translateY(-${y}px)`;
-      // 終了後、位置をリセットしてDOM量を抑える
       setTimeout(()=>{
         r.strip.style.transition = 'none';
         r.strip.style.transform = `translateY(-${targetRow * per}px)`;
-        // 現在位置を記録
         state.indices[reelIndex] = targetIndex;
         res();
-      }, 1000); // CSS速度と足並み
+      }, 1000);
     }, reelIndex*120);
   });
 }
@@ -226,47 +220,58 @@ function showOutcome(visible){
   resultEl.textContent = hit.message;
   resultEl.className = `result ${hit.class}`;
   oddsEl.textContent = `結果: ${asText}`;
+
   if (hit.say) speak(hit.say);
+  // 触覚：当たり>ニアミス>ハズレ でパターンを変える
+  if (hit.class === "win") vibro([30,50,30]);
+  else if (hit.class === "near") vibro([20,30,20]);
+  else vibro(12);
 }
 
 function eqArr(a,b){ return a.length===b.length && a.every((v,i)=>v===b[i]); }
-
 function judge(visible){
-  // 完全一致・ニアミスの優先判定
   for (const p of PATTERNS){
-    if (p.match && eqArr(visible, p.match)){
-      return { message:`${p.label}｜${p.say}`, class:p.class, say:p.say };
-    }
+    if (p.match && eqArr(visible, p.match)){ return { message:`${p.label}｜${p.say}`, class:p.class, say:p.say }; }
     if (p.matchPrefix){
       const ok = p.matchPrefix.every((v,i)=> visible[i]===v);
-      if (ok){ return { message:`${p.label}｜${p.say}`, class:p.class, say:p.say }; }
+      if (ok) return { message:`${p.label}｜${p.say}`, class:p.class, say:p.say };
     }
     if (p.matchSuffix){
       const ok = p.matchSuffix.every((v,i)=> visible[i+visible.length - p.matchSuffix.length]===v);
-      if (ok){ return { message:`${p.label}｜${p.say}`, class:p.class, say:p.say }; }
+      if (ok) return { message:`${p.label}｜${p.say}`, class:p.class, say:p.say };
     }
   }
-  // ハズレ
   const line = MISS_LINES[Math.floor(Math.random()*MISS_LINES.length)];
   return { message:`ハズレ｜${line}`, class:"miss", say: line };
 }
 
-// UIイベント
-spinBtn.addEventListener("click", spin);
+// 操作系：タップ/クリック/キー
+spinBtn.addEventListener("click", spin, { passive:true });
+reelsEl.addEventListener("click", spin, { passive:true }); // どこでもタップで回す
 document.addEventListener("keydown", e=>{
-  if (e.code === "Space"){ e.preventDefault(); spin(); }
-});
-muteBtn.addEventListener("click", ()=>{
-  speechMuted = !speechMuted;
-  muteBtn.classList.toggle("muted", speechMuted);
-  muteBtn.textContent = speechMuted ? "読み上げ：OFF" : "読み上げ：ON";
+  if (e.code === "Space" || e.key === "Enter"){ e.preventDefault(); spin(); }
 });
 
-// 初回ヒント読み上げ（iOS対策：初回のユーザー操作後に読む）
+// 初回ヒント（iOSは操作後のみ可）
 let hinted=false;
 window.addEventListener("pointerdown", ()=>{
   if (!hinted && !speechMuted){ hinted=true; speak("狙え、松、村、です！"); }
 },{once:true});
+
+// ミュート切替
+muteBtn.addEventListener("click", ()=>{
+  speechMuted = !speechMuted;
+  muteBtn.classList.toggle("muted", speechMuted);
+  muteBtn.textContent = speechMuted ? "読み上げ：OFF" : "読み上げ：ON";
+}, { passive:true });
+
+// iOSのズーム誤爆対策（連続タップでのダブルタップズームを抑制）
+let lastTouch=0;
+document.addEventListener("touchend",(e)=>{
+  const now = Date.now();
+  if (now - lastTouch < 350){ e.preventDefault(); }
+  lastTouch = now;
+},{passive:false});
 </script>
 </body>
 </html>
