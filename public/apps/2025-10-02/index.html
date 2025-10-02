@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
 <title>松村スロット（モバイル対応）</title>
 <style>
-  /* 基本スケールを画面幅で調整 */
   :root{
     --reel-size: clamp(84px, 26vw, 140px);
     --gap: clamp(8px, 3vw, 16px);
@@ -17,9 +16,18 @@
   h1{font-size:clamp(16px,4vw,20px);font-weight:700;margin:0;opacity:.9}
   .machine{display:flex;flex-direction:column;align-items:center;gap:14px;background:#12141a;border:1px solid #2a2f3a;border-radius:16px;padding:16px 12px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
   .reels{display:flex;gap:var(--gap);align-items:center;justify-content:center;touch-action:manipulation}
-  .reel { position:relative; overflow:hidden; /* 既存 */ }
-.strip{ position:absolute; left:0; top:0; width:100%; will-change: transform; }
-.cell { height:100%; display:flex; align-items:center; justify-content:center; line-height:1; }
+
+  /* ★ リール可視化＆サイズ確定 */
+  .reel{
+    position:relative; overflow:hidden;
+    width:var(--reel-size); height:var(--reel-size);
+    border-radius:12px; background:linear-gradient(180deg,#181b22,#12141a);
+    border:1px solid #2a2f3a; box-shadow:inset 0 6px 20px rgba(0,0,0,.45);
+    box-sizing:border-box; /* border込みの高さに */
+  }
+  .strip{ position:absolute; left:0; top:0; width:100%; will-change:transform; }
+  .cell{ height:100%; display:flex; align-items:center; justify-content:center; line-height:1; font-size:clamp(22px,6.5vw,28px); font-weight:800; letter-spacing:.02em }
+
   .controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
   button{
     appearance:none;border:0;border-radius:14px;padding:16px 18px;font-weight:800;font-size:clamp(15px,4.2vw,16px);
@@ -43,16 +51,8 @@
   .near{color:#ffd66e}
   .miss{color:#b6c0cd}
 
-  /* 片手操作しやすいよう、画面が狭い時は縦の余白を詰める */
-  @media (max-width:420px){
-    .machine{padding:14px 10px}
-  }
-
-  /* 動きが苦手な人向け */
-  @media (prefers-reduced-motion: reduce){
-    .lightbar{animation:none}
-    *{scroll-behavior:auto;transition:none!important}
-  }
+  @media (max-width:420px){ .machine{padding:14px 10px} }
+  @media (prefers-reduced-motion: reduce){ .lightbar{animation:none} *{scroll-behavior:auto;transition:none!important} }
 </style>
 </head>
 <body>
@@ -109,6 +109,9 @@ let isSpinning = false;
 let speechMuted = false;
 const canVibrate = "vibrate" in navigator;
 
+// ★ 当たりだけ生声（mp3 を /voice/matsumura_desu.mp3 に置く）
+const VOICES = { "松村です！": new Audio("voice/matsumura_desu.mp3") };
+
 // DOM構築
 const reelEls = REELS.map((symbols) => {
   const reel = document.createElement("div");
@@ -129,12 +132,11 @@ const reelEls = REELS.map((symbols) => {
   return { reel, strip, symbols: symbols, cellsCount: many.length };
 });
 
-const state = { indices: REELS.map(() => 0) };
-
 function speak(text){
   if (speechMuted) return;
-  // iOSはユーザー操作後のみ再生可：最初のタップで有効化される想定
-  const u = new SpeechSynthesisUtterance(text);
+  const a = VOICES[text];
+  if (a){ a.currentTime = 0; a.play(); return; }   // 大当たりは生声
+  const u = new SpeechSynthesisUtterance(text);     // それ以外は合成音声
   u.lang = "ja-JP"; u.rate = 1.05;
   try { speechSynthesis.cancel(); speechSynthesis.speak(u); } catch(e){}
 }
@@ -192,90 +194,35 @@ async function spin(){
 function animateReelTo(r, targetIndex, reelIndex){
   const symbols = r.symbols;
 
-  // ★ ここがポイント：実ピクセルのセル高さを取得
-  const per = r.reel.getBoundingClientRect().height;   // = 1セル＝表示枠の高さ
+  // ★ borderを除いた“見えている1セルの高さ”
+  const per = r.reel.clientHeight;
 
-  const cycles = 5 + reelIndex * 2;                    // 後ろほど長く回る
-  const targetRow = symbols.length + targetIndex;      // 2周目で止める
+  const cycles = 5 + reelIndex * 2;             // 後ろほど長く回る
+  const targetRow = symbols.length + targetIndex; // 2周目で止める
   const distanceRows = cycles * symbols.length + targetRow;
-
-  // 中央オフセットは不要（1セル表示のため）
   const y = Math.round(distanceRows * per);
 
   return new Promise(res=>{
     r.strip.style.transition = `transform var(--speed) cubic-bezier(.25,.9,.2,1)`;
-    // translate3d でサブピクセル誤差と描画ブレを回避
     requestAnimationFrame(()=>{
-      r.strip.style.transform = `translate3d(0, -${y}px, 0)`;
+      r.strip.style.transform = `translate3d(0,-${y}px,0)`;
       setTimeout(()=>{
         r.strip.style.transition = 'none';
-        r.strip.style.transform = `translate3d(0, -${Math.round(targetRow * per)}px, 0)`;
-        state.indices[reelIndex] = targetIndex;
+        r.strip.style.transform = `translate3d(0,-${Math.round(targetRow * per)}px,0)`;
         res();
-      }, 1000); // var(--speed) と足並み
+      }, 1000);
     });
   });
-}
-
-
-function showOutcome(visible){
-  const asText = visible.join(" / ");
-  const hit = judge(visible);
-  resultEl.textContent = hit.message;
-  resultEl.className = `result ${hit.class}`;
-  oddsEl.textContent = `結果: ${asText}`;
-
-  if (hit.say) speak(hit.say);
-  // 触覚：当たり>ニアミス>ハズレ でパターンを変える
-  if (hit.class === "win") vibro([30,50,30]);
-  else if (hit.class === "near") vibro([20,30,20]);
-  else vibro(12);
 }
 
 function eqArr(a,b){ return a.length===b.length && a.every((v,i)=>v===b[i]); }
 function judge(visible){
   for (const p of PATTERNS){
-    if (p.match && eqArr(visible, p.match)){ return { message:`${p.label}｜${p.say}`, class:p.class, say:p.say }; }
+    if (p.match && eqArr(visible, p.match)) return { message:`${p.label}｜${p.say}`, class:p.class, say:p.say };
     if (p.matchPrefix){
       const ok = p.matchPrefix.every((v,i)=> visible[i]===v);
       if (ok) return { message:`${p.label}｜${p.say}`, class:p.class, say:p.say };
     }
     if (p.matchSuffix){
       const ok = p.matchSuffix.every((v,i)=> visible[i+visible.length - p.matchSuffix.length]===v);
-      if (ok) return { message:`${p.label}｜${p.say}`, class:p.class, say:p.say };
-    }
-  }
-  const line = MISS_LINES[Math.floor(Math.random()*MISS_LINES.length)];
-  return { message:`ハズレ｜${line}`, class:"miss", say: line };
-}
-
-// 操作系：タップ/クリック/キー
-spinBtn.addEventListener("click", spin, { passive:true });
-reelsEl.addEventListener("click", spin, { passive:true }); // どこでもタップで回す
-document.addEventListener("keydown", e=>{
-  if (e.code === "Space" || e.key === "Enter"){ e.preventDefault(); spin(); }
-});
-
-// 初回ヒント（iOSは操作後のみ可）
-let hinted=false;
-window.addEventListener("pointerdown", ()=>{
-  if (!hinted && !speechMuted){ hinted=true; speak("狙え、松、村、です！"); }
-},{once:true});
-
-// ミュート切替
-muteBtn.addEventListener("click", ()=>{
-  speechMuted = !speechMuted;
-  muteBtn.classList.toggle("muted", speechMuted);
-  muteBtn.textContent = speechMuted ? "読み上げ：OFF" : "読み上げ：ON";
-}, { passive:true });
-
-// iOSのズーム誤爆対策（連続タップでのダブルタップズームを抑制）
-let lastTouch=0;
-document.addEventListener("touchend",(e)=>{
-  const now = Date.now();
-  if (now - lastTouch < 350){ e.preventDefault(); }
-  lastTouch = now;
-},{passive:false});
-</script>
-</body>
-</html>
+      if (
