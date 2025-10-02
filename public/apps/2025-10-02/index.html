@@ -23,7 +23,8 @@
     box-shadow: inset 0 6px 20px rgba(0,0,0,.45);
   }
   .strip{position:absolute;left:0;top:0;width:100%}
-  .cell{display:flex;align-items:center;justify-content:center;height:var(--reel-size);font-size:clamp(22px,6.5vw,28px);font-weight:800;letter-spacing:.02em}
+.cell{ display:flex; align-items:center; justify-content:center;
+       height:var(--reel-size); line-height:1; } /* 行高のズレ防止 */
   .controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
   button{
     appearance:none;border:0;border-radius:14px;padding:16px 18px;font-weight:800;font-size:clamp(15px,4.2vw,16px);
@@ -75,7 +76,7 @@
       <div class="hint">狙え：「松」「村」「です！」｜どこでもタップで回るよ</div>
     </div>
   </div>
-  <div class="badge">© 1日1アプリ｜音量は端末のサイドボタンで調整</div>
+  <div class="badge">© matsumulion</div>
 </div>
 
 <script>
@@ -195,24 +196,32 @@ async function spin(){
 
 function animateReelTo(r, targetIndex, reelIndex){
   const symbols = r.symbols;
-  const per = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--reel-size')) || 120;
-  const cycles = 5 + reelIndex * 2; // 後ろのリールほど長い
-  const targetRow = (symbols.length + targetIndex); // 2周目で止める
+  const per = parseFloat(getComputedStyle(document.documentElement)
+               .getPropertyValue('--reel-size')) || 120;
+
+  const cycles = 5 + reelIndex * 2;                     // 回転数
+  const targetRow = symbols.length + targetIndex;       // 2周目で止める
   const distanceRows = cycles * symbols.length + targetRow;
-  const y = distanceRows * per;
+
+  // ★ ここがポイント：中央合わせのため 1/2セル分オフセット
+  const centerOffset = per / 2;
+
+  const y = distanceRows * per - centerOffset;
+
   return new Promise(res=>{
     r.strip.style.transition = `transform var(--speed) cubic-bezier(.25,.9,.2,1)`;
     setTimeout(()=>{
-      r.strip.style.transform = `translateY(-${y}px)`;
+      r.strip.style.transform = `translateY(-${Math.round(y)}px)`;
       setTimeout(()=>{
         r.strip.style.transition = 'none';
-        r.strip.style.transform = `translateY(-${targetRow * per}px)`;
-        state.indices[reelIndex] = targetIndex;
+        // 最終位置も同じオフセットでリセット
+        r.strip.style.transform = `translateY(-${Math.round(targetRow * per - centerOffset)}px)`;
         res();
       }, 1000);
     }, reelIndex*120);
   });
 }
+
 
 function showOutcome(visible){
   const asText = visible.join(" / ");
