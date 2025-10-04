@@ -22,6 +22,17 @@ button{cursor:pointer;font-weight:600}
 @media (max-width: 480px) {
   .timeline{gap:6px;padding:6px}
   .block{width:70px;height:70px;font-size:12px}
+  .controls{flex-direction:column;gap:8px;align-items:stretch}
+  .control-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .controls label{white-space:nowrap;font-size:11px}
+  .controls #drumStyle{min-width:60px;font-size:11px}
+  .controls input{min-width:50px;font-size:11px}
+  .controls button{font-size:11px;padding:6px 8px;white-space:nowrap;min-width:80px}
+  .controls #add{width:100%}
+  .controls #bpm{width:80px}
+  .controls #drumStyle{width:100px}
+  .controls #loop{display:flex;align-items:center;gap:4px}
+  .controls #play, .controls #stop{flex:1}
 }
 .block:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.4)}
 .block .del{position:absolute;top:6px;right:6px;display:grid;place-items:center;width:22px;height:22px;padding:0;border:none;border-radius:50%;background:#000b;color:#fff;font-size:12px;line-height:1;cursor:pointer}
@@ -52,18 +63,26 @@ button{cursor:pointer;font-weight:600}
   </div>
 
   <div class="controls">
-    <button id="add">＋ ブロック追加</button>
-    <label>BPM</label><input id="bpm" type="number" value="100" style="width:80px">
-    <label>ドラム</label>
-    <select id="drumStyle">
-      <option value="none">なし</option>
-      <option value="rock">Rock</option>
-      <option value="funk">Funk</option>
-      <option value="hiphop">HipHop</option>
-    </select>
-    <label><input type="checkbox" id="loop" checked> ループ</label>
-    <button id="play">▶再生</button>
-    <button id="stop">■停止</button>
+    <div class="control-row">
+      <button id="add">＋ ブロック追加</button>
+    </div>
+    <div class="control-row">
+      <label>BPM</label><input id="bpm" type="number" value="100" style="width:80px">
+    </div>
+    <div class="control-row">
+      <label>ドラム</label>
+      <select id="drumStyle">
+        <option value="none">なし</option>
+        <option value="rock">Rock</option>
+        <option value="funk">Funk</option>
+        <option value="hiphop">HipHop</option>
+      </select>
+    </div>
+    <div class="control-row">
+      <label><input type="checkbox" id="loop" checked> ループ</label>
+      <button id="play">▶再生</button>
+      <button id="stop">■停止</button>
+    </div>
   </div>
 
 
