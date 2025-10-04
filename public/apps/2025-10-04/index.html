@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>コードで遊ぶやつ</title>
+<style>
+body{background:#0b0c10;color:#fff;font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;margin:0;padding:24px}
+.wrap{max-width:960px;margin:auto;display:flex;flex-direction:column;gap:16px}
+label{font-size:12px;color:#bbb}
+select,input,button{border-radius:8px;padding:8px 10px;border:1px solid #333;background:#111;color:#fff}
+button{cursor:pointer;font-weight:600}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{border:1px solid #333;border-radius:999px;padding:6px 10px;background:#111;cursor:pointer}
+.chip.active{background:#2b3948}
+.timeline{display:flex;flex-wrap:wrap;gap:8px;min-height:80px;background:#111;border-radius:12px;padding:8px}
+.block{--h:200;--l:30%;width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;text-align:center;position:relative;background:hsl(var(--h) 65% var(--l));border:2px solid hsl(var(--h) 65% calc(var(--l) + 10%));border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:transform .15s ease,box-shadow .15s ease;cursor:grab;user-select:none}
+@media (max-width: 768px) {
+  .timeline{justify-content:center;gap:8px;padding:8px}
+  .block{width:75px;height:75px;font-size:13px}
+}
+@media (max-width: 480px) {
+  .timeline{gap:6px;padding:6px}
+  .block{width:70px;height:70px;font-size:12px}
+}
+.block:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.4)}
+.block .del{position:absolute;top:6px;right:6px;display:grid;place-items:center;width:22px;height:22px;padding:0;border:none;border-radius:50%;background:#000b;color:#fff;font-size:12px;line-height:1;cursor:pointer}
+.block .del:hover{background:#ff3b30}
+.block.dragging{opacity:.6;transform:rotate(5deg) scale(1.05);outline:2px dashed #5dd3ff;z-index:1000;cursor:grabbing}
+.block.drop-target{outline:3px solid #5dd3ff;background:rgba(93,211,255,0.1)!important;transform:scale(1.02)}
+.block .del:hover{background:#f33}
+.block:active{cursor:grabbing}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>コードで遊ぶやつ</h1>
+
+  <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">
+    <div>
+      <label>ルート</label>
+      <select id="root"></select>
+    </div>
+    <div>
+      <label>クオリティ</label>
+      <select id="quality"></select>
+    </div>
+    <div>
+      <label>テンション</label>
+      <div id="tension-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="add">＋ ブロック追加</button>
+    <label>BPM</label><input id="bpm" type="number" value="100" style="width:80px">
+    <label>ドラム</label>
+    <select id="drumStyle">
+      <option value="none">なし</option>
+      <option value="rock">Rock</option>
+      <option value="funk">Funk</option>
+      <option value="hiphop">HipHop</option>
+    </select>
+    <label><input type="checkbox" id="loop" checked> ループ</label>
+    <button id="play">▶再生</button>
+    <button id="stop">■停止</button>
+  </div>
+
+
+  <div class="timeline" id="timeline"></div>
+</div>
+
+<script>
+// ====== Data ======
+const NOTE_NAMES=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const QUALITIES=[{id:"maj",name:"M",intervals:[0,4,7]},{id:"min",name:"m",intervals:[0,3,7]},{id:"dim",name:"dim",intervals:[0,3,6,9]},{id:"m7b5",name:"m7♭5",intervals:[0,3,6,10]}];
+const TENSIONS=[{id:"7",name:"7",semis:10},{id:"maj7",name:"M7",semis:11},{id:"9",name:"9",semis:14},{id:"11",name:"11",semis:17},{id:"13",name:"13",semis:21}];
+
+// ====== UI refs ======
+const rootSel=document.getElementById('root');
+const qualitySel=document.getElementById('quality');
+const chips=document.getElementById('tension-chips');
+const addBtn=document.getElementById('add');
+const bpmInput=document.getElementById('bpm');
+const drumSel=document.getElementById('drumStyle');
+const loopChk=document.getElementById('loop');
+const playBtn=document.getElementById('play');
+const stopBtn=document.getElementById('stop');
+const timeline=document.getElementById('timeline');
+
+// Build selectors
+rootSel.innerHTML=NOTE_NAMES.map((n,i)=>`<option value="${i}">${n}</option>`).join('');
+qualitySel.innerHTML=QUALITIES.map(q=>`<option value="${q.id}">${q.name}</option>`).join('');
+chips.innerHTML=TENSIONS.map(t=>`<span class='chip' tabindex="0" data-id='${t.id}'>${t.name}</span>`).join('');
+chips.addEventListener('click',e=>{const c=e.target.closest('.chip');if(c)c.classList.toggle('active');});
+chips.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){const c=e.target.closest('.chip');if(c){c.classList.toggle('active');e.preventDefault();}}});
+
+// ====== State & helpers ======
+let blocks=[{root:0,quality:'maj',tensions:[]},{root:9,quality:'min',tensions:[]},{root:5,quality:'maj',tensions:[]},{root:7,quality:'maj',tensions:[]}]; // C → Am → F → G
+function blockLabel(b){
+  const qLabel={maj:'M',min:'m',dim:'dim',m7b5:'m7♭5'}[b.quality]||b.quality;
+  const tens=b.tensions.length?`(${b.tensions.map(t=>t==='maj7'?'M7':t).join(',')})`:'';
+  return `${NOTE_NAMES[b.root]}${qLabel}${tens}`;
+}
+function colorHue(root,quality){const baseHue=root*30;const lightMap={maj:45,min:35,dim:28,m7b5:32};const light=(lightMap[quality]!==undefined)?lightMap[quality]:35;return{h:baseHue,l:light};}
+
+function render(){
+  timeline.innerHTML='';
+  blocks.forEach((b,idx)=>{
+    const el=document.createElement('div');
+    el.className='block';
+    el.draggable = true;
+    el.dataset.index = idx;
+    const col=colorHue(b.root,b.quality);
+    el.style.setProperty('--h', col.h);
+    el.style.setProperty('--l', col.l + '%');
+    el.innerHTML=`<button class="del" title="削除" aria-label="削除">×</button><strong>${blockLabel(b)}</strong>`;
+
+    // delete
+    const delBtn = el.querySelector('.del');
+    delBtn.addEventListener('click',(ev)=>{ ev.stopPropagation(); blocks.splice(idx,1); render(); });
+    delBtn.addEventListener('mousedown',(ev)=>{ ev.stopPropagation(); });
+
+    // デスクトップ用ドラッグ&ドロップ
+    el.addEventListener('dragstart', function(e) {
+      console.log('dragstart:', idx);
+      if (e.target.closest('.del')) {
+        e.preventDefault();
+        return false;
+      }
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', idx.toString());
+      this.classList.add('dragging');
+    });
+
+    el.addEventListener('dragend', function(e) {
+      console.log('dragend:', idx);
+      this.classList.remove('dragging');
+      document.querySelectorAll('.block').forEach(block => {
+        block.classList.remove('drop-target');
+      });
+    });
+
+    el.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+
+    el.addEventListener('dragenter', function(e) {
+      e.preventDefault();
+      this.classList.add('drop-target');
+    });
+
+    el.addEventListener('dragleave', function(e) {
+      if (!this.contains(e.relatedTarget)) {
+        this.classList.remove('drop-target');
+      }
+    });
+
+    el.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.classList.remove('drop-target');
+      
+      const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+      const toIndex = parseInt(this.dataset.index);
+      
+      console.log('drop:', fromIndex, '→', toIndex);
+      
+      if (fromIndex !== toIndex && fromIndex >= 0 && toIndex >= 0) {
+        moveBlock(fromIndex, toIndex);
+        console.log(`ブロックを移動: ${fromIndex} → ${toIndex}`);
+      }
+    });
+
+    // スマホ用タッチドラッグ&ドロップ
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isDragging = false;
+    let draggedIndex = -1;
+
+    el.addEventListener('touchstart', function(e) {
+      if (e.target.closest('.del')) {
+        return;
+      }
+      const touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      draggedIndex = idx;
+      isDragging = false;
+      console.log('touchstart:', idx);
+    }, { passive: true });
+
+    el.addEventListener('touchmove', function(e) {
+      if (e.target.closest('.del')) {
+        return;
+      }
+      const touch = e.touches[0];
+      const deltaX = Math.abs(touch.clientX - touchStartX);
+      const deltaY = Math.abs(touch.clientY - touchStartY);
+      
+      if (deltaX > 10 || deltaY > 10) {
+        if (!isDragging) {
+          isDragging = true;
+          this.classList.add('dragging');
+          console.log('touch drag start:', idx);
+        }
+        
+        // ドラッグ中の視覚的フィードバック
+        this.style.transform = `translate(${touch.clientX - touchStartX}px, ${touch.clientY - touchStartY}px) rotate(5deg) scale(1.05)`;
+        
+        // 他のブロックをハイライト
+        document.querySelectorAll('.block').forEach(block => {
+          if (block !== this) {
+            const rect = block.getBoundingClientRect();
+            const blockCenterX = rect.left + rect.width / 2;
+            const blockCenterY = rect.top + rect.height / 2;
+            const distance = Math.sqrt(
+              Math.pow(touch.clientX - blockCenterX, 2) + 
+              Math.pow(touch.clientY - blockCenterY, 2)
+            );
+            
+            if (distance < 60) {
+              block.classList.add('drop-target');
+            } else {
+              block.classList.remove('drop-target');
+            }
+          }
+        });
+      }
+    }, { passive: true });
+
+    el.addEventListener('touchend', function(e) {
+      if (e.target.closest('.del')) {
+        return;
+      }
+      
+      if (isDragging) {
+        console.log('touch end:', idx);
+        
+        // ドロップ先を検索
+        const touch = e.changedTouches[0];
+        const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+        const targetBlock = dropTarget?.closest('.block');
+        
+        if (targetBlock && targetBlock !== this) {
+          const toIndex = parseInt(targetBlock.dataset.index);
+          const fromIndex = draggedIndex;
+          
+          console.log('touch drop:', fromIndex, '→', toIndex);
+          
+          if (fromIndex !== toIndex && fromIndex >= 0 && toIndex >= 0) {
+            moveBlock(fromIndex, toIndex);
+            console.log(`ブロックを移動: ${fromIndex} → ${toIndex}`);
+          }
+        }
+        
+        // クリーンアップ
+        this.classList.remove('dragging');
+        this.style.transform = '';
+        document.querySelectorAll('.block').forEach(block => {
+          block.classList.remove('drop-target');
+        });
+      }
+      
+      isDragging = false;
+      draggedIndex = -1;
+    }, { passive: true });
+
+    timeline.appendChild(el);
+  });
+}
+
+function moveBlock(from,to){
+  const item = blocks.splice(from,1)[0];
+  blocks.splice(to,0,item);
+  render();
+}
+
+function selectedTensions(){
+  return [...chips.querySelectorAll('.chip.active')].map(b=>b.dataset.id);
+}
+addBtn.addEventListener('click',()=>{const tens=selectedTensions();blocks.push({root:+rootSel.value,quality:qualitySel.value,tensions:tens});render();});
+
+// ====== Playback ======
+let isPlaying = false;
+let playbackInterval = null;
+let audioContext = null;
+let oscillators = [];
+
+// Web Audio API初期化
+function initAudio() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+// ドラム音を生成
+function playDrumSound(type) {
+  if (!audioContext) return;
+  
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  const filter = audioContext.createBiquadFilter();
+  
+  oscillator.connect(filter);
+  filter.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  if (type === 'kick') {
+    // キックドラム：低い周波数の短い音
+    oscillator.frequency.setValueAtTime(60, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(30, audioContext.currentTime + 0.1);
+    oscillator.type = 'sine';
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(200, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+  } else if (type === 'snare') {
+    // スネア：ノイズベースの音
+    oscillator.type = 'sawtooth';
+    oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1000, audioContext.currentTime);
+    filter.Q.setValueAtTime(10, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+  } else if (type === 'hat') {
+    // ハイハット：高音の短い音
+    oscillator.type = 'square';
+    oscillator.frequency.setValueAtTime(8000, audioContext.currentTime);
+    filter.type = 'highpass';
+    filter.frequency.setValueAtTime(5000, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+  }
+  
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + 0.2);
+}
+
+// ドラムパターンを再生
+function playDrumPattern(style, beat) {
+  if (style === 'none') return;
+  
+  const patterns = {
+    rock: { hat: [0,0.5,1,1.5,2,2.5,3,3.5], snare: [1,3], kick: [0,2] },
+    jazz: { hat: [0,0.5,1,1.5,2,2.5,3,3.5], snare: [], kick: [0] },
+    bossa: { hat: [0,0.5,1,1.5,2,2.5,3,3.5], snare: [1,3], kick: [0,2.5] },
+    funk: { hat: [0,0.25,0.5,0.75,1,1.25,1.5,1.75,2,2.25,2.5,2.75,3,3.25,3.5,3.75], snare: [1,3], kick: [0,0.25,2,3.75] },
+    hiphop: { hat: [0,0.5,1,1.5,2,2.5,3,3.5], snare: [1,3], kick: [0,0.5,3.5] }
+  };
+  
+  const pattern = patterns[style] || { hat: [], snare: [], kick: [] };
+  
+  // 現在のビートでどのドラムを鳴らすかチェック
+  if (pattern.kick.includes(beat)) playDrumSound('kick');
+  if (pattern.snare.includes(beat)) playDrumSound('snare');
+  if (pattern.hat.includes(beat)) playDrumSound('hat');
+}
+
+// コードの音を生成
+function playChord(root, quality, tensions) {
+  if (!audioContext) return;
+  
+  // 既存のオシレーターを停止
+  oscillators.forEach(osc => {
+    try { osc.stop(); } catch(e) {}
+  });
+  oscillators = [];
+  
+  // ルート音の周波数（A4 = 440Hz基準）
+  const rootFreq = 440 * Math.pow(2, (root - 9) / 12);
+  
+  // クオリティのインターバル
+  const intervals = {maj:[0,4,7], min:[0,3,7], dim:[0,3,6], m7b5:[0,3,6,10]}[quality] || [0,4,7];
+  
+  // テンションのインターバル
+  const tensionIntervals = tensions.map(t => {
+    const tensionMap = {7:10, maj7:11, 9:14, 11:17, 13:21};
+    return tensionMap[t] || 0;
+  });
+  
+  // 全てのインターバルを結合
+  const allIntervals = [...intervals, ...tensionIntervals];
+  
+  // 各音を再生
+  allIntervals.forEach(interval => {
+    const frequency = rootFreq * Math.pow(2, interval / 12);
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+    oscillator.type = 'sine';
+    
+    // 音量を段階的に下げる（低音ほど大きく）
+    const volume = Math.max(0.1, 0.3 - (interval / 12) * 0.1);
+    gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+    
+    oscillator.start();
+    oscillators.push(oscillator);
+  });
+}
+
+function startPlayback() {
+  if (isPlaying) return;
+  
+  // オーディオコンテキストを初期化
+  initAudio();
+  
+  isPlaying = true;
+  playBtn.textContent = '⏸一時停止';
+  playBtn.style.background = '#ff6b35';
+  
+  console.log('再生開始:', {
+    blocks: blocks.map(b => blockLabel(b)),
+    bpm: bpmInput.value,
+    drumStyle: drumSel.value,
+    loop: loopChk.checked
+  });
+  
+  // ブロックをハイライト表示して音を再生
+  let currentBlock = 0;
+  
+  playbackInterval = setInterval(() => {
+    // 前のブロックのハイライトを削除
+    document.querySelectorAll('.block').forEach(el => {
+      el.style.outline = '';
+    });
+    
+    if (blocks.length > 0) {
+      // 現在のブロックをハイライト
+      const currentEl = document.querySelector(`[data-index="${currentBlock}"]`);
+      if (currentEl) {
+        currentEl.style.outline = '3px solid #5dd3ff';
+      }
+      
+      // コードの音を再生（4拍分の長さ）
+      const currentBlockData = blocks[currentBlock];
+      if (currentBlockData) {
+        playChord(currentBlockData.root, currentBlockData.quality, currentBlockData.tensions);
+      }
+      
+      // ドラムパターンを4拍分再生（16分音符ごと）
+      const drumStyle = drumSel.value;
+      if (drumStyle !== 'none') {
+        const patterns = {
+          rock: { hat: [0,0.5,1,1.5,2,2.5,3,3.5], snare: [1,3], kick: [0,2] },
+          funk: { hat: [0,0.25,0.5,0.75,1,1.25,1.5,1.75,2,2.25,2.5,2.75,3,3.25,3.5,3.75], snare: [1,3], kick: [0,0.25,2,3.75] },
+          hiphop: { hat: [0,0.5,1,1.5,2,2.5,3,3.5], snare: [1,3], kick: [0,0.5,3.5] }
+        };
+        
+        const pattern = patterns[drumStyle] || { hat: [], snare: [], kick: [] };
+        const bpm = parseInt(bpmInput.value) || 100;
+        const beatDuration = 60000 / bpm; // 1拍の長さ（ミリ秒）
+        
+        // 各ドラム音を正しいタイミングで再生
+        pattern.kick.forEach(time => {
+          setTimeout(() => playDrumSound('kick'), time * beatDuration);
+        });
+        pattern.snare.forEach(time => {
+          setTimeout(() => playDrumSound('snare'), time * beatDuration);
+        });
+        pattern.hat.forEach(time => {
+          setTimeout(() => playDrumSound('hat'), time * beatDuration);
+        });
+      }
+      
+      currentBlock++;
+      if (currentBlock >= blocks.length) {
+        if (loopChk.checked) {
+          currentBlock = 0;
+        } else {
+          stopPlayback();
+        }
+      }
+    }
+  }, 60000 / (parseInt(bpmInput.value) || 100) * 4); // 4拍分（全音符）の長さ
+}
+
+function stopPlayback() {
+  isPlaying = false;
+  playBtn.textContent = '▶再生';
+  playBtn.style.background = '';
+  
+  if (playbackInterval) {
+    clearInterval(playbackInterval);
+    playbackInterval = null;
+  }
+  
+  // 音を停止
+  oscillators.forEach(osc => {
+    try { osc.stop(); } catch(e) {}
+  });
+  oscillators = [];
+  
+  // ハイライトを削除
+  document.querySelectorAll('.block').forEach(el => {
+    el.style.outline = '';
+  });
+  
+  console.log('再生停止');
+}
+
+playBtn.addEventListener('click', () => {
+  if (isPlaying) {
+    stopPlayback();
+  } else {
+    startPlayback();
+  }
+});
+
+stopBtn.addEventListener('click', stopPlayback);
+
+// 初期化時にデフォルトのコード進行を表示
+render();
+
+// デバッグ用：ドラッグ&ドロップテスト
+console.log('ドラッグ&ドロップ機能をテスト中...');
+setTimeout(() => {
+  const blocks = document.querySelectorAll('.block');
+  console.log('ブロック数:', blocks.length);
+  blocks.forEach((block, i) => {
+    console.log(`ブロック${i}:`, {
+      draggable: block.draggable,
+      dataset: block.dataset,
+      hasDragListeners: block.ondragstart !== null
+    });
+  });
+}, 1000);
+
+
+</script>
+</body>
+</html>
