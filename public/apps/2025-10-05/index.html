@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>しりとりです！</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <style>
+    :root{
+      --bg:#f6f8fb;--panel:#ffffff;--text:#0f172a;--muted:#64748b;--brand:#4f46e5;--brand-2:#22c55e;--accent:#f59e0b;--danger:#ef4444;
+      --ring:rgba(79,70,229,.2);--shadow:0 8px 24px rgba(15,23,42,.08);
+    }
+    *{box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;margin:0}
+    .shell{min-height:100vh;display:grid;align-items:start;padding:24px}
+    .container{max-width:880px;margin:0 auto;width:100%}
+    .card{background:var(--panel);border:1px solid #e2e8f0;border-radius:16px;box-shadow:var(--shadow)}
+    .pad-16{padding:16px}
+    .pad-20{padding:20px}
+    .stack-16{display:grid;gap:16px}
+    .row{display:flex;gap:10px;align-items:stretch}
+    .header{margin-bottom:16px;text-align:center}
+    .gradient-text{background:linear-gradient(90deg,var(--brand),#06b6d4);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .muted{color:var(--muted)}
+    .input{flex:1;border:1px solid #cbd5e1;border-radius:12px;padding:12px 14px;font-size:16px;outline:none;background:#fff;color:var(--text);transition:border-color .15s, box-shadow .15s}
+    .input:focus{border-color:var(--brand);box-shadow:0 0 0 4px var(--ring)}
+    .btn{border:none;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;transition:transform .08s ease, box-shadow .15s}
+    .btn:active{transform:translateY(1px)}
+    .btn-primary{background:var(--brand);color:#fff;box-shadow:0 4px 16px rgba(79,70,229,.25)}
+    .btn-secondary{background:#fff;color:var(--text);border:1px solid #e2e8f0}
+    .pill{display:inline-flex;align-items:center;gap:6px;border:1px solid #e2e8f0;background:#fff;border-radius:999px;padding:6px 10px;font-size:12px;color:var(--muted)}
+    .pill .dot{width:8px;height:8px;border-radius:50%;background:var(--brand)}
+    .history{min-height:200px;max-height:45vh;overflow:auto}
+    .history ol{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+    .history li{display:flex;align-items:baseline;gap:8px;padding:10px 12px;border:1px solid #eef2f7;border-radius:12px;background:#fff;box-shadow:0 2px 8px rgba(15,23,42,.04);animation:pop .12s ease}
+    .chip{font-size:11px;border:1px solid #e2e8f0;border-radius:999px;padding:2px 8px}
+    .chip-you{background:#eef2ff;color:#3730a3;border-color:#e0e7ff}
+    .chip-bot{background:#ecfeff;color:#155e75;border-color:#cffafe}
+    .end-card{border:2px solid #fbbf24;background:#fffbeb}
+    .kbd{display:inline-block;border:1px solid #cbd5e1;border-bottom-width:2px;border-radius:8px;padding:2px 6px;background:#fff;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-size:12px;color:#334155}
+    @keyframes pop{from{transform:scale(.98);opacity:.0}to{transform:scale(1);opacity:1}}
+  </style>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin></script>
+</head>
+<body>
+  <div class="shell">
+    <div class="container">
+      <div id="root"></div>
+    </div>
+  </div>
+
+  <script type="text/babel">
+    const { useState, useRef, useEffect } = React;
+
+    function toHiragana(str) {
+      return str
+        .replace(/[\u30a1-\u30f6]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60))
+        .replace(/[\u30fb\u3000\u0020]/g, " ");
+    }
+
+    const smallToLarge = {
+      "ぁ":"あ","ぃ":"い","ぅ":"う","ぇ":"え","ぉ":"お",
+      "ゃ":"や","ゅ":"ゆ","ょ":"よ","ゎ":"わ","ゕ":"か","ゖ":"け",
+    };
+
+    function normalizeWord(input){
+      if(!input) return "";
+      let s = input.trim();
+      s = toHiragana(s.toLowerCase());
+      s = s.replace(/[Ａ-Ｚａ-ｚ０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+      return s;
+    }
+
+    function lastEffectiveKana(word){
+      const s = normalizeWord(word);
+      for(let i=s.length-1;i>=0;i--){
+        let ch = s[i];
+        if (ch === "ー" || /[\u3000\s、。.,!！?？]/.test(ch)) continue;
+        if (ch === "っ") continue;
+        if (smallToLarge[ch]) ch = smallToLarge[ch];
+        if (/[ぁ-ん]/.test(ch)) return ch;
+      }
+      return "";
+    }
+
+    function firstEffectiveKana(word){
+      const s = normalizeWord(word);
+      for(let i=0;i<s.length;i++){
+        let ch = s[i];
+        if (/[\u3000\s、。.,!！?？]/.test(ch)) continue;
+        if (ch === "っ") continue;
+        if (smallToLarge[ch]) ch = smallToLarge[ch];
+        if (/[ぁ-ん]/.test(ch)) return ch;
+      }
+      return "";
+    }
+
+    function App(){
+      const [history, setHistory] = useState([]);
+      const [input, setInput] = useState("");
+      const [error, setError] = useState("");
+      const [ended, setEnded] = useState(false);
+      const [phase, setPhase] = useState(0);
+      const [needHead, setNeedHead] = useState("");
+      const inputRef = useRef(null);
+      const audioRef = useRef(null);
+      const [revealStage, setRevealStage] = useState(0); // 0:none, 1:"ま", 2:"ま…", 3:"ま、ま… 松村です！"
+      const historyRef = useRef(null);
+
+      const WORDS = useRef([
+        "あしか","あさり","ありがと","あり","ありじごく","いか","いぬ","いちご","いね","うま","うめ","うた","えのき","えび",
+        "おに","おかし","かい","かさ","かめ","からて","かるた","かわ","きく","きつね","きのこ","きりん",
+        "くま","くるま","くつ","くらげ","けむし","けしき","こあら","こおり","こめ","こども","こま","こやぎ",
+        "さくら","さめ","さら","さる","しお","しいたけ","しか","しま","しまうま","しめじ","しろくま","しらす",
+        "すいか","すずめ","すもう","するめ","せみ","せんす","そこ","そり","そら","たいや","たいこ","たぬき",
+        "ちず","ちゃわん","ちょうちょ","つき","つな","つめ","てがみ","てつ","てんぐ","とけい","とかげ","とら",
+        "なす","なめこ","なわ","にわとり","にんじん","ぬいぐるみ","ぬま","ねこ","ねぎ","のり","はさみ","はちみつ",
+        "ひつじ","ひよこ","ふね","ふりこ","へび","ほし","ほん","まくら","まど","まり","まつり","まんが","まぐろ",
+        "みかん","みみず","むし","むね","めだか","めろん","もも","ものさし","やぎ","やきいも","やま","ゆき","ようかん",
+        "らいおん","らくだ","らっぱ","りす","りんご","るーれっと","れもん","ろうそく","わかめ","わに","だるま","どらやき",
+      ]);
+
+      const INDEX = useRef({});
+      useEffect(()=>{
+        const idx={};
+        for(const w of WORDS.current){
+          const head = firstEffectiveKana(w);
+          if(!idx[head]) idx[head]=[];
+          idx[head].push(w);
+        }
+        INDEX.current = idx;
+      },[]);
+
+      useEffect(()=>{
+        (async()=>{
+          try{
+            const res = await fetch("/words.json", { cache: "force-cache" });
+            if(!res.ok) return;
+            const list = await res.json();
+            if(!Array.isArray(list)) return;
+            const seen = new Set(WORDS.current);
+            let added=0;
+            for(const w of list){
+              if(typeof w!=="string") continue;
+              const ww=w.trim();
+              if(!ww) continue;
+              if(!seen.has(ww)){ seen.add(ww); WORDS.current.push(ww); added++; }
+            }
+            if(added){
+              const idx={};
+              for(const w of WORDS.current){
+                const head = firstEffectiveKana(w);
+                if(!head) continue;
+                (idx[head]||(idx[head]=[])).push(w);
+              }
+              INDEX.current = idx;
+              console.log(`✅ Loaded ${list.length} words from /words.json (added ${added})`);
+            }
+          }catch(e){
+            console.warn("/words.json load failed", e);
+          }
+        })();
+      },[]);
+
+      useEffect(()=>{ if(inputRef.current) inputRef.current.focus(); },[ended,phase]);
+
+      // 音声の準備
+      useEffect(()=>{
+        if (!audioRef.current) {
+          const a = new Audio('/apps/2025-10-02/voice/matsumura_desu.m4a');
+          a.preload = 'auto';
+          audioRef.current = a;
+        }
+      },[]);
+
+      // 終了時: 段階的にテキストを表示してから音声再生
+      useEffect(()=>{
+        if (!ended) return;
+        setRevealStage(1);
+        const t1 = setTimeout(()=> setRevealStage(2), 500);
+        const t2 = setTimeout(()=> {
+          setRevealStage(3);
+          try { audioRef.current && audioRef.current.play && audioRef.current.play(); } catch(_) {}
+        }, 1100);
+        return ()=>{ clearTimeout(t1); clearTimeout(t2); };
+      }, [ended]);
+
+      // 履歴のオートスクロール（新しい項目追加時に最下部へ）
+      useEffect(()=>{
+        const el = historyRef.current;
+        if(!el) return;
+        try{
+          el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+        }catch(_){
+          el.scrollTop = el.scrollHeight;
+        }
+      }, [history]);
+
+      const used = (arr)=> new Set(arr.map((h)=> normalizeWord(h.word)));
+
+      const pickOne = (startKana, usedSet)=>{
+        const list = (INDEX.current[startKana]||[])
+          .filter((w)=> !usedSet.has(normalizeWord(w)))
+          .filter((w)=> lastEffectiveKana(w) !== "ん");
+        if(list.length===0) return null;
+        const safe = list.filter((w)=> lastEffectiveKana(w) !== "ま");
+        const pool = safe.length ? safe : list;
+        return pool[Math.floor(Math.random()*pool.length)];
+      };
+
+      const MAX_DEPTH = 20;
+      const findPathToMa = (startKana, usedSet, depth=0)=>{
+        if(depth>MAX_DEPTH) return null;
+        const list = (INDEX.current[startKana]||[])
+          .filter((w)=> !usedSet.has(normalizeWord(w)))
+          .filter((w)=> lastEffectiveKana(w) !== "ん");
+        const shuffled=[...list].sort(()=>Math.random()-0.5);
+        for(const w of shuffled){
+          const tail = lastEffectiveKana(w);
+          const nextUsed = new Set(usedSet);
+          nextUsed.add(normalizeWord(w));
+          if(tail === "ま") return [w];
+          const rec = findPathToMa(tail, nextUsed, depth+1);
+          if(rec) return [w, ...rec];
+        }
+        return null;
+      };
+
+      const playChain = async(words)=>{
+        for(const w of words){
+          await new Promise((res)=> setTimeout(res, 400));
+          const tail = lastEffectiveKana(w);
+          setHistory((prev)=> [...prev, { by:"bot", word:w, lastKana:tail }]);
+        }
+      };
+
+      const onSubmit = (e)=>{
+        e.preventDefault();
+        setError("");
+        if(ended) return;
+        const word = input.trim();
+        if(!word) return;
+        const head = firstEffectiveKana(word);
+        const tail = lastEffectiveKana(word);
+        if(!tail){ setError("日本語の単語を入力してね"); return; }
+        if(phase===1 && needHead && head!==needHead){ setError(`「${needHead}」から始まる言葉で！`); return; }
+        setHistory((prev)=> [...prev, { by:"you", word, lastKana:tail }]);
+        setInput("");
+        if(tail === "ま"){ setEnded(true); return; }
+        if(tail === "ん"){ setEnded(true); setError("※『ん』で終了！"); return; }
+
+        const usedSet = used([...history, { word }]);
+        if(phase===0){
+          const bot = pickOne(tail, usedSet);
+          if(!bot){
+            setHistory((prev)=> [...prev, { by:"bot", word:"…返せません（参りました）", lastKana:"" }]);
+            setEnded(true);
+            return;
+          }
+          const botTail = lastEffectiveKana(bot);
+          setHistory((prev)=> [...prev, { by:"bot", word:bot, lastKana:botTail }]);
+          if(botTail === "ん"){ setEnded(true); setError("ボットが『ん』で終了！"); return; }
+          if(botTail === "ま"){ setEnded(true); return; }
+          setNeedHead(botTail);
+          setPhase(1);
+          return;
+        }
+
+        if(phase===1){
+          setPhase(2);
+          const path = findPathToMa(tail, usedSet);
+          if(!path){
+            setHistory((prev)=> [...prev, { by:"bot", word:"…繋げられませんでした（参りました）", lastKana:"" }]);
+            setEnded(true);
+            return;
+          }
+          playChain(path).then(()=>{
+            const last = path[path.length-1];
+            const lastTail = lastEffectiveKana(last);
+            setEnded(true);
+            if(lastTail === "ん") setError("ボットが『ん』で終了！");
+          });
+          return;
+        }
+      };
+
+      const reset = ()=>{
+        setHistory([]);
+        setInput("");
+        setError("");
+        setEnded(false);
+        setPhase(0);
+        setNeedHead("");
+        if (inputRef.current) inputRef.current.focus();
+        setRevealStage(0);
+        try { if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; } } catch(_) {}
+      };
+
+      return (
+        <div className="stack-16">
+          <div>
+            <header className="mb-6 text-center">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">しりとりです！</h1>
+              <p className="muted" style={{marginTop:8, fontSize:16, lineHeight:1.6}}>
+                <span className="pill" style={{fontSize:14, padding:'8px 12px'}}><span className="dot"></span>ひらがなで単語を入力してください。</span>
+              </p>
+            </header>
+          </div>
+
+            <div className="stack-16">
+              <div className="card pad-16">
+                <form onSubmit={onSubmit} className="row" style={{flexWrap:'wrap'}}>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder={ended ? "ゲームは終了しました" : (phase === 1 && needHead ? `「${needHead}」から始まる言葉…` : "ことばを入力")}
+                    value={input}
+                    onChange={(e)=> setInput(e.target.value)}
+                    disabled={ended}
+                    className="input"
+                  />
+                  <button type="submit" disabled={ended} className="btn btn-primary">送信</button>
+                  <button type="button" onClick={reset} className="btn btn-secondary">リセット</button>
+                </form>
+                {error && <p className="muted" style={{color:'#ef4444',marginTop:8,fontSize:13}}>{error}</p>}
+                {phase === 1 && needHead && !ended && (
+                  <p className="muted" style={{marginTop:8,fontSize:14}}>次は「<span className="font-semibold">{needHead}</span>」から</p>
+                )}
+              </div>
+
+              <div className="card pad-16 history" ref={historyRef}>
+                <h2 style={{fontWeight:600, marginTop:0, marginBottom:8}}>履歴</h2>
+                {history.length === 0 ? (
+                  <p className="muted">まだ入力はありません</p>
+                ) : (
+                  <ol>
+                    {history.map((h,i)=> (
+                      <li key={i}>
+                        <span className={h.by === 'bot' ? 'chip chip-bot' : 'chip chip-you'}>{h.by === 'bot' ? 'BOT' : 'YOU'}</span>
+                        <span style={{marginLeft:8, marginRight:8, fontWeight:600}}>{h.word}</span>
+                        {h.lastKana && <span className="muted" style={{fontSize:13}}>（…{h.lastKana}）</span>}
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+
+              {ended && (
+                <div className="card pad-20 end-card" style={{textAlign:'center'}}>
+                  <p className="gradient-text" style={{fontSize:32, fontWeight:900, letterSpacing:0.5}}>
+                    {revealStage === 1 && 'ま'}
+                    {revealStage === 2 && 'ま…'}
+                    {revealStage === 3 && 'ま、ま… 松村です！'}
+                  </p>
+                  <div style={{marginTop:12}}>
+                    <button onClick={reset} className="btn" style={{background: 'linear-gradient(90deg,#f59e0b,#f97316)', color:'#fff'}}>もういちど</button>
+                  </div>
+                </div>
+              )}
+
+              
+            </div>
+
+            <footer className="muted" style={{marginTop:24, textAlign:'center', fontSize:12}}>©︎matsumulion</footer>
+          </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App/>);
+  </script>
+</body>
+</html>
+
+
