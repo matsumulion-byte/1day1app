@@ -1,6 +1,14 @@
 <!doctype html>
 <html lang="ja">
 <head>
+  <!-- OGP AUTO-GENERATED START (do not edit by hand) -->
+  <meta property="og:title" content="しりとりです！">
+  <meta name="twitter:title" content="しりとりです！">
+  <meta property="og:url" content="https://matsumura.dev/apps/2025-10-05/index.html">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <!-- OGP AUTO-GENERATED END -->
+
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>しりとりです！</title>
@@ -339,7 +347,7 @@
                   <ol>
                     {history.map((h,i)=> (
                       <li key={i}>
-                        <span className={h.by === 'bot' ? 'chip chip-bot' : 'chip chip-you'}>{h.by === 'bot' ? 'BOT' : 'YOU'}</span>
+                        <span className={h.by === 'bot' ? 'chip chip-bot' : 'chip chip-you'}>{h.by === 'bot' ? '松村' : 'YOU'}</span>
                         <span style={{marginLeft:8, marginRight:8, fontWeight:600}}>{h.word}</span>
                         {h.lastKana && <span className="muted" style={{fontSize:13}}>（…{h.lastKana}）</span>}
                       </li>

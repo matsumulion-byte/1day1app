@@ -4,6 +4,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "SITE_BASE_URL=$SITE_BASE_URL node scripts/generate-ogp.js",
+    "ogp": "SITE_BASE_URL=$SITE_BASE_URL node scripts/generate-ogp.js",
     "start": "next start"
   },
   "dependencies": {
