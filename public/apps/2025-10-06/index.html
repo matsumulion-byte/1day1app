@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>松村を探せ！</title>
+<style>
+  html,body{
+    margin:0;height:100%;
+    background:#000;color:#fff;
+    font-family:system-ui,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:none;
+  }
+  .wrap{
+    width:100%;max-width:1000px;margin:0 auto;padding:16px;
+    box-sizing:border-box;
+  }
+  h1{font-size:clamp(18px,5vw,28px);margin:0 0 12px;text-align:center;}
+  canvas{
+    width:100%;height:auto;display:block;
+    border-radius:12px;overflow:hidden;
+  }
+  #msg{margin-top:8px;font-size:clamp(14px,3.5vw,18px);text-align:center;}
+</style>
+<body>
+<div class="wrap">
+  <h1>松村を探せ！</h1>
+  <canvas id="stage"></canvas>
+  <p id="msg">画像を読み込み中...</p>
+</div>
+<audio id="voice" src="matsumura_desu.m4a" preload="auto"></audio>
+
+<script>
+(async function(){
+  const cvs = document.getElementById('stage');
+  const ctx  = cvs.getContext('2d');
+  const msg  = document.getElementById('msg');
+  const voice = document.getElementById('voice');
+  const DPR = window.devicePixelRatio || 1;
+
+  let bg, matsu;
+  let target = null;
+  let zoom = 1;
+  let panX = 0, panY = 0;
+  let lastTouchDist = null;
+  let isDragging = false;
+  let lastX, lastY;
+
+  // ===== Canvas設定 =====
+  function resizeCanvas(){
+    const rect = cvs.getBoundingClientRect();
+    cvs.width  = rect.width * DPR;
+    cvs.height = rect.width * DPR * 0.625;
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.scale(DPR,DPR);
+    drawScene();
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  // ===== 画像ロード =====
+  const loadImage = src => new Promise((res, rej)=>{
+    const img = new Image();
+    img.onload = ()=>res(img);
+    img.onerror = ()=>rej(new Error('画像が読み込めません: '+src));
+    img.src = src + '?v=' + Date.now();
+  });
+
+  bg = await loadImage('bg.png');
+  matsu = await loadImage('matsumura.png');
+  msg.textContent = '松村をタップしてみよう！';
+
+  // ===== 描画関数 =====
+  function drawScene(){
+    if(!bg || !matsu) return;
+    const rect = cvs.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+
+    ctx.save();
+    ctx.clearRect(0,0,width,height);
+    ctx.translate(panX, panY);
+    ctx.scale(zoom, zoom);
+
+    // 背景
+    const rw = width / bg.width, rh = height / bg.height;
+    const r = Math.max(rw, rh);
+    const bw = bg.width * r, bh = bg.height * r;
+    const bx = (width - bw)/2, by = (height - bh)/2;
+    ctx.drawImage(bg, bx, by, bw, bh);
+
+    // 松村（初回配置のみ）
+    if(!target){
+      const baseScale = 0.07;
+      const scale = baseScale * (width / 800); // ←スマホ対応スケール
+      const w = matsu.width * scale;
+      const h = matsu.height * scale;
+      const x = Math.random() * (width - w);
+      const yMin = height * 0.28;
+      const yMax = height - h - 10;
+      const y = yMin + Math.random() * (yMax - yMin);
+      target = {x, y, w, h};
+    }
+    ctx.drawImage(matsu, target.x, target.y, target.w, target.h);
+    ctx.restore();
+  }
+
+  // ===== 当たり判定 =====
+  function checkHit(mx, my){
+    const rect = cvs.getBoundingClientRect();
+    // ズーム・パン補正
+    const x = (mx - rect.left - panX) / zoom;
+    const y = (my - rect.top  - panY) / zoom;
+    return target && x>=target.x && x<=target.x+target.w && y>=target.y && y<=target.y+target.h;
+  }
+
+  // ===== 操作系 =====
+  function handleTap(e){
+    const t = e.touches ? e.touches[0] : e;
+    if(checkHit(t.clientX, t.clientY)){
+      msg.textContent = '🎉 松村です！';
+      voice.currentTime = 0;
+      voice.play();
+    } else {
+      msg.textContent = '👀 ハズレ…';
+    }
+  }
+
+  // ズーム（ホイール）
+  cvs.addEventListener('wheel', e=>{
+    e.preventDefault();
+    const rect = cvs.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const prevZoom = zoom;
+    zoom = Math.min(3, Math.max(0.8, zoom * (e.deltaY < 0 ? 1.1 : 0.9)));
+
+    // マウス位置を基準に拡大縮小
+    panX -= (mx - panX) * (zoom/prevZoom - 1);
+    panY -= (my - panY) * (zoom/prevZoom - 1);
+    drawScene();
+  }, {passive:false});
+
+  // ドラッグ（パン）
+  cvs.addEventListener('mousedown', e=>{
+    isDragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+  window.addEventListener('mouseup', ()=>isDragging=false);
+  window.addEventListener('mousemove', e=>{
+    if(!isDragging) return;
+    panX += e.clientX - lastX;
+    panY += e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    drawScene();
+  });
+
+  // ピンチズーム（スマホ）
+  cvs.addEventListener('touchstart', e=>{
+    if(e.touches.length===1){
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+      isDragging = true;
+    } else if(e.touches.length===2){
+      lastTouchDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      isDragging = false;
+    }
+  });
+  cvs.addEventListener('touchmove', e=>{
+    if(e.touches.length===1 && isDragging){
+      panX += e.touches[0].clientX - lastX;
+      panY += e.touches[0].clientY - lastY;
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+      drawScene();
+    } else if(e.touches.length===2){
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if(lastTouchDist){
+        const rect = cvs.getBoundingClientRect();
+        const cx = (e.touches[0].clientX + e.touches[1].clientX)/2 - rect.left;
+        const cy = (e.touches[0].clientY + e.touches[1].clientY)/2 - rect.top;
+        const prevZoom = zoom;
+        zoom = Math.min(3, Math.max(0.8, zoom * (dist / lastTouchDist)));
+        panX -= (cx - panX) * (zoom/prevZoom - 1);
+        panY -= (cy - panY) * (zoom/prevZoom - 1);
+        drawScene();
+      }
+      lastTouchDist = dist;
+    }
+  }, {passive:false});
+  cvs.addEventListener('touchend', e=>{
+    if(e.touches.length===0){
+      isDragging=false;
+      lastTouchDist=null;
+    }
+  });
+
+  // タップ（正解判定）
+  cvs.addEventListener('click', handleTap);
+  cvs.addEventListener('touchend', e=>{
+    if(e.touches.length===0 && !isDragging) handleTap(e.changedTouches[0]);
+  });
+
+  drawScene();
+})();
+</script>
+</body>
+</html>
