@@ -28,7 +28,7 @@
   <canvas id="stage"></canvas>
   <p id="msg">画像を読み込み中...</p>
 </div>
-<audio id="voice" src="matsumura_desu.m4a" preload="auto"></audio>
+<audio id="voice" src="/apps/2025-10-06/matsumura_desu.m4a" preload="auto"></audio>
 
 <script>
 (async function(){
@@ -66,8 +66,8 @@
     img.src = src + '?v=' + Date.now();
   });
 
-  bg = await loadImage('bg.png');
-  matsu = await loadImage('matsumura.png');
+  bg = await loadImage('/apps/2025-10-06/bg.png');
+  matsu = await loadImage('/apps/2025-10-06/matsumura.png');
   msg.textContent = '松村をタップしてみよう！';
 
   // ===== 描画関数 =====
