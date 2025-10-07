@@ -3,32 +3,323 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>松村ミステリー夜話</title>
-
-<!-- フォント（CDNが塞がれても動くように system-ui → 明朝系の順でフォールバック） -->
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600&display=swap" rel="stylesheet">
+<title>松村ミステリー夜話 – ノベル寄せ（背景/BGM/ワードタイプ）</title>
 
 <style>
   :root{
-    --bg-0:#070707;
-    --bg-1:#121212;
-    --text:#EAEAEA;
-    --muted:#A0A0A0;
-    --accent:#ff5757;
-    --pane-w:max(320px, min(860px, 92vw));
-    --line-h:1.95;
-    --fade:700ms;
-    --type:16ms; /* 1文字の表示間隔 */
+    --bg0:#050505;
+    --ink:#ececec;
+    --muted:#a6a6a6;
+    --panel:max(320px, min(860px, 92vw));
+    --line-h:2.05;
+    --token:70ms;   /* 単語（トークン）ごとの間隔（少しゆっくりに） */
+    --fade:700ms;   /* 行フェード */
+    --kenburns-scale:1.08;
   }
   *{box-sizing:border-box}
-  html,body{height:100%;margin:0;background:radial-gradient(120% 160% at 50% 0%, var(--bg-1), var(--bg-0));color:var(--text);font-family:"Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", "游明朝", "Noto Serif JP", serif}
-  body{display:flex;align-items:center;justify-content:center}
-  .app{width:var(--pane-w);padding:20px 18px 28px;border:1px solid #1f1f1f;border-radius:16px;background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.0));box-shadow:0 10px 40px rgba(0,0,0,.5);position:relative;overflow:hidden}
-  .title{letter-spacing:.08em;text-align:center;margin:2px 0 8px 0;font-size:clamp(18px, 2.6vw, 22px)}
-  .sub{color:var(--muted);text-align:center;margin:0 0 12px 0;font-size:clamp(11px,1.8vw,12px)}
-  .screen{min-height:48vh;max-height:64vh;overflow:auto;padding:18px 14px 22px;border-radius:12px;border:1px solid #222;background:rgba(10,10,10,.55);backdrop-filter:blur(2px)}
-  .line{opacity:0;transform:translateY(2px);transition:opacity var(--fade) ease, transform var(--fade) ease;line-height:var(--line-h);margin:0 0 .6em 0;font-size:clamp(15px, 2.4vw, 18px)}
+  html,body{height:100%;margin:0;background:#000;color:var(--ink);font-family:"Hiragino Mincho ProN","Yu Mincho","游明朝","Noto Serif JP",serif}
+  body{display:flex;align-items:center;justify-content:center;overflow:hidden}
+/* CSS内に誤って混入していたJSを削除（JSは下部<script>内で実行） */
+
+  /* 背景（画像＋暗幕＋ノイズ＋ケンバーンズ） */
+  .bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+  .bg::before{
+    content:"";position:absolute;inset:-3%;
+    background:#000 center/cover no-repeat;
+    background-image: var(--bg-url, none);
+    transform: scale(1); animation: kenburns 30s ease-in-out infinite alternate;
+    filter: saturate(1) brightness(1.02) contrast(1.0);
+  }
+  @keyframes kenburns{to{transform:scale(var(--kenburns-scale)) translate3d(1.2%,0,0)}}
+  .veil{position:fixed;inset:0;background:radial-gradient(120% 150% at 50% -20%, rgba(0,0,0,.18), rgba(0,0,0,.5));z-index:1;pointer-events:none}
+  .grain{position:fixed;inset:-10%;z-index:2;opacity:.06;mix-blend-mode:soft-light;pointer-events:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    animation:grain 1.7s steps(2,end) infinite}
+  @keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-1%,1%)}50%{transform:translate(1%,-1%)}75%{transform:translate(.5%,.5%)}100%{transform:translate(0,0)}}
+
+  /* 枠 */
+  .stage{width:var(--panel);padding:28px 18px 22px;border-radius:16px;border:1px solid rgba(255,255,255,.08);
+    background:linear-gradient(180deg, rgba(20,20,20,.55), rgba(10,10,10,.45));
+    backdrop-filter: blur(3px); box-shadow:0 20px 60px rgba(0,0,0,.6); position:relative; z-index:5}
+  .title{letter-spacing:.08em;text-align:center;margin:0 0 8px;font-size:clamp(18px,2.6vw,22px)}
+  .sub{color:var(--muted);text-align:center;margin:0 0 14px;font-size:clamp(11px,1.9vw,12px)}
+
+  .screen{min-height:60vh;max-height:68vh;overflow:auto;padding:20px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.08);
+    background:rgba(0,0,0,.35);line-height:var(--line-h)}
+  .line{opacity:0;transform:translateY(2px);transition:opacity var(--fade) ease, transform var(--fade) ease;margin:0 0 .9em}
   .line.show{opacity:1;transform:none}
+  .center{text-align:center}
   .muted{color:var(--muted)}
+  .caret{display:inline-block;width:.6ch;border-right:1px solid rgba(255,255,255,.45);animation:blink 1s step-end infinite}
+  @keyframes blink{50%{border-color:transparent}}
+
   .controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
-  button{appearance:none;border:1px solid #2a2a2a;background:#111;color:var(--text);padding:10px 14px;border-radi
+  button{appearance:none;border:1px solid rgba(255,255,255,.14);background:rgba(15,15,15,.8);color:var(--ink);
+    padding:10px 14px;border-radius:999px;cursor:pointer;font:inherit;letter-spacing:.02em}
+  button:hover{border-color:rgba(255,255,255,.28);box-shadow:0 0 0 2px rgba(255,255,255,.08)}
+  button:disabled{opacity:.55;cursor:not-allowed}
+  .primary{background:linear-gradient(180deg,#171717,#0f0f0f)}
+  .tiny{font-size:12px;padding:6px 10px}
+  .ghost{background:transparent}
+
+  /* 暗転 */
+  .cut{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity 600ms ease;z-index:9}
+  .cut.show{opacity:1}
+
+  @media (prefers-reduced-motion: reduce){
+    .bg::before,.grain{animation:none}
+    .cut,.line{transition:none}
+    :root{--token:0ms;--fade:0ms}
+  }
+</style>
+</head>
+<body>
+  <!-- 背景 -->
+  <div class="bg" id="bg"></div>
+  <div class="veil"></div>
+  <div class="grain"></div>
+  <div class="cut" id="cut"></div>
+
+  <div class="stage" role="application" aria-label="サウンドノベル風・自動生成アプリ">
+    <h1 class="title">松村ミステリー夜話</h1>
+    <p class="sub">— 物語はひとつのボタンから始まる —</p>
+
+    <div id="screen" class="screen" aria-live="polite">
+      <p class="line show muted">ようこそ。これは、語られざる夜を記録する装置。</p>
+    </div>
+
+    <div class="controls">
+      <button id="start" class="primary">▶ 物語を始める</button>
+      <button id="skip"  class="tiny ghost" disabled>スキップ（Space）</button>
+      <button id="again" class="tiny ghost" disabled>🔄 もう一度</button>
+      <button id="copy"  class="tiny ghost" disabled>📋 コピー</button>
+      <button id="bgmBtn" class="tiny ghost">♪ BGM OFF</button>
+    </div>
+
+    <!-- 音源（任意）：BGM のみ使用 -->
+    <audio id="bgm"   preload="none" loop></audio>
+  </div>
+
+<script>
+/* ===== 背景画像（任意） ===== */
+(function setBg(){
+  // フォルダの背景画像からロード可能な1枚を選択（プリロードして確認）
+  const candidates = [
+    './bg/bg1.png',
+    './bg/bg2.png',
+    './bg/bg3.png',
+    './bg/bg4.png'
+  ];
+  const applyBg = (src)=>{
+    const url = `url('${src}')`;
+    document.documentElement.style.setProperty('--bg-url', url);
+    const bgEl = document.getElementById('bg');
+    if (bgEl) {
+      bgEl.style.setProperty('--bg-url', url);
+      bgEl.style.backgroundImage = url; // 直接指定のフォールバック
+      bgEl.style.backgroundPosition = 'center';
+      bgEl.style.backgroundSize = 'cover';
+    }
+  };
+  const tryNext = (i)=>{
+    if (i >= candidates.length){ applyBg('bg.jpg'); return; }
+    const img = new Image();
+    img.onload = ()=> applyBg(candidates[i]);
+    img.onerror = ()=> tryNext(i+1);
+    img.src = candidates[i];
+  };
+  tryNext(Math.floor(Math.random()*candidates.length));
+})();
+
+/* ===== データ ===== */
+const D = {
+  prologues: [
+    "霧が街を包み、足音だけが響いていた。",
+    "目を覚ますと、机の上には冷めたコーヒーがあった。",
+    "雨音の向こうで、誰かがピアノを弾いている気がした。",
+    "最後に笑ったのは、誰だったろうか。"
+  ],
+  titlesA: ["雪に消えた","黒い","最後の","記録されなかった","沈黙の","十三番目の"],
+  titlesB: ["演奏会","証言","肖像","手記","影","招待状"],
+  characters: ["松村刑事","無口な青年","謎の画家","沈黙のピアニスト","AI研究者","古書店の女主人"],
+  incidents: [
+    "鏡がすべて割れていた","時計が逆に回っていた","楽譜が赤いインクで塗りつぶされていた",
+    "ドアは内側から鍵がかかっていた","SNSのタイムスタンプが矛盾していた"
+  ],
+  clues: ["小さなボイスレコーダー","古びた写真","切り抜かれた新聞","黒い鍵","未送信のメール"],
+  moves: [
+    "誰かが記憶をすり替えた","影武者がいた","録音が仕掛けられていた",
+    "監視カメラの死角が作られていた","AIが画像を偽装していた"
+  ],
+  quotes: [
+    "「ここからが本当のはじまりだ」","「音は、嘘をつかない」",
+    "「あなたは、何を見たと言える？」","「記録は、記憶より正確だとは限らない」"
+  ],
+  twists: [
+    "犯人は自分自身だった","誰も死んでいなかった","事件はまだ始まっていなかった",
+    "すべてはAIが生成した記憶だった","松村は存在しなかった"
+  ],
+  codas: [
+    "……つまり、真実は最初から目の前にあったのだ。",
+    "そして、静けさだけが部屋に残った。",
+    "雨は、何事もなかったかのように降り続いていた。"
+  ]
+};
+const pick = a => a[Math.floor(Math.random()*a.length)];
+
+/* ===== 要素 ===== */
+const screen = document.getElementById('screen');
+const start  = document.getElementById('start');
+const skipBt = document.getElementById('skip');
+const again  = document.getElementById('again');
+const copyBt = document.getElementById('copy');
+const cut    = document.getElementById('cut');
+const bgm    = document.getElementById('bgm');
+const bgmBtn = document.getElementById('bgmBtn');
+
+// BGM 候補（ランダム再生）
+const bgms = [
+  'bgm/bgm1.mp3',
+  'bgm/bgm2.mp3',
+  'bgm/bgm3.mp3'
+];
+
+function pickRandom(list){ return list[Math.floor(Math.random()*list.length)]; }
+
+// 初期BGMを設定（ボタンで即再生できるように）
+if (bgm && !bgm.src){ bgm.src = pickRandom(bgms); }
+
+/* ===== ユーティリティ ===== */
+const wait = ms => new Promise(r=>setTimeout(r,ms));
+function line(text, cls=""){
+  const p = document.createElement('p');
+  p.className = `line ${cls}`.trim();
+  screen.appendChild(p);
+  requestAnimationFrame(()=> p.classList.add('show'));
+  return p;
+}
+async function blackout(on=true){ cut.classList.toggle('show', on); await wait(550); }
+
+/* ===== 文字表示：単語ごとに“スッ”と出す ===== */
+let typing=false, skipNow=false;
+function tokenize(text){
+  // 空白も保持、句読点も単独トークン化
+  return text.split(/(\s+|、|。|，|．|…|—|―|！|!|？|\?)/g).filter(t=>t!==undefined && t!=="");
+}
+async function typeParagraph(text, cls=""){
+  const p = line("", cls);
+  typing = true;
+  const tokens = tokenize(text);
+  const base = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--token")) || 42;
+
+  for (let i=0;i<tokens.length;i++){
+    if (skipNow){ p.textContent = text; break; }
+    p.textContent += tokens[i];
+    let d = base;
+    if (/[、，]/.test(tokens[i])) d *= 2.2;
+    if (/[。．…!?！？—―]/.test(tokens[i])) d *= 3.6;
+    await wait(d);
+    screen.scrollTop = screen.scrollHeight;
+  }
+  // 軽いカーソル演出（最後だけ一瞬）
+  const c = document.createElement('span'); c.className = 'caret';
+  p.appendChild(c); await wait(350); c.remove();
+
+  typing=false; skipNow=false; screen.scrollTop = screen.scrollHeight;
+}
+
+/* ===== ストーリー生成 ===== */
+function makeTitle(){ return `${pick(D.titlesA)}${pick(D.titlesB)}`; }
+function makeStory(){
+  return [
+    {t:`【 ${makeTitle()} 】`, cls:"center"},
+    {t: pick(D.prologues)},
+    {t:""},
+    {t:`登場人物は、${pick(D.characters)}。`},
+    {t:`現場には、${pick(D.incidents)}という奇妙な痕跡が残っていた。`},
+    {t:`手がかりは、${pick(D.clues)}ただひとつ。`},
+    {t: pick(D.quotes), cls:"center"},
+    {t:`—— ${pick(D.moves)}。`},
+    {t:`真相は、${pick(D.twists)}。`},
+    {t: pick(D.codas)},
+    {t:"……そして、すべてを見届けたのは——松村だけだった。", cls:"center"}
+  ];
+}
+
+/* ===== 進行 ===== */
+async function play(){
+  start.disabled = true; skipBt.disabled = false; again.disabled = true; copyBt.disabled = true;
+
+// ストーリー開始時にランダムBGM設定
+try{
+  const chosen = bgms[Math.floor(Math.random()*bgms.length)];
+  bgm.src = chosen;
+  bgm.volume = 0.28;
+  await bgm.play().catch(()=>{});
+}catch(e){}
+
+
+  await blackout(true);
+  screen.innerHTML = "";
+  await wait(250);
+
+  const story = makeStory();
+
+  await blackout(false);
+  await typeParagraph(story[0].t, story[0].cls||"");
+  await wait(400);
+  for (let i=1;i<story.length;i++){
+    skipBt.disabled = false;
+    await typeParagraph(story[i].t, story[i].cls||"");
+    skipBt.disabled = true;
+    if (story[i].t==="") await wait(220);
+  }
+
+  // 読了ボイスは未使用
+
+  start.textContent = "▶ 別の物語を始める";
+  start.disabled = false;
+  again.disabled = false;
+  copyBt.disabled = false;
+}
+start.addEventListener('click', play);
+
+skipBt.addEventListener('click', ()=>{ if(typing) skipNow = true; });
+window.addEventListener('keydown', e=>{
+  if (e.code === 'Space'){ e.preventDefault(); if(typing) skipNow = true; }
+});
+
+again.addEventListener('click', async ()=>{
+  screen.innerHTML = "";
+  line("—— 事件ファイルを再生します。","muted show");
+  await wait(300);
+  start.click();
+});
+
+copyBt.addEventListener('click', async ()=>{
+  const text = [...screen.querySelectorAll('.line')].map(n=>n.textContent).join("\n");
+  try{
+    await navigator.clipboard.writeText(text);
+    copyBt.textContent = "📋 コピーしました";
+    setTimeout(()=>copyBt.textContent="📋 コピー", 1200);
+  }catch(e){ alert("コピーに失敗しました"); }
+});
+
+/* ===== BGM ON/OFF ===== */
+let bgmOn = false;
+bgmBtn.addEventListener('click', async ()=>{
+  try{
+    if (!bgm || !bgm.src){ return; }
+    if (bgm.paused){
+      await bgm.play();
+      bgm.volume = 0.28;
+      bgmBtn.textContent = "♪ BGM ON";
+    } else {
+      bgm.pause();
+      bgmBtn.textContent = "♪ BGM OFF";
+    }
+  }catch(e){}
+});
+</script>
+</body>
+</html>
