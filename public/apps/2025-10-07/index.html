@@ -103,12 +103,22 @@
 <script>
 /* ===== 背景画像（任意） ===== */
 (function setBg(){
+  // 現在のパスを基準にアセットの絶対URLを生成（/2025-10-07 など）
+  const basePath = (function(){
+    try{
+      const p = location.pathname;
+      // 末尾が "/" の場合はそのまま、それ以外はディレクトリ部分を採用
+      if (p.endsWith('/')) return p.replace(/\/$/, '');
+      const m = p.match(/^\/(\d{4}-\d{2}-\d{2})(?:\/.+)?$/);
+      return m ? `/${m[1]}` : '';
+    }catch(e){ return ''; }
+  })();
   // フォルダの背景画像からロード可能な1枚を選択（プリロードして確認）
   const candidates = [
-    './bg/bg1.png',
-    './bg/bg2.png',
-    './bg/bg3.png',
-    './bg/bg4.png'
+    `${basePath}/bg/bg1.png`,
+    `${basePath}/bg/bg2.png`,
+    `${basePath}/bg/bg3.png`,
+    `${basePath}/bg/bg4.png`
   ];
   const applyBg = (src)=>{
     const url = `url('${src}')`;
@@ -122,7 +132,7 @@
     }
   };
   const tryNext = (i)=>{
-    if (i >= candidates.length){ applyBg('bg.jpg'); return; }
+    if (i >= candidates.length){ applyBg(`${basePath}/bg.jpg`); return; }
     const img = new Image();
     img.onload = ()=> applyBg(candidates[i]);
     img.onerror = ()=> tryNext(i+1);
@@ -177,11 +187,19 @@ const cut    = document.getElementById('cut');
 const bgm    = document.getElementById('bgm');
 const bgmBtn = document.getElementById('bgmBtn');
 
-// BGM 候補（ランダム再生）
+// BGM 候補（ランダム再生）: 現在ルートに合わせて解決
+const ROUTE_BASE = (function(){
+  try{
+    const p = location.pathname;
+    if (p.endsWith('/')) return p.replace(/\/$/, '');
+    const m = p.match(/^\/(\d{4}-\d{2}-\d{2})(?:\/.+)?$/);
+    return m ? `/${m[1]}` : '';
+  }catch(e){ return ''; }
+})();
 const bgms = [
-  'bgm/bgm1.mp3',
-  'bgm/bgm2.mp3',
-  'bgm/bgm3.mp3'
+  `${ROUTE_BASE}/bgm/bgm1.mp3`,
+  `${ROUTE_BASE}/bgm/bgm2.mp3`,
+  `${ROUTE_BASE}/bgm/bgm3.mp3`
 ];
 
 function pickRandom(list){ return list[Math.floor(Math.random()*list.length)]; }
