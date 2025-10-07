@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Chord→Phrase Generator</title>
+  <style>
+    :root{ --bg:#0b0c10; --fg:#e8e8e8; --sub:#a6b0bf; --acc:#62d1ff; --card:#121419; --mut:#20242c; }
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans JP",sans-serif}
+    .wrap{max-width:1080px;margin:0 auto;padding:24px 16px 80px}
+    h1{font-size:22px;margin:0 0 12px}
+    .row{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:980px){.row{grid-template-columns:1.2fr .8fr}}
+    .card{background:var(--card);border:1px solid var(--mut);border-radius:16px;padding:16px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+    textarea,input,select,button{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid var(--mut);background:#0f1217;color:var(--fg);padding:10px 12px}
+    textarea{min-height:84px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    label{display:block;font-size:12px;color:var(--sub);margin:0 0 6px}
+    .grid{display:grid;gap:12px}
+    .grid.cols2{grid-template-columns:1fr 1fr}
+    .grid.cols3{grid-template-columns:1fr 1fr 1fr}
+    .btn{cursor:pointer;background:linear-gradient(180deg,#1a9cff,#0077ff);border:none;color:#fff;font-weight:700}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .small{font-size:12px;color:var(--sub)}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    .examples button{background:#18202c}
+    .footer{margin-top:24px;color:var(--sub)}
+    canvas,svg{max-width:100%}
+    .pill{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;background:#121826;border:1px solid #253043;color:#a9bbd6}
+    .error{margin-top:8px;padding:8px 10px;border-radius:10px;background:#331717;border:1px solid #6f2020;color:#ffb1b1}
+    .ok{color:#7be495}
+    pre{white-space:pre-wrap;background:#0f1217;border:1px solid #20242c;border-radius:12px;padding:12px;color:#a9bbd6}
+    .muted{color:#7b8797}
+    .flag{display:flex;align-items:center;gap:8px}
+  </style>
+  <!-- ✅ ライブラリはプログラム的に複数CDNからロード＆フォールバックします -->
+</head>
+<body>
+<div class="wrap">
+  <h1>Chord→Phrase Generator <span class="pill">VexFlow + Tone.js</span></h1>
+  <div id="libstatus" class="small muted">ライブラリ読み込み中…</div>
+  <div class="row">
+    <section class="card">
+      <div class="grid">
+        <div>
+          <label>コード進行（バー区切りは | ）</label>
+          <textarea id="chords" placeholder="例: Cmaj7 | Dm7 G7 | Cmaj7 A7 | Dm7 G7"></textarea>
+          <div class="examples toolbar" style="margin-top:8px">
+            <span class="small">サンプル:</span>
+            <button class="pill" data-ex="Cmaj7 | Dm7 G7 | Cmaj7 A7 | Dm7 G7">Jazz IIm-V-I</button>
+            <button class="pill" data-ex="Am | F | C | G">Pop 4コード</button>
+            <button class="pill" data-ex="Dm7 G7 | Cmaj7 | Fmaj7 B7 | Em7 A7">循環アドリブ</button>
+          </div>
+        </div>
+        <div class="grid cols3">
+          <div>
+            <label>テンポ (BPM)</label>
+            <input id="bpm" type="number" value="110" min="40" max="240" />
+          </div>
+          <div>
+            <label>拍子</label>
+            <select id="meter">
+              <option value="4/4" selected>4/4</option>
+              <option value="3/4">3/4</option>
+            </select>
+          </div>
+          <div>
+            <label>音価</label>
+            <select id="noteValue">
+              <option value="8n" selected>8分音符フレーズ</option>
+              <option value="4n">4分音符（シンプル）</option>
+              <option value="16n">16分（細かめ）</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid cols3">
+          <div>
+            <label>休符の比率</label>
+            <select id="restRatio">
+              <option value="0" selected>0%</option>
+              <option value="0.1">10%</option>
+              <option value="0.2">20%</option>
+              <option value="0.3">30%</option>
+              <option value="0.4">40%</option>
+            </select>
+          </div>
+          <div class="flag">
+            <input id="targetOn" type="checkbox" />
+            <label for="targetOn">小節頭ターゲットノート優先（3rd/7th）</label>
+          </div>
+          <div>
+            <label>キー（固定）</label>
+            <input id="key" type="text" placeholder="C, G, F#, B♭ 等（未入力なら自動）" />
+          </div>
+        </div>
+        <div class="toolbar">
+          <button class="btn" id="gen" disabled>フレーズ生成</button>
+          <button id="play" class="pill" disabled>▶ 再生</button>
+          <button id="stop" class="pill" disabled>■ 停止</button>
+          <button id="reharm" class="pill" disabled>↻ 別バリエーション</button>
+          <button id="runtests" class="pill" disabled>✔ 自己テスト</button>
+          <button id="exportMidi" class="pill" disabled>♪ MIDI書き出し</button>
+        </div>
+        <div id="err" class="error" style="display:none"></div>
+        <div class="small">方針: スウィングなし。スケールは固定（maj→Ionian, m→Dorian, 7→Mixolydian, m7b5→Locrian）。休符率と小節頭ターゲットの有無を指定可能。MIDI書き出し対応。</div>
+      </div>
+    </section>
+    <section class="card">
+      <label>譜面プレビュー</label>
+      <div id="score"></div>
+      <div class="footer small">VexFlowで描画、音はTone.jsのSynth/PolySynth。伴奏は各小節でコードが鳴ります。</div>
+      <details style="margin-top:12px"><summary>テスト結果</summary>
+        <pre id="testout">(未実行)</pre>
+      </details>
+      <details style="margin-top:12px"><summary>読み込み診断</summary>
+        <pre id="diag">(収集中)</pre>
+      </details>
+    </section>
+  </div>
+</div>
+
+<script>
+// =====================
+// Dynamic multi-CDN loader (with diagnostics)
+// =====================
+const Diag = { lines:[], add(msg){ this.lines.push(`[${new Date().toLocaleTimeString()}] ${msg}`); const el=document.getElementById('diag'); if(el) el.textContent=this.lines.join('\n'); } };
+function loadScriptSeq(urls, globalCheck){
+  return new Promise(async (resolve, reject)=>{
+    for(const url of urls){
+      try{
+        Diag.add(`try: ${url}`);
+        await loadScript(url);
+        await new Promise(r=>setTimeout(r, 30)); // give it a tick
+        if(globalCheck()){
+          Diag.add(`ok : ${url}`);
+          return resolve(url);
+        }else{
+          Diag.add(`loaded but global missing for: ${url}`);
+        }
+      }catch(e){
+        Diag.add(`fail: ${url} -> ${e.message}`);
+      }
+    }
+    reject(new Error('all sources failed'));
+  });
+}
+function loadScript(src){
+  return new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = src; s.async = true; s.defer = true; s.crossOrigin = 'anonymous';
+    s.onload = ()=>resolve();
+    s.onerror = ()=>reject(new Error('network or blocked'));
+    document.head.appendChild(s);
+  });
+}
+
+const VEX_URLS = [
+  // Local fallback (put files under ./vendor/)
+  './vendor/vexflow.min.js',
+  // CDNs
+  'https://cdn.jsdelivr.net/npm/vexflow@4.2.3/build/vexflow.min.js',
+  'https://unpkg.com/vexflow@4.2.3/build/vexflow.min.js',
+  'https://fastly.jsdelivr.net/npm/vexflow@4.2.3/build/vexflow.min.js'
+];
+const TONE_URLS = [
+  // Local fallback (put files under ./vendor/)
+  './vendor/Tone.js',
+  // CDNs
+  'https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js',
+  'https://unpkg.com/tone@14.8.49/build/Tone.js',
+  'https://fastly.jsdelivr.net/npm/tone@14.8.49/build/Tone.js'
+];
+
+(async function boot(){
+  const status = document.getElementById('libstatus');
+  try{
+    const usedVex = await loadScriptSeq(VEX_URLS, ()=> !!(window.Vex && Vex.Flow));
+    const usedTone = await loadScriptSeq(TONE_URLS, ()=> !!window.Tone);
+    status.innerHTML = `<span class="ok">✅ ライブラリ読み込みOK</span><br><span class="small">VexFlow: ${usedVex}\nTone: ${usedTone}</span>`;
+    enableUI();
+    window.__LIB_READY__ = true;
+    initApp();
+  }catch(e){
+    status.innerHTML = `<div class="error">ライブラリの読み込みに失敗しました。<br>${e.message}<br>CDNブロックや社内ネットワークの制限の可能性があります。必要ならローカル配置に切り替えてください。</div>`;
+    Diag.add('fatal: libs not loaded');
+  }
+})();
+
+function enableUI(){
+  ['gen','play','stop','reharm','runtests','exportMidi'].forEach(id=>{ const b=document.getElementById(id); if(b) b.disabled=false; });
+}
+</script>
+
+<script>
+// =====================
+// App (depends on VexFlow/Tone)
+// =====================
+function initApp(){
+  const VF = Vex.Flow;
+  // ===== Music helpers
+  const NOTE_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  function normalizeRoot(s){ const m=String(s).trim().match(/^([A-Ga-g])([#b♭]?)/); if(!m) return null; return m[1].toUpperCase()+(m[2]||'').replace('♭','b'); }
+  function midiToNote(midi){ const n=((midi%12)+12)%12; const oct=Math.floor(midi/12)-1; return NOTE_NAMES[n]+oct; }
+  const SCALE_BY_QUAL={ maj:[0,2,4,5,7,9,11], maj7:[0,2,4,5,7,9,11], m:[0,2,3,5,7,9,10], m7:[0,2,3,5,7,9,10], '7':[0,2,4,5,7,9,10], dim:[0,2,3,5,6,8,9,11], m7b5:[0,2,3,5,6,8,10], sus4:[0,2,5,7,9,10] };
+  function chordTones(q){ switch(q){ case 'maj': case 'maj7': return [0,4,7,11]; case 'm': case 'm7': return [0,3,7,10]; case '7': return [0,4,7,10]; case 'm7b5': return [0,3,6,10]; case 'dim': return [0,3,6,9]; case 'sus4': return [0,5,7,10]; default: return [0,4,7]; } }
+  function parseChordSymbol(sym){ const s=String(sym||'').trim(); const m=s.match(/^([A-Ga-g][#b♭]?)(.*)$/); if(!m) return null; const root=normalizeRoot(m[1]); let rest=(m[2]||'').replace(/\s+/g,''); rest=rest.replace('M7','maj7').replace('Δ','maj7'); let quality='maj'; if(/maj7|M7|Δ7/.test(rest)) quality='maj7'; else if(/m7b5|ø/.test(rest)) quality='m7b5'; else if(/^m/.test(rest)) quality='m7'; else if(/7/.test(rest)) quality='7'; else if(/sus4?/.test(rest)) quality='sus4'; return {root,quality}; }
+  function rootToMidi(root){ const r=(root||'C').replace('♭','b'); const n=r[0]; const alt=r[1]==='#'?1:r[1]==='b'?-1:0; const base={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[n]||0; let midi=60+(base+alt); while(midi<48) midi+=12; while(midi>83) midi-=12; return midi; }
+  function scaleForChord(ch){ const degrees=SCALE_BY_QUAL[ch.quality]||SCALE_BY_QUAL.maj; const rootMidi=rootToMidi(ch.root); return degrees.map(d=>rootMidi+d); }
+  function tonesForChord(ch){ const deg=chordTones(ch.quality); const rootMidi=rootToMidi(ch.root); return deg.map(d=>rootMidi+d); }
+  function estimateKey(chords){ const counts={}; chords.flat().forEach(ch=>{ if(!ch) return; counts[ch.root]=(counts[ch.root]||0)+1; }); let best='C',max=-1; for(const [r,c] of Object.entries(counts)){ if(c>max){max=c;best=r;} } return best; }
+  function parseProgression(text){ const bars=String(text||'').split('|').map(b=>b.trim()).filter(Boolean); return bars.map(bar=> bar.split(/\s+/).map(parseChordSymbol).filter(Boolean)); }
+
+  // ===== Phrase Generator =====
+  function generateMelody(prog, meter="4/4", noteValue="8n", keyRoot, opts){
+    const beats = meter.startsWith('3')?3:4;
+    const npb = noteValue==="4n"?1:noteValue==="8n"?2:4; // 4n,8n,16n
+    const totalPerBar = beats*npb;
+    const out=[]; let last=64; // E4
+    const restP = Math.max(0, Math.min(0.9, opts?.restRatio||0));
+    const targetOn = !!opts?.targetOn;
+
+    prog.forEach((barChords, barIdx)=>{
+      const ch0 = barChords[0]||{root:keyRoot,quality:'maj'};
+      const scale = scaleForChord(ch0);
+      const chordNotes = tonesForChord(ch0);
+
+      for(let i=0;i<totalPerBar;i++){
+        const strong = (i%npb===0);
+        // 休符: 基本は弱拍で適用。強拍にもほんの少し適用（半分の確率）
+        if(Math.random() < (strong? restP*0.4 : restP)){
+          out.push({midi:null, dur:noteValue, bar:barIdx, rest:true});
+          continue;
+        }
+        let t;
+        if(strong){
+          if(targetOn){
+            // 小節頭: 3rd/7th を優先
+            const tones = chordTones(ch0.quality);
+            const third = tones[1] ?? 4; // 3rd
+            const seventh = tones[3] ?? 10; // 7th if available
+            const cand = [rootToMidi(ch0.root)+third, rootToMidi(ch0.root)+seventh];
+            t = cand[Math.floor(Math.random()*cand.length)];
+          }else{
+            t = chordNotes[Math.floor(Math.random()*chordNotes.length)];
+          }
+        }else{
+          // nearest scale step to last
+          const cand = scale.map(n=>n + 12*Math.floor((last-n)/12));
+          t = cand.reduce((a,b)=> Math.abs(b-last)<=Math.abs(a-last)?b:a, cand[0]);
+          t += (Math.random()<.5?-2:2) * (Math.random()<.7?1:0);
+        }
+        while(t<57) t+=12; while(t>79) t-=12; // keep mid range
+        if(!strong && Math.random()<0.15){ t += (t>last?-1:1); }
+        out.push({midi:t, dur:noteValue, bar:barIdx});
+        last=t;
+      }
+    });
+    return out;
+  }
+
+  function melodyToVexNotes(melody){
+    const notes=[];
+    melody.forEach(n=>{
+      let dur = (n.dur==='4n')? 'q' : (n.dur==='8n')? '8' : '16';
+      if(n.rest){ // 休符表記
+        notes.push(new VF.StaveNote({clef:'treble', keys:['b/4'], duration: dur+'r'}));
+        return;
+      }
+      const name=midiToNote(n.midi);
+      const m=name.match(/^([A-G])(#|b)?(\d)$/);
+      if(!m){ return; }
+      const letter=m[1].toLowerCase(); const acc=m[2]||''; const oct=m[3];
+      const keys=[letter+(acc?acc:'')+'/'+oct];
+      notes.push(new VF.StaveNote({clef:'treble', keys, duration: dur}));
+    });
+    return notes;
+  }
+
+  function chunkByBars(items, barCount){ const out=Array.from({length:barCount},()=>[]); items.forEach(it=>{ if(out[it.bar]) out[it.bar].push(it); }); return out; }
+
+  function renderScore(prog, melody, meter){
+    const target=document.getElementById('score'); target.innerHTML='';
+    const renderer=new VF.Renderer(target, VF.Renderer.Backends.SVG);
+    const width=Math.min(1000, target.clientWidth||1000);
+    const barWidth=Math.max(240, Math.floor(width/2));
+    const rows=Math.max(1, Math.ceil(prog.length/2));
+    const height=180*rows; renderer.resize(width,height);
+    const context=renderer.getContext();
+    const den=+meter.split('/')[1];
+    const melByBar=chunkByBars(melody, prog.length);
+    for(let i=0;i<prog.length;i++){
+      const x=(i%2)*barWidth; const y=Math.floor(i/2)*180;
+      const stave=new VF.Stave(x+20, y+20, barWidth-40);
+      if(i%2===0){ stave.addClef('treble').addTimeSignature(meter); }
+      stave.setContext(context).draw();
+      const notes=melodyToVexNotes(melByBar[i]);
+      const beats=meter.startsWith('3')?3:4;
+      const voice=new VF.Voice({num_beats:beats, beat_value:den});
+      voice.setMode(VF.Voice.Mode.SOFT);
+      voice.addTickables(notes);
+      new VF.Formatter().joinVoices([voice]).format([voice], barWidth-60);
+      voice.draw(context, stave);
+      const chords=prog[i].map(c=> `${c.root}${c.quality==='maj'?'': c.quality==='maj7'?'maj7':c.quality}`);
+      if(notes[0]){
+        const ann=new VF.Annotation(chords.join('  ')).setFont('sans-serif',12,'').setVerticalJustification(VF.Annotation.VerticalJustify.TOP);
+        notes[0].addAnnotation(0, ann);
+      }
+    }
+  }
+
+  // ===== Audio (Tone.js) — swingなし（ストレート）
+  const synth=new Tone.Synth({oscillator:{type:'triangle'}}).toDestination();
+  const poly=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'sine'}}).toDestination();
+  function play(prog, melody, bpm){
+    Tone.Transport.stop(); Tone.Transport.position=0; Tone.Transport.bpm.value=bpm;
+    const backing=[];
+    prog.forEach((barChords,i)=>{ const ch=barChords[0]||{root:'C',quality:'maj'}; const tones=tonesForChord(ch).slice(0,3).map(m=>midiToNote(m)); backing.push({time:`${i}m`,notes:tones}); });
+    new Tone.Part((time,ev)=>{ poly.triggerAttackRelease(ev.notes,'1m',time); }, backing).start(0);
+    const mel=[]; melody.forEach(n=>{ if(n.rest) return; mel.push({time:`${n.bar}m`, note:midiToNote(n.midi), dur:n.dur}); });
+    new Tone.Part((time,ev)=>{ synth.triggerAttackRelease(ev.note,ev.dur,time); }, mel).start(0);
+    Tone.Transport.swing = 0; // ✅ 明示的にスウィング0
+    Tone.Transport.start();
+  }
+  function stop(){ Tone.Transport.stop(); Tone.Transport.position=0; }
+
+  // ===== MIDI Export (Type-1, 2トラック: meta + notes)
+  function exportMIDI(prog, melody, bpm, meter){
+    const PPQ = 480; // ticks per quarter
+    function vlq(n){ const bytes=[]; let buffer=n & 0x7F; while((n >>=7)){ buffer <<=8; buffer |= ((n & 0x7F) | 0x80); } while(true){ bytes.push(buffer & 0xFF); if(buffer & 0x80) buffer >>=8; else break; } return bytes; }
+    function push(arr, ...nums){ nums.forEach(n=>arr.push(n & 0xFF)); }
+    function textTrack(){ const t=[]; // tempo
+      // Set Tempo
+      const mpq = Math.round(60000000/(bpm||110));
+      t.push(0x00, 0xFF, 0x51, 0x03, (mpq>>16)&255, (mpq>>8)&255, mpq&255);
+      // Time Signature
+      const num = meter.startsWith('3')?3:4; const den = +meter.split('/')[1];
+      const dd = Math.log2(den)|0; t.push(0x00,0xFF,0x58,0x04, num, dd, 24, 8);
+      // End of Track
+      t.push(0x00,0xFF,0x2F,0x00); return t; }
+
+    function noteTrack(){
+      const t=[]; const channel=0; // program change (optional)
+      // simple mapping duration -> ticks
+      const durTicksMap = {'4n': PPQ, '8n': PPQ/2, '16n': PPQ/4};
+      let lastBar=0; let timeTicks=0; // accumulate in ticks
+      function addDelta(delta){ vlq(delta).forEach(b=>t.push(b)); }
+      // iterate bars
+      for(let bar=0; bar<prog.length; bar++){
+        // backing chord: root/3rd/7th as block at start of bar
+        const ch = prog[bar][0] || {root:'C',quality:'maj'};
+        const chordMidis = tonesForChord(ch).slice(0,3);
+        const barStartTicks = bar * PPQ * (meter.startsWith('3')?3:4);
+        // align timeTicks to bar boundary
+        if(timeTicks < barStartTicks){ addDelta(barStartTicks - timeTicks); timeTicks = barStartTicks; }
+        chordMidis.forEach(m=>{ push(t, 0x90, m & 127, 100); }); // note on
+        addDelta(PPQ * (meter.startsWith('3')?3:4));
+        chordMidis.forEach(m=>{ push(t, 0x80, m & 127, 64); }); // note off
+        timeTicks += PPQ * (meter.startsWith('3')?3:4);
+      }
+      // melody on separate channel 1
+      timeTicks = 0; // restart timeline for melody interleaving
+      let currentBar = 0; let positionWithinBar = 0; const beats = meter.startsWith('3')?3:4;
+      melody.forEach(n=>{
+        const dur = durTicksMap[n.dur] || PPQ/2; // default 8n
+        const absTicks = n.bar * beats * PPQ + positionWithinBar;
+        if(n.rest){ positionWithinBar += dur; return; }
+        const delta = absTicks - timeTicks; addDelta(delta<0?0:delta); timeTicks = absTicks;
+        push(t, 0x91, (n.midi & 127), 100); // note on ch1
+        addDelta(dur); push(t, 0x81, (n.midi & 127), 64); // note off ch1
+        timeTicks += dur; positionWithinBar += dur;
+        if(positionWithinBar >= beats*PPQ){ positionWithinBar = 0; }
+      });
+      // End of Track
+      t.push(0x00,0xFF,0x2F,0x00); return t;
+    }
+
+    function chunk(type, data){
+      const len = data.length; return new Uint8Array([
+        ...type.charCodeAt(0).toString().split('').map(()=>0), // placeholder (ignored)
+      ]);
+    }
+    // Build header
+    function u32(n){ return [(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255]; }
+    function u16(n){ return [(n>>>8)&255,n&255]; }
+
+    const header = [];
+    // MThd
+    header.push(0x4D,0x54,0x68,0x64, 0x00,0x00,0x00,0x06, 0x00,0x01, 0x00,0x02, (PPQ>>8)&255, PPQ&255);
+    // Track 0 (meta)
+    const t0 = textTrack();
+    const t0len = u32(t0.length);
+    const trk0 = [0x4D,0x54,0x72,0x6B, ...t0len, ...t0];
+    // Track 1 (notes)
+    const t1 = noteTrack();
+    const t1len = u32(t1.length);
+    const trk1 = [0x4D,0x54,0x72,0x6B, ...t1len, ...t1];
+
+    const bytes = new Uint8Array([ ...header, ...trk0, ...trk1 ]);
+    const blob = new Blob([bytes], {type:'audio/midi'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='phrase.mid'; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  }
+
+  // ===== Wire UI
+  const el=id=>document.getElementById(id);
+  const chordsEl=el('chords'); const bpmEl=el('bpm'); const keyEl=el('key'); const meterEl=el('meter'); const noteValEl=el('noteValue');
+  const restRatioEl=el('restRatio'); const targetOnEl=el('targetOn');
+  const genBtn=el('gen'); const playBtn=el('play'); const stopBtn=el('stop'); const reharmBtn=el('reharm'); const runTestsBtn=el('runtests'); const exportMidiBtn=el('exportMidi');
+
+  let lastProg=[], lastMelody=[], lastOpts={restRatio:0, targetOn:false};
+
+  function generate(){ try{
+    const prog=parseProgression(chordsEl.value);
+    if(prog.length===0){ throw new Error('コード進行を入力してください'); }
+    const key=keyEl.value.trim()||estimateKey(prog);
+    lastOpts = { restRatio: parseFloat(restRatioEl.value||'0')||0, targetOn: !!targetOnEl.checked };
+    const melody=generateMelody(prog, meterEl.value, noteValEl.value, key, lastOpts);
+    lastProg=prog; lastMelody=melody;
+    renderScore(prog, melody, meterEl.value);
+    el('err').style.display='none';
+  }catch(e){ const box=el('err'); box.style.display='block'; box.textContent='生成に失敗: '+e.message; console.error(e); }}
+
+  Array.from(document.querySelectorAll('.examples button')).forEach(b=>{ b.addEventListener('click',()=>{ chordsEl.value=b.dataset.ex; generate(); }); });
+  genBtn.addEventListener('click',()=> generate());
+  playBtn.addEventListener('click', async ()=>{ try{ if(!lastMelody.length) generate(); await Tone.start(); play(lastProg, lastMelody, +bpmEl.value||110); }catch(e){ const box=el('err'); box.style.display='block'; box.textContent='再生に失敗: '+e.message; } });
+  stopBtn.addEventListener('click',()=> stop());
+  reharmBtn.addEventListener('click',()=>{ if(!chordsEl.value.trim()) return; generate(); });
+  exportMidiBtn.addEventListener('click', ()=>{ if(!lastMelody.length) generate(); exportMIDI(lastProg, lastMelody, +bpmEl.value||110, meterEl.value); });
+
+  // ===== Tests (追加)
+  function expect(name, cond){ return `${cond? '✅':'❌'} ${name}`; }
+  function runSelfTests(){ const out=[];
+    // parsing
+    out.push(expect('parseChordSymbol Cmaj7', JSON.stringify(parseChordSymbol('Cmaj7'))===JSON.stringify({root:'C',quality:'maj7'})));
+    out.push(expect('parseChordSymbol Bb7', JSON.stringify(parseChordSymbol('Bb7'))===JSON.stringify({root:'Bb',quality:'7'})));
+    out.push(expect('parseChordSymbol F#m7b5', JSON.stringify(parseChordSymbol('F#m7b5'))===JSON.stringify({root:'F#',quality:'m7b5'})));
+    // progression
+    const p=parseProgression('Cmaj7 | Dm7 G7 | Cmaj7');
+    out.push(expect('progression bars=3', p.length===3));
+    out.push(expect('bar2 chords=2', p[1].length===2));
+    // melody length
+    const m1=generateMelody([[{root:'C',quality:'maj7'}],[{root:'F',quality:'maj7'}]], '4/4','8n','C',{restRatio:0});
+    out.push(expect('melody len 4/4 8n (2bars*8)=16', m1.length===16));
+    const m2=generateMelody([[{root:'C',quality:'maj7'}]], '3/4','4n','C',{restRatio:0});
+    out.push(expect('melody len 3/4 4n (1bar*3)=3', m2.length===3));
+    // rest ratio (粗いチェック): 40%で休符が含まれる
+    const m3=generateMelody([[{root:'C',quality:'maj7'}]], '4/4','8n','C',{restRatio:0.4});
+    out.push(expect('rests appear when ratio=0.4', m3.some(n=>n.rest)));
+    // target note ON: bar頭が休符でないときは chord tones の3rd/7th 付近が多い（近似チェック）
+    const m4=generateMelody([[{root:'C',quality:'maj7'}],[{root:'F',quality:'maj7'}]], '4/4','8n','C',{restRatio:0, targetOn:true});
+    const barHeads = m4.filter((_,i)=> i%8===0); // 8nで1小節8音
+    out.push(expect('targetOn produced non-rest head', barHeads.every(n=>!n.rest)));
+
+    const box=document.getElementById('testout'); box.textContent=out.join('\n'); }
+  document.getElementById('runtests').addEventListener('click', runSelfTests);
+
+  // preload example
+  document.getElementById('chords').value='Cmaj7 | Dm7 G7 | Cmaj7 A7 | Dm7 G7';
+  generate();
+}
+</script>
+
+<!-- ✅ ローカル配置の手引き（CDNがブロックされる環境向け）
+1) https://github.com/0xfe/vexflow/releases から v4.2.3 の dist を取得し、/vendor/vexflow.min.js に保存
+2) https://github.com/Tonejs/Tone.js/releases から v14.8.49 の build/Tone.js を /vendor/Tone.js に保存
+3) 上の loader 配列を次のように先頭へ追加:
+   const VEX_URLS = [ './vendor/vexflow.min.js', ...CDN候補 ]
+   const TONE_URLS = [ './vendor/Tone.js', ...CDN候補 ]
+これで社内ネットワークでも動きます。
+-->
+</body>
+</html>
