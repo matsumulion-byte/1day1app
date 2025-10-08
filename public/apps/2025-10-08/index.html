@@ -52,7 +52,7 @@
   </div>
 
   <!-- クリア時SE（ユーザー操作後のみ再生） -->
-  <audio id="clearSE" src="matsumura_desu.m4a" preload="auto"></audio>
+  <audio id="clearSE" src="./matsumura_desu.m4a" preload="auto"></audio>
 
 <script>
 (function(){
@@ -281,7 +281,7 @@
     });
   }
   (async ()=>{
-    const candidate = 'image.jpg';
+    const candidate = './image.jpg';
     const ok = await ensureImage(candidate);
     if (!ok){
       console.error('[Puzzle] 画像が読み込めませんでした:', toAbsolute(candidate));
