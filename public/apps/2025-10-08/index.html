@@ -270,10 +270,28 @@
 
   // ===== Init =====
   runSelfTests();
-  // 使用する画像を同ディレクトリの image.jpg に設定
-  imgURL = 'image.jpg';
-  // 初期表示からシャッフル状態にする
-  shuffle();
+  // 画像/音声の到達性チェック（失敗時はコンソールに絶対URLを表示し数値タイルにフォールバック）
+  function toAbsolute(u){ try{ return new URL(u, location.href).toString(); }catch(_){ return u; } }
+  function ensureImage(u){
+    return new Promise(resolve=>{
+      const im = new Image();
+      im.onload = ()=> resolve(true);
+      im.onerror = ()=> resolve(false);
+      im.src = u + (u.includes('?') ? '' : `?v=${Date.now()}`);
+    });
+  }
+  (async ()=>{
+    const candidate = 'image.jpg';
+    const ok = await ensureImage(candidate);
+    if (!ok){
+      console.error('[Puzzle] 画像が読み込めませんでした:', toAbsolute(candidate));
+      // フォールバック: 数値タイルのまま
+    } else {
+      imgURL = candidate;
+    }
+    // 初期表示からシャッフル状態にする
+    shuffle();
+  })();
 })();
 </script>
 </body>
