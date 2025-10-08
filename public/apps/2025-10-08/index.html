@@ -272,18 +272,10 @@
   runSelfTests();
   // 画像/音声の到達性チェック（失敗時はコンソールに絶対URLを表示し数値タイルにフォールバック）
   function toAbsolute(u){ try{ return new URL(u, location.href).toString(); }catch(_){ return u; } }
+  // Vercelの公開ルートでは `public` がサイトルートにマッピングされるため、
+  // このアプリの実体は `/apps/2025-10-08/` 配下にある
   function getBaseDir(){
-    const u = new URL(location.href);
-    const parts = u.pathname.split('/').filter(Boolean);
-    const last = parts[parts.length-1] || '';
-    const looksLikeFile = last.includes('.') && !last.endsWith('.');
-    let basePath = u.pathname;
-    if (looksLikeFile){
-      basePath = basePath.replace(/[^/]*$/, '');
-    } else if (!basePath.endsWith('/')) {
-      basePath += '/';
-    }
-    return basePath;
+    return '/apps/2025-10-08/';
   }
   function ensureImage(u){
     return new Promise(resolve=>{
@@ -295,7 +287,7 @@
   }
   (async ()=>{
     const base = getBaseDir();
-    // オーディオのパスも同ディレクトリ基準に固定
+    // オーディオと画像のパスをサイトルート基準で固定
     if (clearSE) clearSE.src = `${base}matsumura_desu.m4a`;
     const candidate = `${base}image.jpg`;
     const ok = await ensureImage(candidate);
