@@ -273,8 +273,17 @@
   // 画像/音声の到達性チェック（失敗時はコンソールに絶対URLを表示し数値タイルにフォールバック）
   function toAbsolute(u){ try{ return new URL(u, location.href).toString(); }catch(_){ return u; } }
   function getBaseDir(){
-    const p = location.pathname;
-    return p.endsWith('/') ? p : p.replace(/[^/]*$/, '');
+    const u = new URL(location.href);
+    const parts = u.pathname.split('/').filter(Boolean);
+    const last = parts[parts.length-1] || '';
+    const looksLikeFile = last.includes('.') && !last.endsWith('.');
+    let basePath = u.pathname;
+    if (looksLikeFile){
+      basePath = basePath.replace(/[^/]*$/, '');
+    } else if (!basePath.endsWith('/')) {
+      basePath += '/';
+    }
+    return basePath;
   }
   function ensureImage(u){
     return new Promise(resolve=>{
