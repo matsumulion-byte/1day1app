@@ -52,7 +52,7 @@
   </div>
 
   <!-- クリア時SE（ユーザー操作後のみ再生） -->
-  <audio id="clearSE" src="./matsumura_desu.m4a" preload="auto"></audio>
+  <audio id="clearSE" preload="auto"></audio>
 
 <script>
 (function(){
@@ -272,6 +272,10 @@
   runSelfTests();
   // 画像/音声の到達性チェック（失敗時はコンソールに絶対URLを表示し数値タイルにフォールバック）
   function toAbsolute(u){ try{ return new URL(u, location.href).toString(); }catch(_){ return u; } }
+  function getBaseDir(){
+    const p = location.pathname;
+    return p.endsWith('/') ? p : p.replace(/[^/]*$/, '');
+  }
   function ensureImage(u){
     return new Promise(resolve=>{
       const im = new Image();
@@ -281,7 +285,10 @@
     });
   }
   (async ()=>{
-    const candidate = './image.jpg';
+    const base = getBaseDir();
+    // オーディオのパスも同ディレクトリ基準に固定
+    if (clearSE) clearSE.src = `${base}matsumura_desu.m4a`;
+    const candidate = `${base}image.jpg`;
     const ok = await ensureImage(candidate);
     if (!ok){
       console.error('[Puzzle] 画像が読み込めませんでした:', toAbsolute(candidate));
