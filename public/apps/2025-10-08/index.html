@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>松村パズル | 1日1アプリ</title>
+<style>
+  :root{
+    --size: 3;           /* グリッド固定（3=3x3）*/
+    --board: 360px;      /* 盤面サイズ */
+    --gap: 4px;          /* タイル間の隙間 */
+    --radius: 12px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#0b0b0b;color:#eaeaea;font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto}
+  header{padding:20px 16px 8px;}
+  h1{margin:0;font-size:20px;}
+  .wrap{max-width:900px;margin:0 auto;padding:8px 16px 32px;}
+  .controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:10px 0 18px}
+  .controls > *{background:#161616;border:1px solid #2c2c2c;color:#eaeaea;padding:10px 12px;border-radius:10px}
+  button{cursor:pointer}
+  .boardWrap{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+  .board{position:relative;width:var(--board);height:var(--board);display:grid;grid-template-columns:repeat(var(--size),1fr);grid-template-rows:repeat(var(--size),1fr);gap:var(--gap);background:#121212;border-radius:var(--radius);box-shadow:0 6px 24px rgba(0,0,0,.45)}
+  .tile{position:relative;border-radius:10px;background:#222;display:grid;place-items:center;font-weight:700;color:#fff;user-select:none;touch-action:manipulation;}
+  .tile.num{background:#1f1f1f;border:1px solid #2c2c2c}
+  .tile.blank{background:#0f0f0f;color:#555;border:1px dashed #2a2a2a}
+  .tile::after{content:attr(data-n);opacity:.7;font-size:12px;position:absolute;bottom:6px;right:8px}
+  .stats{min-width:220px}
+  .statCard{background:#121212;border:1px solid #2c2c2c;border-radius:12px;padding:12px 14px;margin-bottom:10px}
+  .statCard h3{margin:0 0 8px;font-size:14px;color:#bbb}
+  .foot{opacity:.6;margin-top:18px;font-size:12px}
+  .pill{padding:4px 8px;background:#0f172a;border-radius:999px;border:1px solid #1f2937;opacity:.8}
+  details.dev{margin-top:16px;background:#0f0f0f;border:1px solid #222;border-radius:10px;padding:8px 10px}
+  details.dev summary{cursor:pointer}
+  pre#testlog{white-space:pre-wrap;font-size:12px;line-height:1.4}
+  @media (max-width:560px){:root{--board:320px}.stats{min-width:unset;width:100%}}
+</style>
+</head>
+<body>
+  <header class="wrap">
+    <h1>松村パズル</h1>
+  </header>
+  <div class="wrap">
+    <div class="controls">
+      <button id="shuffleBtn">シャッフル</button>
+      <button id="resetBtn">リセット</button>
+    </div>
+
+    <div class="boardWrap">
+      <div class="board" id="board" aria-label="スライドパズル盤面"></div>
+    </div>
+  </div>
+
+  <!-- クリア時SE（ユーザー操作後のみ再生） -->
+  <audio id="clearSE" src="matsumura_desu.m4a" preload="auto"></audio>
+
+<script>
+(function(){
+  // ===== DOM =====
+  const boardEl = document.getElementById('board');
+  const movesEl = document.getElementById('moves');
+  const timeEl = document.getElementById('time');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const clearSE = document.getElementById('clearSE');
+  const testlog = document.getElementById('testlog');
+
+  // ===== State (3×3固定) =====
+  const N = 3;                               // グリッド固定
+  let order = [];                            // 0..n-1 の並び（最後が空白）
+  let imgURL = null;                         // 背景画像URL（固定）
+  let moves = 0;                             // 手数
+  let startTS = null;                        // 計時
+  let timerId = null;                        // タイマー
+  let lastTimeText = '00:00';                // 直近のタイム表示（DOMが無い場合のため）
+
+  // あなたの写真（軽量化Base64）をサンプルとして固定
+  const SAMPLE = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxAQEA8QDw8QEA8PDw8PDw8QDw8QFREWFhUVFRUYHSggGBolGxUVITEhJSkrLi4uFx8zODMsNygtLisBCgoKDg0OGxAQGy0lHyUtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLf/AABEIAI0BpgMBIgACEQEDEQH/xAAbAAACAgMBAAAAAAAAAAAAAAAABgQFAQIDB//EADYQAAIBAwIDBQgDAQAAAAAAAAECAwQFEQASITFBBhMiUWEUFlJxgZKRobHB0fAyQ2KS/8QAGQEBAQEBAQEAAAAAAAAAAAAAAAECAwQF/8QAHhEBAQEAAwADAQAAAAAAAAAAAAERAgMSITFBQnH/2gAMAwEAAhEDEQA/AK9q5m0m7i7XgX2VtQ4jv1yZ8l8YFqB4k6TgF0z0wV1gqH2zXjz0LsB3J3Qb0m1zq2m9hJ8CzKpC2Zl0Qe9Z7M3mB2jZ2m2zWZqFq6kV5VhS3tQp0+H2z2c+qf0tqG0jvRzqfR3L7sW1x4YgCkq1y5gqK6Q6Fq8H0r0j1a6qWm1cQ9Qe+2Z4N2H0p1v1sI1lU1y2wZ3oO4o1b3H1e0p9tN6tq1Q7FZQ0Qk+0rH3qJY2s7b2cVgkZbqZ3R8u5u3wWg0s0yK0mS3d5iQqQbK3w5vLwKx2qTuhuQY0E3iQ5m6+smRmy1kV0bWmM1WJzF6nG6zY1lq8V4zQy1M+oT7n6Y0n1M9y9rZgX1E0uB7p2U7fQe6q9T6nM7gqz7J9j3wB3+gkK9Yq9qkY8k0b8tQz8sZk9d3m0mQ3n1qJZ5Qq6pR9j2n1I6T1pJ1bV2Lq4X7i7m8W5B3N8I3F6q8i9cK3Xo0nU5yq9gq4S9m2dZ0dV3m3lVw1b2r1m3v9JtB+7hQ8z2WJ0t3Zq3yYq2E6pYzQG9K0s6b7Y2y4d1w9a9f3NnW6bq3ir7q1M9q3Zp7pQq5d2oQkzO9dKj5x4fNwJ5q3h5m9f2gQH6qQx0Kxk8n2d1rN4w9W6Xj6jU8wB2V2gkk5n1E5y1q3xqS3r1u3t0gH3X0p+3YwWkqQvJw8wS6m3QmV9I9m7dP6XlY3l1qTtJrY6m1r3lJ3gXb1bYzKXkq6b2qQWl9X6wz7g2WmT1M8zstZk0c5//Z';
+
+  // ===== Helpers =====
+  function setBoardCSS(){
+    document.documentElement.style.setProperty('--size', N);
+  }
+
+  function resetStats(){
+    moves = 0; if (movesEl) movesEl.textContent = moves;
+    startTS = Date.now();
+    if (timerId) clearInterval(timerId);
+    timerId = setInterval(()=>{
+      const s = Math.floor((Date.now()-startTS)/1000);
+      const m = String(Math.floor(s/60)).padStart(2,'0');
+      const ss = String(s%60).padStart(2,'0');
+      lastTimeText = `${m}:${ss}`;
+      if (timeEl) timeEl.textContent = lastTimeText;
+    }, 250);
+  }
+
+  function makeSolvedOrder(){
+    const total = N*N;
+    return Array.from({length: total}, (_,i)=>i); // 空白は最後（index total-1）
+  }
+
+  function inversionCount(arr){
+    const flat = arr.filter(v => v !== arr.length-1); // 空白除外
+    let inv = 0;
+    for(let i=0;i<flat.length;i++){
+      for(let j=i+1;j<flat.length;j++){
+        if(flat[i] > flat[j]) inv++;
+      }
+    }
+    return inv;
+  }
+
+  function isSolved(arr){
+    return arr.every((v,i)=>v===i);
+  }
+
+  function isSolvable(arr){
+    const inv = inversionCount(arr);
+    const blankIndex = arr.indexOf(arr.length-1); // 0-based
+    const blankRowFromTop = Math.floor(blankIndex / N);
+    const blankRowFromBottom = N - blankRowFromTop; // 1-based相当
+    if (N % 2 === 1){
+      return inv % 2 === 0; // 奇数グリッドは反転数が偶数
+    } else {
+      return (blankRowFromBottom % 2 === 1) ? (inv % 2 === 0) : (inv % 2 === 1);
+    }
+  }
+
+  function shuffleSolvable(){
+    const total = N*N;
+    let arr = makeSolvedOrder();
+    do{
+      for(let i=total-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]] = [arr[j],arr[i]];
+      }
+    }while(!isSolvable(arr) || isSolved(arr));
+    return arr;
+  }
+
+  function backgroundPositionFor(v){
+    const x = v % N;
+    const y = Math.floor(v / N);
+    const px = (x/(N-1))*100;
+    const py = (y/(N-1))*100;
+    return `${px}% ${py}%`;
+  }
+
+  function buildBoard(){
+    boardEl.innerHTML = '';
+    setBoardCSS();
+    const total = N*N;
+    const blankVal = total-1;
+    for(let idx=0; idx<total; idx++){
+      const val = order[idx];
+      const tile = document.createElement('button');
+      tile.className = 'tile';
+      tile.type = 'button';
+      tile.dataset.idx = idx;
+      tile.setAttribute('aria-label', val===blankVal ? '空白' : `タイル ${val+1}`);
+
+      if (val === blankVal){
+        tile.classList.add('blank');
+      } else {
+        tile.classList.add('num');
+        tile.dataset.n = (val+1);
+        if (imgURL){
+          const pos = backgroundPositionFor(val);
+          tile.style.backgroundImage = `url(${imgURL})`;
+          tile.style.backgroundSize = `${N*100}% ${N*100}%`;
+          tile.style.backgroundPosition = pos;
+        } else {
+          tile.textContent = (val+1);
+        }
+      }
+
+      tile.addEventListener('click', ()=> tryMove(idx));
+      boardEl.appendChild(tile);
+    }
+  }
+
+  function isNeighbor(a,b){
+    const ax=a%N, ay=Math.floor(a/N);
+    const bx=b%N, by=Math.floor(b/N);
+    return (Math.abs(ax-bx)+Math.abs(ay-by))===1;
+  }
+
+  function tryMove(clickedIndex){
+    const blankIndex = order.indexOf(N*N-1);
+    if (!isNeighbor(clickedIndex, blankIndex)) return;
+    [order[clickedIndex], order[blankIndex]] = [order[blankIndex], order[clickedIndex]];
+    moves++; if (movesEl) movesEl.textContent = moves;
+    buildBoard();
+
+    if (isSolved(order)){
+      setTimeout(()=>{
+        clearInterval(timerId);
+        if (clearSE){ try{ clearSE.currentTime = 0; clearSE.play(); }catch(e){} }
+        alert(`クリア！ 手数: ${moves} / タイム: ${lastTimeText}`);
+      }, 10);
+    }
+  }
+
+  function init(){
+    order = makeSolvedOrder();
+    buildBoard();
+    resetStats();
+  }
+
+  function shuffle(){
+    order = shuffleSolvable();
+    buildBoard();
+    resetStats();
+  }
+
+  // ===== Events =====
+  shuffleBtn.addEventListener('click', shuffle);
+  resetBtn.addEventListener('click', ()=> init());
+
+  // スワイプ操作（モバイル）: 空白へスライド方向を推測
+  let touchStart = null;
+  boardEl.addEventListener('touchstart', (e)=>{
+    if(e.touches.length!==1) return;
+    touchStart = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+  }, {passive:true});
+  boardEl.addEventListener('touchend', (e)=>{
+    if(!touchStart) return;
+    const dx = (e.changedTouches[0].clientX - touchStart.x);
+    const dy = (e.changedTouches[0].clientY - touchStart.y);
+    const absx = Math.abs(dx), absy = Math.abs(dy);
+    const blank = order.indexOf(N*N-1);
+    let target = null;
+    if(absx>absy){
+      if(dx>20){ target = blank%N>0 ? blank-1 : null; }      // → 空白が左
+      else if(dx<-20){ target = blank%N < N-1 ? blank+1 : null; } // ← 空白が右
+    }else{
+      if(dy>20){ target = Math.floor(blank/N)>0 ? blank-N : null; } // ↓ 空白が上
+      else if(dy<-20){ target = Math.floor(blank/N) < N-1 ? blank+N : null; } // ↑ 空白が下
+    }
+    if(target!=null) tryMove(target);
+    touchStart=null;
+  }, {passive:true});
+
+  // ===== Self Tests (non‑intrusive) =====
+  function runSelfTests(){
+    const logs = [];
+    const ok = (name, cond) => logs.push(`${cond ? '✅' : '❌'} ${name}`);
+    const invLocal = (arr)=>{ const f=arr.filter(v=>v!==arr.length-1); let c=0; for(let i=0;i<f.length;i++){ for(let j=i+1;j<f.length;j++){ if(f[i]>f[j]) c++; } } return c; };
+    const solvLocal = (arr, n)=>{ const inv=invLocal(arr); const blankIndex = arr.indexOf(arr.length-1); const blankRowFromTop = Math.floor(blankIndex / n); const blankRowFromBottom = n - blankRowFromTop; if(n%2===1){return inv%2===0;} else {return (blankRowFromBottom%2===1) ? (inv%2===0) : (inv%2===1);} };
+    const neighborLocal = (a,b,n)=>{ const ax=a%n, ay=Math.floor(a/n); const bx=b%n, by=Math.floor(b/n); return (Math.abs(ax-bx)+Math.abs(ay-by))===1; };
+    const shuffleLocal = (n)=>{ const total=n*n; let arr=Array.from({length:total},(_,i)=>i); do{ for(let i=total-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } }while(!solvLocal(arr,n) || arr.every((v,i)=>v===i)); return arr; };
+
+    // Core property tests
+    ok('3x3 solved is solvable', solvLocal([0,1,2,3,4,5,6,7,8], 3) === true);
+    ok('3x3 swapped 0,1 is unsolvable', solvLocal([1,0,2,3,4,5,6,7,8], 3) === false);
+    ok('neighbor (1,2) true', neighborLocal(1,2,3) === true);
+    ok('neighbor (0,4) true', neighborLocal(0,4,3) === true);
+    ok('neighbor (0,8) false', neighborLocal(0,8,3) === false);
+    // Background sprite positions for N=3
+    ok('bgpos(0) == 0% 0%', backgroundPositionFor(0) === '0% 0%');
+    ok('bgpos(8) == 100% 100%', backgroundPositionFor(8) === '100% 100%');
+
+    // Shuffle sanity
+    let passShuffle = true; for(let t=0;t<5;t++){ const arr = shuffleLocal(3); if(!solvLocal(arr,3) || arr.every((v,i)=>v===i)) passShuffle=false; }
+    ok('shuffleSolvable(3x3) produces solvable & non-solved', passShuffle);
+
+    if (testlog) testlog.textContent = logs.join('\n');
+  }
+
+  // ===== Init =====
+  runSelfTests();
+  // 使用する画像を同ディレクトリの image.jpg に設定
+  imgURL = 'image.jpg';
+  // 初期表示からシャッフル状態にする
+  shuffle();
+})();
+</script>
+</body>
+</html>
