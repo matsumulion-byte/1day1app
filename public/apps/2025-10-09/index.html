@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>松村タイマー</title>
+<style>
+  *,*::before,*::after{ box-sizing:border-box; } /* ← はみ出し防止 */
+  :root {
+    --bg:#000; --fg:#fff; --btn:#1c1c1e; --btnPrimary:#1d5cff;
+    --card:#0b0b0c; --border:#222;
+  }
+  html, body { height:100%; }
+  body {
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family: system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+    display:flex; align-items:center; justify-content:center;
+    padding: max(env(safe-area-inset-top),12px) max(env(safe-area-inset-right),12px)
+             max(env(safe-area-inset-bottom),12px) max(env(safe-area-inset-left),12px);
+  }
+  .wrap { width:min(100%, 680px); }
+  .card{
+    background:linear-gradient(180deg,#0c0c0d,#060607);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:16px;
+    box-shadow:0 8px 28px rgba(0,0,0,.45), inset 0 0 0 1px #111;
+  }
+  h1{
+    margin:0 0 12px; font-size: clamp(18px, 4.6vw, 24px);
+    display:flex; align-items:center; gap:8px;
+  }
+
+  /* ---- レイアウト：入力行とボタン行を分離 ---- */
+  .controls{ display:grid; gap:12px; }
+  .fields{
+    display:grid; gap:12px;
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (min-width: 560px){
+    .fields{ grid-template-columns: 200px 200px; justify-content:start; }
+  }
+  label{ font-size:12px; opacity:.9; display:flex; flex-direction:column; gap:6px; }
+  input[type="number"]{
+    appearance: textfield;
+    width:100%; padding:12px 14px; border-radius:12px;
+    border:1px solid var(--border); background:#0f0f10; color:var(--fg);
+    font-size:18px; line-height:1.2; text-align:center;
+  }
+  input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  .btns{
+    display:grid; gap:10px;
+    grid-template-columns: 1fr 1fr; /* スマホ2列 */
+  }
+  @media (min-width: 560px){
+    .btns{ grid-template-columns: repeat(3, 1fr); } /* PCは3列 */
+  }
+  button{
+    -webkit-tap-highlight-color: transparent;
+    padding:14px 12px; border-radius:12px; border:1px solid #1b1b1d;
+    background:var(--btn); color:var(--fg); font-size:16px; line-height:1;
+    cursor:pointer; width:100%;
+  }
+  .primary{ background:var(--btnPrimary); border-color:#2f5fff; }
+  button:disabled{ opacity:.45; cursor:not-allowed; }
+
+  .time{
+    text-align:center; font-variant-numeric: tabular-nums;
+    font-size: clamp(40px, 16vw, 96px);
+    letter-spacing:.02em; margin: 10px 0 6px;
+  }
+  .hint{ text-align:center; font-size:12px; opacity:.72; min-height:1.2em; }
+
+  /* 「ま」「松村です！」の巨大表示（見切れ防止） */
+  #big{
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    font-weight:800; color:#fff;
+    font-size: clamp(64px, 22vw, 160px);
+    text-shadow: 0 0 18px rgba(255,255,255,.9), 0 0 44px rgba(29,92,255,.5);
+    white-space: nowrap; text-wrap: nowrap; word-break: keep-all;
+    opacity:0; transform:scale(.9);
+    transition: opacity .25s ease, transform .25s ease;
+    pointer-events:none;
+  }
+  #big.show{ opacity:1; transform:scale(1); }
+  #big.hide{ opacity:0; transform:scale(.85); transition: opacity .8s ease, transform .8s ease; }
+
+  footer{ text-align:center; font-size:11px; opacity:.6; margin-top:8px; }
+
+  /* モバイル時の巨大テキスト縮小（1行キープ） */
+  @media (max-width: 420px){
+    #big{ font-size: clamp(56px, 18vw, 160px); }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>松村タイマー ⏱️</h1>
+
+      <div class="controls">
+        <!-- 入力行 -->
+        <div class="fields">
+          <label>分
+            <input id="min" type="number" inputmode="numeric" min="0" value="0" />
+          </label>
+          <label>秒
+            <input id="sec" type="number" inputmode="numeric" min="0" max="59" value="10" />
+          </label>
+        </div>
+
+        <!-- ボタン行（常に別行・フル幅） -->
+        <div class="btns">
+          <button id="start" class="primary">スタート</button>
+          <button id="stop">ストップ</button>
+          <button id="reset">リセット</button>
+        </div>
+      </div>
+
+      <div id="time" class="time">00:10</div>
+    </div>
+  </div>
+
+  <div id="big"></div>
+  <audio id="voice" src="matsumura_desu.m4a" preload="auto"></audio>
+
+<script>
+(() => {
+  const minI = document.getElementById('min');
+  const secI = document.getElementById('sec');
+  const startB = document.getElementById('start');
+  const stopB = document.getElementById('stop');
+  const resetB = document.getElementById('reset');
+  const timeEl = document.getElementById('time');
+  const bigEl = document.getElementById('big');
+  const voice = document.getElementById('voice');
+
+  let baseMs = 0, target = 0, running = false, pausedMs = null, timer = null, lastShown = null;
+
+  const pad = n => String(n).padStart(2,'0');
+  const fmt = ms => {
+    ms = Math.max(0, ms|0);
+    const s = Math.floor(ms/1000);
+    return `${pad(Math.floor(s/60))}:${pad(s%60)}`;
+  };
+  const readInputMs = () => {
+    const m = Math.max(0, parseInt(minI.value||'0',10));
+    const sIn = Math.max(0, parseInt(secI.value||'0',10));
+    const s = Math.min(59, sIn);
+    return (m*60 + s) * 1000;
+  };
+  const enableInputs = on => { minI.disabled = secI.disabled = !on; };
+
+  function flashBig(text){
+    bigEl.textContent = text;
+    bigEl.classList.remove('hide');
+    void bigEl.offsetWidth;
+    bigEl.classList.add('show');
+    setTimeout(()=> bigEl.classList.remove('show'), 600);
+  }
+  function showFinal(){
+    bigEl.textContent = '松村です！';
+    bigEl.classList.remove('hide');
+    bigEl.classList.add('show');
+    voice.currentTime = 0;
+    voice.play().catch(()=>{});
+    setTimeout(()=>{
+      bigEl.classList.add('hide');
+      setTimeout(()=> bigEl.classList.remove('show','hide'), 1200);
+    }, 1400);
+  }
+
+  function tick(){
+    const left = target - Date.now();
+    if (left <= 0){
+      clearInterval(timer); timer = null;
+      running = false; startB.disabled = false; enableInputs(true);
+      timeEl.textContent = fmt(0);
+      showFinal();
+      return;
+    }
+    timeEl.textContent = fmt(left);
+
+    const secLeft = Math.ceil(left/1000);
+    if (secLeft <= 3 && secLeft > 0 && lastShown !== secLeft){
+      lastShown = secLeft;
+      flashBig('ま');
+      try { voice.pause(); } catch(e){}
+    }
+  }
+
+  function start(){
+    if (running) return;
+    lastShown = null;
+
+    let setMs;
+    if (pausedMs != null){
+      setMs = pausedMs; pausedMs = null;
+    } else {
+      baseMs = readInputMs();
+      if (baseMs <= 0){ alert('時間を設定してね'); return; }
+      setMs = baseMs;
+    }
+
+    target = Date.now() + setMs;
+    running = true;
+    startB.disabled = true; enableInputs(false);
+    tick();
+    timer = setInterval(tick, 100);
+  }
+
+  function stop(){
+    if (!running) return;
+    pausedMs = Math.max(0, target - Date.now());
+    clearInterval(timer); timer = null;
+    running = false; startB.disabled = false; enableInputs(true);
+  }
+
+  function reset(){
+    clearInterval(timer); timer = null;
+    running = false; pausedMs = null; lastShown = null;
+    startB.disabled = false; enableInputs(true);
+    baseMs = readInputMs();
+    timeEl.textContent = fmt(baseMs);
+    bigEl.classList.remove('show','hide');
+  }
+
+  startB.addEventListener('click', start);
+  stopB.addEventListener('click', stop);
+  resetB.addEventListener('click', reset);
+
+  [minI, secI].forEach(inp=>{
+    inp.addEventListener('change', ()=>{ if(!running){ timeEl.textContent = fmt(readInputMs()); }});
+    inp.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') start(); });
+  });
+
+  baseMs = readInputMs();
+  timeEl.textContent = fmt(baseMs);
+})();
+</script>
+</body>
+</html>
