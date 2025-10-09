@@ -125,7 +125,7 @@
   <div id="big"></div>
   <audio id="voice" preload="auto" playsinline>
     <source src="matsumura_desu.m4a" type="audio/mp4" />
-    <source src="matsumura_desu.mp3" type="audio/mpeg" />
+    <source src="matsumura_desu.m4a" type="audio/x-m4a" />
   </audio>
 
 <script>
@@ -159,6 +159,7 @@
   function unlockAudio(){
     if (audioUnlocked) return;
     try{
+      voice.load();
       voice.muted = true;
       const p = voice.play();
       if (p && typeof p.then === 'function'){
