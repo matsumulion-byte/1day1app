@@ -123,7 +123,10 @@
   </div>
 
   <div id="big"></div>
-  <audio id="voice" src="matsumura_desu.m4a" preload="auto" playsinline></audio>
+  <audio id="voice" preload="auto" playsinline>
+    <source src="matsumura_desu.m4a" type="audio/mp4" />
+    <source src="matsumura_desu.mp3" type="audio/mpeg" />
+  </audio>
 
 <script>
 (() => {
@@ -175,6 +178,9 @@
     } catch(e){}
   }
 
+  // 画面の最初のタップでもアンロック（念のため）
+  window.addEventListener('pointerdown', () => unlockAudio(), { once:true, passive:true });
+
   function flashBig(text){
     bigEl.textContent = text;
     bigEl.classList.remove('hide');
@@ -187,7 +193,7 @@
     bigEl.classList.remove('hide');
     bigEl.classList.add('show');
     voice.currentTime = 0;
-    voice.play().catch(()=>{});
+    voice.play().catch((err)=>{ try{ console.warn('Audio play failed', err); }catch(e){} });
     setTimeout(()=>{
       bigEl.classList.add('hide');
       setTimeout(()=> bigEl.classList.remove('show','hide'), 1200);
