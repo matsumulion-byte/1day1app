@@ -123,7 +123,7 @@
   </div>
 
   <div id="big"></div>
-  <audio id="voice" src="matsumura_desu.m4a" preload="auto"></audio>
+  <audio id="voice" src="matsumura_desu.m4a" preload="auto" playsinline></audio>
 
 <script>
 (() => {
@@ -137,6 +137,7 @@
   const voice = document.getElementById('voice');
 
   let baseMs = 0, target = 0, running = false, pausedMs = null, timer = null, lastShown = null;
+  let audioUnlocked = false;
 
   const pad = n => String(n).padStart(2,'0');
   const fmt = ms => {
@@ -151,6 +152,28 @@
     return (m*60 + s) * 1000;
   };
   const enableInputs = on => { minI.disabled = secI.disabled = !on; };
+
+  function unlockAudio(){
+    if (audioUnlocked) return;
+    try{
+      voice.muted = true;
+      const p = voice.play();
+      if (p && typeof p.then === 'function'){
+        p.then(()=>{
+          voice.pause();
+          voice.currentTime = 0;
+          voice.muted = false;
+          audioUnlocked = true;
+        }).catch(()=>{});
+      } else {
+        // Fallback for environments not returning a Promise
+        voice.pause();
+        voice.currentTime = 0;
+        voice.muted = false;
+        audioUnlocked = true;
+      }
+    } catch(e){}
+  }
 
   function flashBig(text){
     bigEl.textContent = text;
@@ -193,6 +216,9 @@
   function start(){
     if (running) return;
     lastShown = null;
+
+    // Ensure audio is unlocked by a user gesture (required on iOS/Safari/Chrome mobile)
+    unlockAudio();
 
     let setMs;
     if (pausedMs != null){
