@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ETタッチ｜一発勝負（左右別モーション & 画像差し替え対応）</title>
+  <style>
+    :root{
+      --bg:#0b1020;           /* 宇宙っぽい背景 */
+      --fg:#e5f0ff;           /* テキスト */
+      --glow:#6ee7ff;         /* 光エフェクト */
+      --accent:#ffd166;       /* 成功の光 */
+      --miss:#ff6b6b;         /* ミス色 */
+      --ok-window: 24px;      /* 判定の許容ピクセル（あとでJSから上書き） */
+      --scaleL: 0.75;         /* 左指の縮尺（0.1〜1.2） */
+      --scaleR: 0.75;         /* 右指の縮尺（0.1〜1.2） */
+      --wL: 50%;              /* 左の横幅（%） */
+      --wR: 50%;              /* 右の横幅（%） */
+      --tipL: 0px;            /* 左画像の指先補正：+で右へ（境界側へ） */
+      --tipR: 0px;            /* 右画像の指先補正：+で左へ（境界側へ） */
+    }
+    html,body{height:100%;}
+    body{
+      margin:0; background: radial-gradient(100vw 100vh at 50% 20%, #151a3a 0%, var(--bg) 60%);
+      color:var(--fg); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "ヒラギノ角ゴ ProN", "Noto Sans JP", "メイリオ", sans-serif;
+    }
+    .stars{position:fixed; inset:0; pointer-events:none; z-index:0;}
+    .star{position:absolute; width:2px; height:2px; background:#fff; opacity:.8; border-radius:50%; animation: twinkle 3s infinite ease-in-out;}
+    @keyframes twinkle{ 0%,100%{opacity:.2} 50%{opacity:1} }
+
+    .wrap{
+      position:relative; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:12px;
+      min-height:100dvh; padding: max(16px, env(safe-area-inset-top)) 16px 24px;
+    }
+    h1{font-size: clamp(20px, 4.5vw, 28px); margin:8px 0 0; letter-spacing:.02em}
+    .sub{opacity:.8; font-size:14px;}
+
+    .stage{
+      position:relative; width:min(92vw, 480px); height:min(70vh, 680px);
+      border-radius:24px; background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      box-shadow: 0 10px 30px rgba(0,0,0,.35) inset, 0 10px 40px rgba(0,0,0,.25);
+      overflow:hidden; z-index:1;
+    }
+
+    /* ガイドライン削除 */
+    .midline{ display:none !important; }
+    .window{ display:none !important; }
+
+    /* 指（画像差し替え対応） */
+    .finger{
+      position:absolute; margin:0; aspect-ratio: 3.2 / 1; pointer-events:none;
+      display:flex; align-items:center; 
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,.35));
+      z-index:3; /* ← 指を最前面に */
+    }
+    .finger svg{ width:100%; height:auto; max-width:100%; }
+    .finger .imgwrap{ position:absolute; inset:0; display:none; align-items:center; justify-content:center; }
+    .finger .imgwrap img{ max-width:100%; height:auto; display:block; }
+    /* スケールは内側(imgwrap)に適用して中央の隙間が変わらないようにする */
+    .left .imgwrap{ transform-origin:right center; }
+    .right .imgwrap{ transform-origin:left center; }
+    /* 指先の位置合わせ補正 + 縮尺 */
+    .left.has-img .imgwrap{ display:flex; transform: translateX(var(--tipL)) scale(var(--scaleL)); }
+    .right.has-img .imgwrap{ display:flex; transform: translateX(calc(var(--tipR) * -1)) scale(var(--scaleR)); }
+    .finger .imgwrap img{ max-width:100%; height:auto; display:block; }
+    /* 指先の位置合わせ補正（画像の“境界から指先まで”の距離を吸収） */
+    
+    .finger .imgwrap img{ max-width:100%; height:auto; display:block; }
+    
+    .finger.has-img svg{ display:none; }
+
+    .left{ top:20%; left:0; right:auto; width:var(--wL); justify-content:flex-end; }
+    .right{ top:60%; right:0; left:auto; width:var(--wR); justify-content:flex-start; }
+
+    /* 光リング */
+    .pulse{ position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); margin:auto; width:0; height:0; border-radius:999px; pointer-events:none; opacity:0; z-index:2; }
+    .pulse.show{ animation: pulse 700ms ease-out forwards; }
+    @keyframes pulse{
+      0%{ width:0; height:0; box-shadow:0 0 0 0 var(--accent); opacity:.9 }
+      100%{ width:90%; height:90%; box-shadow:0 0 120px 50px rgba(255,209,102,.35); opacity:0 }
+    }
+
+    /* UI */
+    .hud{ display:flex; gap:8px; align-items:center; justify-content:center; margin-top:2px; }
+    .chip{ background:rgba(255,255,255,.08); padding:8px 12px; border-radius:999px; font-size:13px; }
+
+    .btns{ display:flex; gap:12px; margin-top:8px; }
+    button{
+      -webkit-tap-highlight-color: transparent; appearance:none; border:none; color:#0b0f1a;
+      background:#b3e5ff; padding:14px 18px; border-radius:14px; font-weight:700; font-size:16px; cursor:pointer;
+      box-shadow: 0 6px 16px rgba(109,195,255,.35), inset 0 -2px 0 rgba(0,0,0,.12);
+    }
+    button.secondary{ background:#fff; }
+
+    .big-txt{ position:absolute; left:0; right:0; top:40%; transform:translateY(-50%); text-align:center; font-weight:900;
+      letter-spacing:.02em; pointer-events:none; opacity:0; font-size: clamp(28px, 12vw, 64px); text-shadow: 0 6px 22px rgba(0,0,0,.35);
+      z-index:1; /* ← テキストは一番下 */
+    }
+    .big-txt.show{ animation: pop .9s ease forwards; }
+    @keyframes pop{ 0%{opacity:0; transform:translateY(-50%) scale(.8)} 30%{opacity:1; transform:translateY(-52%) scale(1.04)} 60%{transform:translateY(-50%) scale(1)} 100%{opacity:1}}
+
+    .result{ text-align:center; margin-top:6px; min-height:28px; }
+
+    /* 端末下部の安全領域確保 */
+    .pad{ height: max(10px, env(safe-area-inset-bottom)); }
+
+    /* アクセシビリティ（キーボード動作） */
+    .hidden-input{ position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+  </style>
+</head>
+<body>
+  <div class="stars" aria-hidden="true" id="stars"></div>
+  <div class="wrap">
+    <h1>ET風ゲーム</h1>
+    <div class="sub">左右の指が上下するよ。重なった瞬間を狙ってタップ！</div>
+
+    <div class="stage" id="stage" role="application" aria-label="ETタッチ ゲームステージ">
+
+      <!-- 光リング -->
+      <div class="pulse" id="pulse"></div>
+
+      <!-- 指（画像差し替え対応：画像があればimgを表示、なければSVGの指） -->
+      <div class="finger left" id="left">
+        <div class="imgwrap"><img id="leftImg" alt="左の指" /></div>
+        <svg viewBox="0 0 200 80" aria-hidden="true">
+          <defs>
+            <linearGradient id="skinL" x1="0" x2="1">
+              <stop offset="0%" stop-color="#ffe3c4"/>
+              <stop offset="100%" stop-color="#ffcaa6"/>
+            </linearGradient>
+          </defs>
+          <circle cx="170" cy="40" r="28" fill="url(#skinL)" stroke="#d5a88b" stroke-width="2"/>
+          <rect x="0" y="18" width="160" height="44" rx="22" fill="url(#skinL)" stroke="#d5a88b" stroke-width="2"/>
+        </svg>
+      </div>
+
+      <div class="finger right" id="right">
+        <div class="imgwrap"><img id="rightImg" alt="右の指" /></div>
+        <svg viewBox="0 0 200 80" aria-hidden="true">
+          <defs>
+            <linearGradient id="skinR" x1="0" x2="1">
+              <stop offset="0%" stop-color="#ffe3c4"/>
+              <stop offset="100%" stop-color="#ffcaa6"/>
+            </linearGradient>
+          </defs>
+          <circle cx="30" cy="40" r="28" fill="url(#skinR)" stroke="#d5a88b" stroke-width="2"/>
+          <rect x="40" y="18" width="160" height="44" rx="22" fill="url(#skinR)" stroke="#d5a88b" stroke-width="2"/>
+        </svg>
+      </div>
+
+      <div class="big-txt" id="bigTxt"></div>
+    </div>
+
+    <div class="btns">
+      <button id="startBtn" aria-label="ゲームを開始">スタート</button>
+      <button id="retryBtn" class="secondary" disabled aria-label="もう一度">リトライ</button>
+    </div>
+
+    <div class="result" id="result"></div>
+    <div class="pad"></div>
+  </div>
+
+  <!-- 音声（差し替え推奨） -->
+  <audio id="seOk" preload="auto" src="matsumura_desu.mp3"></audio>
+  <audio id="seMiss" preload="auto" src="miss.mp3"></audio>
+  <audio id="bgm" preload="auto" src="bgm.mp3" loop></audio>
+
+  <input class="hidden-input" id="hiddenKey" aria-hidden="true" />
+
+  <script>
+    // ====== ユーティリティ ======
+    const clamp=(n,min,max)=> Math.max(min, Math.min(max, n));
+
+    // 画像差し替え用コンフィグ（必要に応じて編集）
+    const CONFIG = {
+      useImages: true,           // 画像は用意したときだけ読み込む
+      leftImgSrc: './left.png',  // 左画像のパス
+      rightImgSrc: './right.png',// 右画像のパス（※クォート必須）
+      rightControl: 'auto',
+      autoWidth: false,          // 画像の横幅比率を自動で L+R=100% に正規化する
+      // ▼判定調整（左右別）
+      hitOffsetL: 8,             // 左: 要素中心からの当たり判定Yオフセット(px) +で下
+      hitOffsetR: -43,             // 右: 要素中心からの当たり判定Yオフセット(px) +で下
+      tolL: 10,                  // 左の許容(px)
+      tolR: 10,                  // 右の許容(px)
+    };
+
+    // 星を生成（軽量）
+    (function makeStars(){
+      const layer=document.getElementById('stars');
+      const count=70;
+      for(let i=0;i<count;i++){
+        const s=document.createElement('div');
+        s.className='star';
+        const x=Math.random()*100, y=Math.random()*100, d=1+Math.random()*2;
+        s.style.left=x+'%'; s.style.top=y+'%'; s.style.width=d+'px'; s.style.height=d+'px';
+        s.style.animationDelay=(Math.random()*3).toFixed(2)+'s';
+        layer.appendChild(s);
+      }
+    })();
+
+    // ====== ゲーム状態 ======
+    const stage   = document.getElementById('stage');
+    const leftEl  = document.getElementById('left');
+    const rightEl = document.getElementById('right');
+    const leftImg = document.getElementById('leftImg');
+    const rightImg= document.getElementById('rightImg');
+    const bigTxt  = document.getElementById('bigTxt');
+    const pulse   = document.getElementById('pulse');
+
+    const startBtn= document.getElementById('startBtn');
+    const retryBtn= document.getElementById('retryBtn');
+    const resultEl= document.getElementById('result');
+
+    const seOk  = document.getElementById('seOk');
+    const seMiss= document.getElementById('seMiss');
+    const bgm   = document.getElementById('bgm');
+
+    const diffLabel=document.getElementById('diffLabel');
+    const winLabel =document.getElementById('winLabel');
+    const spdLabel =document.getElementById('spdLabel');
+    const rcLabel  =document.getElementById('rcLabel');
+
+    let playing=false, finished=false;
+    // 左右で別の速度・位相
+    let tL=0, tR=0, speedL=1.0, speedR=0.85;
+    let phaseR = Math.PI/3;  // 右の初期位相ずらし
+    let okWindow=24;       // 互換用（全体の目安）
+
+    function setDifficulty(mode='NORMAL'){
+      if(mode==='EASY'){ okWindow=34; speedL=0.85; speedR=0.75; }
+      else if(mode==='HARD'){ okWindow=18; speedL=1.2; speedR=1.05; }
+      else { okWindow=24; speedL=1.0; speedR=0.85; mode='NORMAL'; }
+      // デフォは左右同じ幅に反映（あとでURLやCONFIGで個別上書き可）
+      CONFIG.tolL = okWindow; CONFIG.tolR = okWindow;
+      document.documentElement.style.setProperty('--ok-window', okWindow+'px');
+      diffLabel.textContent=mode; winLabel.textContent=`${CONFIG.tolL}/${CONFIG.tolR}px`; spdLabel.textContent=(speedL).toFixed(1)+'×';
+    }
+
+
+    // 左右の上下アニメーション（sin波）：左右別スピード＆位相
+    let rafId=0;
+    function loop(){
+      const H = stage.clientHeight;
+      // 左
+      tL += 0.018 * speedL;
+      const center = H * 0.5;
+      const amp    = H * 0.28;
+      const yL     = center + Math.sin(tL)*amp;
+      const rectL  = leftEl.getBoundingClientRect();
+      leftEl.style.top = (yL - rectL.height/2) + 'px';
+
+      // 右（仕様切替：auto or tap）
+      if(CONFIG.rightControl==='auto'){
+        tR += 0.018 * speedR;
+        const yR = center + Math.sin(tR + phaseR) * (H*0.24);
+        const rectR = rightEl.getBoundingClientRect();
+        rightEl.style.top = (yR - rectR.height/2) + 'px';
+      }
+
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function startGame(){
+      if(playing) return;
+      playing=true; finished=false; resultEl.textContent=''; bigTxt.textContent=''; bigTxt.classList.remove('show');
+      startBtn.disabled=true; retryBtn.disabled=true;
+
+      try{ bgm.volume=0.45; bgm.play().catch(()=>{}); }catch(e){}
+
+      // 初期位相をランダム化（毎回パターンが変わる）
+      tL = Math.random()*Math.PI*2;
+      tR = Math.random()*Math.PI*2;
+      phaseR = Math.random()*Math.PI*2;
+
+      cancelAnimationFrame(rafId);
+      loop();
+
+      // 一発勝負：ステージタップ or Enterキーで判定
+      stage.addEventListener('pointerdown', onShot, { once:true });
+      window.addEventListener('keydown', onKey, { once:true });
+    }
+
+    function onKey(e){ if(e.key==='Enter' || e.key===' '){ onShot(); } }
+
+    function centerY(el){ const r = el.getBoundingClientRect(); return r.top + r.height/2; }
+    function hitY(el, offset){ return centerY(el) + (offset||0); }
+    function centerYOfStage(){ return stage.getBoundingClientRect().top + stage.clientHeight/2; }
+
+    function onShot(){
+      if(!playing || finished) return;
+      // 右指がtapモードなら中央へスナップ移動（旧仕様互換）
+      if(CONFIG.rightControl==='tap'){
+        const yMid = centerYOfStage();
+        rightEl.style.transition = 'top .18s cubic-bezier(.2,.8,.2,1)';
+        rightEl.style.top = (yMid - rightEl.clientHeight/2) + 'px';
+      }
+
+      // 判定
+      const yLeft  = hitY(leftEl,  CONFIG.hitOffsetL);
+      const yRight = (CONFIG.rightControl==='auto') ? hitY(rightEl, CONFIG.hitOffsetR) : (centerYOfStage() + (CONFIG.hitOffsetR||0));
+      const diff = Math.abs(yLeft - yRight);
+      const combinedTol = (CONFIG.tolL + CONFIG.tolR) / 2; // 左右の許容の平均をしきい値に
+      const ok = diff <= combinedTol;
+
+      pulse.classList.remove('show'); void pulse.offsetWidth; pulse.classList.add('show');
+
+      finished=true; cancelAnimationFrame(rafId);
+
+      if(ok){
+        stage.style.boxShadow='0 10px 30px rgba(0,0,0,.35) inset, 0 10px 40px rgba(255,209,102,.35)';
+        bigTxt.style.color='var(--accent)';
+        bigTxt.textContent='松村です！';
+        bigTxt.classList.add('show');
+        try{ seOk.currentTime=0; seOk.play().catch(()=>{}); }catch(e){}
+        resultEl.innerHTML = `成功！差: <strong>${Math.round(diff)}px</strong>`;
+      }else{
+        stage.style.boxShadow='0 10px 30px rgba(0,0,0,.35) inset, 0 10px 40px rgba(255,107,107,.28)';
+        bigTxt.style.color='var(--miss)';
+        bigTxt.textContent='MISS...';
+        bigTxt.classList.add('show');
+        try{ seMiss.currentTime=0; seMiss.play().catch(()=>{}); }catch(e){}
+        resultEl.textContent = `ミス… 差: ${Math.round(diff)}px`;
+      }
+
+      startBtn.disabled=true; retryBtn.disabled=false; playing=false;
+    }
+
+    function resetUI(){
+      cancelAnimationFrame(rafId);
+      stage.style.boxShadow='0 10px 30px rgba(0,0,0,.35) inset, 0 10px 40px rgba(0,0,0,.25)';
+      bigTxt.classList.remove('show'); bigTxt.textContent=''; resultEl.textContent='';
+      rightEl.style.transition='';
+    }
+
+    // ====== イベント ======
+    startBtn.addEventListener('click', ()=>{ resetUI(); startGame(); });
+    retryBtn.addEventListener('click', ()=>{ resetUI(); startGame(); });
+
+    // スワイプ誤動作防止：ステージはタップのみ
+    stage.addEventListener('touchmove', (e)=>{ e.preventDefault(); }, {passive:false});
+
+    // 画面回転やリサイズ時の補正
+    window.addEventListener('resize', ()=>{
+      const H = stage.clientHeight;
+      okWindow = Math.round(clamp(H * 0.035 * (1.0/((speedL+speedR)/2)), 12, 48));
+      document.documentElement.style.setProperty('--ok-window', okWindow+'px');
+      winLabel.textContent = `${CONFIG.tolL}/${CONFIG.tolR}px`;
+    });
+
+    // 初回タップまでBGMは実質ミュート扱い
+    document.addEventListener('pointerdown', ()=>{
+      if(bgm.paused){ try{ bgm.play().catch(()=>{}); }catch(e){} }
+    }, { once:true });
+
+    // ====== 画像差し替え初期化 ======
+    (function setupImages(){
+      if(!CONFIG.useImages) return;
+
+      function applyImg(imgEl, containerEl, src){
+        if(!src) return;
+        imgEl.onload = ()=>{ 
+          containerEl.classList.add('has-img');
+          autoTipDetect(imgEl, containerEl); // 透明余白の自動検出→tip補正
+          maybeRecalcWidths(); // 自動幅調整（有効時）
+        };
+        imgEl.onerror = ()=>{ containerEl.classList.remove('has-img'); console.warn('画像読み込み失敗:', src); };
+        const bust = (src.includes('?')? '&':'?') + 'v=' + Date.now();
+        imgEl.src = src + bust;
+      }
+
+      const p = new URLSearchParams(location.search);
+      const leftSrc  = p.get('left')  || CONFIG.leftImgSrc;
+      const rightSrc = p.get('right') || CONFIG.rightImgSrc;
+
+      applyImg(leftImg,  leftEl,  leftSrc);
+      applyImg(rightImg, rightEl, rightSrc);
+    })();
+
+    // ====== 画像横幅の自動正規化（L+R=100%） ======
+    function maybeRecalcWidths(){
+      if(!CONFIG.autoWidth && !window.__autoWidthParam) return;
+      const wL = leftImg && leftImg.naturalWidth ? leftImg.naturalWidth : null;
+      const wR = rightImg && rightImg.naturalWidth ? rightImg.naturalWidth : null;
+      if(!wL || !wR) return;
+      const total = wL + wR;
+      if(total <= 0) return;
+      const nL = (wL / total) * 100;
+      const nR = 100 - nL;
+      document.documentElement.style.setProperty('--wL', nL.toFixed(4) + '%');
+      document.documentElement.style.setProperty('--wR', nR.toFixed(4) + '%');
+    }
+
+    // ====== 指先補正の自動検出（PNGの透明余白を走査） ======
+    function autoTipDetect(imgEl, containerEl){
+      try{
+        const side = (containerEl.id==='left')?'left':'right';
+        const canvas = document.createElement('canvas');
+        const w = imgEl.naturalWidth, h = imgEl.naturalHeight;
+        if(!w||!h) return;
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imgEl, 0, 0);
+        const imgData = ctx.getImageData(0, 0, w, h).data;
+        let transparentCols = 0;
+        if(side==='left'){
+          // 右端→左へスキャン：右端から連続する完全透明列数
+          scanRight: for(let x=w-1; x>=0; x--){
+            for(let y=0; y<h; y++){
+              const a = imgData[(y*w + x)*4 + 3];
+              if(a>8){ break scanRight; } // 見つけた
+            }
+            transparentCols++;
+          }
+          if(transparentCols>0){
+            document.documentElement.style.setProperty('--tipL', transparentCols + 'px');
+          }
+        }else{
+          // 左端→右へスキャン：左端から連続する完全透明列数
+          scanLeft: for(let x=0; x<w; x++){
+            for(let y=0; y<h; y++){
+              const a = imgData[(y*w + x)*4 + 3];
+              if(a>8){ break scanLeft; }
+            }
+            transparentCols++;
+          }
+          if(transparentCols>0){
+            document.documentElement.style.setProperty('--tipR', transparentCols + 'px');
+          }
+        }
+      }catch(e){ console.warn('autoTipDetect failed', e); }
+    }
+
+    // ====== 便利：URLパラメータで難易度 & 右操作モード変更
+    (function readParams(){
+      const p = new URLSearchParams(location.search);
+      const m = (p.get('mode')||'NORMAL').toUpperCase();
+      setDifficulty(['EASY','HARD'].includes(m)?m:'NORMAL');
+      const rc = (p.get('rc')||'auto').toLowerCase(); // rc=auto|tap
+      const rcLabelEl = document.getElementById('rcLabel');
+      if(rc==='tap'){ CONFIG.rightControl='tap'; rcLabelEl.textContent='TAP'; }
+      else{ CONFIG.rightControl='auto'; rcLabelEl.textContent='AUTO'; }
+
+      // 画像スケール（URLから上書き可） ?scaleL=0.7&scaleR=0.65
+      const sL = parseFloat(p.get('scaleL')); if(!isNaN(sL)) document.documentElement.style.setProperty('--scaleL', sL);
+      const sR = parseFloat(p.get('scaleR')); if(!isNaN(sR)) document.documentElement.style.setProperty('--scaleR', sR);
+
+      // 横幅（%）。二つの値の合計で自動正規化。?wL=40&wR=60
+      const wL = parseFloat(p.get('wL')); const wR = parseFloat(p.get('wR'));
+      if(!isNaN(wL) && !isNaN(wR)){
+        const total = (wL + wR);
+        const nL = total>0 ? (wL/total*100) : 50;
+        const nR = total>0 ? (wR/total*100) : 50;
+        document.documentElement.style.setProperty('--wL', nL+'%');
+        document.documentElement.style.setProperty('--wR', nR+'%');
+      }
+
+      // 指先補正（px）。例: ?tipL=24&tipR=18
+      const tL = parseFloat(p.get('tipL')); if(!isNaN(tL)) document.documentElement.style.setProperty('--tipL', tL+'px');
+      const tR = parseFloat(p.get('tipR')); if(!isNaN(tR)) document.documentElement.style.setProperty('--tipR', tR+'px');
+
+      // 当たり判定Yのオフセット（左右別） ?hitL=8&hitR=-6
+      const hL = parseFloat(p.get('hitL')); if(!isNaN(hL)) CONFIG.hitOffsetL = hL;
+      const hR = parseFloat(p.get('hitR')); if(!isNaN(hR)) CONFIG.hitOffsetR = hR;
+
+      // 許容幅（左右別） ?tolL=18&tolR=28
+      const tl = parseFloat(p.get('tolL')); if(!isNaN(tl)) CONFIG.tolL = tl;
+      const tr = parseFloat(p.get('tolR')); if(!isNaN(tr)) CONFIG.tolR = tr;
+      winLabel.textContent = `${CONFIG.tolL}/${CONFIG.tolR}px`;
+
+      // 自動幅: ?autoW=1 または ?width=auto
+      const autoW = p.get('autoW')==='1' || (p.get('width')||'').toLowerCase()==='auto';
+      if(autoW){ window.__autoWidthParam = true; maybeRecalcWidths(); }
+
+      // デバッグ可視化: ?debugY=1 → 左右の判定Yにライン表示
+      if(p.get('debugY')==='1'){
+        const lineL = document.createElement('div');
+        const lineR = document.createElement('div');
+        for(const ln of [lineL,lineR]){ ln.style.position='absolute'; ln.style.left='0'; ln.style.right='0'; ln.style.height='1px'; ln.style.pointerEvents='none'; }
+        lineL.style.background='rgba(255,120,120,.7)';
+        lineR.style.background='rgba(120,200,255,.7)';
+        stage.appendChild(lineL); stage.appendChild(lineR);
+        // 1フレーム後に配置（DOM計測のため）
+        requestAnimationFrame(()=>{
+          lineL.style.top = (hitY(leftEl, CONFIG.hitOffsetL) - stage.getBoundingClientRect().top) + 'px';
+          const yR = (CONFIG.rightControl==='auto') ? hitY(rightEl, CONFIG.hitOffsetR) : (centerYOfStage() + (CONFIG.hitOffsetR||0));
+          lineR.style.top = (yR - stage.getBoundingClientRect().top) + 'px';
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
