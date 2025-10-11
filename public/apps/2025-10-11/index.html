@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>4パッド・ドラム v3（ルーパーのみ / サンプラー対応）</title>
+  <style>
+    :root{ --bg:#0b0f14; --fg:#e7edf3; --muted:#92a0ad; --acc:#4fd1c5; --pad:#121923; --padOn:#1f2a38; --ring:#2b3b4c; --hot:#ffcf33; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{ margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif; color:var(--fg); background: radial-gradient(1200px 800px at 70% -10%, #16202c 0%, var(--bg) 45%); display:grid; place-items:center; padding:16px; }
+    .app{width:min(1080px,100%);} 
+    header{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px}
+    h1{font-size:clamp(18px,3vw,24px); margin:0; letter-spacing:.02em}
+    .hint{color:var(--muted); font-size:12px}
+
+    .grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+    .pad{ position:relative; aspect-ratio:1/1; border-radius:20px; border:1px solid var(--ring); background:linear-gradient(180deg,var(--pad),#0f151d); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 8px 30px rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; cursor:pointer; user-select:none; transition: transform .04s ease, background .12s ease, box-shadow .12s ease; touch-action:manipulation; }
+    .pad:active, .pad.active{ transform: translateY(2px) scale(.98); background:var(--padOn); box-shadow: inset 0 2px 0 rgba(255,255,255,.06), 0 2px 12px rgba(0,0,0,.5);} 
+    .pad .label{ text-align:center; }
+    .name{font-size:clamp(16px,3.2vw,22px); font-weight:700; letter-spacing:.02em}
+    .key{margin-top:6px; color:var(--acc); font-size:12px; font-variant-numeric:tabular-nums}
+
+    .panel{ margin-top:16px; background:#0e141c; border:1px solid var(--ring); border-radius:14px; padding:12px; box-shadow: 0 8px 30px rgba(0,0,0,.25); }
+
+    .transport{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; position:relative; z-index:2; }
+    .btn{ appearance:none; border:none; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:700; color:#0a0f14; background:var(--acc); }
+    .btn.sec{ background:#2b3b4c; color:var(--fg); }
+    .bpm{ display:flex; align-items:center; gap:10px; color:var(--muted); }
+    input[type="range"]{ accent-color: var(--acc);} 
+
+    .seq{ margin-top:12px; overflow:auto; position:relative; z-index:1; }
+    table{ border-collapse:separate; border-spacing:6px; width:100%; }
+    th, td{ text-align:center; }
+    th.track{ text-align:left; font-weight:600; color:var(--muted); padding-right:6px; white-space:nowrap; }
+
+    .step{ width:34px; height:34px; border-radius:8px; border:1px solid #243447; background:#121821; cursor:pointer; display:inline-grid; place-items:center; color:#93b4d6; font-size:11px; }
+    .step.on{ background:#183047; border-color:#2c4d70; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+    .step.playhead{ outline:2px solid var(--hot); outline-offset:2px; }
+
+    .footer{display:flex; gap:16px; align-items:center; margin-top:14px; color:var(--muted); font-size:13px; flex-wrap:wrap}
+    .kbd{background:#121821; border:1px solid #223247; color:#cfe6ff; border-radius:6px; padding:2px 6px; font-size:12px}
+    .touchy{ -webkit-tap-highlight-color: rgba(0,0,0,0); touch-action: manipulation; }
+
+    /* --- Mobile-first tweaks --- */
+    @media (max-width: 640px){
+      body{ padding:12px; }
+      header{ flex-direction:column; align-items:flex-start; gap:6px; }
+      .hint{ font-size:11px; }
+      .grid{ gap:12px; }
+      .pad{ border-radius:18px; }
+      .name{ font-size:clamp(18px,6vw,22px); }
+      .panel{ padding:10px; border-radius:12px; }
+      .transport{ gap:8px; }
+      .btn{ padding:12px 14px; border-radius:12px; font-size:14px; }
+      .bpm{ gap:8px; }
+      .seq{ margin-top:10px; overflow-x:auto; -webkit-overflow-scrolling: touch; }
+      .step{ width:44px; height:44px; border-radius:10px; }
+      table{ border-spacing:8px; min-width: 720px; }
+    }
+
+    /* Very small screens */
+    @media (max-width: 380px){
+      .btn{ padding:10px 12px; font-size:13px; }
+      .step{ width:40px; height:40px; }
+      table{ min-width: 640px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>4パッド・ドラム v3（ルーパーのみ）</h1>
+      <div class="hint">キー操作: <span class="kbd">A</span>=Kick / <span class="kbd">S</span>=Snare / <span class="kbd">D</span>=Hi‑Hat / <span class="kbd">F</span>=松村です！</div>
+    </header>
+
+
+    <!-- Transport -->
+    <section class="panel">
+      <div class="transport" data-role="transport">
+        <button id="play" class="btn" type="button">▶︎ 再生</button>
+        <button id="stop" class="btn sec" type="button">■ 停止</button>
+        <div class="bpm">
+          <label for="bpm">BPM</label>
+          <input id="bpm" type="range" min="60" max="180" step="1" value="100" />
+          <span id="bpmVal">100</span>
+        </div>
+        <div class="bpm">
+          <label for="vol">音量</label>
+          <input id="vol" type="range" min="0" max="1.5" step="0.01" value="1.0" />
+          <span id="volVal">1.00</span>
+        </div>
+        <button id="clear" class="btn sec" type="button">クリア</button>
+        <button id="hihat8" class="btn sec" type="button">ハイハット 8分</button>
+      </div>
+    </section>
+
+    <!-- Pads -->
+    <main class="grid touchy" id="grid">
+      <button class="pad" data-sound="kick" data-key="A"><div class="label"><div class="name">Kick</div><div class="key">A</div></div></button>
+      <button class="pad" data-sound="snare" data-key="S"><div class="label"><div class="name">Snare</div><div class="key">S</div></div></button>
+      <button class="pad" data-sound="hihat" data-key="D"><div class="label"><div class="name">Hi‑Hat</div><div class="key">D</div></div></button>
+      <button class="pad" data-sound="matsu" data-key="F"><div class="label"><div class="name">松村です！</div><div class="key">F</div></div></button>
+    </main>
+
+    <!-- Sequencer -->
+    <section class="panel">
+      <div class="seq" id="seq"></div>
+    </section>
+
+    <div class="footer">
+      <div>初回タップで音が有効化されます（ブラウザ仕様）。</div>
+    </div>
+  </div>
+
+  <script>
+    // ------------------ Audio & Samples ------------------
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const samples = { kick:null, snare:null, hihat:null, matsu:null };
+    let __lastUsedSample = null; // for tests
+    let currentMatsuSource = null; // 松村ですの現在再生中の音源を追跡
+
+    let ctx = null; let masterGain = null; let comp = null; let seqBus = null; let liveBus = null;
+    function ensureAudio(){
+      if(!ctx){
+        ctx = new AudioCtx();
+        // Buses
+        seqBus = ctx.createGain();   // sequencer voices
+        liveBus = ctx.createGain();  // manual pad hits
+        seqBus.gain.value = 1.00;    // unify bus gains for consistent tone
+        liveBus.gain.value = 1.00;
+
+        // Master chain: (seq+live) -> masterGain -> compressor -> destination
+        masterGain = ctx.createGain();
+        masterGain.gain.value = parseFloat(document.getElementById('vol').value || '1.0');
+
+        comp = ctx.createDynamicsCompressor();
+        comp.threshold.setValueAtTime(-8, ctx.currentTime);
+        comp.knee.setValueAtTime(18, ctx.currentTime);
+        comp.ratio.setValueAtTime(4, ctx.currentTime);
+        comp.attack.setValueAtTime(0.003, ctx.currentTime);
+        comp.release.setValueAtTime(0.12, ctx.currentTime);
+
+        // Connect graph
+        seqBus.connect(masterGain);
+        liveBus.connect(masterGain);
+        masterGain.connect(comp).connect(ctx.destination);
+      }
+    }
+
+    async function loadPredefinedSamples(){
+      try{
+        ensureAudio();
+        const sampleFiles = {
+          kick: 'kick.m4a',
+          snare: 'Snare.m4a', 
+          hihat: 'hihat.m4a',
+          matsu: 'matsumura_desu.m4a'
+        };
+        
+        for(const [key, filename] of Object.entries(sampleFiles)){
+          try{
+            const response = await fetch(filename);
+            if(response.ok){
+              const arrayBuffer = await response.arrayBuffer();
+              const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+              samples[key] = audioBuffer;
+              console.log(`${key} サンプルを読み込みました`);
+            }
+          }catch(e){
+            console.warn(`${key} サンプルの読み込みに失敗: ${e.message}`);
+          }
+        }
+      }catch(e){
+        console.warn('サンプル読み込みエラー:', e);
+      }
+    }
+
+    function envNode(duration=0.2, attack=0.001, decay=0.15, peak=1.0, sustain=0.0){
+      const g = (ctx||{createGain:()=>({gain:{}})}).createGain();
+      const now = ctx.currentTime;
+      g.gain.cancelScheduledValues?.(now);
+      g.gain.setValueAtTime?.(0, now);
+      g.gain.linearRampToValueAtTime?.(peak, now + attack);
+      g.gain.exponentialRampToValueAtTime?.(Math.max(0.0001, sustain), now + attack + Math.max(0.001, decay));
+      setTimeout(()=>g.disconnect?.(), (duration*1000)+60);
+      return g;
+    }
+
+    // --------------- Synth or Sample Players ---------------
+    function playKick(time, fromSeq){ ensureAudio(); const t=time??ctx.currentTime;
+      if(samples.kick){ __lastUsedSample='kick'; const src=ctx.createBufferSource(); src.buffer=samples.kick; src.connect((fromSeq && seqBus)?seqBus:(liveBus||masterGain)); src.start(t); return; }
+      const o=ctx.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(140,t); o.frequency.exponentialRampToValueAtTime(40,t+0.5);
+      const env=envNode(0.6,0.002,0.25,1.0,0.0001); const g = ctx.createGain(); g.gain.value = 1.0;
+      o.connect(env).connect(g).connect((fromSeq && seqBus) ? seqBus : (liveBus || masterGain)); o.start(t); o.stop(t+0.6); }
+
+    let noiseBuf=null; function getNoise(){ if(noiseBuf) return noiseBuf; ensureAudio(); const b=ctx.createBuffer(1, ctx.sampleRate*2, ctx.sampleRate); const d=b.getChannelData(0); for(let i=0;i<d.length;i++){ d[i]=Math.random()*2-1;} noiseBuf=b; return b; }
+
+    function playSnare(time, fromSeq){ ensureAudio(); const t=time??ctx.currentTime;
+      if(samples.snare){ __lastUsedSample='snare'; const src=ctx.createBufferSource(); src.buffer=samples.snare; src.connect((fromSeq && seqBus)?seqBus:(liveBus||masterGain)); src.start(t); return; }
+      // Synthesis fallback
+      const n=ctx.createBufferSource(); n.buffer=getNoise(); const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1800; bp.Q.value = 0.6; const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=600; const ng=envNode(0.25,0.001,0.18,0.9,0.0001); const gN = ctx.createGain(); gN.gain.value = 1.2; n.connect(bp).connect(hp).connect(ng).connect(gN).connect((fromSeq && seqBus) ? seqBus : (liveBus || masterGain)); n.start(t); n.stop(t+0.25); const o=ctx.createOscillator(); o.type='triangle'; o.frequency.setValueAtTime(200,t); const og=envNode(0.15,0.001,0.12,0.5,0.0001); const gT = ctx.createGain(); gT.gain.value = 1.2; o.connect(og).connect(gT).connect((fromSeq && seqBus) ? seqBus : (liveBus || masterGain)); o.start(t); o.stop(t+0.15); }
+
+    function playHiHat(time, fromSeq){ ensureAudio(); const t=time??ctx.currentTime;
+      if(samples.hihat){ __lastUsedSample='hihat'; const src=ctx.createBufferSource(); src.buffer=samples.hihat; src.connect((fromSeq && seqBus)?seqBus:(liveBus||masterGain)); src.start(t); return; }
+      // Natural closed hat: transient + airy body
+      const srcA = ctx.createBufferSource(); srcA.buffer = getNoise();
+      const srcB = ctx.createBufferSource(); srcB.buffer = getNoise();
+      const hpA = ctx.createBiquadFilter(); hpA.type='highpass'; hpA.frequency.value = 8000; const envA = envNode(0.02, 0.0005, 0.018, 1.0, 0.0001);
+      const hpB = ctx.createBiquadFilter(); hpB.type='highpass'; hpB.frequency.value = 6000; const shelf = ctx.createBiquadFilter(); shelf.type='highshelf'; shelf.frequency.value = 7000; shelf.gain.value = 3; const envB = envNode(0.06, 0.001, 0.05, 1.0, 0.0001);
+      const gOut = ctx.createGain(); gOut.gain.value = 1.6;
+      srcA.connect(hpA).connect(envA).connect(gOut); srcB.connect(hpB).connect(shelf).connect(envB).connect(gOut);
+      gOut.connect((fromSeq && seqBus) ? seqBus : (liveBus || masterGain));
+      srcA.start(t);  srcA.stop(t + 0.03); srcB.start(t);  srcB.stop(t + 0.08); }
+
+    function playMatsu(time, fromSeq){ 
+      ensureAudio(); 
+      const t=time??ctx.currentTime; 
+      
+      // 前の松村ですの音を停止
+      if(currentMatsuSource){
+        try{
+          currentMatsuSource.stop();
+        }catch(e){
+          // 既に停止済みの場合は無視
+        }
+        currentMatsuSource = null;
+      }
+      
+      if(samples.matsu){ 
+        __lastUsedSample='matsu'; 
+        const src=ctx.createBufferSource(); 
+        src.buffer=samples.matsu; 
+        src.connect((fromSeq && seqBus)?seqBus:(liveBus||masterGain)); 
+        src.start(t); 
+        currentMatsuSource = src; // 現在の音源を記録
+        return; 
+      }
+      
+      try{ 
+        const utt=new SpeechSynthesisUtterance('松村です！'); 
+        utt.lang='ja-JP'; 
+        utt.rate=1.0; 
+        utt.pitch=1.0; 
+        if(time){ 
+          const delay=Math.max(0, (time-ctx.currentTime)*1000); 
+          setTimeout(()=>{ 
+            window.speechSynthesis.cancel(); 
+            window.speechSynthesis.speak(utt); 
+          }, delay);
+        } else { 
+          window.speechSynthesis.cancel(); 
+          window.speechSynthesis.speak(utt);
+        } 
+      }catch(e){ 
+        const o=ctx.createOscillator(); 
+        o.type='square'; 
+        const g=envNode(0.2,0.001,0.15,0.7,0.0001); 
+        o.frequency.setValueAtTime(880,t); 
+        o.connect(g).connect(masterGain); 
+        o.start(t); 
+        o.stop(t+0.2);
+      } 
+    }
+
+    const actions = { kick: playKick, snare: playSnare, hihat: playHiHat, matsu: playMatsu };
+
+    // ------------------ Pads ------------------
+    const grid = document.getElementById('grid');
+    function triggerPad(el){ const sound=el.getAttribute('data-sound'); const fn=actions[sound]; if(fn){ fn(undefined, false); } el.classList.add('active'); setTimeout(()=>el.classList.remove('active'), 90); }
+    grid.addEventListener('pointerdown', (e)=>{ const el=e.target.closest('.pad'); if(!el) return; triggerPad(el); });
+    const keyMap = { a:'kick', s:'snare', d:'hihat', f:'matsu' };
+    window.addEventListener('keydown', (e)=>{ 
+      const k=(e.key||'').toLowerCase(); 
+      if(keyMap[k]){ 
+        const el=[...document.querySelectorAll('.pad')].find(p=>p.dataset.sound===keyMap[k]); 
+        if(el){ 
+          triggerPad(el);
+          // キーボード入力もシーケンサーに記録
+          recordFromPad(keyMap[k]);
+        } 
+      } 
+    });
+    window.addEventListener('touchstart', ensureAudio, {once:true});
+    window.addEventListener('mousedown', ensureAudio, {once:true});
+
+    // ------------------ Sequencer ------------------
+    const STEPS = 16; // 4/4の16分×16ステップ
+    const tracks = [
+      { id:'kick',  name:'Kick',  steps:new Array(STEPS).fill(false) },
+      { id:'snare', name:'Snare', steps:new Array(STEPS).fill(false) },
+      { id:'hihat', name:'Hi‑Hat',steps:new Array(STEPS).fill(false) },
+      { id:'matsu', name:'松村です！', steps:new Array(STEPS).fill(false) },
+    ];
+
+    const seqRoot = document.getElementById('seq');
+    function renderSeq(){
+      const table = document.createElement('table');
+      const header = document.createElement('tr');
+      header.appendChild(document.createElement('th')); // empty corner
+      for(let i=0;i<STEPS;i++){ const th=document.createElement('th'); th.textContent=(i+1); th.style.color = (i%4===0)? '#c9d7e6': '#7690aa'; header.appendChild(th); }
+      table.appendChild(header);
+
+      for(const trk of tracks){
+        const tr = document.createElement('tr');
+        const label = document.createElement('th'); label.className='track'; label.textContent=trk.name; tr.appendChild(label);
+        for(let s=0;s<STEPS;s++){
+          const td = document.createElement('td');
+          const btn = document.createElement('button'); btn.className='step'; btn.setAttribute('data-track', trk.id); btn.setAttribute('data-step', s);
+          btn.addEventListener('click', ()=>{ trk.steps[s] = !trk.steps[s]; btn.classList.toggle('on', trk.steps[s]); });
+          if(trk.steps[s]) btn.classList.add('on');
+          td.appendChild(btn); tr.appendChild(td);
+        }
+        table.appendChild(tr);
+      }
+      seqRoot.innerHTML=''; seqRoot.appendChild(table);
+    }
+    renderSeq();
+
+    // Transport
+    const playBtn = document.getElementById('play');
+    const stopBtn = document.getElementById('stop');
+    const clearBtn = document.getElementById('clear');
+    const hihat8Btn = document.getElementById('hihat8');
+    const bpmRange = document.getElementById('bpm');
+    const bpmVal = document.getElementById('bpmVal');
+    const volRange = document.getElementById('vol');
+    const volVal = document.getElementById('volVal');
+
+    let bpm = parseInt(bpmRange.value,10);
+    bpmVal.textContent = bpm;
+    bpmRange.addEventListener('input', ()=>{ bpm=parseInt(bpmRange.value,10); bpmVal.textContent=bpm; });
+    volVal.textContent = parseFloat(volRange.value).toFixed(2);
+    volRange.addEventListener('input', ()=>{ ensureAudio(); const v = parseFloat(volRange.value); masterGain.gain.setTargetAtTime(v, ctx.currentTime, 0.01); volVal.textContent = v.toFixed(2); });
+
+    clearBtn.addEventListener('click', ()=>{ for(const t of tracks){ t.steps.fill(false); } renderSeq(); });
+    hihat8Btn.addEventListener('click', ()=>{ const hh = tracks.find(t=>t.id==='hihat'); if(!hh) return; for(let i=0;i<STEPS;i++){ hh.steps[i] = (i%2===0); } renderSeq(); });
+
+    // Scheduler (Web Audio clock with lookahead)
+    let isPlaying=false, currentStep=0, nextNoteTime=0; // sec
+    const lookahead = 25;      // ms
+    const scheduleAhead = 0.1; // sec
+    let timerID=null;
+
+    function nextNote(){
+      const secondsPerBeat = 60.0 / bpm; // 四分音符
+      nextNoteTime += 0.25 * secondsPerBeat; // 16分音符
+      currentStep = (currentStep + 1) % STEPS;
+    }
+
+    function scheduleStep(step, time){
+      // identical routing & gains for live and sequencer
+      for(const trk of tracks){ if(trk.steps[step]){ actions[trk.id](time, true); } }
+      requestAnimationFrame(()=>highlightPlayhead(step));
+    }
+
+    function scheduler(){
+      while(ctx && nextNoteTime < ctx.currentTime + scheduleAhead){
+        scheduleStep(currentStep, nextNoteTime);
+        nextNote();
+      }
+      timerID = setTimeout(scheduler, lookahead);
+    }
+
+    function highlightPlayhead(step){
+      const buttons = document.querySelectorAll('.step');
+      buttons.forEach(b=>b.classList.remove('playhead'));
+      const col = document.querySelectorAll(`.step[data-step="${step}"]`);
+      col.forEach(b=>b.classList.add('playhead'));
+    }
+
+    function start(){ ensureAudio(); if(isPlaying) return; isPlaying=true; playBtn.textContent='⏸ 一時停止';
+      if(ctx.state==='suspended'){ ctx.resume(); }
+      currentStep = 0; nextNoteTime = ctx.currentTime + 0.10; scheduler(); }
+
+    function stop(){ if(!isPlaying) return; isPlaying=false; playBtn.textContent='▶︎ 再生'; clearTimeout(timerID); timerID=null; highlightPlayhead(-1); }
+
+    playBtn.addEventListener('click', ()=>{ if(!isPlaying) start(); else { isPlaying=false; playBtn.textContent='▶︎ 再生'; clearTimeout(timerID); timerID=null; } });
+    stopBtn.addEventListener('click', stop);
+
+    // ------- Quantize record from pads while playing -------
+    function recordFromPad(sound){ if(!isPlaying) return; const now = ctx.currentTime;
+      const secondsPerBeat = 60.0 / bpm; const stepDur = 0.25*secondsPerBeat; const ahead = nextNoteTime - now;
+      const cur = (currentStep + (ahead>stepDur*0.5? -1:0) + STEPS) % STEPS; 
+      const trk = tracks.find(t=>t.id===sound); if(trk){ trk.steps[cur] = true; const btn = document.querySelector(`.step[data-track="${sound}"][data-step="${cur}"]`); btn?.classList.add('on'); } }
+
+    grid.addEventListener('pointerdown', (e)=>{ const el=e.target.closest('.pad'); if(!el) return; const sound=el.getAttribute('data-sound'); recordFromPad(sound); }, {capture:true});
+
+    // ------------------ Self Tests (console) ------------------
+    (function runSelfTests(){
+      try{
+        console.log('[TEST] begin');
+        const stepsExpected = STEPS * 4; // 4 tracks
+        const stepsNow = document.querySelectorAll('.step').length;
+        console.assert(stepsNow === stepsExpected, `[TEST] steps count expected ${stepsExpected}, got ${stepsNow}`);
+        ensureAudio();
+        console.assert(!!ctx && !!masterGain, '[TEST] audio context/masterGain should be initialized');
+        const g = envNode(0.05);
+        console.assert(g && g.gain && typeof g.gain.setValueAtTime === 'function', '[TEST] envNode returns valid GainNode');
+        ['kick','snare','hihat','matsu'].forEach(k=>console.assert(typeof actions[k]==='function', `[TEST] action ${k} exists`));
+        // Verify HiHat 8ths button wiring (non-destructive)
+        const hh = tracks.find(t=>t.id==='hihat'); const prev = hh.steps.slice();
+        document.getElementById('hihat8')?.click();
+        const count = hh.steps.filter(Boolean).length;
+        console.assert(count===8, `[TEST] clicking hihat8 should produce 8 steps, got ${count}`);
+        // Quick audible smoke test: schedule one hat shortly later
+        actions.hihat(ctx.currentTime + 0.05, true);
+        // restore
+        hh.steps = prev; renderSeq();
+        // transport/button types exist
+        const playType = document.getElementById('play')?.getAttribute('type');
+        const stopType = document.getElementById('stop')?.getAttribute('type');
+        console.assert(playType==='button' && stopType==='button', '[TEST] transport buttons must be type="button"');
+        // Sample path test
+        try{
+          const testBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*0.02), ctx.sampleRate);
+          samples.hihat = testBuf; __lastUsedSample=null; actions.hihat(ctx.currentTime+0.02, true);
+          console.assert(__lastUsedSample==='hihat', '[TEST] hihat sample path should be used when buffer present');
+          samples.hihat = null; __lastUsedSample=null; // restore
+        }catch(e){ console.warn('[TEST] sample path test skipped', e); }
+        console.log('[TEST] PASS (no exceptions)');
+      }catch(e){ console.error('[TEST] FAIL', e); }
+    })();
+
+    // Extra self-test for hi-hat 8ths (pattern logic only; UI restored)
+    (function testHiHatPreset(){
+      const hh = tracks.find(t=>t.id==='hihat'); if(!hh) return;
+      const prev = hh.steps.slice();
+      for(let i=0;i<STEPS;i++){ hh.steps[i] = (i%2===0); }
+      const count = hh.steps.filter(Boolean).length;
+      console.assert(count===8, `[TEST] hihat 8ths should have 8 steps, got ${count}`);
+      // restore previous pattern to avoid side-effects
+      hh.steps = prev; renderSeq();
+    })();
+
+    // focus for keyboard & init samples
+    window.addEventListener('load', ()=>{ document.body.focus(); loadPredefinedSamples(); });
+  </script>
+</body>
+</html>
