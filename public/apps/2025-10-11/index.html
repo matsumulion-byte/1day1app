@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>松村ドラム</title>
+  <title>松村ドラムです</title>
   <style>
     :root{ --bg:#0b0f14; --fg:#e7edf3; --muted:#92a0ad; --acc:#4fd1c5; --pad:#121923; --padOn:#1f2a38; --ring:#2b3b4c; --hot:#ffcf33; }
     *{box-sizing:border-box}
@@ -16,7 +16,7 @@
 
     .grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
     .pad{ position:relative; aspect-ratio:1/1; border-radius:20px; border:1px solid var(--ring); background:linear-gradient(180deg,var(--pad),#0f151d); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 8px 30px rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; cursor:pointer; user-select:none; transition: transform .04s ease, background .12s ease, box-shadow .12s ease; touch-action:manipulation; }
-    .pad:active, .pad.active{ transform: translateY(2px) scale(.98); background:var(--padOn); box-shadow: inset 0 2px 0 rgba(255,255,255,.06), 0 2px 12px rgba(0,0,0,.5);} 
+    .pad:active, .pad.active{ transform: translateY(1px) scale(.99); background:var(--padOn); box-shadow: inset 0 2px 0 rgba(255,255,255,.06), 0 2px 12px rgba(0,0,0,.5);} 
     .pad .label{ text-align:center; }
     .name{font-size:clamp(16px,3.2vw,22px); font-weight:700; letter-spacing:.02em; color:#ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.5);}
     .key{margin-top:6px; color:#4fd1c5; font-size:12px; font-variant-numeric:tabular-nums; text-shadow: 0 1px 2px rgba(0,0,0,0.3);}
@@ -44,47 +44,68 @@
 
     /* --- Mobile-first tweaks --- */
     @media (max-width: 640px){
-      body{ padding:12px; }
-      header{ flex-direction:column; align-items:flex-start; gap:6px; }
-      .hint{ font-size:11px; }
-      .grid{ gap:12px; }
+      body{ padding:8px; }
+      header{ flex-direction:column; align-items:flex-start; gap:4px; margin-bottom:8px; }
+      .hint{ font-size:10px; }
+      .grid{ 
+        gap:8px; 
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        height: calc(100vh - 200px);
+        min-height: 300px;
+      }
       .pad{ 
-        border-radius:18px; 
-        min-height: 120px;
+        border-radius:16px; 
+        min-height: 0;
+        aspect-ratio: 1;
         -webkit-tap-highlight-color: transparent;
         touch-action: manipulation;
+        transform: none !important;
+        transition: background .1s ease, box-shadow .1s ease;
       }
-      .name{ font-size:clamp(18px,6vw,22px); }
-      .key{ font-size:14px; }
-      .panel{ padding:10px; border-radius:12px; }
-      .transport{ gap:8px; flex-wrap:wrap; }
+      .pad:active, .pad.active{
+        transform: none !important;
+        background: var(--padOn) !important;
+        box-shadow: inset 0 2px 0 rgba(255,255,255,.06), 0 2px 12px rgba(0,0,0,.5) !important;
+      }
+      .name{ font-size:clamp(14px,4vw,18px); }
+      .key{ font-size:12px; }
+      .panel{ padding:8px; border-radius:10px; margin-top:8px; }
+      .transport{ gap:6px; flex-wrap:wrap; }
       .btn{ 
-        padding:12px 14px; 
-        border-radius:12px; 
-        font-size:14px; 
-        min-height: 44px;
-        -webkit-tap-highlight-color: transparent;
-        touch-action: manipulation;
-      }
-      .bpm{ gap:8px; }
-      .seq{ margin-top:10px; overflow-x:auto; -webkit-overflow-scrolling: touch; }
-      .step{ 
-        width:44px; 
-        height:44px; 
+        padding:8px 12px; 
         border-radius:10px; 
+        font-size:12px; 
+        min-height: 36px;
         -webkit-tap-highlight-color: transparent;
         touch-action: manipulation;
-        min-height: 44px;
       }
-      table{ border-spacing:8px; min-width: 720px; }
+      .bpm{ gap:6px; }
+      .seq{ margin-top:8px; overflow-x:auto; -webkit-overflow-scrolling: touch; }
+      .step{ 
+        width:36px; 
+        height:36px; 
+        border-radius:8px; 
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        min-height: 36px;
+      }
+      table{ border-spacing:6px; min-width: 600px; }
     }
 
     /* Very small screens */
     @media (max-width: 380px){
-      .btn{ padding:10px 12px; font-size:13px; min-height: 40px; }
-      .step{ width:40px; height:40px; min-height: 40px; }
-      .pad{ min-height: 100px; }
-      table{ min-width: 640px; }
+      body{ padding:6px; }
+      .grid{ 
+        height: calc(100vh - 180px);
+        min-height: 250px;
+        gap:6px;
+      }
+      .btn{ padding:6px 10px; font-size:11px; min-height: 32px; }
+      .step{ width:32px; height:32px; min-height: 32px; }
+      .name{ font-size:clamp(12px,3.5vw,16px); }
+      .key{ font-size:10px; }
+      table{ min-width: 560px; }
     }
 
     /* Landscape orientation for mobile */
@@ -99,7 +120,7 @@
 <body>
   <div class="app">
     <header>
-      <h1>4パッド・ドラム v3（ルーパーのみ）</h1>
+      <h1>松村ドラムです</h1>
       <div class="hint">キー操作: <span class="kbd">A</span>=Kick / <span class="kbd">S</span>=Snare / <span class="kbd">D</span>=Hi‑Hat / <span class="kbd">F</span>=松村です！</div>
     </header>
 
