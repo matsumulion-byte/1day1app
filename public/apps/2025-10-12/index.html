@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>松村キャッチ！ - コンボ＆ざる版</title>
+<style>
+  :root { --bg:#0f1220; --fg:#fafafa; --accent:#6ee7ff; --danger:#ff5d7a; --good:#22c55e; --combo:#ffd54a; }
+  html,body { height:100%; margin:0; background:var(--bg); color:var(--fg);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", "Helvetica Neue", Arial;
+    overscroll-behavior: none; touch-action: manipulation;
+  }
+  .wrap { display:flex; flex-direction:column; align-items:center; gap:10px; padding:12px; }
+  .hud { width:min(92vw,560px); display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+  .badge { padding:6px 10px; border-radius:999px; background:#1a1f3a; border:1px solid #2b325c; font-weight:700; }
+  .btn { padding:10px 14px; border-radius:10px; background:linear-gradient(180deg,#3b82f6,#2563eb); border:none; color:white; font-weight:700; box-shadow:0 6px 18px rgba(37,99,235,.35); }
+  .btn:disabled { opacity:.5 }
+  .mute { background:#334155; }
+  .canvas-wrap { width:min(92vw,560px); aspect-ratio:9/16; border-radius:16px; overflow:hidden; position:relative;
+    box-shadow:0 10px 40px rgba(0,0,0,.35), inset 0 0 0 1px #2b325c;
+    -webkit-user-select:none; user-select:none; touch-action:none;
+  }
+  .canvas-wrap.desktop { aspect-ratio:3/4; } /* デスクトップは縦短め */
+  canvas { width:100%; height:100%; display:block; background: radial-gradient(120% 100% at 50% 0%, #182244 0%, #0f1220 60%); }
+  .toast { position:absolute; left:50%; top:18%; transform:translateX(-50%); font-weight:900;
+    text-shadow:0 4px 14px rgba(0,0,0,.6); pointer-events:none; color:#fff; font-size: clamp(20px, 6vw, 42px);
+    opacity:0; transition: opacity .12s, transform .12s;
+  }
+  .toast.show { opacity:1; transform: translateX(-50%) scale(1.04); }
+  .comboHUD { padding:6px 10px; border-radius:999px; background:#3a2d0a; border:1px solid #5b470f; color:#fff3c4; font-weight:900; }
+  .overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+    background: linear-gradient(180deg, rgba(8,10,16,.72), rgba(8,10,16,.72)); color:white; text-align:center; padding:20px;
+  }
+  .card { background:#0f1428; border:1px solid #243056; border-radius:14px; padding:16px 14px; width:min(80%, 380px); }
+  .small { font-size:12px; opacity:.7 }
+
+  /* 浮遊スコア */
+  .float-score { position:absolute; color:#fff; font-weight:900; text-shadow:0 2px 8px rgba(0,0,0,.5); pointer-events:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud">
+    <div class="badge" id="time">⏱ 30.0s</div>
+    <div class="badge" id="score">🎯 0</div>
+    <div class="comboHUD" id="combo">COMBO ×1</div>
+    <div class="badge" id="best">🏆 0</div>
+    <button class="btn mute" id="muteBtn">🔊 音ON</button>
+    <button class="btn" id="startBtn" disabled>▶︎ ロード中…</button>
+  </div>
+  <div class="canvas-wrap" id="stage">
+    <canvas id="game" width="360" height="640"></canvas>
+    <div class="toast" id="toast">松村です！</div>
+    <div class="overlay" id="overlay">
+      <div class="card">
+        <h2 style="margin:0 0 6px">松村キャッチ！（コンボ版）</h2>
+        <p style="margin:0">30秒で「松村」をできるだけキャッチ！<br>偽物を取ったら<strong style="color:var(--danger)">即ゲームオーバー</strong>！</p>
+        <p class="small" style="margin:8px 0 0">指/マウスで移動、← → または A/D でも移動</p>
+        <p class="small" style="margin:8px 0 0; color:#ffe08a">2.5秒以内の連続キャッチでコンボUP！最大×4</p>
+      </div>
+      <button class="btn" id="startBtn2" disabled>▶︎ ロード中…</button>
+      <div class="small">画像を読み込み中です…</div>
+    </div>
+  </div>
+</div>
+
+<audio id="voice" preload="auto">
+  <source src="/apps/2025-10-12/matsumura_desu.m4a" type="audio/mp4">
+</audio>
+
+<script>
+(() => {
+  // ===== 環境検知 & キャンバス設定 =====
+  const isDesktop = matchMedia('(pointer: fine)').matches && window.innerWidth >= 700;
+  const TARGET_W = 360;
+  const TARGET_H = isDesktop ? 520 : 640; // デスクトップは縦短め
+  const speedScale = TARGET_H / 640;
+
+  // DOM参照
+  const cv = document.getElementById('game');
+  const ctx = cv.getContext('2d');
+  const stage = document.getElementById('stage');
+  if (isDesktop) stage.classList.add('desktop');
+  cv.width = TARGET_W;
+  cv.height = TARGET_H;
+
+  // ===== 画像プリロード =====
+  const assets = {
+    ok:  { src: '/apps/2025-10-12/matsu_ok.png',  img: new Image(), isReal: true  },
+    ng1: { src: '/apps/2025-10-12/matsu_ng1.png', img: new Image(), isReal: false },
+    ng2: { src: '/apps/2025-10-12/matsu_ng2.png', img: new Image(), isReal: false },
+    ng3: { src: '/apps/2025-10-12/matsu_ng3.png', img: new Image(), isReal: false },
+  };
+  const list = Object.values(assets);
+  let loaded = 0;
+  const startBtn  = document.getElementById('startBtn');
+  const startBtn2 = document.getElementById('startBtn2');
+  const overlay   = document.getElementById('overlay');
+
+  list.forEach(a=>{
+    a.img.onload = a.img.onerror = () => {
+      if (++loaded === list.length) {
+        startBtn.disabled=false; startBtn.textContent='▶︎ スタート';
+        startBtn2.disabled=false; startBtn2.textContent='▶︎ ゲーム開始';
+      }
+    };
+    a.img.src = a.src;
+  });
+
+  // ===== HUD等 =====
+  const timeEl  = document.getElementById('time');
+  const scoreEl = document.getElementById('score');
+  const comboEl = document.getElementById('combo');
+  const bestEl  = document.getElementById('best');
+  const toast   = document.getElementById('toast');
+  const muteBtn = document.getElementById('muteBtn');
+  const voice   = document.getElementById('voice');
+
+  // ===== 状態 =====
+  let running=false, gameOver=false;
+  let score=0, best=Number(localStorage.getItem('matsuCatchBest')||0);
+  let timeLeft=30000, lastT=0, spawnAcc=0, spawnInterval=700;
+  let objects=[];
+  bestEl.textContent = `🏆 ${best}`;
+
+  // --- コンボ状態 ---
+  let comboCount = 0;           // 連続キャッチ数
+  let comboTimer = 0;           // 残り時間(ms)
+  const COMBO_WINDOW = 2500;    // 2.5秒以内の連続で継続
+  function comboMultiplier(cnt){
+    if (cnt >= 9) return 4;
+    if (cnt >= 6) return 3;
+    if (cnt >= 3) return 2;
+    return 1;
+  }
+  function updateComboHUD(){
+    const mul = comboMultiplier(comboCount);
+    comboEl.textContent = `COMBO ×${mul}`;
+    comboEl.style.background = mul>=3 ? '#5b3f0a' : '#3a2d0a';
+    comboEl.style.borderColor = mul>=3 ? '#855e0e' : '#5b470f';
+  }
+
+  // プレイヤー（ざる）
+  const player = { w: isDesktop ? 102 : 96, h: 34, x: TARGET_W/2 - (isDesktop?51:48), y: TARGET_H - 58 };
+
+  // ===== 入力：スマホ最適化（pointer capture + ベタ追従） =====
+  const SMOOTH_FACTOR_TOUCH = 0.40; // 小さいほど指にベタ付き
+  const SMOOTH_FACTOR_MOUSE = 0.25;
+
+  let pointerActive = false;
+  let activePointerId = null;
+  let targetX = player.x;
+
+  const toCanvasX = (clientX) => {
+    const rect = cv.getBoundingClientRect();
+    const ratio = cv.width / rect.width;
+    return (clientX - rect.left) * ratio;
+  };
+
+  // iOSなどのオーディオ初期化
+  let audioUnlocked=false;
+  function kickAudio(){
+    if(audioUnlocked) return;
+    try { voice.play().then(()=>{ voice.pause(); voice.currentTime=0; audioUnlocked=true; }).catch(()=>{}); } catch(e){}
+  }
+
+  stage.addEventListener('pointerdown', (e) => {
+    pointerActive = true;
+    activePointerId = e.pointerId;
+    stage.setPointerCapture?.(activePointerId);
+    targetX = toCanvasX(e.clientX) - player.w/2;
+    kickAudio();
+  }, { passive: true });
+
+  stage.addEventListener('pointermove', (e) => {
+    if (!pointerActive || (activePointerId!==null && e.pointerId!==activePointerId)) return;
+    targetX = toCanvasX(e.clientX) - player.w/2;
+    if (e.pointerType === 'touch') e.preventDefault?.();
+  }, { passive: false });
+
+  const release = () => {
+    pointerActive = false;
+    if (activePointerId !== null) {
+      stage.releasePointerCapture?.(activePointerId);
+      activePointerId = null;
+    }
+  };
+  stage.addEventListener('pointerup', release, { passive: true });
+  stage.addEventListener('pointercancel', release, { passive: true });
+  stage.addEventListener('pointerleave', release, { passive: true });
+
+  // デスクトップはホバーでも追従
+  if (isDesktop) {
+    stage.addEventListener('pointermove', (e) => {
+      if (pointerActive) return;
+      targetX = toCanvasX(e.clientX) - player.w/2;
+    }, { passive: true });
+  }
+
+  // キーボード操作
+  let keyDir = 0; // -1:左, +1:右
+  addEventListener('keydown', e=>{
+    if(e.key==='ArrowLeft' || e.key==='a' || e.key==='A') keyDir = -1;
+    if(e.key==='ArrowRight'|| e.key==='d' || e.key==='D') keyDir = 1;
+  });
+  addEventListener('keyup', e=>{
+    if(['ArrowLeft','a','A'].includes(e.key) && keyDir<0) keyDir = 0;
+    if(['ArrowRight','d','D'].includes(e.key) && keyDir>0) keyDir = 0;
+  });
+
+  // ===== スポーン（松村を大きめに） =====
+  function spawnObject(){
+    const isReal = Math.random() < 0.7; // 70% 本物
+    const cand = isReal ? [assets.ok] : [assets.ng1, assets.ng2, assets.ng3];
+    const chosen = cand[Math.floor(Math.random()*cand.length)];
+
+    // ★ サイズアップ（従来より一回り大きい）
+    const base = 46, rand = 16;       // r = 46〜62 → 直径 92〜124px
+    const size = base + Math.random()*rand;
+
+    const x = 24 + Math.random()*(TARGET_W - 48);
+    const y = -(size*2) - 10;
+    const v = (1.6 + Math.random()*0.9 + (1 - timeLeft/30000)*1.8) * speedScale;
+    const sway = (Math.random()*0.8 + 0.4) * (Math.random()<0.5 ? -1 : 1);
+    objects.push({ x, y, r:size, vy:v, img:chosen.img, isReal:chosen.isReal, sway, t:0 });
+  }
+
+  // ===== 描画 =====
+  function drawBackground(){ ctx.clearRect(0,0,TARGET_W,TARGET_H); ctx.fillStyle='#0b0f1d'; ctx.fillRect(0, TARGET_H-36, TARGET_W, 36); }
+  function roundRect(ctx, x, y, w, h, r) {
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath(); ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+  // ざる描画
+  function drawZaru(x, y, w, h){
+    const r = 12;
+    // 影
+    ctx.globalAlpha = .15;
+    ctx.fillStyle = '#000';
+    roundRect(ctx, x+3, y+6, w, h, r); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // 外枠
+    ctx.fillStyle = '#d1a85a';
+    roundRect(ctx, x, y, w, h, r); ctx.fill();
+    ctx.strokeStyle = '#b6893f'; ctx.lineWidth = 2;
+    roundRect(ctx, x, y, w, h, r); ctx.stroke();
+
+    // 縁
+    ctx.strokeStyle = '#e9c67b'; ctx.lineWidth = 4;
+    roundRect(ctx, x+4, y+3, w-8, h-6, r-6); ctx.stroke();
+
+    // 編み目（軽量）
+    ctx.save();
+    ctx.beginPath(); roundRect(ctx, x+6, y+5, w-12, h-10, r-8); ctx.clip();
+    ctx.strokeStyle = 'rgba(90,60,15,0.25)'; ctx.lineWidth = 2;
+
+    const gridGap = 10;
+    for(let gx = x; gx < x+w; gx += gridGap){
+      ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx, y+h); ctx.stroke();
+    }
+    for(let gy = y; gy < y+h; gy += gridGap){
+      ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x+w, gy); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function drawPlayer(){ drawZaru(player.x, player.y, player.w, player.h); }
+  function drawStars(t){
+    const seed = Math.floor(t/800)%999;
+    for(let i=0;i<22;i++){
+      const x = ((i*seed*37)%TARGET_W);
+      const y = ((i*seed*59)%(TARGET_H-80));
+      const r = (i%3)+1;
+      ctx.globalAlpha = 0.08 + ((i*7)%10)/60;
+      ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fillStyle='#c7d2fe'; ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+  function drawObject(o){
+    ctx.save();
+    ctx.translate(o.x, o.y);
+    const k = Math.sin(o.t*0.002)*o.sway;
+    const w = o.r*2, h = o.r*2;
+    ctx.drawImage(o.img, -w/2 + k*2, -h/2, w, h);
+    ctx.restore();
+  }
+
+  // ===== トースト/サウンド/浮遊スコア =====
+  let toastTimer=0;
+  function showToast(msg='松村です！'){
+    toast.textContent = msg; toast.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(()=>toast.classList.remove('show'), 420);
+  }
+  let muted=false;
+  function playVoice(){ if(!muted){ try{ const n=voice.cloneNode(true); n.volume=0.9; n.play().catch(()=>{}); }catch(e){} } }
+  muteBtn.addEventListener('click', ()=>{
+    muted=!muted; muteBtn.textContent = muted ? '🔇 音OFF' : '🔊 音ON'; muteBtn.classList.toggle('mute', muted);
+  });
+
+  function spawnFloatScore(px, py, text, color='#fff'){
+    const el = document.createElement('div');
+    el.className = 'float-score';
+    el.textContent = text;
+    el.style.left = (px - 10) + 'px';
+    el.style.top  = (py - 10) + 'px';
+    el.style.color = color;
+    stage.appendChild(el);
+    let t=0;
+    const id = setInterval(()=>{
+      t += 16;
+      el.style.transform = `translateY(${-t/20}px)`;
+      el.style.opacity = String(Math.max(0, 1 - t/600));
+      if(t>600){ clearInterval(id); el.remove(); }
+    }, 16);
+  }
+
+  // ===== HUD/終了 =====
+  function updateHUD(){ timeEl.textContent=`⏱ ${(timeLeft/1000).toFixed(1)}s`; scoreEl.textContent=`🎯 ${score}`; bestEl.textContent=`🏆 ${best}`; updateComboHUD(); }
+  function resetGame(){
+    running=false; gameOver=false; score=0; timeLeft=30000; lastT=0; spawnAcc=0; spawnInterval=700; objects=[];
+    comboCount = 0; comboTimer = 0; updateComboHUD();
+    player.x = TARGET_W/2 - player.w/2; player.y = TARGET_H - 58; updateHUD();
+  }
+  function endGame(reason='time'){
+    running=false; gameOver=true; overlay.style.display='flex';
+    overlay.innerHTML = `
+      <div class="card">
+        <h2 style="margin:0 0 8px">${reason==='fake'?'ゲームオーバー！':'タイムアップ！'}</h2>
+        <p style="margin:0 0 6px">スコア：<strong style="font-size:20px">${score}</strong></p>
+        <p class="small" style="margin:0 0 10px">${reason==='fake'?'偽物をキャッチしてしまった…':'おつかれさま！'}</p>
+        <p class="small" style="margin:0">ベスト：<strong>${best}</strong></p>
+      </div>
+      <button class="btn" id="retryBtn">↻ もう一度</button>
+    `;
+    document.getElementById('retryBtn').addEventListener('click', ()=>{ buildHomeOverlay(); startGame(); });
+  }
+  function buildHomeOverlay(){
+    overlay.style.display='flex';
+    overlay.innerHTML=`
+      <div class="card">
+        <h2 style="margin:0 0 6px">松村キャッチ！（コンボ版）</h2>
+        <p style="margin:0">30秒で「松村」をできるだけキャッチ！<br>偽物で<strong style="color:var(--danger)">即ゲームオーバー</strong></p>
+        <p class="small" style="margin:8px 0 0">指/マウス移動、← → / A・D で移動</p>
+        <p class="small" style="margin:8px 0 0; color:#ffe08a">2.5秒以内の連続キャッチで倍率UP（最大×4）</p>
+      </div>
+      <button class="btn" id="startBtn2">▶︎ ゲーム開始</button>
+    `;
+    document.getElementById('startBtn2').addEventListener('click', startGame);
+  }
+
+  // ===== ループ =====
+  function startGame(){
+    resetGame();
+    overlay.style.display='none';
+    running=true;
+    lastT=performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function loop(t){
+    if(!running) return;
+    const dt = Math.min(50, t - lastT); lastT = t;
+
+    timeLeft -= dt; if(timeLeft<0) timeLeft=0;
+
+    // コンボタイマー減衰
+    if(comboTimer > 0){
+      comboTimer -= dt;
+      if(comboTimer <= 0){ comboTimer = 0; comboCount = 0; }
+    }
+
+    // スポーン
+    spawnAcc += dt;
+    const dynamicInterval = Math.max(260, spawnInterval - ((30000 - timeLeft)/30000)*320);
+    if (spawnAcc >= dynamicInterval) {
+      spawnAcc = 0;
+      const n = Math.random()<0.85 ? 1 : 2;
+      for(let i=0;i<n;i++) spawnObject();
+    }
+
+    // 入力
+    if(keyDir !== 0){
+      const keySpeed = 6.0;
+      player.x += keyDir * keySpeed * (dt/16.67);
+      targetX = player.x;
+    }
+    const isTouching = pointerActive;
+    const smooth = isTouching ? SMOOTH_FACTOR_TOUCH : SMOOTH_FACTOR_MOUSE;
+    player.x += (targetX - player.x) * (1 - smooth);
+    player.x = Math.max(4, Math.min(TARGET_W - player.w - 4, player.x));
+
+    // 物体更新
+    for(const o of objects){ o.t += dt; o.y += o.vy * (dt/16.67) * 3; }
+
+    // 当たり判定（スマホは少し甘め）
+    const px=player.x, py=player.y, pw=player.w, ph=player.h;
+    const tol = isDesktop ? 10 : 14;
+    const caught=[];
+    for(const o of objects){
+      if(o.y + o.r >= py && o.y - o.r <= py+ph){
+        if(o.x >= px - tol && o.x <= px + pw + tol) caught.push(o);
+      }
+    }
+    for(const o of caught){
+      objects.splice(objects.indexOf(o),1);
+      if(o.isReal){
+        // --- コンボ処理 ---
+        comboCount = (comboTimer>0) ? (comboCount+1) : 1; // 新規 or 継続
+        comboTimer = COMBO_WINDOW;
+        const mul = comboMultiplier(comboCount);
+        const gain = mul; // 1/2/3/4点
+        score += gain;
+        if(score>best){ best=score; localStorage.setItem('matsuCatchBest', String(best)); }
+        playVoice(); showToast(mul>=3 ? `松村です！ ×${mul}` : '松村です！');
+
+        // 浮遊スコア演出（コンボ色）
+        const color = mul>=4 ? '#ffd54a' : (mul>=3 ? '#ffe08a' : '#ffffff');
+        // 画面座標へ変換
+        const rect = cv.getBoundingClientRect();
+        const sx = rect.left + (o.x / cv.width) * rect.width;
+        const sy = rect.top  + (o.y / cv.height)* rect.height;
+        spawnFloatScore(sx, sy, `+${gain}`, color);
+      } else {
+        endGame('fake'); updateHUD(); return;
+      }
+    }
+
+    // 画面外を削除
+    objects = objects.filter(o => o.y - o.r <= TARGET_H+10);
+
+    // 描画
+    drawBackground();
+    drawStars(t);
+    for(const o of objects) drawObject(o);
+    drawPlayer();
+    // キャッチゾーン
+    ctx.globalAlpha=.06; ctx.fillStyle='#00e6a8'; ctx.fillRect(0, player.y-2, TARGET_W, player.h+4); ctx.globalAlpha=1;
+
+    updateHUD();
+    if(timeLeft<=0){ endGame('time'); return; }
+    requestAnimationFrame(loop);
+  }
+
+  // ===== ボタン =====
+  startBtn.addEventListener('click', startGame);
+  startBtn2?.addEventListener('click', startGame);
+
+  // 初期
+  buildHomeOverlay();
+  resetGame();
+})();
+</script>
+</body>
+</html>
