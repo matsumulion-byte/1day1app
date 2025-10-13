@@ -213,10 +213,10 @@
       if(p.vr!==undefined) p.rot += p.vr;
 
       // 破片による巻き込み（軽量チェック）
-      if(p.type==='frag' && p.age>2 && pins && pins.length){
+      if(p.type==='frag' && p.age>3 && pins && pins.length){
         // サンプリングして負荷軽減
         if((p.age % 3)===0 || Math.random()<0.25){
-          const baseR = 10 + currentPower*8; // さらに縮小
+          const baseR = 11 + currentPower*9; // 少しだけ戻す
           const r2 = baseR*baseR;
           for(const pin of pins){
             if(!pin.alive) continue;
@@ -224,7 +224,7 @@
             const dx = X - p.x, dy = Y - p.y;
             const d2 = dx*dx + dy*dy;
             if(d2 < r2){
-              const prob = Math.min(0.75, 0.16 + currentPower*0.30); // もう少し下げる
+              const prob = Math.min(0.78, 0.18 + currentPower*0.32); // わずかに上げる
               if(Math.random() < prob){
                 pin.alive = false; fragDown++;
                 const screenSize = PIN_BASE*scale;
@@ -246,7 +246,7 @@
     const rBall = ball.radius; let downThisTick = 0;
     for(const p of pins){
       if(!p.alive) continue;
-      const {X,Y,scale}=p.screen; const s=PIN_BASE*scale; const rPin=s*0.28; // 当たり判定を少し小さく
+      const {X,Y,scale}=p.screen; const s=PIN_BASE*scale; const rPin=s*0.30; // ヒットしやすさを微増
       const dx=X-ball.x, dy=Y-ball.y; const d2=dx*dx+dy*dy; const rr=(rBall+rPin)*(rBall+rPin);
       if(d2<rr){
         p.alive=false; downThisTick++;
@@ -256,9 +256,9 @@
           if(!q.alive) continue;
           const {X:x2,Y:y2,scale:sc2}=q.screen; const s2=PIN_BASE*sc2;
           const dd=(x2-ball.x)**2+(y2-ball.y)**2;
-          // ほんの少し弱体化（出過ぎ防止）
-          const chainK = 1.18 + currentPower*1.4;
-          const prob = Math.min(0.90, 0.65 + currentPower*0.18);
+          // 連鎖を少し強化（ストライク率改善）
+          const chainK = 1.25 + currentPower*1.5;
+          const prob = Math.min(0.92, 0.68 + currentPower*0.20);
           const randomGate = Math.random() < prob;
           if(dd<rr*chainK && randomGate){
             q.alive=false; downThisTick++;
