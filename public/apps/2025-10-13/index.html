@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>松村ボーリング（安定版：ピン大型化＆発射中は矢印非表示）</title>
+  <style>
+    html,body{height:100%;margin:0;background:#0b0b0b;color:#eee;font-family:system-ui,Roboto,"Noto Sans JP";overflow:hidden}
+    canvas{width:min(90vw,900px);aspect-ratio:16/9;display:block;border-radius:10px;border:1px solid #222;box-shadow:0 6px 20px rgba(0,0,0,.45);margin:0 auto;touch-action:manipulation}
+    @media (max-width: 640px){
+      canvas{height:95vh;width:auto;max-width:100vw;aspect-ratio:9/16}
+    }
+  </style>
+</head>
+<body>
+<canvas id="game" width="800" height="450" aria-label="松村ボーリング"></canvas>
+<script>
+(function(){
+  'use strict';
+  // ================= Canvas & Globals =================
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  let W = canvas.width, H = canvas.height;
+  let centerX = W/2; // must exist before resizeCanvas uses it
+  function isMobile(){ return window.matchMedia('(max-width: 640px)').matches; }
+  function resizeCanvas(){
+    const prevCenter = centerX;
+    if(isMobile()){
+      let targetH = Math.max(400, Math.floor(window.innerHeight*0.95));
+      let targetW = Math.floor(targetH * (9/16));
+      const maxW = Math.floor(window.innerWidth*0.98);
+      if(targetW > maxW){
+        targetW = maxW;
+        targetH = Math.floor(targetW * (16/9));
+      }
+      canvas.width = targetW;
+      canvas.height = targetH;
+    }else{
+      const targetW = Math.min(Math.floor(window.innerWidth*0.9), 900);
+      const targetH = Math.floor(targetW * (9/16));
+      canvas.width = targetW;
+      canvas.height = targetH;
+    }
+    W = canvas.width; H = canvas.height;
+    centerX = W/2;
+    applyResponsive();
+    // re-center existing entities horizontally to preserve layout after resize
+    const dx = centerX - prevCenter;
+    if(Array.isArray(pins)){
+      for(const p of pins){ if(p && typeof p.x0==='number') p.x0 += dx; }
+    }
+    if(ball && typeof ball.x==='number'){ ball.x += dx; }
+    // after size changes, also recompute pin scale (depends on W)
+    if(typeof recomputePinScale==='function') recomputePinScale();
+  }
+  window.addEventListener('resize', resizeCanvas);
+
+  // Responsive lane config
+  let laneNearSubtract = 100;   // W - laneNearSubtract = near lane width
+  let laneFarScale = 0.4;       // far lane width = near * laneFarScale
+  let laneTopYConst = 20;       // top y of lane
+  let laneBottomMargin = 5;     // bottom margin
+  let pinColGap = 70;           // horizontal gap between pins at near (computed)
+  let pinGapK = 0.22;           // gap ratio to laneNearW
+  let pinSizeK = 0.18;          // pin base size ratio to laneNearW
+  let PIN_BASE = 120;           // base pin size, recomputed responsively
+  function recomputePinScale(){
+    const laneNearW = W - laneNearSubtract;
+    pinColGap = Math.max(38, laneNearW * pinGapK);
+    PIN_BASE = Math.max(60, laneNearW * pinSizeK);
+  }
+  function applyResponsive(){
+    const isMobile = window.matchMedia('(max-width: 640px)').matches;
+    if(isMobile){
+      // Wider lane on mobile: subtract ~10% of width (at least 60px)
+      laneNearSubtract = Math.max(60, Math.floor(W * 0.10));
+      laneFarScale = 0.45;
+      laneTopYConst = 28;
+      laneBottomMargin = 8;
+      pinGapK = 0.20;           // slightly tighter on mobile
+      pinSizeK = 0.17;          // a bit larger pins on mobile
+    }else{
+      laneNearSubtract = 100;
+      laneFarScale = 0.4;
+      laneTopYConst = 20;
+      laneBottomMargin = 5;
+      pinGapK = 0.22;
+      pinSizeK = 0.20;          // a bit larger pins on desktop
+    }
+    recomputePinScale();
+  }
+  applyResponsive();
+
+  // quick error banner (万一の例外可視化)
+  let lastError = null;
+  window.addEventListener('error', e=>{
+    lastError = e.message || String(e.error||'error');
+    // 画面にもオーバーレイ表示（パースOK時のランタイムエラー可視化）
+    try{
+      let ov = document.getElementById('err-overlay');
+      if(!ov){
+        ov = document.createElement('div');
+        ov.id='err-overlay';
+        ov.style.cssText='position:fixed;left:0;right:0;bottom:0;background:rgba(200,0,0,.9);color:#fff;padding:8px 12px;font:12px/1.4 monospace;z-index:9999;white-space:pre-wrap;';
+        document.body.appendChild(ov);
+      }
+      ov.textContent = 'Error: '+ lastError;
+    }catch(_){/* ignore */}
+  });
+
+  // ================= State =================
+  const STATE = { AIM:'aim', POWER:'power', ROLL:'roll', SETTLE:'settle', END:'end' };
+  let state = STATE.AIM;
+  let roll = 1, totalDown = 0, settleTimer = 0, currentPower = 0;
+  let scoreFirst = 0, scoreSecond = 0; // 各投の本数
+
+  // ================= Audio (SFX) =================
+  // ここに手元の音源パスを設定してください。
+  // 例: audio/hit.mp3, audio/shout_mild.mp3, ... を同ディレクトリ or /audio/ に配置
+  const SFX = {
+    hit: 'audio/hit.m4a',
+    // 叫び音源は未同梱。必要なら audio/ に配置してパスを追加してください。
+    shout: []
+  };
+  function makeAudio(src, vol=0.9){ const a=new Audio(); a.src=src; a.preload='auto'; a.volume=vol; return a; }
+  const sfx = { hit: makeAudio(SFX.hit, 0.85), shouts: (SFX.shout||[]).map((p)=>makeAudio(p, 0.9)) };
+  let audioUnlocked=false;
+  function unlockAudio(){ if(audioUnlocked) return; audioUnlocked=true; try{ sfx.hit.muted=true; sfx.hit.play().then(()=>{ sfx.hit.pause(); sfx.hit.currentTime=0; sfx.hit.muted=false; }).catch(()=>{}); }catch(e){} }
+  function playHit(count){
+    // ベースのヒット音（1回）
+    try{ sfx.hit.currentTime=0; sfx.hit.play().catch(()=>{}); }catch(e){}
+    // 叫び音源がある場合のみ、強度に応じて追加再生
+    if(sfx.shouts && sfx.shouts.length>0){
+      let idx = 0; if(count>=8) idx=3; else if(count>=5) idx=2; else if(count>=3) idx=1; else idx=0;
+      const sh = sfx.shouts[Math.min(idx, sfx.shouts.length-1)];
+      if(sh){ try{ sh.currentTime=0; sh.play().catch(()=>{}); }catch(e){} }
+    }
+  }
+
+  // ================= Projection / Lane =================
+  // centerX is declared earlier at top; reuse here
+  const yNear = 200; const yFar = 30; const lateralNarrowK = 0.9; const sizeShrinkK = 0.7;
+  function project(x,z){ const persp=1-lateralNarrowK*z; const X=centerX+(x-centerX)*persp; const Y=yNear*(1-z)+yFar*z; const scale=1-sizeShrinkK*z; return {X,Y,scale}; }
+  function inferZFromY(y){ return Math.max(0, Math.min(1, (y - yNear) / (yFar - yNear))); }
+
+  function laneEdgesAtY(y){
+    const laneNearW=W - laneNearSubtract, laneFarW=laneNearW*laneFarScale; const laneNearX=(W-laneNearW)/2, laneFarX=(W-laneFarW)/2;
+    const t = Math.max(0, Math.min(1, (y-30)/(H-60)));
+    const left  = laneFarX*(1-t) + laneNearX*t;
+    const right = (laneFarX+laneFarW)*(1-t) + (laneNearX+laneNearW)*t;
+    return {left,right};
+  }
+  function drawLane(){
+    ctx.fillStyle = '#0f0e0d'; ctx.fillRect(0,0,W,H);
+    const laneNearW=W - laneNearSubtract, laneFarW=laneNearW*laneFarScale; const laneNearX=(W-laneNearW)/2, laneFarX=(W-laneFarW)/2; const laneTopY=laneTopYConst, laneBottomY=H-laneBottomMargin;
+    const g = ctx.createLinearGradient(0, laneBottomY, 0, laneTopY); g.addColorStop(0,'#3a332c'); g.addColorStop(1,'#2b2621');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(laneNearX,laneBottomY); ctx.lineTo(laneNearX+laneNearW,laneBottomY); ctx.lineTo(laneFarX+laneFarW,laneTopY); ctx.lineTo(laneFarX,laneTopY); ctx.closePath(); ctx.fill();
+  }
+
+  // ================= Pins (robust image loading) =================
+  const pinImg = new Image();
+  let pinImgReady = false; let pinImgFailed = false; // onerrorでtrue
+  pinImg.onload = function(){ pinImgReady = pinImg.naturalWidth > 0; if(!pinImgReady) pinImgFailed = true; };
+  pinImg.onerror = function(){ pinImgFailed = true; pinImgReady = false; };
+  pinImg.src = 'matsumura.png'; // 同ディレクトリ配置
+
+  // PIN_BASE is declared earlier at top; keep single source of truth
+  class Pin{
+    constructor(x0,z0){ this.x0=x0; this.z0=z0; this.alive=true; }
+    get screen(){ return project(this.x0, this.z0); }
+    draw(){ if(!this.alive) return; const {X,Y,scale}=this.screen; const s=PIN_BASE*scale; if(pinImgReady && !pinImgFailed){ try{ ctx.drawImage(pinImg, X-s/2, Y-s/2, s, s); }catch(e){ drawPinFallback(X,Y,scale); } } else { drawPinFallback(X,Y,scale); } }
+  }
+  function drawPinFallback(X,Y,scale){ ctx.save(); ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(X,Y,Math.max(10,12*scale),0,Math.PI*2); ctx.fill(); ctx.fillStyle='#222'; ctx.beginPath(); ctx.arc(X,Y,Math.max(8,10*scale),0,Math.PI*2); ctx.fill(); ctx.fillStyle='#fff'; ctx.font=`bold ${Math.max(12,14*scale)}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('松', X, Y+0.5); ctx.restore(); }
+  function makePinRack(){ const pins=[]; const rows=[1,2,3,4]; const zStart=0.55, zStep=0.1; const colGap=pinColGap; for(let r=0;r<rows.length;r++){ const count=rows[r]; const z=zStart+r*zStep; const offset=(count-1)*colGap/2; for(let i=0;i<count;i++){ const x=centerX - offset + i*colGap; pins.push(new Pin(x,z)); } } return pins; }
+
+  // ================= Ball =================
+  const BALL_BASE = 36;
+  class Ball{
+    constructor(){ this.reset(); }
+    reset(){ const startY=H-30; const edges=laneEdgesAtY(startY); this.x=(edges.left+edges.right)/2; this.y=startY; this.vx=0; this.vy=0; this.active=false; }
+    get scale(){ const z=inferZFromY(this.y); return 1 - sizeShrinkK*z; }
+    get radius(){ return (BALL_BASE * this.scale) * 0.55; }
+    launch(angleDeg,power){ const spd=9*(0.25+0.75*(power||0)); const rad=angleDeg*Math.PI/180; this.vx=Math.sin(rad)*spd; this.vy=-Math.cos(rad)*spd; this.active=true; }
+    step(){ if(!this.active) return; this.x+=this.vx; this.y+=this.vy; this.vx*=0.988; this.vy*=0.988; const edges=laneEdgesAtY(this.y); const left=edges.left+this.radius*0.6; const right=edges.right-this.radius*0.6; if(this.x<left){ this.x=left; this.vx=-this.vx*0.82; } if(this.x>right){ this.x=right; this.vx=-this.vx*0.82; } if(Math.abs(this.vx)+Math.abs(this.vy)<0.18 || this.y<40) this.active=false; }
+    draw(){ const r=this.radius, s=this.scale, x=this.x, y=this.y; const grd=ctx.createRadialGradient(x-6*s,y-6*s,4,x,y,r+6); grd.addColorStop(0,'#eef'); grd.addColorStop(1,'#3aa7ff'); ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.fillStyle='rgba(0,0,0,.25)'; ctx.beginPath(); ctx.arc(x+4*s,y+4*s,r*0.6,0,Math.PI*2); ctx.fill(); }
+  }
+
+  // ================= Particles (テクスチャ破裂) =================
+  const particles = [];
+  function burstAtTextured(x,y,scale,power,screenSize){
+    if(!(pinImgReady && !pinImgFailed)) { burstAtFallback(x,y,scale,power); return; }
+    const cols = 6 + Math.floor(power*4); // 6〜10
+    const rows = 6 + Math.floor(power*4);
+    const tw = (screenSize/cols), th = (screenSize/rows);
+    const sw = (pinImg.naturalWidth/cols), sh = (pinImg.naturalHeight/rows);
+    const baseSpeed = 2.2 + power*3.5;
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        const sx = c*sw, sy = r*sh; const ang = (Math.random()*Math.PI*2); const spd = baseSpeed * (0.6 + Math.random()*1.2);
+        particles.push({ type:'frag', x: x + (c-cols/2+0.5)*tw*0.06, y: y + (r-rows/2+0.5)*th*0.06, vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd - (0.8+power*0.8), g: 0.18, life: 60 + Math.floor(Math.random()*50), age: 0, rot: Math.random()*Math.PI, vr: (Math.random()-0.5)*0.5, sx, sy, sw, sh, tw, th });
+      }
+    }
+    for(let i=0;i<6;i++) particles.push({type:'ring',x,y,age:0,life:55+i*4});
+  }
+  function burstAtFallback(x,y,scale,power){ const count = Math.floor(24 + 18*power); for(let i=0;i<count;i++){ const ang=Math.random()*Math.PI*2; const spd=(2+Math.random()*4)*(0.7+power*1.3); particles.push({ type:'chunk', x, y, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd-(0.8+power*0.8), g:0.18, life:50+Math.floor(Math.random()*40), age:0, size:(6+Math.random()*10)*scale, rot:Math.random()*Math.PI, vr:(Math.random()-0.5)*0.4, tint: Math.random()<0.25? '#ff4d8d' : '#ffffff' }); } for(let i=0;i<6;i++) particles.push({type:'ring',x,y,age:0,life:55+i*4}); }
+  function stepParticles(){
+    let fragDown = 0;
+    for(const p of particles){
+      p.age++;
+      if(p.vy!==undefined) p.vy += (p.g||0);
+      if(p.vx!==undefined) p.x += p.vx;
+      if(p.vy!==undefined) p.y += p.vy;
+      if(p.vr!==undefined) p.rot += p.vr;
+
+      // 破片による巻き込み（軽量チェック）
+      if(p.type==='frag' && p.age>2 && pins && pins.length){
+        // サンプリングして負荷軽減
+        if((p.age % 2)===0 || Math.random()<0.35){
+          const baseR = 12 + currentPower*12; // 12〜24px 付近
+          const r2 = baseR*baseR;
+          for(const pin of pins){
+            if(!pin.alive) continue;
+            const {X,Y,scale} = pin.screen;
+            const dx = X - p.x, dy = Y - p.y;
+            const d2 = dx*dx + dy*dy;
+            if(d2 < r2){
+              const prob = Math.min(0.9, 0.22 + currentPower*0.45); // 高パワーほど当たりやすい
+              if(Math.random() < prob){
+                pin.alive = false; fragDown++;
+                const screenSize = PIN_BASE*scale;
+                burstAtTextured(X, Y, Math.max(0.5, scale), Math.max(0.18, currentPower), screenSize);
+              }
+            }
+          }
+        }
+      }
+    }
+    for(let i=particles.length-1;i>=0;i--){ if(particles[i].age > particles[i].life) particles.splice(i,1); }
+    if(fragDown>0){ try{ playHit(fragDown); }catch(_){} }
+  }
+  function drawParticles(){ for(const p of particles){ const alpha = Math.max(0, 1 - p.age/p.life); ctx.save(); ctx.globalAlpha = alpha; if(p.type==='frag'){ ctx.translate(p.x, p.y); ctx.rotate(p.rot||0); try{ ctx.drawImage(pinImg, p.sx, p.sy, p.sw, p.sh, -p.tw/2, -p.th/2, p.tw, p.th); } catch(e){ ctx.fillStyle='#fff'; ctx.fillRect(-p.tw/2, -p.th/2, p.tw, p.th); } } else if(p.type==='chunk'){ ctx.translate(p.x, p.y); ctx.rotate(p.rot||0); ctx.fillStyle = p.tint||'#fff'; ctx.fillRect(-(p.size||6)*0.4, -(p.size||6)*0.2, (p.size||6), (p.size||6)*0.4); } else if(p.type==='ring'){ ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(6, p.age*0.8), 0, Math.PI*2); ctx.stroke(); } ctx.restore(); } }
+
+  // ================= Collision =================
+  let pins = makePinRack(); let ball = new Ball();
+  function tryHitPins(){
+    const rBall = ball.radius; let downThisTick = 0;
+    for(const p of pins){
+      if(!p.alive) continue;
+      const {X,Y,scale}=p.screen; const s=PIN_BASE*scale; const rPin=s*0.28; // 当たり判定を少し小さく
+      const dx=X-ball.x, dy=Y-ball.y; const d2=dx*dx+dy*dy; const rr=(rBall+rPin)*(rBall+rPin);
+      if(d2<rr){
+        p.alive=false; downThisTick++;
+        burstAtTextured(X, Y, Math.max(0.6, scale), Math.max(0.2, currentPower), s);
+        // 近隣巻き込み（距離とランダムで弱体化）
+        for(const q of pins){
+          if(!q.alive) continue;
+          const {X:x2,Y:y2,scale:sc2}=q.screen; const s2=PIN_BASE*sc2;
+          const dd=(x2-ball.x)**2+(y2-ball.y)**2;
+          // 連鎖係数を上げて当たりやすく
+          const chainK = 1.25 + currentPower*1.6;
+          const prob = Math.min(0.95, 0.70 + currentPower*0.20);
+          const randomGate = Math.random() < prob;
+          if(dd<rr*chainK && randomGate){
+            q.alive=false; downThisTick++;
+            burstAtTextured(x2, y2, Math.max(0.45, sc2*0.95), Math.max(0.15, currentPower*0.85), s2);
+          }
+        }
+      }
+    }
+    if(downThisTick>0){ playHit(downThisTick); }
+  }
+  function countDown(){ let n=0; for(const p of pins) if(!p.alive) n++; return n; }
+
+  // ================= Aim Arrow =================
+  let showAimArrow=true, fixedAim=null, aimT=0, currentAim=0; // 角度（-18..+18）
+  function drawAimGuide(){ if(!(showAimArrow || fixedAim!==null)) return; const angle=(fixedAim!==null?fixedAim:(-18+36*aimT)); const rad=angle*Math.PI/180; const start={x:ball.x,y:ball.y-12}; const len=80; const end={x:start.x+Math.sin(rad)*len,y:start.y-Math.cos(rad)*len}; const eEdges=laneEdgesAtY((start.y+end.y)/2); end.x=Math.max(eEdges.left+6,Math.min(eEdges.right-6,end.x)); ctx.save(); ctx.strokeStyle='rgba(255,60,60,0.9)'; ctx.setLineDash([8,6]); ctx.lineWidth=3; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(start.x,start.y); ctx.lineTo(end.x,end.y); ctx.stroke(); const headLen=10; const headAng=Math.atan2(end.y-start.y,end.x-start.x); ctx.beginPath(); ctx.moveTo(end.x,end.y); ctx.lineTo(end.x-headLen*Math.cos(headAng-Math.PI/6),end.y-headLen*Math.sin(headAng-Math.PI/6)); ctx.lineTo(end.x-headLen*Math.cos(headAng+Math.PI/6),end.y-headLen*Math.sin(headAng+Math.PI/6)); ctx.closePath(); ctx.fillStyle='rgba(255,60,60,0.9)'; ctx.fill(); ctx.restore(); }
+
+  // ================= Power Meter =================
+  let showPower=false, fixedPower=null, powerT=0; // 0..1
+  function drawPowerMeter(){ if(!(state===STATE.POWER || fixedPower!==null || showPower)) return; const val=(fixedPower!==null?fixedPower:powerT); const x=30,y=H-90,w=W-60,h=36; ctx.save(); ctx.lineWidth=2; ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.fillStyle='rgba(0,0,0,0.35)'; if(typeof ctx.roundRect==='function'){ ctx.beginPath(); ctx.roundRect(x,y,w,h,10); ctx.fill(); ctx.stroke(); } else { ctx.beginPath(); ctx.rect(x,y,w,h); ctx.fill(); ctx.stroke(); } const grad=ctx.createLinearGradient(x,y,x+w,y); grad.addColorStop(0.00,'#445'); grad.addColorStop(0.35,'#3aa7ff'); grad.addColorStop(0.70,'#ff7f5c'); grad.addColorStop(1.00,'#ff2d2d'); ctx.fillStyle=grad; ctx.fillRect(x+4,y+4,(w-8)*val,h-8); ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1; for(let i=0;i<=10;i++){ const tx=x+4+(w-8)*(i/10); ctx.beginPath(); ctx.moveTo(tx,y+h-8); ctx.lineTo(tx,y+h-14); ctx.stroke(); } ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.font='12px system-ui'; ctx.textBaseline='bottom'; ctx.textAlign='left'; ctx.fillText('弱い',x,y-4); ctx.textAlign='right'; ctx.fillText('強い',x+w,y-4); ctx.textAlign='center'; ctx.font='bold 14px system-ui'; ctx.fillText(Math.round(val*100)+'%', x+w/2, y-4); const px=x+4+(w-8)*val, py=y+h+6; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px-7,py-12); ctx.lineTo(px+7,py-12); ctx.closePath(); ctx.fill(); ctx.restore(); }
+
+  // ================= Game Flow =================
+  function resetAll(){
+    state=STATE.AIM; roll=1; totalDown=0; scoreFirst=0; scoreSecond=0;
+    pins=makePinRack(); ball.reset();
+    showAimArrow=true; fixedAim=null; showPower=false; fixedPower=null; currentPower=0; particles.length=0;
+  }
+  function finishRoll(){
+    // この投で倒れた本数（pins は各投前に生存ピンのみなので、そのまま数える）
+    const knockedThis = countDown();
+
+    if(roll===1){
+      scoreFirst = Math.min(10, knockedThis);
+      totalDown  = Math.min(10, scoreFirst);
+    } else {
+      scoreSecond = Math.min(10 - scoreFirst, knockedThis);
+      totalDown   = Math.min(10, scoreFirst + scoreSecond);
+    }
+
+    // 次の状態へ
+    pins = pins.filter(p=>p.alive);
+    if(roll===1){
+      if(totalDown===10){
+        state=STATE.END; // ストライク
+      } else {
+        roll=2;
+        ball.reset();
+        state=STATE.AIM;
+        showAimArrow=true; fixedAim=null; showPower=false; fixedPower=null; currentPower=0;
+      }
+    } else {
+      state=STATE.END;
+    }
+  }
+
+  // ================= Loop =================
+  function render(ts){
+    drawLane();
+    // draw pins (奥→手前)
+    const sorted=[...pins].sort((a,b)=>b.z0-a.z0); for(const p of sorted) p.draw();
+
+    // meters
+    if(state===STATE.AIM && showAimArrow){ const sp=0.9; aimT=0.5+0.5*Math.sin(ts/1000*Math.PI/sp); currentAim=-18+36*aimT; }
+    if(state===STATE.POWER && showPower){ const sp=0.8; powerT=0.5+0.5*Math.sin(ts/1000*Math.PI/sp); }
+
+    // guides & UI
+    if(state!==STATE.ROLL && state!==STATE.SETTLE){ drawAimGuide(); } // 発射中は矢印非表示
+    drawPowerMeter();
+
+    // physics
+    if(state===STATE.ROLL || state===STATE.SETTLE){
+      ball.step(); tryHitPins(); stepParticles();
+      if(state===STATE.ROLL && !ball.active){ state=STATE.SETTLE; settleTimer=0; }
+      if(state===STATE.SETTLE){ stepParticles(); if(++settleTimer>40){ finishRoll(); } }
+    } else { stepParticles(); }
+
+    // particles & ball
+    drawParticles();
+    ball.draw();
+
+    // === 結果表示（END時） ===
+    if(state===STATE.END){
+      ctx.save();
+      ctx.font='bold 28px "Noto Sans JP", system-ui';
+      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#fff';
+      const first = Math.min(10, (scoreFirst||0));
+      const second = Math.min(10 - first, (scoreSecond||0));
+      const twoRollTotal = Math.min(10, first + second);
+      let msg = '';
+      if(roll===1 && first===10){
+        msg = 'ストライク！松村全滅です！';
+      } else if(roll!==1 && first<10 && (first + second)===10){
+        msg = 'スペア！惜しい！';
+      } else {
+        msg = `2投合計 ${twoRollTotal}本！`;
+      }
+      ctx.fillText(msg, W/2, H/2);
+      ctx.font='16px system-ui';
+      ctx.fillText('クリックで再挑戦', W/2, H/2+40);
+      ctx.restore();
+    }
+
+    // error banner
+    if(lastError){ ctx.fillStyle='rgba(255,0,0,.8)'; ctx.fillRect(0,H-26,W,26); ctx.fillStyle='#fff'; ctx.font='12px monospace'; ctx.fillText('Error: '+lastError, 8, H-8); }
+
+    requestAnimationFrame(render);
+  }
+
+  // ================= Input =================
+  function handleClick(){ unlockAudio();
+    if(state===STATE.AIM){
+      // 方向確定（矢印は固定→POWERへ）
+      fixedAim = currentAim; showAimArrow = false; state = STATE.POWER; showPower = true;
+    } else if(state===STATE.POWER){
+      // パワー確定→発射直前に矢印完全消去
+      fixedPower = powerT; showPower = false; currentPower = fixedPower;
+      fixedAim = null; showAimArrow = false; // 発射中は非表示
+      const ang = (fixedAim!==null ? fixedAim : currentAim);
+      ball.launch(ang, currentPower); state = STATE.ROLL;
+    } else if(state===STATE.END){ resetAll(); }
+  }
+  // Faster input on mobile: pointerdown
+  canvas.addEventListener('pointerdown', (e)=>{ e.preventDefault(); handleClick(); }, { passive:false });
+
+  // ================= Init & Tests =================
+  function start(){ resetAll(); requestAnimationFrame(render); }
+  resizeCanvas();
+  start();
+
+  // ---- Minimal test helpers (console): window.__matsumuraBowling ----
+  window.__matsumuraBowling = {
+    getState: ()=>state, getFlags: ()=>({showAimArrow,showPower,fixedAim,fixedPower,roll,totalDown,pinImgReady,pinImgFailed,particles:particles.length}),
+    resetAll, handleClick,
+    runTests(){
+      const logs=[]; const ok=(name,cond)=>{logs.push(`${cond?'✅':'❌'} ${name}`); return cond;};
+      try{
+        // T1: 初期
+        resetAll(); ok('初期:AIM', state===STATE.AIM); ok('矢印表示', showAimArrow===true); ok('ゲージ非表示', showPower===false && fixedPower===null);
+        // T2: 1クリックでPOWER
+        handleClick(); ok('POWERへ', state===STATE.POWER); ok('ゲージ描画条件OK', state===STATE.POWER);
+        // T3: 2クリックでROLL（発射中は矢印非表示）
+        handleClick(); ok('ROLLへ', state===STATE.ROLL); ok('矢印非表示', true);
+        for(let i=0;i<5;i++){ ball.step(); }
+        ok('物理ステップ可能', true);
+      }catch(e){ logs.push('❌ 例外: '+e.message); }
+      console.log('\n--- Matsumura Bowling Tests ---'); logs.forEach(l=>console.log(l)); return logs;
+    }
+  };
+})();
+</script>
+</body>
+</html>
+
