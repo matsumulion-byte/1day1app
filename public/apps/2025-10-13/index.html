@@ -215,8 +215,8 @@
       // 破片による巻き込み（軽量チェック）
       if(p.type==='frag' && p.age>2 && pins && pins.length){
         // サンプリングして負荷軽減
-        if((p.age % 2)===0 || Math.random()<0.35){
-          const baseR = 11 + currentPower*10; // やや縮小
+        if((p.age % 3)===0 || Math.random()<0.25){
+          const baseR = 10 + currentPower*8; // さらに縮小
           const r2 = baseR*baseR;
           for(const pin of pins){
             if(!pin.alive) continue;
@@ -224,7 +224,7 @@
             const dx = X - p.x, dy = Y - p.y;
             const d2 = dx*dx + dy*dy;
             if(d2 < r2){
-              const prob = Math.min(0.85, 0.20 + currentPower*0.38); // やや下げる
+              const prob = Math.min(0.75, 0.16 + currentPower*0.30); // もう少し下げる
               if(Math.random() < prob){
                 pin.alive = false; fragDown++;
                 const screenSize = PIN_BASE*scale;
