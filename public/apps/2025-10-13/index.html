@@ -116,9 +116,9 @@
 
   // ================= Audio (SFX) =================
   // ここに手元の音源パスを設定してください。
-  // 例: audio/hit.mp3, audio/shout_mild.mp3, ... を同ディレクトリ or /audio/ に配置
+  // 例: /apps/2025-10-13/audio/hit.mp3, ... を配置
   const SFX = {
-    hit: 'audio/hit.m4a',
+    hit: '/apps/2025-10-13/audio/hit.m4a',
     // 叫び音源は未同梱。必要なら audio/ に配置してパスを追加してください。
     shout: []
   };
@@ -162,7 +162,7 @@
   let pinImgReady = false; let pinImgFailed = false; // onerrorでtrue
   pinImg.onload = function(){ pinImgReady = pinImg.naturalWidth > 0; if(!pinImgReady) pinImgFailed = true; };
   pinImg.onerror = function(){ pinImgFailed = true; pinImgReady = false; };
-  pinImg.src = 'matsumura.png'; // 同ディレクトリ配置
+  pinImg.src = '/apps/2025-10-13/matsumura.png'; // 絶対パス
 
   // PIN_BASE is declared earlier at top; keep single source of truth
   class Pin{
