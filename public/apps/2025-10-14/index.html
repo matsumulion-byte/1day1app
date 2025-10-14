@@ -127,28 +127,28 @@
  * 画像URLをコードで固定設定
  *  - ここを書き換えるだけで背景＆人物を差し替え可能
  *********************/
-const DEFAULT_BG_URL = "./images/sushiya.png";      // ← 寿司屋さん背景
-const DEFAULT_PERSON_URL = "./images/sushimura.png"; // ← 松村さん写真（透過PNG想定）
+const DEFAULT_BG_URL = "/apps/2025-10-14/images/sushiya.png";      // ← 寿司屋さん背景
+const DEFAULT_PERSON_URL = "/apps/2025-10-14/images/sushimura.png"; // ← 松村さん写真（透過PNG想定）
 
 /*********************
  * メニュー（そのまま）
  *********************/
 const DEFAULT_MENU = [
-  { name: "サーモン丼", price: 780, tags:["サーモン","定番","脂のり","あっさり"], image: "./images/salmon-don.png" },
-  { name: "まぐろ丼", price: 780, tags:["まぐろ","赤身","定番","あっさり"], image: "./images/tuna-don.png" },
-  { name: "づけまぐろ丼", price: 750, tags:["まぐろ","づけ","味しっかり"], image: "./images/zuke-tuna-don.png" },
-  { name: "ねぎとろ丼", price: 650, tags:["まぐろ","たたき","やわらか","こってり"], image: "./images/negitoro-don.png" },
-  { name: "バラばくだん丼", price: 650, tags:["色々","ミックス","楽しい"], image: "./images/bara-chirashi.png" },
-  { name: "日替わり丼", price: 570, tags:["色々","ボリューム","人気"], image: "./images/kaisen-don.png" },
-  { name: "サーモンいくら丼", price: 780, tags:["いくら","サーモン","ご褒美"], image: "./images/ikura-salmon-don.png" },
-  { name: "サーモンねぎとろ丼", price: 750, tags:["サーモン","まぐろ","ミックス"], image: "./images/salmon-negitoro-don.png" },
-  { name: "どんまる丼", price: 750, tags:["サーモン","まぐろ","ミックス","満足"], image: "./images/mix-don.png" },
-  { name: "炙りトロサーモン丼", price: 650, tags:["サーモン","炙り","香ばしい"], image: "./images/aburi-salmon-don.png" },
-  { name: "穴子丼", price: 650, tags:["穴子","甘だれ","やわらか"], image: "./images/anago-don.png" },
-  { name: "しらす丼", price: 650, tags:["あっさり","白身","しらす"], image: "./images/shirasu-don.png" },
-  { name: "マグロユッケ丼", price: 750, tags:["まぐろ","ユッケ風","味しっかり","ピリ辛"], image: "./images/maguro-yukke-don.png" },
-  { name: "えんがわ丼", price: 650, tags:["白身","あっさり","えんがわ"], image: "./images/engawa-don.png" },
-  { name: "お子様テリチキ丼", price: 500, tags:["甘だれ","鶏","子ども向け"], image: "./images/terichiki-kids-don.png" },
+  { name: "サーモン丼", price: 780, tags:["サーモン","定番","脂のり","あっさり"], image: "/apps/2025-10-14/images/salmon-don.png" },
+  { name: "まぐろ丼", price: 780, tags:["まぐろ","赤身","定番","あっさり"], image: "/apps/2025-10-14/images/tuna-don.png" },
+  { name: "づけまぐろ丼", price: 750, tags:["まぐろ","づけ","味しっかり"], image: "/apps/2025-10-14/images/zuke-tuna-don.png" },
+  { name: "ねぎとろ丼", price: 650, tags:["まぐろ","たたき","やわらか","こってり"], image: "/apps/2025-10-14/images/negitoro-don.png" },
+  { name: "バラばくだん丼", price: 650, tags:["色々","ミックス","楽しい"], image: "/apps/2025-10-14/images/bara-chirashi.png" },
+  { name: "日替わり丼", price: 570, tags:["色々","ボリューム","人気"], image: "/apps/2025-10-14/images/kaisen-don.png" },
+  { name: "サーモンいくら丼", price: 780, tags:["いくら","サーモン","ご褒美"], image: "/apps/2025-10-14/images/ikura-salmon-don.png" },
+  { name: "サーモンねぎとろ丼", price: 750, tags:["サーモン","まぐろ","ミックス"], image: "/apps/2025-10-14/images/salmon-negitoro-don.png" },
+  { name: "どんまる丼", price: 750, tags:["サーモン","まぐろ","ミックス","満足"], image: "/apps/2025-10-14/images/mix-don.png" },
+  { name: "炙りトロサーモン丼", price: 650, tags:["サーモン","炙り","香ばしい"], image: "/apps/2025-10-14/images/aburi-salmon-don.png" },
+  { name: "穴子丼", price: 650, tags:["穴子","甘だれ","やわらか"], image: "/apps/2025-10-14/images/anago-don.png" },
+  { name: "しらす丼", price: 650, tags:["あっさり","白身","しらす"], image: "/apps/2025-10-14/images/shirasu-don.png" },
+  { name: "マグロユッケ丼", price: 750, tags:["まぐろ","ユッケ風","味しっかり","ピリ辛"], image: "/apps/2025-10-14/images/maguro-yukke-don.png" },
+  { name: "えんがわ丼", price: 650, tags:["白身","あっさり","えんがわ"], image: "/apps/2025-10-14/images/engawa-don.png" },
+  { name: "お子様テリチキ丼", price: 500, tags:["甘だれ","鶏","子ども向け"], image: "/apps/2025-10-14/images/terichiki-kids-don.png" },
 ];
 
 /*********************
@@ -242,7 +242,7 @@ function showResult(){
     $('#resultPrice').textContent = `¥${result.price}`;
     $('#resultImg').src = result.image;
     $('#resultImg').onerror = function() {
-      this.src = './images/sushiya.png'; // フォールバック画像
+      this.src = '/apps/2025-10-14/images/sushiya.png'; // フォールバック画像
     };
     
     // タグを表示
