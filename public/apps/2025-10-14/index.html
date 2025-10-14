@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>丼丸 Akinator</title>
+  <style>
+    :root{
+      --gold:#ffd166; --gold2:#ffb703; --text:#fffaf1; --muted:#d6d3e6; --ink:#201647;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:#0b0b12;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans JP",sans-serif}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px 16px 120px}
+
+    /* ヘッダー */
+    .brand{display:flex;align-items:center;gap:10px;margin:6px 0 14px}
+    .brand .lamp{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 30% 30%, #fff8e1, #ffd166 40%, transparent 60%), linear-gradient(180deg,#ffda85,var(--gold2));box-shadow:0 0 22px rgba(255,197,66,.55)}
+    .brand h1{font-size:clamp(22px,4.2vw,36px);margin:0;letter-spacing:.02em}
+    .brand .sub{color:var(--muted)}
+
+    .card{border:1px solid #2b2b44;border-radius:18px;background:#151527;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+
+    .toolbar{display:flex;gap:10px;align-items:center;padding:12px 14px;border-bottom:1px solid #2b2b44;flex-wrap:wrap}
+    .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid #2b2b44;background:#201647;padding:8px 12px;border-radius:999px;font-size:13px;color:#efe9ff}
+    .pill input, .pill select{background:transparent;border:none;color:var(--text);outline:none}
+    .btn{cursor:pointer;border:1px solid #6a4c00;background:linear-gradient(180deg,var(--gold),var(--gold2));color:#2b1900;padding:10px 14px;border-radius:12px;font-weight:900;letter-spacing:.02em;text-shadow:0 1px 0 rgba(255,255,255,.3)}
+    .btn.ghost{background:#201647;border-color:#2b2b44;color:#efe9ff;text-shadow:none}
+    .btn.warn{background:linear-gradient(180deg,#ff9e6e,#e85d04);border-color:#a34100;color:#2b1000}
+    .btn:active{transform:translateY(1px)}
+
+    /* ステージ：1カラム（背景画像 + キャラ画像 + 吹き出し） */
+    .stage{padding:16px}
+    .charpanel{position:relative;border-radius:16px;overflow:hidden;min-height:480px;border:1px solid #2b2b44;background:#000}
+    /* 背景は常に画像で埋める */
+    #bgImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;filter:brightness(.9)}
+    /* モバイルは縦に合わせて横をカット */
+    @media(max-width:640px){
+      #bgImg{object-fit:cover;object-position:center}
+    }
+    /* 松村さんの写真（前面） */
+    #userPhoto{position:absolute;right:2%;bottom:0;max-height:96%;width:auto;object-fit:contain;filter:drop-shadow(0 10px 20px rgba(0,0,0,.5));transform:scale(1.3);transform-origin:bottom right}
+
+    /* 吹き出し */
+    .bubble{position:absolute;left:18px;top:16px;max-width:min(88%,680px);background:#fff8e6;color:#2b1800;border-radius:14px;padding:14px 16px;border:2px solid #e7b341;font-size:20px;line-height:1.55;box-shadow:0 12px 30px rgba(0,0,0,.25);z-index:3}
+    .bubble:after{content:"";position:absolute;left:28px;bottom:-14px;border:8px solid transparent;border-top-color:#e7b341;filter:drop-shadow(0 3px 2px rgba(0,0,0,.18))}
+    .bubble:before{content:"";position:absolute;left:28px;bottom:-12px;border:8px solid transparent;border-top-color:#fff8e6}
+    .qnum{position:absolute;right:12px;top:10px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#d6d3e6;background:#0005;padding:4px 8px;border-radius:8px;z-index:4}
+
+    /* 結果表示エリア */
+    .result-area{position:absolute;left:18px;top:16px;max-width:min(88%,680px);background:#fff8e6;border-radius:14px;padding:16px;border:2px solid #e7b341;box-shadow:0 12px 30px rgba(0,0,0,.25);z-index:3}
+    .result-item{display:flex;gap:16px;align-items:center}
+    .result-item img{width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid #e7b341}
+    .result-info h3{margin:0 0 8px 0;font-size:20px;color:#2b1800;font-weight:bold}
+    .result-price{font-size:18px;color:#d2691e;font-weight:bold;margin-bottom:8px}
+    .result-tags{display:flex;flex-wrap:wrap;gap:6px}
+    .result-tags span{background:#e7b341;color:#2b1800;padding:4px 8px;border-radius:12px;font-size:12px;font-weight:500}
+
+    /* 回答：5ボタンを2段配置（上3 / 下2） */
+    .answers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px 14px;border-top:1px solid #2b2b44}
+    .answers .btn{min-height:52px}
+
+    .footer{position:fixed;inset:auto 0 0 0;background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.6)), #0b0b12;border-top:1px solid #2b2b44}
+    .footer .inner{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;gap:8px;align-items:center}
+    .grow{flex:1}
+    .caps{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#d6d3e6}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <div class="lamp"></div>
+      <div>
+        <h1>丼丸 Akinator</h1>
+      </div>
+    </div>
+
+    <div class="card" id="app">
+      <div class="toolbar">
+        <div class="grow"></div>
+        <button class="btn" id="startBtn">はじめる</button>
+        <button class="btn ghost" id="backBtn" disabled>戻る</button>
+        <button class="btn warn" id="resetBtn">リセット</button>
+      </div>
+
+      <div class="stage">
+        <section class="charpanel">
+          <div class="qnum" id="qnum">Question 0/10</div>
+          <div class="bubble" id="bubble">「はじめる」を押すと質問を始めます。準備はいいですか？」</div>
+          <!-- 結果表示エリア -->
+          <div class="result-area" id="resultArea" style="display:none;">
+            <div class="result-item">
+              <img id="resultImg" alt="おすすめ料理" />
+              <div class="result-info">
+                <h3 id="resultName"></h3>
+                <div class="result-price" id="resultPrice"></div>
+                <div class="result-tags" id="resultTags"></div>
+              </div>
+            </div>
+          </div>
+          <!-- 背景＆松村さん写真（固定URLをコード内で設定） -->
+          <img id="bgImg" alt="寿司屋の背景" />
+          <img id="userPhoto" alt="寿司屋さんの松村" />
+        </section>
+      </div>
+
+      <!-- 2段の回答ボタン（上3/下2） -->
+      <div class="answers">
+        <button class="btn" data-ans="Y">はい</button>
+        <button class="btn" data-ans="DK">分からない</button>
+        <button class="btn" data-ans="N">いいえ</button>
+        <button class="btn" data-ans="PY">たぶんそう / 部分的にそう</button>
+        <button class="btn" data-ans="PN">たぶん違う / そうでもない</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="inner">
+      <div class="grow caps">Progress: <span id="progTxt">0 / 10</span></div>
+      <div class="caps">推理精度 <span id="conf2">－</span></div>
+    </div>
+  </div>
+
+<script>
+/*********************
+ * 画像URLをコードで固定設定
+ *  - ここを書き換えるだけで背景＆人物を差し替え可能
+ *********************/
+const DEFAULT_BG_URL = "./images/sushiya.png";      // ← 寿司屋さん背景
+const DEFAULT_PERSON_URL = "./images/sushimura.png"; // ← 松村さん写真（透過PNG想定）
+
+/*********************
+ * メニュー（そのまま）
+ *********************/
+const DEFAULT_MENU = [
+  { name: "サーモン丼", price: 780, tags:["サーモン","定番","脂のり","あっさり"], image: "./images/salmon-don.png" },
+  { name: "まぐろ丼", price: 780, tags:["まぐろ","赤身","定番","あっさり"], image: "./images/tuna-don.png" },
+  { name: "づけまぐろ丼", price: 750, tags:["まぐろ","づけ","味しっかり"], image: "./images/zuke-tuna-don.png" },
+  { name: "ねぎとろ丼", price: 650, tags:["まぐろ","たたき","やわらか","こってり"], image: "./images/negitoro-don.png" },
+  { name: "バラばくだん丼", price: 650, tags:["色々","ミックス","楽しい"], image: "./images/bara-chirashi.png" },
+  { name: "日替わり丼", price: 570, tags:["色々","ボリューム","人気"], image: "./images/kaisen-don.png" },
+  { name: "サーモンいくら丼", price: 780, tags:["いくら","サーモン","ご褒美"], image: "./images/ikura-salmon-don.png" },
+  { name: "サーモンねぎとろ丼", price: 750, tags:["サーモン","まぐろ","ミックス"], image: "./images/salmon-negitoro-don.png" },
+  { name: "どんまる丼", price: 750, tags:["サーモン","まぐろ","ミックス","満足"], image: "./images/mix-don.png" },
+  { name: "炙りトロサーモン丼", price: 650, tags:["サーモン","炙り","香ばしい"], image: "./images/aburi-salmon-don.png" },
+  { name: "穴子丼", price: 650, tags:["穴子","甘だれ","やわらか"], image: "./images/anago-don.png" },
+  { name: "しらす丼", price: 650, tags:["あっさり","白身","しらす"], image: "./images/shirasu-don.png" },
+  { name: "マグロユッケ丼", price: 750, tags:["まぐろ","ユッケ風","味しっかり","ピリ辛"], image: "./images/maguro-yukke-don.png" },
+  { name: "えんがわ丼", price: 650, tags:["白身","あっさり","えんがわ"], image: "./images/engawa-don.png" },
+  { name: "お子様テリチキ丼", price: 500, tags:["甘だれ","鶏","子ども向け"], image: "./images/terichiki-kids-don.png" },
+];
+
+/*********************
+ * 5択式のYes/No設計
+ *********************/
+const ANSWER_WEIGHT = { Y:+1.0, PY:+0.6, DK:0, PN:-0.4, N:-1.0 };
+const TOTAL_Q = 10;
+const QUESTIONS = [
+  { id:'light', text:'今日はさっぱり系が良い？', plus:['あっさり','さっぱり','塩'], minus:['こってり','脂のり','甘だれ'] },
+  { id:'rich', text:'こってり/脂のりが欲しい？', plus:['こってり','脂のり','満足'], minus:['さっぱり'] },
+  { id:'salmon', text:'サーモンが食べたい？', plus:['サーモン'] },
+  { id:'tuna', text:'まぐろ(赤身)が食べたい？', plus:['まぐろ','赤身'] },
+  { id:'mix', text:'色々乗ったミックスが良い？', plus:['ミックス','色々','ボリューム'] },
+  { id:'aburi', text:'炙りの香ばしさが好き？', plus:['炙り','香ばしい'] },
+  { id:'zuke', text:'漬け/ユッケ風など味しっかりが良い？', plus:['づけ','ユッケ風','味しっかり'] },
+  { id:'ikura', text:'いくらを乗せたい？', plus:['いくら','ご褒美'] },
+  { id:'avo', text:'アボカドのまろやか系が好き？', plus:['アボカド','まろやか'], minus:['赤身'] },
+  { id:'sweet', text:'甘だれが好き？', plus:['甘だれ','やわらか'] },
+];
+
+/*********************
+ * 状態/ユーティリティ
+ *********************/
+const $ = s=>document.querySelector(s);
+function mulberry32(a){ return function(){ let t = a += 0x6D2B79F5; t = Math.imul(t ^ t>>>15, t | 1); t ^= t + Math.imul(t ^ t>>>7, t | 61); return ((t ^ t>>>14) >>> 0) / 4294967296; } }
+let menu = DEFAULT_MENU.slice();
+let step = 0; // 0..TOTAL_Q
+let answers = {}; // id -> key (Y/PY/DK/PN/N)
+
+function setProgress(){
+  $('#progTxt').textContent = `${step} / ${TOTAL_Q}`;
+  $('#qnum').textContent = `Question ${step}/${TOTAL_Q}`;
+}
+
+/*********************
+ * 推理ロジック
+ *********************/
+function scoreMenu(){
+  // 予算/同日固定はトルツメ：全メニューからスコアリング
+  let cand = menu.slice();
+  const tagScore = {};
+  for(const q of QUESTIONS){
+    const key = answers[q.id]; if(!key) continue; const w = ANSWER_WEIGHT[key];
+    (q.plus||[]).forEach(t=> tagScore[t] = (tagScore[t]||0) + w);
+    (q.minus||[]).forEach(t=> tagScore[t] = (tagScore[t]||0) - w);
+  }
+  let rng = Math.random;
+  if($('#seedMode') && $('#seedMode').value==='date'){
+    const d=new Date(); const seed=Number(`${d.getFullYear()}${(d.getMonth()+1+'').padStart(2,'0')}${(d.getDate()+'').padStart(2,'0')}`);
+    rng = mulberry32(seed);
+  }
+  const scored = cand.map(m=>{
+    const base = 1; const ts = (m.tags||[]).reduce((s,t)=> s + (tagScore[t]||0), 0);
+    const diversity = (m.tags||[]).some(t=>tagScore[t]) ? 0 : -0.2;
+    const jitter = (rng()-0.5)*0.2;
+    return { item:m, score: base + ts + diversity + jitter };
+  }).sort((a,b)=> b.score - a.score);
+  return scored;
+}
+
+function confidenceFrom(scores){
+  if(!scores.length) return 0; const [a,b] = [scores[0]?.score ?? 0, scores[1]?.score ?? 0];
+  const gap = Math.max(0, a-b); return Math.min(100, Math.round(60 + gap*25));
+}
+
+/*********************
+ * 画面遷移
+ *********************/
+function showQuestion(){
+  if(step>=TOTAL_Q){ showResult(); return; }
+  const q = QUESTIONS[step];
+  $('#bubble').textContent = q.text;
+  setProgress();
+}
+
+function showResult(){
+  const scored = scoreMenu();
+  const conf = confidenceFrom(scored);
+  $('#conf2').textContent = conf + '%';
+  
+  if(scored.length) {
+    const result = scored[0].item;
+    $('#bubble').textContent = `見えました… 今日のおすすめは「${result.name}」！`;
+    
+    // 結果表示エリアを表示
+    $('#resultArea').style.display = 'block';
+    $('#bubble').style.display = 'none';
+    
+    // 結果情報を設定
+    $('#resultName').textContent = result.name;
+    $('#resultPrice').textContent = `¥${result.price}`;
+    $('#resultImg').src = result.image;
+    $('#resultImg').onerror = function() {
+      this.src = './images/sushiya.png'; // フォールバック画像
+    };
+    
+    // タグを表示
+    const tagsHtml = result.tags.map(tag => `<span>${tag}</span>`).join('');
+    $('#resultTags').innerHTML = tagsHtml;
+  } else {
+    $('#bubble').textContent = 'むむ… 条件に合う候補が見つかりませんでした。';
+    $('#resultArea').style.display = 'none';
+  }
+}
+
+function answer(key){
+  if(step>=TOTAL_Q) return;
+  const q = QUESTIONS[step];
+  answers[q.id] = key;
+  step++; showQuestion();
+}
+
+/*********************
+ * 初期化/イベント
+ *********************/
+async function init(){
+  // 画像をコード側の固定URLで設定
+  try {
+    await Promise.all([
+      loadImage($('#bgImg'), DEFAULT_BG_URL),
+      loadImage($('#userPhoto'), DEFAULT_PERSON_URL)
+    ]);
+    console.log('すべての画像の読み込みが完了しました');
+  } catch (error) {
+    console.error('画像読み込み中にエラーが発生しました:', error);
+  }
+  setProgress();
+}
+
+// 画像読み込み関数
+function loadImage(imgElement, src) {
+  return new Promise((resolve, reject) => {
+    imgElement.src = src;
+    imgElement.onload = function() {
+      console.log('画像読み込み成功:', src);
+      resolve();
+    };
+    imgElement.onerror = function() {
+      console.error('画像読み込み失敗:', src);
+      // フォールバック画像やプレースホルダーを設定
+      imgElement.style.backgroundColor = '#333';
+      imgElement.style.display = 'flex';
+      imgElement.style.alignItems = 'center';
+      imgElement.style.justifyContent = 'center';
+      imgElement.style.color = '#fff';
+      imgElement.style.fontSize = '14px';
+      imgElement.alt = '画像読み込みエラー';
+      reject(new Error('画像読み込み失敗: ' + src));
+    };
+  });
+}
+
+// 回答ボタン
+Array.from(document.querySelectorAll('.answers .btn')).forEach(b=>{
+  b.addEventListener('click', ()=> answer(b.dataset.ans));
+});
+
+// ツールバー
+$('#startBtn').onclick = ()=>{ step=0; answers={}; showQuestion(); };
+$('#backBtn').onclick = ()=>{ if(step<=0) return; step=Math.max(0, step-1); const prevId = QUESTIONS[step]?.id; if(prevId) delete answers[prevId]; showQuestion(); };
+$('#resetBtn').onclick = ()=>{ step=0; answers={}; $('#bubble').textContent='「はじめる」を押すと質問を始めます。準備はいいですか？」'; $('#bubble').style.display='block'; $('#resultArea').style.display='none'; setProgress(); $('#conf2').textContent='－'; };
+
+init();
+</script>
+</body>
+</html>
