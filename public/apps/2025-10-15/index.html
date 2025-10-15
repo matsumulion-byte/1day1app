@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <title>マツムラン</title>
 <style>
-:root{--bg:#0e0f12;--fg:#f6f7fb;--acc:#38bdf8;--muted:#9aa0a6;}
+:root{--bg:#0e0f12;--fg:#f6f7fb;--acc:#38bdf8;--muted:#9aa0a6;--safe-bottom: env(safe-area-inset-bottom, 0px);}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{
   height:100%;margin:0;background:var(--bg);color:var(--fg);
@@ -13,7 +13,7 @@ html,body{
   overflow:hidden; overscroll-behavior:none;
 }
 canvas{image-rendering:pixelated;image-rendering:crisp-edges; touch-action:none;}
-.wrap{display:flex;flex-direction:column;height:calc(var(--vh, 1vh) * 100)}
+.wrap{display:flex;flex-direction:column;height:calc(var(--vh, 1vh) * 100);padding-bottom:var(--safe-bottom)}
 header{padding:10px 12px;display:flex;gap:10px;align-items:center;position:relative;z-index:10}
 .btn{
   border:1px solid #2a2d35;background:#171a1f;color:var(--fg);
@@ -30,7 +30,7 @@ background:linear-gradient(180deg,#0b0d1188,#0b0d11dd);backdrop-filter:blur(1.5p
 .big h1{font-size:clamp(28px,6vw,64px);margin:0 0 6px;text-shadow:0 6px 30px #0008}
 .sub{font-size:clamp(13px,2.2vw,18px);opacity:.9}
 .hud{position:absolute;right:10px;top:10px;font-size:14px;opacity:.9;background:#0b0d1299;padding:6px 10px;border-radius:10px}
-.hint{position:absolute;left:50%;bottom:14px;translate:-50% 0;font-size:12px;opacity:.9;background:#0b0d1299;padding:6px 10px;border-radius:10px}
+.hint{position:absolute;left:50%;bottom:calc(var(--safe-bottom, 0px) + 14px);translate:-50% 0;font-size:12px;opacity:.9;background:#0b0d1299;padding:6px 10px;border-radius:10px}
 
 /* スマホ向け拡大 */
 @media (max-width: 768px){
