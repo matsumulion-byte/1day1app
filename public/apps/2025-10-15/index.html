@@ -127,6 +127,9 @@ background:linear-gradient(180deg,#0b0d1188,#0b0d11dd);backdrop-filter:blur(1.5p
     const cw = wrap.clientWidth || vwW;
     const ch = wrap.clientHeight || vvH;
     W=cw; H=ch;
+    // Ground height: make the ground band taller on mobile landscape to reduce sky area
+    const landscape = (window.innerWidth >= window.innerHeight);
+    GND_H = (isMobile() && landscape) ? Math.max(GND_BASE, Math.floor(H * 0.18)) : GND_BASE;
     cvs.width=Math.floor(W*DPR); cvs.height=Math.floor(H*DPR);
     cvs.style.width=W+'px'; cvs.style.height=H+'px';
     ctx.setTransform(DPR,0,0,DPR,0,0);
@@ -172,7 +175,8 @@ background:linear-gradient(180deg,#0b0d1188,#0b0d11dd);backdrop-filter:blur(1.5p
   const RUN_BOOST=90;
   const JUMP_VY=-720;
   const HOLD_BONUS=-260;
-  const GND_H=72;
+  const GND_BASE=72;
+  let GND_H=GND_BASE;
 
   // 障害物生成範囲
   const OBSTACLE_BASE_INTERVAL=150;
