@@ -24,7 +24,7 @@ header{padding:10px 12px;display:flex;gap:10px;align-items:center;position:relat
 .canvas-wrap{position:relative;flex:1;min-height:420px}
 canvas{position:absolute;inset:0;width:100%;height:100%}
 .overlay{position:absolute;inset:0;display:grid;place-items:center;
-background:linear-gradient(180deg,#0b0d1188,#0b0d11dd);backdrop-filter:blur(1.5px)}
+background:linear-gradient(180deg,#0b0d1188,#0b0d11dd);backdrop-filter:blur(1.5px);padding-bottom:calc(var(--safe-bottom, 0px) + 10px)}
 .hidden{display:none}
 .big{text-align:center}
 .big h1{font-size:clamp(28px,6vw,64px);margin:0 0 6px;text-shadow:0 6px 30px #0008}
@@ -129,7 +129,7 @@ background:linear-gradient(180deg,#0b0d1188,#0b0d11dd);backdrop-filter:blur(1.5p
     W=cw; H=ch;
     // Ground height: make the ground band taller on mobile landscape to reduce sky area and show player fully
     const landscape = (window.innerWidth >= window.innerHeight);
-    GND_H = (isMobile() && landscape) ? Math.max(GND_BASE, Math.floor(H * 0.32)) : GND_BASE;
+    GND_H = (isMobile() && landscape) ? Math.max(GND_BASE, Math.floor(H * 0.34)) : GND_BASE;
     cvs.width=Math.floor(W*DPR); cvs.height=Math.floor(H*DPR);
     cvs.style.width=W+'px'; cvs.style.height=H+'px';
     ctx.setTransform(DPR,0,0,DPR,0,0);
