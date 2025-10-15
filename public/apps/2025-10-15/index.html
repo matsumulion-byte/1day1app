@@ -142,8 +142,10 @@ background:linear-gradient(180deg,#0b0d1188,#0b0d11dd);backdrop-filter:blur(1.5p
   const seGoal=new Audio();
   seGoal.src='data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAA';
   let muted=false;
+  // 配信環境で確実に解決できるようアセット基準パスを統一
+  const ASSET_BASE = '/apps/2025-10-15/';
   // BGM（同ディレクトリに bgm.mp3 を配置してください）
-  const bgm = new Audio('./bgm.mp3');
+  const bgm = new Audio(ASSET_BASE + 'bgm.mp3');
   bgm.loop = true;
   bgm.volume = 0.35;
   bgm.preload = 'auto';
@@ -176,7 +178,7 @@ background:linear-gradient(180deg,#0b0d1188,#0b0d11dd);backdrop-filter:blur(1.5p
 
   // ===== スプライト =====
   const sprite=new Image();
-  sprite.src='./sprite.png';
+  sprite.src=ASSET_BASE + 'sprite.png';
   // spriteReady / FRAME_* / recomputeScale are declared above to avoid TDZ
   sprite.onload=()=>{
     spriteReady=true;
@@ -192,7 +194,7 @@ background:linear-gradient(180deg,#0b0d1188,#0b0d11dd);backdrop-filter:blur(1.5p
   const obstacleImgs = [];
   for(let i=1;i<=4;i++){
     const img = new Image();
-    img.src = `/apps/2025-10-15/ob${i}.png`;
+    img.src = ASSET_BASE + `ob${i}.png`;
     obstacleImgs.push(img);
   }
   ctx.imageSmoothingEnabled=false;
