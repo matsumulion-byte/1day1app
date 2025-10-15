@@ -146,6 +146,10 @@ background:linear-gradient(180deg,#0b0d1188,#0b0d11dd);backdrop-filter:blur(1.5p
   const bgm = new Audio('./bgm.mp3');
   bgm.loop = true;
   bgm.volume = 0.35;
+  bgm.preload = 'auto';
+  bgm.addEventListener('error', ()=>{
+    console.error('[BGM] Failed to load', bgm.currentSrc || bgm.src);
+  });
   muteBtn.onclick=()=>{muted=!muted;muteBtn.textContent=muted?'🔇 サウンドOFF':'🔈 サウンドON';
     if(muted){ try{ bgm.pause(); }catch(_){} } else { if(state==='playing') { bgm.play().catch(()=>{}); } }
   };
@@ -179,6 +183,9 @@ background:linear-gradient(180deg,#0b0d1188,#0b0d11dd);backdrop-filter:blur(1.5p
     FRAME_W=Math.floor(sprite.width/FRAMES);
     FRAME_H=sprite.height;
     recomputeScale();
+  };
+  sprite.onerror=()=>{
+    console.error('[Sprite] Failed to load', sprite.currentSrc || sprite.src);
   };
 
   // ===== 障害物画像（ob1.png〜ob4.png）読み込み =====
@@ -483,7 +490,11 @@ function getPlayerHitbox(px, py){
     setTimeout(()=>{ startBtn.textContent='▶︎ スタート / リスタート'; }, 200);
     reset();
     // ユーザー操作に紐づけてBGMを開始（自動再生対策）
-    if(!muted){ bgm.currentTime = 0; bgm.play().catch(()=>{}); }
+    if(!muted){
+      try{ bgm.currentTime = 0; }catch(_){}
+      // すぐに再生できない場合は load -> play の順で再試行
+      bgm.play().catch(()=>{ try{ bgm.load(); bgm.play().catch(()=>{}); }catch(_){} });
+    }
   };
   startBtn.addEventListener('click', onStart, {passive:false});
   startBtn.addEventListener('pointerdown', onStart, {passive:false});
