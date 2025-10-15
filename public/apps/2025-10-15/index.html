@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>マツムラン</title>
+<style>
+:root{--bg:#0e0f12;--fg:#f6f7fb;--acc:#38bdf8;--muted:#9aa0a6;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{
+  height:100%;margin:0;background:var(--bg);color:var(--fg);
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;
+  overflow:hidden; overscroll-behavior:none;
+}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges; touch-action:none;}
+.wrap{display:flex;flex-direction:column;height:100%}
+header{padding:10px 12px;display:flex;gap:10px;align-items:center;position:relative;z-index:10}
+.btn{
+  border:1px solid #2a2d35;background:#171a1f;color:var(--fg);
+  padding:10px 14px;border-radius:14px;cursor:pointer;font-weight:700; touch-action:manipulation;
+}
+.btn:active{transform:translateY(1px)}
+.meta{margin-left:auto;display:flex;gap:12px;align-items:center;font-size:12px;color:var(--muted)}
+.canvas-wrap{position:relative;flex:1;min-height:420px}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;
+background:linear-gradient(180deg,#0b0d1188,#0b0d11dd);backdrop-filter:blur(1.5px)}
+.hidden{display:none}
+.big{text-align:center}
+.big h1{font-size:clamp(28px,6vw,64px);margin:0 0 6px;text-shadow:0 6px 30px #0008}
+.sub{font-size:clamp(13px,2.2vw,18px);opacity:.9}
+.hud{position:absolute;right:10px;top:10px;font-size:14px;opacity:.9;background:#0b0d1299;padding:6px 10px;border-radius:10px}
+.hint{position:absolute;left:50%;bottom:14px;translate:-50% 0;font-size:12px;opacity:.9;background:#0b0d1299;padding:6px 10px;border-radius:10px}
+
+/* スマホ向け拡大 */
+@media (max-width: 768px){
+  header{padding:12px}
+  .btn{padding:12px 16px; font-size:16px; border-radius:16px}
+  .hud{font-size:15px}
+  .hint{font-size:13px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <button id="startBtn" class="btn">▶︎ スタート / リスタート</button>
+    <button id="muteBtn" class="btn">🔈 サウンドON</button>
+    <div class="meta">
+      <span id="meters">0 m</span>
+    </div>
+  </header>
+
+  <div class="canvas-wrap" id="stage">
+    <canvas id="game"></canvas>
+
+    <div id="startOverlay" class="overlay">
+      <div class="big">
+        <h1>上を向いて歩こうラン</h1>
+        <div class="sub">タップ/クリックでジャンプ。どこまで行けるか競おう。</div>
+      </div>
+    </div>
+    <div id="deadOverlay" class="overlay hidden">
+      <div class="big">
+        <h1 style="color:#fca5a5">ゲームオーバー</h1>
+        <div class="sub">ぶつかっちゃった…（再挑戦は上のボタン）</div>
+      </div>
+    </div>
+
+    <div id="orientOverlay" class="overlay hidden">
+      <div class="big">
+        <h1>横向き専用</h1>
+        <div class="sub">スマホは横に回転してプレイしてください。</div>
+      </div>
+    </div>
+
+    <div class="hud" id="hud">距離: 0m / ベスト: 0m</div>
+    <div class="hint">画面どこでもタップでジャンプ（長押しで高く）<br>※Dキーで当たり判定表示ON/OFF</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const cvs=document.getElementById('game');
+  const ctx=cvs.getContext('2d');
+  const wrap=document.getElementById('stage');
+  const startBtn=document.getElementById('startBtn');
+  const muteBtn=document.getElementById('muteBtn');
+  const metersEl=document.getElementById('meters');
+  const hudEl=document.getElementById('hud');
+  const startOv=document.getElementById('startOverlay');
+  const deadOv=document.getElementById('deadOverlay');
+  const orientOv=document.getElementById('orientOverlay');
+
+  // ===== 画面サイズ =====
+  let W=0,H=0,DPR=1;
+  function isMobile(){ return /iPhone|Android.+Mobile|Windows Phone|webOS|BlackBerry/i.test(navigator.userAgent); }
+  // ===== スプライト前方宣言（resizeより前に宣言してTDZ回避） =====
+  let spriteReady=false;
+  let FRAME_W=32,FRAME_H=48,FRAMES=4,SCALE=3;
+  function recomputeScale(){
+    const isLandscape = (window.innerWidth >= window.innerHeight);
+    const baseFrameH = FRAME_H || 48;
+    const targetH = (isMobile() && isLandscape)
+      ? Math.max(16, Math.min(Math.floor(H*0.055), Math.round(PLAYER_BOX.h*0.9)))
+      : Math.round(PLAYER_BOX.h*1.2);
+    let s = targetH / baseFrameH;
+    if (isMobile() && isLandscape) {
+      s = Math.max(0.5, Math.min(1.0, s));
+    } else {
+      s = Math.max(1.0, Math.min(3.0, s));
+    }
+    SCALE = s;
+  }
+  function resize(){
+    const cap = isMobile() ? 1.5 : 2;
+    DPR=Math.min(cap,window.devicePixelRatio||1);
+    // Fallback to viewport size if client size is temporarily 0 (e.g., during orientation changes)
+    const cw = wrap.clientWidth || window.innerWidth || 1;
+    const ch = wrap.clientHeight || window.innerHeight || 1;
+    W=cw; H=ch;
+    cvs.width=Math.floor(W*DPR); cvs.height=Math.floor(H*DPR);
+    cvs.style.width=W+'px'; cvs.style.height=H+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    updateOrientation();
+    recomputeScale();
+  }
+  addEventListener('resize',resize,{passive:true});
+  addEventListener('orientationchange',()=>{ setTimeout(resize, 0); },{passive:true});
+
+  let orientationBlocked=false;
+  function updateOrientation(){
+    const isLandscape = (window.matchMedia && window.matchMedia('(orientation: landscape)').matches) || (window.innerWidth >= window.innerHeight);
+    orientationBlocked = isMobile() && !isLandscape;
+    orientOv.classList.toggle('hidden', !orientationBlocked);
+    // ボタンは常に押せるようにする（ポートレート時はオーバーレイで案内）
+    startBtn.disabled = false;
+  }
+  // 初期レイアウト反映は、PLAYER_BOX 定義後に実行（TDZ回避）
+
+  // ===== サウンド =====
+  const seGoal=new Audio();
+  seGoal.src='data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAA';
+  let muted=false;
+  // BGM（同ディレクトリに bgm.mp3 を配置してください）
+  const bgm = new Audio('./bgm.mp3');
+  bgm.loop = true;
+  bgm.volume = 0.35;
+  muteBtn.onclick=()=>{muted=!muted;muteBtn.textContent=muted?'🔇 サウンドOFF':'🔈 サウンドON';
+    if(muted){ try{ bgm.pause(); }catch(_){} } else { if(state==='playing') { bgm.play().catch(()=>{}); } }
+  };
+
+  // ===== 物理定数 =====
+  const G=2000;
+  const RUN_BASE=230;
+  const RUN_BOOST=90;
+  const JUMP_VY=-720;
+  const HOLD_BONUS=-260;
+  const GND_H=72;
+
+  // 障害物生成範囲
+  const OBSTACLE_BASE_INTERVAL=150;
+  const OBSTACLE_VAR_INTERVAL=120;
+  const SPAWN_NEAR= W => Math.max(80, W*0.20);
+  const SPAWN_FAR = W => Math.max(420, W*0.85);
+
+  // 当たり判定（甘め）
+  const PLAYER_BOX = { w: 28, h: 40, offsetX: -2, offsetY: 6 };
+  let BEST_DIST=Number(localStorage.getItem("bestDist")||0);
+  // 初期レイアウト反映（必要な依存が揃った後に実行）
+  resize();
+
+  // ===== スプライト =====
+  const sprite=new Image();
+  sprite.src='./sprite.png';
+  // spriteReady / FRAME_* / recomputeScale are declared above to avoid TDZ
+  sprite.onload=()=>{
+    spriteReady=true;
+    FRAME_W=Math.floor(sprite.width/FRAMES);
+    FRAME_H=sprite.height;
+    recomputeScale();
+  };
+
+  // ===== 障害物画像（ob1.png〜ob4.png）読み込み =====
+  const obstacleImgs = [];
+  for(let i=1;i<=4;i++){
+    const img = new Image();
+    img.src = `./ob${i}.png`;
+    obstacleImgs.push(img);
+  }
+  ctx.imageSmoothingEnabled=false;
+  let animTime=0;
+  let DEBUG_HITBOX=false; // ← デバッグモード
+
+  // ===== RNG =====
+  let seed=20251015;
+  const rnd=()=> (seed=(seed*16807)%2147483647)/2147483647;
+
+  // ===== ワールド =====
+  let state='idle';
+  const world={ camX:0, dist:0, obs:[], spawnX:0 };
+  const ply={ x:isMobile()?W*0.25:84, y:H-GND_H-PLAYER_BOX.h, vy:0, onG:true };
+  let stars=[];
+
+  // 背景
+  function initScenery(){
+    stars=[];
+    const count=Math.floor((W*H)/9000);
+    for(let i=0;i<count;i++){
+      stars.push({x:rnd()*100000,y:Math.floor(rnd()*Math.max(80,H*0.45)),s:(rnd()<0.85?1:2)});
+    }
+  }
+
+  function reset(){
+    resize();
+    seed=Date.now()%1e9;
+    state='playing';
+    world.camX=0; world.dist=0; world.obs.length=0; world.spawnX=0;
+    ply.x=isMobile()?W*0.25:84; ply.y=H-GND_H-PLAYER_BOX.h; ply.vy=0; ply.onG=true;
+    startOv.classList.add('hidden'); deadOv.classList.add('hidden');
+    initScenery();
+    spawnMoreObstacles(1,true);
+    tPrev=performance.now();
+  }
+
+  // ===== 障害物生成 =====
+  function spawnMoreObstacles(diff=1, forceKick=false){
+    const near = world.camX + SPAWN_NEAR(W);
+    const far  = world.camX + SPAWN_FAR(W);
+    if (world.spawnX < near || forceKick) world.spawnX = near - 40;
+    const untilX = far;
+    const lerp = (a,b,t)=> a + (b-a)*t;
+    const OB_KIND_COUNT = 4;
+    while (world.spawnX < untilX) {
+      const baseInterval = OBSTACLE_BASE_INTERVAL + rnd()*OBSTACLE_VAR_INTERVAL;
+      const interval = Math.max(40, baseInterval / diff);
+      world.spawnX += interval;
+      let ox = world.spawnX + (rnd()*140 - 70);
+      const doBias = rnd() < (isMobile() ? 0.3 : 0.5);
+      if (doBias) {
+        const centerX = world.camX + ply.x;
+        const bias = isMobile() ? 0.25 : 0.45;
+        ox = lerp(ox, centerX, bias) + (rnd()*60 - 30);
+      }
+      const minX = world.camX + 24;
+      const maxX = world.camX + W - 24;
+      ox = Math.min(maxX, Math.max(minX, ox));
+      const size = 22 + Math.floor(rnd()*44);
+      const fall = (140 + rnd()*220) * diff;
+      const y0 = -140 + (-rnd()*260);
+      // サイズ帯に応じて画像種別を選択（0:小, 1:中, 2:大, 3:特大）
+      const kind = (size <= 28) ? 0 : (size <= 40) ? 1 : (size <= 56) ? 2 : 3;
+      world.obs.push({
+        x: ox, y: y0, w: size, h: size, vy: fall, k: kind,
+        c: pick(['#93c5fd','#fca5a5','#fcd34d','#86efac','#fbbf24'])
+      });
+    }
+    function pick(arr){ return arr[Math.floor(rnd()*arr.length)]; }
+  }
+
+  // ===== 入力 =====
+  let holding=false,holdT=0;
+  const jumpStart=()=>{ if(state!=='playing')return; if(ply.onG){ ply.vy=JUMP_VY; ply.onG=false; holding=true; holdT=0; } };
+  const jumpEnd=()=> holding=false;
+
+  wrap.addEventListener('touchmove', e=>{ e.preventDefault(); }, {passive:false});
+  wrap.addEventListener('pointerdown', e=>{ if(e.target===startBtn) return; e.preventDefault(); jumpStart(); }, {passive:false});
+  wrap.addEventListener('pointerup', e=>{ if(e.target===startBtn) return; e.preventDefault(); jumpEnd(); }, {passive:false});
+  addEventListener('keydown', e=>{
+    if(e.code==='Space'||e.code==='ArrowUp') jumpStart();
+    if(e.code==='KeyM'){ muted=!muted; muteBtn.textContent = muted ? '🔇 サウンドOFF' : '🔈 サウンドON'; }
+    if(e.code==='KeyD'){ DEBUG_HITBOX=!DEBUG_HITBOX; console.log("Debug:",DEBUG_HITBOX); }
+  });
+  addEventListener('keyup', e=>{ if(e.code==='Space'||e.code==='ArrowUp') jumpEnd(); });
+
+  // ===== ループ =====
+  let tPrev=0;
+  function loop(tNow){
+    const dt=Math.min(0.032,(tNow-tPrev)/1000||0.016); tPrev=tNow;
+    if(state==='playing') update(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  function update(dt){
+    if(orientationBlocked){ orientOv.classList.remove('hidden'); return; }
+    const dist=world.dist;
+    const diffFactor=1+Math.min(1.5, dist/10000);
+    const runSpeed=(RUN_BASE+RUN_BOOST*0.6)*diffFactor;
+    world.dist += runSpeed*dt;
+    const camOffset = isMobile() ? W * 0.22 : 120;
+    world.camX = world.dist - camOffset;
+    spawnMoreObstacles(diffFactor);
+
+    if(!ply.onG){
+      if(holding && holdT<0.12){ ply.vy += HOLD_BONUS*dt*6; holdT += dt; }
+      ply.vy += G * dt * diffFactor;
+    }
+    ply.y += ply.vy*dt;
+    const groundY = H - GND_H - PLAYER_BOX.h;
+    if(ply.y>=groundY){ ply.y=groundY; ply.vy=0; ply.onG=true; }
+
+    for(const o of world.obs){
+      o.y += o.vy * dt * diffFactor;
+      if(intersect(ply.x, ply.y, PLAYER_BOX.w, PLAYER_BOX.h, o.x - world.camX, o.y, o.w, o.h)){
+        state='dead';
+        deadOv.classList.remove('hidden');
+        const thisDist = Math.floor(world.dist);
+        if(thisDist > BEST_DIST){ BEST_DIST = thisDist; localStorage.setItem("bestDist", BEST_DIST); }
+        deadOv.innerHTML = `
+          <div class="big">
+            <h1 style="color:#fca5a5">ゲームオーバー</h1>
+            <div class="sub" style="font-size:18px; margin-top:8px;">
+              今回の距離：<b style="font-size:22px; color:#fcd34d;">${thisDist}m</b><br>
+              ベスト距離：<b style="color:#38bdf8;">${BEST_DIST}m</b>
+            </div>
+            <div class="sub" style="margin-top:10px;">上のボタンで再挑戦</div>
+          </div>`;
+        if(!muted){ seGoal.currentTime=0; seGoal.play().catch(()=>{}); }
+        break;
+      }
+    }
+    metersEl.textContent = Math.floor(world.dist) + " m";
+    hudEl.textContent = `距離: ${Math.floor(world.dist)}m / ベスト: ${BEST_DIST}m`;
+    animTime += dt * (ply.onG?8:6);
+  }
+
+  function intersect(ax, ay, aw, ah, bx, by, bw, bh){
+  // ax,ay はプレイヤーの論理座標（左上）。まず実ヒットボックスを取得
+  const hb = getPlayerHitbox(ax, ay);
+  return (
+    hb.x < bx + bw &&
+    hb.x + hb.w > bx &&
+    hb.y < by + bh &&
+    hb.y + hb.h > by
+  );
+}
+
+
+// スプライトの描画矩形 -> 当たり矩形を導出
+function getPlayerHitbox(px, py){
+  // 0-1に収める小道具
+  const clamp = (v,min,max)=> Math.max(min, Math.min(max, v));
+  const lerp  = (a,b,t)=> a + (b-a)*t;
+
+  // 描画と同じ値
+  const dw = spriteReady ? FRAME_W * SCALE : PLAYER_BOX.w;
+  const dh = spriteReady ? FRAME_H * SCALE : PLAYER_BOX.h;
+  const drawX = px - (dw - PLAYER_BOX.w) / 2;
+  const drawY = py + PLAYER_BOX.h - dh;
+
+  // 難易度の進行：距離4,000mで徐々にノーマルへ（好みで距離変更OK）
+  const t = clamp(world.dist / 4000, 0, 1);
+
+  // 余白率（序盤はヒットボックスをかなり小さく、進むほど少し大きく）
+  //           E A S Y             →           N O R M A L
+  const mx       = lerp(dw * 0.44,               dw * 0.36,               t); // 左右マージン（小さめ当たり）
+  const myTop    = lerp(dh * 0.40,               dh * 0.30,               t); // 上マージン（小さめ当たり）
+  const myBottom = lerp(dh * 0.26,               dh * 0.18,               t); // 下マージン（小さめ当たり）
+
+  const x = drawX + mx;
+  const w = Math.max(2, dw - mx*2);
+  const baseH = Math.max(2, dh - myTop - myBottom);
+  const h = Math.max(2, Math.floor(baseH * 0.6));
+  const y = drawY + myTop + Math.floor((baseH - h) / 2); // 中央寄せ
+  return { x, y, w, h };
+}
+
+  // ===== 描画 =====
+  function render(){
+    ctx.clearRect(0,0,W,H);
+    drawAutumnNight();
+
+    // 障害物
+    for(const o of world.obs){
+      const sx=o.x-world.camX; if(sx<-120||sx>W+120) continue;
+      const k = o.k || 0;
+      const obImg = obstacleImgs[k];
+      if (obImg && obImg.complete && obImg.naturalWidth > 0) {
+        // 優先：個別画像で描画
+        ctx.imageSmoothingEnabled=false;
+        ctx.drawImage(obImg, sx, o.y, o.w, o.h);
+        ctx.imageSmoothingEnabled=true;
+      } else if (spriteReady) {
+        // 次点：スプライトのフレーム 0-3 を使用
+        const sX = (k % 4) * FRAME_W;
+        ctx.imageSmoothingEnabled=false;
+        ctx.drawImage(sprite, sX, 0, FRAME_W, FRAME_H, sx, o.y, o.w, o.h);
+        ctx.imageSmoothingEnabled=true;
+      } else {
+        // フォールバック：色矩形
+        ctx.fillStyle=o.c; ctx.fillRect(sx,o.y,o.w,o.h);
+      }
+    }
+
+    // プレイヤー
+    const px=ply.x, py=ply.y;
+    ctx.globalAlpha=0.22;
+    ctx.beginPath(); ctx.ellipse(px+PLAYER_BOX.w/2, H-GND_H+6, 24,6,0,0,Math.PI*2);
+    ctx.fillStyle='#000'; ctx.fill(); ctx.globalAlpha=1;
+
+    if(spriteReady){
+      ctx.imageSmoothingEnabled=false;
+      const frame=Math.floor(animTime)%FRAMES;
+      const sx=frame*FRAME_W, sy=0;
+      const dw=FRAME_W*SCALE, dh=FRAME_H*SCALE;
+      const drawX=px-(dw-PLAYER_BOX.w)/2;
+      const drawY=py+PLAYER_BOX.h-dh;
+      ctx.drawImage(sprite, sx, sy, FRAME_W, FRAME_H, drawX, drawY, dw, dh);
+      ctx.imageSmoothingEnabled=true;
+    } else {
+      ctx.fillStyle='#38bdf8'; ctx.fillRect(px,py,PLAYER_BOX.w,PLAYER_BOX.h);
+    }
+
+    // ===== ヒットボックス可視化 =====
+    if (DEBUG_HITBOX) {
+  // プレイヤー（赤）
+  const hb = getPlayerHitbox(px, py);
+  ctx.strokeStyle = '#ff4444';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(hb.x, hb.y, hb.w, hb.h);
+
+  // 障害物（緑）
+  ctx.strokeStyle = '#00ff00';
+  for (const o of world.obs) {
+    const sx = o.x - world.camX;
+    if (sx < -120 || sx > W + 120) continue;
+    ctx.strokeRect(sx, o.y, o.w, o.h);
+  }
+}
+
+
+  }
+
+  // ===== 背景描画 =====
+  function drawAutumnNight(){
+    if (W <= 0 || H <= 0) return;
+    const sky=ctx.createLinearGradient(0,0,0,H);
+    sky.addColorStop(0,'#0a0e26'); sky.addColorStop(0.6,'#0b1020'); sky.addColorStop(1,'#0a0d14');
+    ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#e5e7eb';
+    for(const st of stars){
+      const sx=st.x-world.camX*0.2;
+      const px=((sx%100000)+100000)%W;
+      if(px<-2||px>W+2) continue;
+      ctx.fillRect(Math.floor(px),st.y,st.s,st.s);
+    }
+    const moonX=Math.floor(W*0.78), moonY=Math.floor(H*0.18);
+    ctx.fillStyle='#fde68a'; ctx.beginPath(); ctx.arc(moonX,moonY,10,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#0a0e26'; ctx.beginPath(); ctx.arc(moonX+4,moonY-2,10,0,Math.PI*2); ctx.fill();
+    const baseY1=Math.floor(H*0.62);
+    ctx.fillStyle='#0c1326';
+    for(let x=-((world.camX*0.35)%120);x<W;x+=120){
+      const h=12+Math.floor(Math.sin((x+world.camX*0.1)/90)*8);
+      ctx.fillRect(x,baseY1-h,80,h);
+    }
+    const baseY2=H-GND_H-10;
+    for(let x=-((world.camX*0.6)%90);x<W;x+=90){
+      ctx.fillStyle='#1f2937'; ctx.fillRect(x+40,baseY2-22,4,22);
+      const leafCol=['#f59e0b','#ef4444','#d97706'][((x/90)&3)%3];
+      ctx.fillStyle=leafCol;
+      ctx.fillRect(x+34,baseY2-30,4,4);
+      ctx.fillRect(x+38,baseY2-26,6,5);
+      ctx.fillRect(x+46,baseY2-30,5,5);
+      ctx.fillRect(x+42,baseY2-33,4,4);
+    }
+    for(let x=-((world.camX)%220);x<W;x+=220){
+      const poleX=x+20;
+      ctx.fillStyle='#20252e'; ctx.fillRect(poleX,H-GND_H-50,3,50);
+      ctx.fillStyle='#fcd34d'; ctx.fillRect(poleX-3,H-GND_H-52,9,6);
+      ctx.globalAlpha=0.15;
+      ctx.beginPath(); ctx.ellipse(poleX+1, H-GND_H-48, 26,10,0,0,Math.PI*2);
+      ctx.fillStyle='#fcd34d'; ctx.fill(); ctx.globalAlpha=1;
+    }
+    ctx.fillStyle='#11161d'; ctx.fillRect(0,H-GND_H,W,GND_H);
+    ctx.fillStyle='#fbbf24';
+    for(let x=-((world.camX)%50);x<W;x+=50){ ctx.fillRect(x,H-GND_H+22,22,3); }
+  }
+
+  const onStart = (e)=>{
+    e && e.preventDefault();
+    startBtn.textContent = '⏳ 準備中...';
+    setTimeout(()=>{ startBtn.textContent='▶︎ スタート / リスタート'; }, 200);
+    reset();
+    // ユーザー操作に紐づけてBGMを開始（自動再生対策）
+    if(!muted){ bgm.currentTime = 0; bgm.play().catch(()=>{}); }
+  };
+  startBtn.addEventListener('click', onStart, {passive:false});
+  startBtn.addEventListener('pointerdown', onStart, {passive:false});
+  // 初期化：常にループを開始（描画のみ先行、stateで更新制御）
+  requestAnimationFrame(loop);
+  drawAutumnNight();
+})();
+</script>
+</body>
+</html>
