@@ -13,7 +13,7 @@ html,body{
   overflow:hidden; overscroll-behavior:none;
 }
 canvas{image-rendering:pixelated;image-rendering:crisp-edges; touch-action:none;}
-.wrap{display:flex;flex-direction:column;height:100%}
+.wrap{display:flex;flex-direction:column;height:calc(var(--vh, 1vh) * 100)}
 header{padding:10px 12px;display:flex;gap:10px;align-items:center;position:relative;z-index:10}
 .btn{
   border:1px solid #2a2d35;background:#171a1f;color:var(--fg);
@@ -95,6 +95,11 @@ background:linear-gradient(180deg,#0b0d1188,#0b0d11dd);backdrop-filter:blur(1.5p
   // ===== 画面サイズ =====
   let W=0,H=0,DPR=1;
   function isMobile(){ return /iPhone|Android.+Mobile|Windows Phone|webOS|BlackBerry/i.test(navigator.userAgent); }
+  function updateVh(){
+    const usableH = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    const vh = usableH * 0.01;
+    document.documentElement.style.setProperty('--vh', vh + 'px');
+  }
   // ===== スプライト前方宣言（resizeより前に宣言してTDZ回避） =====
   let spriteReady=false;
   let FRAME_W=32,FRAME_H=48,FRAMES=4,SCALE=3;
@@ -113,11 +118,14 @@ background:linear-gradient(180deg,#0b0d1188,#0b0d11dd);backdrop-filter:blur(1.5p
     SCALE = s;
   }
   function resize(){
+    updateVh();
     const cap = isMobile() ? 1.5 : 2;
     DPR=Math.min(cap,window.devicePixelRatio||1);
     // Fallback to viewport size if client size is temporarily 0 (e.g., during orientation changes)
-    const cw = wrap.clientWidth || window.innerWidth || 1;
-    const ch = wrap.clientHeight || window.innerHeight || 1;
+    const vwW = window.innerWidth || 1;
+    const vvH = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 1;
+    const cw = wrap.clientWidth || vwW;
+    const ch = wrap.clientHeight || vvH;
     W=cw; H=ch;
     cvs.width=Math.floor(W*DPR); cvs.height=Math.floor(H*DPR);
     cvs.style.width=W+'px'; cvs.style.height=H+'px';
@@ -127,6 +135,8 @@ background:linear-gradient(180deg,#0b0d1188,#0b0d11dd);backdrop-filter:blur(1.5p
   }
   addEventListener('resize',resize,{passive:true});
   addEventListener('orientationchange',()=>{ setTimeout(resize, 0); },{passive:true});
+  // 初期vh設定
+  updateVh();
 
   let orientationBlocked=false;
   function updateOrientation(){
