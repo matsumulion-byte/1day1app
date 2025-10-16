@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>松村神経衰弱</title>
+<style>
+  :root{
+    --bg:#0c0f14; --panel:#121720; --fg:#e8eef6; --muted:#9aa7b4;
+    --acc:#4fd1c5; --gap-sm:16px; --gap-lg:20px; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--fg);
+    font-family:ui-sans-serif,system-ui,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+    overflow:hidden; /* ← スクロール抑止 */
+  }
+  .app{
+    display:grid;
+    grid-template-rows:56px 1fr 56px;
+    height:100dvh; /* ← ビューポート高さに固定 */
+  }
+
+  .app-header,.app-footer{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 16px; background:var(--panel);
+    box-shadow:0 2px 12px rgba(0,0,0,.25);
+  }
+  .app-header h1{font-size:16px; margin:0}
+  .status{display:flex; gap:12px; font-size:13px; color:var(--muted)}
+  .status strong{color:var(--fg); font-weight:700}
+
+  .board{
+    position:relative;
+    padding: var(--gap-sm);
+    display:grid; gap: var(--gap-sm);
+    grid-template-columns: repeat(2, 1fr);
+    align-content:center;
+    width:100%; max-width:960px; margin:0 auto;
+    transform-origin: top center; /* ← スケール基点 */
+  }
+  @media (min-width:768px){
+    .board{ gap:var(--gap-lg); padding:var(--gap-lg); grid-template-columns:repeat(4,1fr);}
+  }
+
+  .card{
+    position:relative; width:100%; aspect-ratio:3/4;
+    border-radius:var(--radius);
+    border:1px solid rgba(255,255,255,.08);
+    background:linear-gradient(180deg,#1b2330,#121720);
+    box-shadow:0 6px 18px rgba(0,0,0,.35);
+    cursor:pointer; -webkit-tap-highlight-color:transparent;
+    transition:transform .08s ease, box-shadow .08s ease, filter .2s ease;
+    overflow:hidden;
+  }
+  .card:active{ transform:scale(.98); box-shadow:0 3px 12px rgba(0,0,0,.4);}
+  .card[disabled]{cursor:default; filter:grayscale(.5) brightness(.85);}
+  .face{position:absolute; inset:0; border-radius:inherit; background-size:cover; background-position:center; transition:opacity .18s ease;}
+  .back{background: radial-gradient(800px 500px at 70% -10%, #192436 0%, #111824 40%, #0c0f14 100%);}
+  .front{opacity:0}
+  .card.flipped .front{opacity:1}
+  .card.flipped .back{opacity:0}
+  .card.matched{box-shadow:0 0 0 2px var(--acc), 0 8px 22px rgba(0,0,0,.45); border-color:rgba(79,209,197,.4);}
+
+  /* フッター（トーストのみ） */
+  .match-toast{
+    font-weight:800; letter-spacing:.02em;
+    opacity:0; transform:translateY(6px);
+    transition:all .2s ease;
+  }
+  .app-footer.show .match-toast{opacity:1; transform:translateY(0)}
+
+  /* 結果パネル */
+  .result-panel{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.55);
+    opacity:0; pointer-events:none;
+    transition:opacity .25s ease;
+    z-index:999; /* ← 前面に */
+  }
+  .result-panel.show{opacity:1; pointer-events:auto;}
+  .result-card{
+    background:rgba(18,23,32,.95);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px; padding:22px 22px;
+    width:min(420px,92vw);
+    box-shadow:0 16px 40px rgba(0,0,0,.45);
+    text-align:center;
+  }
+  .result-card h2{margin:0 0 10px; font-size:22px}
+  .result-card p.lead{margin:0 0 14px; color:var(--muted)}
+  .stats{list-style:none; padding:0; margin:0 0 16px; display:grid; gap:8px;}
+  .stats li{display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-radius:10px; background:#111824; border:1px solid rgba(255,255,255,.06); font-size:14px;}
+  .stats li span.value{font-weight:800;}
+  .primary-btn{
+    display:inline-block; width:100%;
+    padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.1);
+    background:linear-gradient(180deg,#243347,#1a2330);
+    color:var(--fg); font-weight:800; cursor:pointer;
+  }
+
+  .sr-only{position:absolute !important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>松村神経衰弱</h1>
+      <div class="status" aria-live="polite" aria-atomic="true">
+        <span class="miss">ミス <strong id="missCount">0/2</strong></span>
+        <span class="left">残り <strong id="leftPairs">4</strong></span>
+      </div>
+    </header>
+
+    <main class="board" id="board" aria-label="カード盤面">
+      <div class="result-panel" id="resultPanel" aria-hidden="true">
+        <div class="result-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+          <h2 id="resultTitle">結果</h2>
+          <p class="lead" id="resultSubtitle">残念！またチャレンジしてね！</p>
+          <ul class="stats">
+            <li><span>時間</span><span class="value" id="statTime">-</span></li>
+            <li><span>ミス回数</span><span class="value" id="statMiss">-</span></li>
+            <li><span>試行回数</span><span class="value" id="statTries">-</span></li>
+            <li><span>ペア達成</span><span class="value" id="statPairs">-</span></li>
+          </ul>
+          <button class="primary-btn" id="replayBtn">もう一度チャレンジする</button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="app-footer" id="footer">
+      <div class="match-toast" id="toast" aria-hidden="true">松村です！</div>
+    </footer>
+
+    <!-- サウンド -->
+    <audio id="se-match" src="/app/2025-10-16/sounds/matsumura_desu.mp3" preload="auto"></audio>
+    <audio id="se-clear" src="/app/2025-10-16/sounds/clear.mp3" preload="auto"></audio>
+    <audio id="se-over"  src="/app/2025-10-16/sounds/over.mp3"  preload="auto"></audio>
+
+    <div class="sr-only" aria-live="polite" id="live"></div>
+  </div>
+
+<script>
+(() => {
+  const IMAGE_PATHS = [
+    "/app/2025-10-16/images/m1.jpg","/app/2025-10-16/images/m2.jpg","/app/2025-10-16/images/m3.jpg","/app/2025-10-16/images/m4.jpg",
+  ];
+  const MAX_MISS = 2;
+  const HEADER_H = 56;
+  const FOOTER_H = 56;
+
+  const board = document.getElementById("board");
+  const missCountEl = document.getElementById("missCount");
+  const leftPairsEl = document.getElementById("leftPairs");
+  const footer = document.getElementById("footer");
+  const toast = document.getElementById("toast");
+  const live = document.getElementById("live");
+  const resultPanel = document.getElementById("resultPanel");
+  const resultTitle = document.getElementById("resultTitle");
+  const resultSubtitle = document.getElementById("resultSubtitle");
+  const statTime = document.getElementById("statTime");
+  const statMiss = document.getElementById("statMiss");
+  const statTries = document.getElementById("statTries");
+  const statPairs = document.getElementById("statPairs");
+  const replayBtn = document.getElementById("replayBtn");
+
+  const seMatch = document.getElementById("se-match");
+  const seClear = document.getElementById("se-clear");
+  const seOver  = document.getElementById("se-over");
+
+  let deck = [], firstPick=null, lock=false, miss=0, leftPairs=4;
+  let tries=0, matchedPairs=0, startedAt=0;
+
+  const shuffle = (arr)=>{for(let i=arr.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+  const vibrate=(p)=>{if(navigator.vibrate)navigator.vibrate(p);}
+  const playSafe=(a)=>{a&&a.currentTime!==undefined&&(a.currentTime=0);a&&a.play().catch(()=>{});}
+  const showToast=()=>{footer.classList.add("show");setTimeout(()=>footer.classList.remove("show"),800);}
+  const updateHUD=()=>{missCountEl.textContent=`${miss}/${MAX_MISS}`;leftPairsEl.textContent=`${leftPairs}`;}
+  const setCardImage=(el,url)=>{el.querySelector(".front").style.backgroundImage=`url("${url}")`;}
+  const createCardEl=(i,img)=>{const b=document.createElement("button");b.className="card";b.innerHTML=`<div class="face back"></div><div class="face front"></div>`;setCardImage(b,img);return b;}
+
+  const onCardClick=(card)=>{
+    if(lock||card.matched||card.el.classList.contains("flipped"))return;
+    if(tries===0 && matchedPairs===0 && miss===0 && !startedAt){startedAt=performance.now();}
+    card.el.classList.add("flipped");
+    if(!firstPick){firstPick=card;return;}
+    lock=true; const second=card; tries++;
+    if(firstPick.img===second.img){
+      firstPick.matched=second.matched=true;
+      firstPick.el.classList.add("matched");
+      second.el.classList.add("matched");
+      matchedPairs++; leftPairs--; updateHUD();
+      playSafe(seMatch); vibrate(50); showToast();
+      if(leftPairs===0){setTimeout(()=>endGame(true),250);}else{firstPick=null;lock=false;}
+    }else{
+      miss++; updateHUD();
+      setTimeout(()=>{
+        firstPick.el.classList.remove("flipped");
+        second.el.classList.remove("flipped");
+        firstPick=null;
+        if(miss>=MAX_MISS){endGame(false);}else{lock=false;}
+      },650);
+    }
+  };
+
+  const endGame=(cleared)=>{
+    deck.forEach(c=>c.el.setAttribute("disabled","true"));
+    lock=true;
+    const elapsedMs=Math.max(0,(performance.now()-(startedAt||performance.now())));
+    const sec=Math.round(elapsedMs)/1000;
+    resultTitle.textContent=cleared?"全ペア達成！松村です！":"ゲームオーバー";
+    resultSubtitle.textContent=cleared?"お見事！コンプリート！":"残念！またチャレンジしてね！";
+    statTime.textContent=`${sec.toFixed(1)} 秒`;
+    statMiss.textContent=`${miss} 回`;
+    statTries.textContent=`${tries} 回`;
+    statPairs.textContent=`${matchedPairs} / 4`;
+    resultPanel.classList.add("show");
+    resultPanel.setAttribute("aria-hidden","false");
+    if(cleared){playSafe(seClear);vibrate([40,40,80]);}
+    else{playSafe(seOver);vibrate([120,60,120]);}
+  };
+
+  const buildDeck=()=>{
+    const imgs=[...IMAGE_PATHS,...IMAGE_PATHS];shuffle(imgs);
+    deck=imgs.map((img,i)=>({id:i,img,matched:false,el:createCardEl(i,img)}));
+  };
+  const mountBoard=()=>{
+    board.querySelectorAll(".card").forEach(c=>c.remove());
+    deck.forEach(c=>{board.appendChild(c.el);c.el.addEventListener("click",()=>onCardClick(c));});
+    board.appendChild(resultPanel); // resultPanelを最前面に
+  };
+  const resetGame=()=>{
+    miss=0;leftPairs=4;firstPick=null;lock=false;tries=0;matchedPairs=0;startedAt=0;
+    updateHUD();resultPanel.classList.remove("show");resultPanel.setAttribute("aria-hidden","true");
+    buildDeck();mountBoard();fitBoard();
+  };
+
+  const preloadImages=(paths)=>{paths.forEach(src=>{const im=new Image();im.src=src;});};
+
+  // 盤面フィット処理
+  const fitBoard=()=>{
+    board.style.transform="scale(1)";
+    const naturalH=board.scrollHeight;
+    const availH=Math.max(0,window.innerHeight-HEADER_H-FOOTER_H);
+    const scale=Math.min(1,availH/naturalH||1);
+    board.style.transform=`scale(${scale})`;
+  };
+  window.addEventListener("resize",fitBoard);
+  window.addEventListener("orientationchange",fitBoard);
+
+  preloadImages(IMAGE_PATHS);
+  resetGame();
+  fitBoard();
+
+  replayBtn.addEventListener("click",resetGame);
+})();
+</script>
+</body>
+</html>
