@@ -203,19 +203,20 @@ img, .matsu {
 
 <script type="module">
 // これで index.html の場所を基準に /2025-10-17/assets/ を自動解決
-const asset = (p) => new URL(p, import.meta.url).toString();
+const asset = (p) => `/2025-10-17/assets/${p.replace('./assets/', '')}`;
 
 const FACE_IMAGES = [
-  asset('./assets/matsu1.png'),
-  asset('./assets/matsu2.png'),
-  asset('./assets/matsu3.png'),
+  asset('matsu1.png'),
+  asset('matsu2.png'),
+  asset('matsu3.png')
 ];
 
 const SND = {
-  hit:   new Audio(asset('./assets/hit.m4a')),
-  start: new Audio(asset('./assets/start.mp3')),
-  end:   new Audio(asset('./assets/end.mp3')),
+  hit:   new Audio(asset('hit.m4a')),
+  start: new Audio(asset('start.mp3')),
+  end:   new Audio(asset('end.mp3')),
 };
+
 
 
 function init(){
