@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>松村たたき！光る松村ver.</title>
+<style>
+:root{
+  --bg:#0b1020; --panel:#0f1724; --accent:#ffd166;
+  --hole:#0b1220; --text:#ffffff; --muted:#9aa6b2;
+}
+html,body{
+  height:100%; margin:0;
+  background:linear-gradient(180deg,var(--bg),#071022);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;
+  color:var(--text);
+}
+.app{max-width:480px;margin:0 auto;padding:14px;box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;gap:12px;}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.title{font-weight:700;font-size:18px;display:flex;flex-direction:column}
+.subtitle{font-size:12px;color:var(--muted)}
+.stats{display:flex;gap:8px;align-items:center}
+.chip{background:var(--panel);padding:6px 10px;border-radius:999px;font-size:14px;color:var(--muted);box-shadow:inset 0 -2px 0 rgba(0,0,0,0.4)}
+
+.board{
+  background:linear-gradient(180deg,#071227 0%, #071a2b 100%);
+  border-radius:12px;padding:14px;box-shadow:0 8px 30px rgba(2,6,23,0.6);
+  flex:1;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+.grid{
+  width:100%;max-width:420px; aspect-ratio:3/4;
+  display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(4,1fr);
+  gap:12px; padding:6px; box-sizing:border-box;
+}
+.hole{
+  position:relative; background:linear-gradient(180deg,#081224,#051020);
+  border-radius:14px; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow: inset 0 -8px 14px rgba(0,0,0,0.6), 0 6px 14px rgba(0,0,0,0.4);
+  touch-action: manipulation;
+}
+.hole.active::after{
+  content:""; position:absolute; inset:6px; border-radius:12px;
+  box-shadow:0 0 0 2px rgba(255,209,102,.22), 0 0 18px rgba(255,209,102,.16) inset;
+  pointer-events:none;
+}
+
+/* 通常松村 */
+.matsu{
+  position:absolute; left:50%; bottom:-26%;
+  transform: translateX(-50%) translateY(110%) scale(1);
+  width:74%; aspect-ratio:1/1; border-radius:50%; overflow:hidden;
+  display:grid; place-items:center; user-select:none; cursor:pointer;
+  transition: transform 180ms cubic-bezier(.2,.9,.3,1);
+  box-shadow:0 8px 18px rgba(0,0,0,0.55);
+  background:transparent; border:none;
+}
+.matsu.up{
+  transform: translateX(-50%) translateY(-6%) scale(1);
+}
+.matsu img{
+  width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;
+}
+
+/* 🌟超派手！光る松村（レア） */
+.matsu.rare {
+  position: relative;
+  z-index: 3;
+  filter: brightness(1.6) saturate(1.8) drop-shadow(0 0 15px rgba(255,255,180,0.9));
+  animation: rarePulse 0.7s ease-in-out infinite alternate;
+}
+.matsu.rare::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,180,0.8) 0%, rgba(255,255,100,0.2) 60%, transparent 80%);
+  animation: rareAura 1.5s ease-in-out infinite alternate;
+  z-index: -1;
+}
+.matsu.rare::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 70%);
+  opacity: 0;
+  animation: rareFlash 2s ease-in-out infinite;
+}
+
+/* 松村全体が脈動 */
+@keyframes rarePulse {
+  0% { transform: translateX(-50%) translateY(-6%) scale(1.05); filter: brightness(1.2); }
+  100% { transform: translateX(-50%) translateY(-6%) scale(1.2); filter: brightness(2) saturate(1.8); }
+}
+
+/* 背景オーラがゆらめく */
+@keyframes rareAura {
+  0% { transform: scale(0.9); opacity: 0.6; filter: blur(4px); }
+  100% { transform: scale(1.3); opacity: 0.9; filter: blur(6px); }
+}
+
+/* ピカッと光るフラッシュ */
+@keyframes rareFlash {
+  0%, 90% { opacity: 0; }
+  95% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+
+
+/* overlay */
+.overlay{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  padding:20px; background:rgba(2,6,23,0.8); z-index:40; backdrop-filter:blur(6px);
+}
+.panel{
+  background:linear-gradient(180deg,#071226,#082033);
+  padding:18px; border-radius:12px; max-width:420px; width:100%;
+  text-align:center; box-shadow:0 10px 30px rgba(2,6,23,0.7);
+}
+.big{font-size:28px;font-weight:800;color:var(--accent);margin:6px 0}
+.muted{color:var(--muted);font-size:14px;margin:6px 0}
+.btn{
+  background:var(--accent); border:none; padding:10px 16px; border-radius:8px;
+  font-weight:700; margin-top:12px; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,0.35);
+}
+.small{
+  font-size:13px; padding:8px 12px; border-radius:8px; background:transparent; color:var(--muted);
+  border:1px solid rgba(255,255,255,0.06);
+}
+footer{display:flex;gap:8px;align-items:center;justify-content:space-between}
+/* 📱 スマホ誤操作防止 */
+body, html {
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  overscroll-behavior: none; /* スクロールバウンス防止 */
+}
+
+img, .matsu {
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: auto;
+  touch-action: none; /* 長押し・ドラッグ防止 */
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="title">
+      <div>松村たたき！</div>
+      <div class="subtitle">30秒で何回叩ける？ 光る松村は5点！</div>
+    </div>
+    <div class="stats">
+      <div class="chip">⏱ <span id="time">30</span>s</div>
+      <div class="chip">⭐ <span id="score">0</span></div>
+      <div class="chip">❤ ∞</div>
+    </div>
+  </header>
+
+  <main class="board">
+    <div class="grid" id="grid"></div>
+  </main>
+
+  <footer>
+    <div>
+      <button id="startBtn" class="btn">スタート</button>
+      <button id="muteBtn" class="small">音：オン</button>
+    </div>
+    <div id="hint" style="color:var(--muted);font-size:13px">松村が出た穴をタップ！</div>
+  </footer>
+</div>
+
+<div id="resultOverlay" class="overlay" style="display:none">
+  <div class="panel">
+    <div style="font-size:16px;color:var(--muted)">結果発表！</div>
+    <div class="big" id="finalScore">0</div>
+    <div class="muted">おつかれさま！</div>
+    <button id="restartBtn" class="btn">もう一度</button>
+  </div>
+</div>
+
+<script type="module">
+const asset=(p)=>new URL(p,import.meta.url).toString();
+const FACE_IMAGES=[asset('./assets/matsu1.png'),asset('./assets/matsu2.png'),asset('./assets/matsu3.png')];
+const SND={hit:new Audio(asset('./assets/hit.m4a')),rare:new Audio(asset('./assets/hit.m4a')),start:new Audio(asset('./assets/start.mp3')),end:new Audio(asset('./assets/end.mp3'))};
+
+function init(){
+  const GRID_COUNT=12,POP_BASE=850,UP_MIN=700,UP_MAX=1200,GAME_TIME=30,RARE_COUNT=3;
+  const grid=document.getElementById('grid'),timeEl=document.getElementById('time'),
+        scoreEl=document.getElementById('score'),startBtn=document.getElementById('startBtn'),
+        muteBtn=document.getElementById('muteBtn'),resultOverlay=document.getElementById('resultOverlay'),
+        finalScore=document.getElementById('finalScore'),restartBtn=document.getElementById('restartBtn'),
+        hintEl=document.getElementById('hint');
+
+  let state={running:false,score:0,time:GAME_TIME,popTimers:[],spawnIntervalId:null,tickIntervalId:null,muted:false,rareTimes:[]};
+
+  const play=(a)=>{if(state.muted)return;try{a.currentTime=0;a.play().catch(()=>{});}catch(e){}};
+  const randomFace=()=>FACE_IMAGES[Math.floor(Math.random()*FACE_IMAGES.length)];
+  const randomRareTimes=()=>{ // ランダムな3タイミング（秒）
+    const times=[]; while(times.length<RARE_COUNT){const t=Math.floor(Math.random()*(GAME_TIME-3))+2;if(!times.includes(t))times.push(t);}
+    return times.sort((a,b)=>a-b);
+  };
+
+  // 穴生成
+  for(let i=0;i<GRID_COUNT;i++){
+    const hole=document.createElement('div');hole.className='hole';
+    const matsu=document.createElement('div');matsu.className='matsu';
+    const img=document.createElement('img');img.src=FACE_IMAGES[0];
+    matsu.appendChild(img);hole.appendChild(matsu);grid.appendChild(hole);
+
+    matsu.addEventListener('click',(e)=>{
+      if(!state.running||!matsu.classList.contains('up'))return;
+      e.stopPropagation();
+      const isRare=matsu.classList.contains('rare');
+      matsu.classList.remove('up'); matsu.classList.remove('rare'); hole.classList.remove('active');
+      state.score+=isRare?5:1;
+      scoreEl.textContent=state.score;
+      play(isRare?SND.rare:SND.hit);
+      const tip=document.createElement('div');
+      tip.textContent=isRare?'+5':'+1';
+      Object.assign(tip.style,{position:'absolute',left:'50%',top:'28%',transform:'translateX(-50%)',fontWeight:'800',
+        color:isRare?'#ffec8a':'var(--accent)',textShadow:'0 2px 8px rgba(0,0,0,.6)',pointerEvents:'none'});
+      hole.appendChild(tip);
+      tip.animate([{opacity:1,transform:'translate(-50%,0)'},{opacity:0,transform:'translate(-50%,-18px)'}],
+                  {duration:600,easing:'ease-out'}).onfinish=()=>tip.remove();
+    });
+  }
+
+  function popOne(isRare=false){
+    const holes=[...document.querySelectorAll('.hole')];
+    const candidates=holes.filter(h=>!h.querySelector('.matsu').classList.contains('up'));
+    if(!candidates.length)return;
+    const chosen=candidates[Math.floor(Math.random()*candidates.length)];
+    const matsu=chosen.querySelector('.matsu');
+    const img=matsu.querySelector('img');
+    img.src=randomFace();
+    matsu.classList.add('up');
+    if(isRare)matsu.classList.add('rare');
+    chosen.classList.add('active');
+    const dur=Math.floor(Math.random()*(UP_MAX-UP_MIN))+UP_MIN;
+    const t=setTimeout(()=>{
+      matsu.classList.remove('up');matsu.classList.remove('rare');chosen.classList.remove('active');
+    },dur);
+    state.popTimers.push(t);
+  }
+
+  function startSpawning(){
+    popOne();
+    state.spawnIntervalId=setInterval(()=>{
+      const secLeft=state.time;
+      const isRare=state.rareTimes.includes(secLeft);
+      popOne(isRare);
+      if(Math.random()<0.18)setTimeout(()=>popOne(isRare),120);
+    },POP_BASE);
+  }
+  function stopSpawning(){
+    clearInterval(state.spawnIntervalId);state.spawnIntervalId=null;
+    state.popTimers.forEach(clearTimeout);
+    state.popTimers=[];
+    document.querySelectorAll('.matsu.up').forEach(m=>m.classList.remove('up','rare'));
+    document.querySelectorAll('.hole.active').forEach(h=>h.classList.remove('active'));
+  }
+
+  function startTick(){
+    timeEl.textContent=state.time;
+    state.tickIntervalId=setInterval(()=>{
+      state.time--;timeEl.textContent=state.time;
+      if(state.time<=0)endGame();
+    },1000);
+  }
+  function stopTick(){clearInterval(state.tickIntervalId);state.tickIntervalId=null;}
+
+  function startGame(){
+    if(state.running)return;
+    state.running=true; state.score=0; state.time=GAME_TIME;
+    state.rareTimes=randomRareTimes(); // ← ここでレア出現タイミング決定
+    scoreEl.textContent=0; timeEl.textContent=GAME_TIME;
+    resultOverlay.style.display='none'; hintEl.style.opacity=0;
+    startBtn.textContent='プレイ中…'; startBtn.disabled=true;
+    play(SND.start); startSpawning(); startTick();
+  }
+  function endGame(){
+    if(!state.running)return;
+    state.running=false; stopSpawning(); stopTick();
+    startBtn.textContent='スタート'; startBtn.disabled=false;
+    play(SND.end); finalScore.textContent=state.score+' pt';
+    resultOverlay.style.display='flex'; hintEl.style.opacity=1;
+  }
+
+  startBtn.addEventListener('click',startGame);
+  restartBtn.addEventListener('click',()=>{resultOverlay.style.display='none';startGame();});
+  muteBtn.addEventListener('click',()=>{state.muted=!state.muted;muteBtn.textContent='音：'+(state.muted?'オフ':'オン');});
+}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init,{once:true});}else{init();}
+// iOSのスクロールやズームを完全にブロック
+document.addEventListener('gesturestart', (e) => e.preventDefault());
+document.addEventListener('dblclick', (e) => e.preventDefault());
+
+</script>
+</body>
+</html>
