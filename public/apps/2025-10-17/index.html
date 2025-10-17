@@ -184,9 +184,17 @@ img, .matsu {
 </div>
 
 <script type="module">
-const asset=(p)=>new URL(p,import.meta.url).toString();
-const FACE_IMAGES=[asset('./assets/matsu1.png'),asset('./assets/matsu2.png'),asset('./assets/matsu3.png')];
-const SND={hit:new Audio(asset('./assets/hit.m4a')),rare:new Audio(asset('./assets/hit.m4a')),start:new Audio(asset('./assets/start.mp3')),end:new Audio(asset('./assets/end.mp3'))};
+const ASSETS_BASE = '/app/2025-10-17/assets/'; // ← ここだけ環境に合わせて！
+const FACE_IMAGES = [
+  ASSETS_BASE + 'matsu1.png',
+  ASSETS_BASE + 'matsu2.png',
+  ASSETS_BASE + 'matsu3.png'
+];
+const SND = {
+  hit:   new Audio(ASSETS_BASE + 'hit.m4a'),
+  start: new Audio(ASSETS_BASE + 'start.mp3'),
+  end:   new Audio(ASSETS_BASE + 'end.mp3'),
+};
 
 function init(){
   const GRID_COUNT=12,POP_BASE=850,UP_MIN=700,UP_MAX=1200,GAME_TIME=30,RARE_COUNT=3;
