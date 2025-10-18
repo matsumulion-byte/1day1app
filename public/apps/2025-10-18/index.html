@@ -113,9 +113,18 @@ const seMatsu=new Audio();
 // アセット読み込み関数（エラーハンドリング付き）
 function loadAssets() {
   // 画像アセット
-  imgPlayer.onerror = () => console.warn('player.png 読み込み失敗');
-  imgCone.onerror = () => console.warn('cone.png 読み込み失敗');
-  imgMatsu.onerror = () => console.warn('matsumurazou.png 読み込み失敗');
+  imgPlayer.onerror = (e) => {
+    console.warn('player.png 読み込み失敗:', e);
+    console.warn('player.png URL:', imgPlayer.src);
+  };
+  imgCone.onerror = (e) => {
+    console.warn('cone.png 読み込み失敗:', e);
+    console.warn('cone.png URL:', imgCone.src);
+  };
+  imgMatsu.onerror = (e) => {
+    console.warn('matsumurazou.png 読み込み失敗:', e);
+    console.warn('matsumurazou.png URL:', imgMatsu.src);
+  };
   
   // 画像読み込み成功時のログ
   imgPlayer.onload = () => console.log('player.png 読み込み成功');
@@ -129,9 +138,35 @@ function loadAssets() {
   // アセット読み込み（Vercel対応パス）
   const basePath = window.location.pathname.replace('/index.html', '').replace(/\/$/, '') || '.';
   
-  imgPlayer.src = `${basePath}/assets/player.png`;
-  imgCone.src = `${basePath}/assets/cone.png`;
-  imgMatsu.src = `${basePath}/assets/matsumurazou.png`;
+  // 画像の読み込みを順次実行（エラーを防ぐため）
+  const loadImageWithRetry = (img, src, retries = 3) => {
+    const attemptLoad = () => {
+      img.src = src;
+      img.onerror = () => {
+        if (retries > 0) {
+          console.warn(`画像読み込み再試行: ${src} (残り${retries}回)`);
+          setTimeout(attemptLoad, 500);
+          retries--;
+        } else {
+          console.error(`画像読み込み最終失敗: ${src}`);
+        }
+      };
+    };
+    attemptLoad();
+  };
+  
+  setTimeout(() => {
+    loadImageWithRetry(imgPlayer, `${basePath}/assets/player.png`);
+  }, 100);
+  
+  setTimeout(() => {
+    loadImageWithRetry(imgCone, `${basePath}/assets/cone.png`);
+  }, 200);
+  
+  setTimeout(() => {
+    loadImageWithRetry(imgMatsu, `${basePath}/assets/matsumurazou.png`);
+  }, 300);
+  
   bgm.src = `${basePath}/assets/bgm.mp3`;
   bgm.loop = true; 
   bgm.volume = 0.4;
@@ -139,9 +174,9 @@ function loadAssets() {
   seMatsu.volume = 1.0;
   
   console.log('画像読み込み開始:', {
-    player: imgPlayer.src,
-    cone: imgCone.src,
-    matsu: imgMatsu.src
+    player: `${basePath}/assets/player.png`,
+    cone: `${basePath}/assets/cone.png`,
+    matsu: `${basePath}/assets/matsumurazou.png`
   });
 }
 
