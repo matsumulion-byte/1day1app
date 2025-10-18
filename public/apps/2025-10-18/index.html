@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>トロン風レースゲーム</title>
+<style>
+  :root{
+    --bg:#050509; --fg:#e7edf3; --muted:#9fb0bf;
+    --skyTop:#0a0018; --skyBot:#130030; --gridColor:#ff8800cc;
+    --road:#160808; --edge1:#ff982b; --edge2:#ffc36a; --lane:#ffb36699;
+    --car:#8a5cff; --carFill:#8a5cff22;
+    --obs:#ff8844; --obsFill:#ff884422;
+    --combo:#ffd36b; --comboGlow:#ffb43b;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;overflow:hidden}
+  #stage{position:fixed; inset:0; display:grid; place-items:center}
+  canvas{display:block; border-radius:12px; background:#000}
+
+  #hud{position:absolute; left:12px; top:calc(env(safe-area-inset-top) + 8px);
+    padding:8px 12px; background:#0b1220cc; border:1px solid #1a2334; border-radius:12px;
+    backdrop-filter: blur(6px); z-index:3; font-size:13px; display:grid; gap:4px; min-width:140px}
+  #hud .r{display:flex; gap:10px; align-items:baseline}
+  #hud .s{color:var(--muted); font-size:12px}
+  #hud .v{font-weight:700}
+  #hud #comboRow{display:none; align-items:center; gap:6px}
+  #hud #comboBadge{
+    padding:2px 6px; border-radius:8px; border:1px solid #3a2a00;
+    background:#201400; color:var(--combo); font-weight:800; letter-spacing:.5px
+  }
+  #muteBtn{margin-top:4px; appearance:none; border:1px solid #31405c; background:#22304a;
+    color:#cfe3ff; padding:4px 8px; border-radius:8px; font-size:12px; cursor:pointer}
+
+  #touch{position:absolute; left:50%; transform:translateX(-50%); bottom:0; width:min(56vh*9/16,92vw); height:min(22vh,160px);
+    display:flex; gap:12px; padding:12px 12px calc(12px + env(safe-area-inset-bottom)); z-index:2}
+  .tap{flex:1; border-radius:14px; background:#0b1120a0; border:1px dashed #22314f; touch-action:none}
+  .tap:active{outline:2px solid #5ad8ff88}
+
+  #start{position:fixed; inset:0; display:grid; place-items:center; background:#0008; z-index:4}
+  #panel{width:min(92vw,520px); background:#0c1222; border:1px solid #1a2334; border-radius:16px; padding:16px 18px}
+  #panel h1{margin:0 0 8px; font-size:18px}
+  #panel p,#panel li{color:#b9c7da; line-height:1.6; font-size:14px}
+  #panel .btn{appearance:none; border:none; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer;
+    background:#2d3a57; color:#dce7f5; border:1px solid #31405c; width:100%}
+</style>
+</head>
+<body>
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="hud">
+      <div class="r"><span class="s">TIME</span><span class="v" id="time">60.0</span>s</div>
+      <div class="r"><span class="s">SCORE</span><span class="v" id="pass">0</span></div>
+      <div class="r"><span class="s">SPEED</span><span class="v" id="speed">100</span></div>
+
+      <div class="r" id="comboRow">
+        <span class="s">COMBO</span>
+        <span id="comboBadge">x1</span>
+        <span class="v" id="comboCount">0</span>
+      </div>
+
+      <button id="muteBtn" aria-label="mute">🔊 BGM</button>
+    </div>
+    <div id="touch"><div id="left" class="tap"></div><div id="right" class="tap"></div></div>
+  </div>
+
+  <div id="start">
+    <div id="panel">
+      <h1>トロン風レースゲーム</h1>
+      <ul>
+        <li>障害物を避け続けよう。ぶつかると減速＆タイム減少。</li>
+      </ul>
+      <button class="btn" id="btnStart">スタート</button>
+    </div>
+  </div>
+
+<script type="module">
+/* ---------- util / canvas size ---------- */
+const $=id=>document.getElementById(id);
+const cv=$('cv'), ctx=cv.getContext('2d',{alpha:false});
+const HUD={time:$('time'),pass:$('pass'),speed:$('speed'), comboRow:$('comboRow'), comboBadge:$('comboBadge'), comboCount:$('comboCount')};
+const btnStart=$('btnStart'), startLayer=$('start');
+const leftPad=$('left'), rightPad=$('right'), muteBtn=$('muteBtn');
+
+const DPR=Math.min(2,window.devicePixelRatio||1), TARGET_AR=9/16;
+function pickViewportSize(){
+  const vw=Math.round(window.visualViewport?.width || window.innerWidth);
+  const vh=Math.round(window.visualViewport?.height|| window.innerHeight);
+  return {vw,vh};
+}
+function resize(){
+  const {vw,vh}=pickViewportSize();
+  let w=Math.min(vw,Math.round(vh*TARGET_AR));
+  let h=Math.round(w/TARGET_AR);
+  if(h>vh){h=vh; w=Math.round(h*TARGET_AR);}
+  cv.style.width=w+'px'; cv.style.height=h+'px';
+  cv.width=Math.max(320,Math.floor(w*DPR));
+  cv.height=Math.max(480,Math.floor(h*DPR));
+}
+addEventListener('resize',resize);
+addEventListener('orientationchange',resize);
+if(window.visualViewport) window.visualViewport.addEventListener('resize',resize);
+
+/* ---------- assets ---------- */
+const asset = p => new URL(p, import.meta.url).toString();
+const imgPlayer=new Image(); imgPlayer.src=asset('./assets/player.png');
+const imgCone=new Image();   imgCone.src=asset('./assets/cone.png');
+const imgMatsu=new Image();  imgMatsu.src=asset('./assets/matsumurazou.png');
+const bgm=new Audio(asset('./assets/bgm.mp3')); bgm.loop=true; bgm.volume=0.4;
+// 松村です（m4aに変更）
+const seMatsu=new Audio(asset('./assets/matsumura_desu.m4a')); seMatsu.volume=1.0;
+let bgmEnabled=true;
+
+/* ---------- input ---------- */
+let keys=new Set(), tap=0;
+addEventListener('keydown',e=>{
+  if(['ArrowLeft','ArrowRight','a','A','d','D'].includes(e.key)) e.preventDefault();
+  if(['ArrowLeft','a','A'].includes(e.key)) keys.add('L');
+  if(['ArrowRight','d','D'].includes(e.key)) keys.add('R');
+});
+addEventListener('keyup',e=>{
+  if(['ArrowLeft','a','A'].includes(e.key)) keys.delete('L');
+  if(['ArrowRight','d','D'].includes(e.key)) keys.delete('R');
+});
+['pointerdown','mousedown','touchstart'].forEach(ev=>{
+  leftPad.addEventListener(ev,()=>tap=-1,{passive:true});
+  rightPad.addEventListener(ev,()=>tap=+1,{passive:true});
+});
+['pointerup','pointercancel','mouseleave','mouseup','touchend','touchcancel'].forEach(ev=>{
+  window.addEventListener(ev,()=>tap=0,{passive:true});
+  leftPad.addEventListener(ev,()=>tap=0,{passive:true});
+  rightPad.addEventListener(ev,()=>tap=0,{passive:true});
+});
+
+/* ---------- game state ---------- */
+const horizonFrac=0.56;
+/* ★ 難易度：ベース速度を引き上げ */
+const baseSpeed=160;
+const PLAYER_S=0.78;
+
+const player={x:0,speed:baseSpeed,width:0.22,height:0.20};
+const obstacles=[];
+const TYPES={
+  cone :{w:0.32,h:0.48,img:()=>imgCone,  bias:0.7},
+  matsu:{w:0.64,h:0.96,img:()=>imgMatsu, bias:0.3}
+};
+
+let t=0,timeLeft=60,score=0,last=0,run=false;
+let lastLane=1,roadScroll=0,spawnAccPx=0,nextSpawnPx=180; // 初期間隔さらに短縮
+const SCROLL_K=1.25; // 視覚スクロール強化
+
+/* combo（猶予短縮） */
+let combo=0, comboTimer=0, comboLevel=1;
+const COMBO_WINDOW=2.2;
+const comboPopups=[];
+
+/* 演出 */
+let shoutT=0,shoutText='',finishing=false,finishT=0;
+
+/* ---------- 難易度スケール ---------- */
+/* 0s→30s で 1.0 → 1.8（上限）に線形上昇。速度・出現間隔・迫り速度などに掛ける */
+function DIFF(){
+  const r = Math.min(1, t/30);
+  return 1.0 + 0.8*r;
+}
+
+/* ---------- track & bg ---------- */
+function roadAtY(y){
+  const H=cv.height,W=cv.width,h=H*horizonFrac;
+  const k=Math.max(0,Math.min(1,(y-h)/(H-h)));
+  const half=(W*0.12)+(W*0.42)*Math.pow(k,1.15);
+  // カーブもほんの少しだけ強く
+  const base=W*0.035, pulse=W*0.06*Math.max(0,Math.sin(t*0.9));
+  const bend=(base+pulse)*Math.sin(t*0.6+(1-k)*1.8) * (0.9 + 0.1*DIFF());
+  return {center:W/2+bend, half};
+}
+function yFromS(s){const H=cv.height,h=H*horizonFrac;const e=s*s*(3-2*s);return h+e*(H-h);}
+function quad(x1,y1,w1,x2,y2,w2){ctx.beginPath();ctx.moveTo(x1-w1,y1);ctx.lineTo(x1+w1,y1);
+  ctx.lineTo(x2+w2,y2);ctx.lineTo(x2-w2,y2);ctx.closePath();ctx.fill();}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function drawWireBackground(){
+  const W=cv.width,H=cv.height,h=(H*horizonFrac)|0;
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,css('--skyTop')); g.addColorStop(1,css('--skyBot'));
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle=css('--gridColor');
+  for(let y=h+(roadScroll%16); y<H; y+=16){
+    const s=(y-h)/(H-h), fade=1-Math.pow(s,1.8);
+    ctx.globalAlpha=fade; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+  for(let i=-W/2;i<=W/2;i+=80){ctx.beginPath();ctx.moveTo(W/2+i,h);ctx.lineTo(W/2+i*2,H);ctx.stroke();}
+  const grd=ctx.createLinearGradient(0,h-10,0,h+40);
+  grd.addColorStop(0,'#ff8000aa'); grd.addColorStop(1,'#0000');
+  ctx.fillStyle=grd; ctx.fillRect(0,h-10,W,50);
+}
+
+/* ---------- control ---------- */
+btnStart.onclick=()=>{startLayer.style.display='none'; start();};
+muteBtn.onclick=()=>{
+  bgmEnabled=!bgmEnabled; muteBtn.textContent=bgmEnabled?'🔊 BGM':'🔇 Mute';
+  if(bgmEnabled){bgm.play().catch(()=>{});} else {bgm.pause();}
+};
+function currentMultiplier(){ return Math.max(1, 1 + Math.floor(combo/5)); }
+function resetComboUI(){
+  HUD.comboRow.style.display = combo>0 ? 'flex' : 'none';
+  comboLevel = currentMultiplier();
+  HUD.comboBadge.textContent = 'x'+comboLevel;
+  HUD.comboCount.textContent = combo.toString();
+}
+
+function start(){
+  t=0; player.x=0; player.speed=baseSpeed;
+   obstacles.length=0; timeLeft=60; score=0; lastLane=1;
+  roadScroll=0; spawnAccPx=0; nextSpawnPx=180;
+  shoutT=0; finishing=false; finishT=0; run=true; last=performance.now();
+  combo=0; comboTimer=0; resetComboUI();
+  if(bgmEnabled){bgm.currentTime=0; bgm.play().catch(()=>{});}
+  requestAnimationFrame(loop);
+}
+function loop(now){
+  if(!run && !finishing) return;
+  const dt=Math.min(0.05,(now-last)/1000); last=now; t+=dt;
+  update(dt); render(); requestAnimationFrame(loop);
+}
+
+/* ---------- spawn ---------- */
+function spawnObstacle(){
+  // 1〜2体同時（難易度で確率UP）
+  spawnOne();
+  if(Math.random()<0.35*DIFF()) spawnOne(true);
+
+  function spawnOne(avoidLaneReuse=false){
+    const type=(Math.random()<TYPES.cone.bias)?'cone':'matsu';
+    let idx=Math.floor(Math.random()*3);
+    if(idx===lastLane || (avoidLaneReuse && obstacles.length && Math.abs(obstacles[obstacles.length-1].x - [-0.7,0,0.7][idx])<0.01)){
+      idx=(idx+(Math.random()<0.5?1:2))%3;
+    }
+    lastLane=idx;
+    const laneX=[-0.7,0,0.7][idx];
+    obstacles.push({s:0,x:laneX,type,hit:false,phase:'live',vanishT:0});
+  }
+}
+
+/* ---------- update ---------- */
+function update(dt){
+  // FINISH：超加速で奥へ抜ける
+  if(finishing){
+    finishT+=dt;
+    player.speed+=(1100-player.speed)*0.9*dt;
+    const k=Math.min(1,finishT/1.2);
+    roadScroll=(roadScroll+player.speed*dt*SCROLL_K*(1.8+k*1.6))%2000;
+    for(const o of obstacles){ if(o.phase==='live'){ o.phase='vanish'; o.vanishT+=dt; } }
+    if(finishT>=1.6){ finishing=false; showResult(); }
+    return;
+  }
+
+  // 操作・速度（復帰を少し速く）
+  const steer=(keys.has('L')?-1:0)+(keys.has('R')?+1:0)+tap;
+  player.x+=steer*1.85*dt; player.x=Math.max(-1,Math.min(1,player.x));
+  player.speed+=(baseSpeed*DIFF()-player.speed)*0.65*dt;  // ← 時間で目標速度が上がる
+  HUD.speed.textContent=Math.round(player.speed);
+
+  // スクロール
+  const scrollPx=player.speed*dt*SCROLL_K;
+  roadScroll=(roadScroll+scrollPx)%1000;
+
+  // 距離ベーススポーン（難易度で圧縮）
+  spawnAccPx+=scrollPx;
+  const diff=DIFF();
+  if(spawnAccPx >= (nextSpawnPx/diff)){
+    spawnObstacle(); spawnAccPx -= (nextSpawnPx/diff);
+    // 基本120〜220px（前より短い）
+    nextSpawnPx = 120 + Math.random()*100;
+    const lastType=obstacles.length?obstacles[obstacles.length-1].type:'cone';
+    if(lastType==='matsu') nextSpawnPx += 70;
+  }
+
+  // 障害物の進行＆消滅（迫る速さも加速）
+  for(let i=obstacles.length-1;i>=0;i--){
+    const o=obstacles[i];
+    if(o.phase==='live'){
+      o.s += (player.speed/baseSpeed) * (dt/(2.1/Math.min(1.5,diff))); // 近づく速度UP
+      if(o.s>=1.0){
+        if(!o.hit){
+          combo++; comboTimer=COMBO_WINDOW;
+          const before=currentMultiplier(); const after=currentMultiplier();
+          if(after>before) comboPopups.push({t:0,txt:`x${after}!`});
+          score += 1 * currentMultiplier();
+          resetComboUI();
+        }
+        o.phase='vanish'; o.vanishT=0;
+      }
+    }else{
+      o.vanishT+=dt; if(o.vanishT>=0.22) obstacles.splice(i,1);
+    }
+  }
+
+  // 衝突
+  const pY=yFromS(PLAYER_S), rp=roadAtY(pY);
+  const pW=rp.half*player.width, pH=cv.height*(player.height*0.9);
+  const px=rp.center+player.x*rp.half*0.9;
+  for(const o of obstacles){
+    if(o.phase!=='live') continue;
+    if(o.s<PLAYER_S-0.12 || o.s>=1.0) continue;
+    const oy=yFromS(o.s), ro=roadAtY(oy), spec=TYPES[o.type];
+    const ow=ro.half*spec.w*0.9, oh=cv.height*(spec.h*0.85);
+    const ox=ro.center+o.x*ro.half*0.9;
+    const hit=(Math.abs(px-ox)<(pW/2+ow/2)) && (Math.abs(oy-pY)<(pH/2+oh/2));
+    if(hit && !o.hit){
+      o.hit=true;
+      player.speed*=0.38;      // 速度ペナルティやや重く
+      timeLeft-=3;             // 時間ペナルティ増
+      combo=0; comboTimer=0; resetComboUI();
+      if(o.type==='matsu'){ shoutText='松村です'; shoutT=1.2; try{seMatsu.currentTime=0; seMatsu.play();}catch{} }
+    }
+  }
+
+  // コンボ時間
+  if(combo>0){ comboTimer -= dt; if(comboTimer<=0){ combo=0; comboTimer=0; resetComboUI(); } }
+
+  // 時間
+  timeLeft-=dt;
+  if(timeLeft<=0){ timeLeft=0; run=false; finishing=true; finishT=0; }
+  HUD.time.textContent=timeLeft.toFixed(1);
+  HUD.pass.textContent=String(score);
+}
+
+/* ---------- render ---------- */
+function render(){
+  const H=cv.height,W=cv.width,h=(H*horizonFrac)|0;
+  drawWireBackground();
+
+  // 道路
+  const band=20;
+  for(let y=H-(roadScroll%band); y>h; y-=band){
+    const r0=roadAtY(y), r1=roadAtY(y-band);
+    ctx.fillStyle=css('--road'); quad(r0.center,y,r0.half, r1.center,y-band,r1.half);
+    ctx.strokeStyle=(Math.floor(y/band)%2)?css('--edge1'):css('--edge2');
+    ctx.lineWidth=2; ctx.beginPath();
+    ctx.moveTo(r0.center-r0.half,y); ctx.lineTo(r1.center-r1.half,y-band);
+    ctx.moveTo(r0.center+r0.half,y); ctx.lineTo(r1.center+r1.half,y-band);
+    ctx.stroke();
+    ctx.strokeStyle=css('--lane'); ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(r0.center,y); ctx.lineTo(r1.center,y-band); ctx.stroke();
+  }
+
+  // 障害物
+  const draw=[...obstacles].sort((a,b)=>{
+    const sa=(a.phase==='vanish')?1.0+a.vanishT:a.s;
+    const sb=(b.phase==='vanish')?1.0+b.vanishT:b.s;
+    return sa-sb;
+  });
+  for(const o of draw){
+    const isV=(o.phase==='vanish');
+    const s  = isV ? (1.0 + o.vanishT*0.35) : o.s;
+    const y  = yFromS(Math.min(1.25,s));
+    const r  = roadAtY(y);
+    const spec=TYPES[o.type];
+    let baseW=r.half*spec.w, baseH=H*(spec.h*0.9);
+    const x=r.center + o.x*r.half*0.9;
+
+    let alpha=1;
+    if(isV){
+      const k=Math.min(1,o.vanishT/0.22);
+      alpha=1-k*k; baseW*=1-0.22*k; baseH*=1-0.22*k;
+    }
+
+    const img=spec.img();
+    ctx.save(); ctx.globalAlpha*=alpha;
+    if(img.complete && img.naturalWidth){
+      const asp=img.naturalWidth/img.naturalHeight;
+      let dw=baseW, dh=baseW/asp;
+      if(dh>baseH){ dh=baseH; dw=baseH*asp; }
+      ctx.drawImage(img, x-dw/2, y-dh, dw, dh);
+    }else{
+      ctx.fillStyle=css('--obsFill'); ctx.strokeStyle=css('--obs'); ctx.lineWidth=2;
+      ctx.fillRect(x-baseW/2, y-baseH, baseW, baseH);
+      ctx.strokeRect(x-baseW/2, y-baseH, baseW, baseH);
+    }
+    ctx.restore();
+  }
+
+  // プレイヤー（FINISH中は上へ小さく）
+  const kF = finishing ? Math.min(1,finishT/1.2) : 0;
+  const pS = finishing ? (PLAYER_S - 0.16*kF) : PLAYER_S;
+  const pY = yFromS(pS), rp = roadAtY(pY);
+  let cw=rp.half*player.width, ch=H*(player.height*0.9);
+  if(finishing){ const z=1-0.5*kF; cw*=z; ch*=z; }
+  const cx=rp.center + player.x*rp.half*0.9;
+
+  if(imgPlayer.complete && imgPlayer.naturalWidth){
+    ctx.drawImage(imgPlayer, cx-cw/2, pY-ch/2, cw, ch);
+  }else{
+    ctx.fillStyle=css('--carFill'); ctx.strokeStyle=css('--car'); ctx.lineWidth=3;
+    ctx.fillRect(cx-cw/2, pY-ch/2, cw, ch); ctx.strokeRect(cx-cw/2, pY-ch/2, cw, ch);
+  }
+
+  // 松村です
+  if(shoutT>0){
+    shoutT -= 1/60;
+    const a=Math.max(0,Math.min(1,shoutT/1.2));
+    const scale=1+0.25*Math.sin((1-a)*Math.PI);
+    ctx.save(); ctx.translate(W/2, H*0.22); ctx.scale(scale,scale); ctx.globalAlpha=a;
+    ctx.font=`700 ${Math.floor(W*0.09)}px system-ui, sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor='#ffa060'; ctx.shadowBlur=24; ctx.fillStyle='#ffd8a0';
+    ctx.fillText('松村です',0,0); ctx.restore();
+  }
+
+  // コンボポップ
+  for(let i=comboPopups.length-1;i>=0;i--){
+    const p=comboPopups[i]; p.t+=1/60;
+    const a=Math.max(0,1-p.t/0.9); if(a<=0){comboPopups.splice(i,1); continue;}
+    const yOff = -20 - p.t*40;
+    ctx.save(); ctx.translate(W/2, H*0.16 + yOff); ctx.globalAlpha=a;
+    ctx.font=`900 ${Math.floor(W*0.12)}px system-ui, sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor='var(--comboGlow)'; ctx.shadowBlur=24; ctx.fillStyle='var(--combo)';
+    ctx.fillText(p.txt,0,0); ctx.restore();
+  }
+}
+
+/* ---------- result ---------- */
+function showResult(){
+  startLayer.style.display='grid';
+  document.getElementById('panel').innerHTML=`
+    <h1>Result</h1>
+    <p>Score：<b>${score}</b>　<span style="color:#9fb0bf">（最大倍率 x${Math.max(1, 1 + Math.floor(combo/5))}）</span></p>
+    <button class="btn" id="retry">もう一度</button>`;
+  document.getElementById('retry').onclick=()=>{ startLayer.style.display='none'; start(); };
+}
+
+/* ---------- boot ---------- */
+resize();
+</script>
+</body>
+</html>
