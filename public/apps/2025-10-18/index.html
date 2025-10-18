@@ -103,31 +103,44 @@ addEventListener('orientationchange',resize);
 if(window.visualViewport) window.visualViewport.addEventListener('resize',resize);
 
 /* ---------- assets ---------- */
-// Vercel対応: 相対パスを直接使用
+// アセット読み込み（フォールバック対応）
 const imgPlayer=new Image(); 
 const imgCone=new Image();   
 const imgMatsu=new Image();  
 const bgm=new Audio(); 
 const seMatsu=new Audio(); 
 
-// アセット読み込み（エラーハンドリング付き）
+// アセット読み込み関数（エラーハンドリング付き）
 function loadAssets() {
-  try {
-    imgPlayer.src='./assets/player.png';
-    imgCone.src='./assets/cone.png';
-    imgMatsu.src='./assets/matsumurazou.png';
-    bgm.src='./assets/bgm.mp3';
-    bgm.loop=true; 
-    bgm.volume=0.4;
-    seMatsu.src='./assets/matsumura_desu.m4a'; 
-    seMatsu.volume=1.0;
-  } catch(e) {
-    console.warn('アセット読み込みエラー:', e);
-  }
+  // 画像アセット
+  imgPlayer.onerror = () => console.warn('player.png 読み込み失敗');
+  imgCone.onerror = () => console.warn('cone.png 読み込み失敗');
+  imgMatsu.onerror = () => console.warn('matsumurazou.png 読み込み失敗');
+  
+  // 音声アセット
+  bgm.onerror = () => console.warn('bgm.mp3 読み込み失敗');
+  seMatsu.onerror = () => console.warn('matsumura_desu.m4a 読み込み失敗');
+  
+  // アセット読み込み（Vercel対応パス）
+  const basePath = window.location.pathname.replace('/index.html', '').replace(/\/$/, '') || '.';
+  console.log('Base path:', basePath);
+  console.log('Current URL:', window.location.href);
+  
+  imgPlayer.src = `${basePath}/assets/player.png`;
+  imgCone.src = `${basePath}/assets/cone.png`;
+  imgMatsu.src = `${basePath}/assets/matsumurazou.png`;
+  bgm.src = `${basePath}/assets/bgm.mp3`;
+  bgm.loop = true; 
+  bgm.volume = 0.4;
+  seMatsu.src = `${basePath}/assets/matsumura_desu.m4a`; 
+  seMatsu.volume = 1.0;
+  
+  console.log('Player image src:', imgPlayer.src);
+  console.log('BGM src:', bgm.src);
 }
 
 loadAssets();
-let bgmEnabled=true;
+let bgmEnabled = true;
 
 /* ---------- input ---------- */
 let keys=new Set(), tap=0;
@@ -218,7 +231,9 @@ btnStart.onclick=()=>{startLayer.style.display='none'; start();};
 muteBtn.onclick=()=>{
   bgmEnabled=!bgmEnabled; muteBtn.textContent=bgmEnabled?'🔊 BGM':'🔇 Mute';
   if(bgmEnabled){
-    bgm.play().catch(e=>console.warn('BGM再生エラー:', e));
+    if(bgm.src && bgm.src !== ''){
+      bgm.play().catch(e=>console.warn('BGM再生エラー:', e));
+    }
   } else { 
     bgm.pause(); 
   }
@@ -237,7 +252,7 @@ function start(){
   roadScroll=0; spawnAccPx=0; nextSpawnPx=180;
   shoutT=0; finishing=false; finishT=0; run=true; last=performance.now();
   combo=0; comboTimer=0; resetComboUI();
-  if(bgmEnabled){bgm.currentTime=0; bgm.play().catch(e=>console.warn('BGM再生エラー:', e));}
+  if(bgmEnabled && bgm.src && bgm.src !== ''){bgm.currentTime=0; bgm.play().catch(e=>console.warn('BGM再生エラー:', e));}
   requestAnimationFrame(loop);
 }
 function loop(now){
@@ -334,7 +349,7 @@ function update(dt){
       player.speed*=0.38;      // 速度ペナルティやや重く
       timeLeft-=3;             // 時間ペナルティ増
       combo=0; comboTimer=0; resetComboUI();
-      if(o.type==='matsu'){ shoutText='松村です'; shoutT=1.2; try{seMatsu.currentTime=0; seMatsu.play().catch(e=>console.warn('SE再生エラー:', e));}catch(e){console.warn('SE再生エラー:', e);} }
+      if(o.type==='matsu'){ shoutText='松村です'; shoutT=1.2; if(seMatsu.src && seMatsu.src !== ''){try{seMatsu.currentTime=0; seMatsu.play().catch(e=>console.warn('SE再生エラー:', e));}catch(e){console.warn('SE再生エラー:', e);}} }
     }
   }
 
@@ -390,11 +405,18 @@ function render(){
 
     const img=spec.img();
     ctx.save(); ctx.globalAlpha*=alpha;
-    if(img.complete && img.naturalWidth){
-      const asp=img.naturalWidth/img.naturalHeight;
-      let dw=baseW, dh=baseW/asp;
-      if(dh>baseH){ dh=baseH; dw=baseH*asp; }
-      ctx.drawImage(img, x-dw/2, y-dh, dw, dh);
+    if(img.complete && img.naturalWidth && !img.onerror){
+      try {
+        const asp=img.naturalWidth/img.naturalHeight;
+        let dw=baseW, dh=baseW/asp;
+        if(dh>baseH){ dh=baseH; dw=baseH*asp; }
+        ctx.drawImage(img, x-dw/2, y-dh, dw, dh);
+      } catch(e) {
+        console.warn('障害物画像描画エラー:', e);
+        ctx.fillStyle=css('--obsFill'); ctx.strokeStyle=css('--obs'); ctx.lineWidth=2;
+        ctx.fillRect(x-baseW/2, y-baseH, baseW, baseH);
+        ctx.strokeRect(x-baseW/2, y-baseH, baseW, baseH);
+      }
     }else{
       ctx.fillStyle=css('--obsFill'); ctx.strokeStyle=css('--obs'); ctx.lineWidth=2;
       ctx.fillRect(x-baseW/2, y-baseH, baseW, baseH);
@@ -411,8 +433,14 @@ function render(){
   if(finishing){ const z=1-0.5*kF; cw*=z; ch*=z; }
   const cx=rp.center + player.x*rp.half*0.9;
 
-  if(imgPlayer.complete && imgPlayer.naturalWidth){
-    ctx.drawImage(imgPlayer, cx-cw/2, pY-ch/2, cw, ch);
+  if(imgPlayer.complete && imgPlayer.naturalWidth && !imgPlayer.onerror){
+    try {
+      ctx.drawImage(imgPlayer, cx-cw/2, pY-ch/2, cw, ch);
+    } catch(e) {
+      console.warn('プレイヤー画像描画エラー:', e);
+      ctx.fillStyle=css('--carFill'); ctx.strokeStyle=css('--car'); ctx.lineWidth=3;
+      ctx.fillRect(cx-cw/2, pY-ch/2, cw, ch); ctx.strokeRect(cx-cw/2, pY-ch/2, cw, ch);
+    }
   }else{
     ctx.fillStyle=css('--carFill'); ctx.strokeStyle=css('--car'); ctx.lineWidth=3;
     ctx.fillRect(cx-cw/2, pY-ch/2, cw, ch); ctx.strokeRect(cx-cw/2, pY-ch/2, cw, ch);
