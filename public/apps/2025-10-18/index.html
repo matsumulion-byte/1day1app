@@ -485,11 +485,20 @@ function render(){
 
     const img=spec.img();
     ctx.save(); ctx.globalAlpha*=alpha;
+    console.log('障害物画像描画チェック:', {
+      complete: img.complete,
+      naturalWidth: img.naturalWidth,
+      naturalHeight: img.naturalHeight,
+      onerror: img.onerror,
+      src: img.src
+    });
+    
     if(img.complete && img.naturalWidth && !img.onerror){
       try {
         const asp=img.naturalWidth/img.naturalHeight;
         let dw=baseW, dh=baseW/asp;
         if(dh>baseH){ dh=baseH; dw=baseH*asp; }
+        console.log('障害物画像描画実行:', {x, y, dw, dh, baseW, baseH});
         ctx.drawImage(img, x-dw/2, y-dh, dw, dh);
       } catch(e) {
         console.warn('障害物画像描画エラー:', e);
@@ -518,8 +527,17 @@ function render(){
   if(finishing){ const z=1-0.5*kF; cw*=z; ch*=z; }
   const cx=rp.center + player.x*rp.half*0.9;
 
+  console.log('プレイヤー画像描画チェック:', {
+    complete: imgPlayer.complete,
+    naturalWidth: imgPlayer.naturalWidth,
+    naturalHeight: imgPlayer.naturalHeight,
+    onerror: imgPlayer.onerror,
+    src: imgPlayer.src
+  });
+  
   if(imgPlayer.complete && imgPlayer.naturalWidth && !imgPlayer.onerror){
     try {
+      console.log('プレイヤー画像描画実行:', {cx, pY, cw, ch});
       ctx.drawImage(imgPlayer, cx-cw/2, pY-ch/2, cw, ch);
     } catch(e) {
       console.warn('プレイヤー画像描画エラー:', e);
