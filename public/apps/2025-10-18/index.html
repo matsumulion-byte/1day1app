@@ -493,7 +493,7 @@ function render(){
       src: img.src
     });
     
-    if(img.complete && img.naturalWidth && !img.onerror){
+    if(img.complete && img.naturalWidth){
       try {
         const asp=img.naturalWidth/img.naturalHeight;
         let dw=baseW, dh=baseW/asp;
@@ -535,7 +535,7 @@ function render(){
     src: imgPlayer.src
   });
   
-  if(imgPlayer.complete && imgPlayer.naturalWidth && !imgPlayer.onerror){
+  if(imgPlayer.complete && imgPlayer.naturalWidth){
     try {
       console.log('プレイヤー画像描画実行:', {cx, pY, cw, ch});
       ctx.drawImage(imgPlayer, cx-cw/2, pY-ch/2, cw, ch);
