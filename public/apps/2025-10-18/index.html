@@ -15,7 +15,7 @@
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;overflow:hidden}
+            font-family:system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;overflow:hidden}
   #stage{position:fixed; inset:0; display:grid; place-items:center}
   canvas{display:block; border-radius:12px; background:#000}
 
@@ -34,7 +34,7 @@
     color:#cfe3ff; padding:4px 8px; border-radius:8px; font-size:12px; cursor:pointer}
 
   #touch{position:absolute; left:50%; transform:translateX(-50%); bottom:0; width:min(56vh*9/16,92vw); height:min(22vh,160px);
-    display:flex; gap:12px; padding:12px 12px calc(12px + env(safe-area-inset-bottom)); z-index:2}
+         display:flex; gap:12px; padding:12px 12px calc(12px + env(safe-area-inset-bottom)); z-index:2}
   .tap{flex:1; border-radius:14px; background:#0b1120a0; border:1px dashed #22314f; touch-action:none}
   .tap:active{outline:2px solid #5ad8ff88}
 
@@ -43,7 +43,7 @@
   #panel h1{margin:0 0 8px; font-size:18px}
   #panel p,#panel li{color:#b9c7da; line-height:1.6; font-size:14px}
   #panel .btn{appearance:none; border:none; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer;
-    background:#2d3a57; color:#dce7f5; border:1px solid #31405c; width:100%}
+              background:#2d3a57; color:#dce7f5; border:1px solid #31405c; width:100%}
 </style>
 </head>
 <body>
@@ -117,6 +117,11 @@ function loadAssets() {
   imgCone.onerror = () => console.warn('cone.png 読み込み失敗');
   imgMatsu.onerror = () => console.warn('matsumurazou.png 読み込み失敗');
   
+  // 画像読み込み成功時のログ
+  imgPlayer.onload = () => console.log('player.png 読み込み成功');
+  imgCone.onload = () => console.log('cone.png 読み込み成功');
+  imgMatsu.onload = () => console.log('matsumurazou.png 読み込み成功');
+  
   // 音声アセット
   bgm.onerror = () => console.warn('bgm.mp3 読み込み失敗');
   seMatsu.onerror = () => console.warn('matsumura_desu.m4a 読み込み失敗');
@@ -132,6 +137,12 @@ function loadAssets() {
   bgm.volume = 0.4;
   seMatsu.src = `${basePath}/assets/matsumura_desu.m4a`; 
   seMatsu.volume = 1.0;
+  
+  console.log('画像読み込み開始:', {
+    player: imgPlayer.src,
+    cone: imgCone.src,
+    matsu: imgMatsu.src
+  });
 }
 
 loadAssets();
@@ -413,6 +424,11 @@ function render(){
         ctx.strokeRect(x-baseW/2, y-baseH, baseW, baseH);
       }
     }else{
+      // デバッグ情報
+      if(!img.complete) console.log('障害物画像: 読み込み未完了');
+      if(!img.naturalWidth) console.log('障害物画像: naturalWidth =', img.naturalWidth);
+      if(img.onerror) console.log('障害物画像: エラー状態');
+      
       ctx.fillStyle=css('--obsFill'); ctx.strokeStyle=css('--obs'); ctx.lineWidth=2;
       ctx.fillRect(x-baseW/2, y-baseH, baseW, baseH);
       ctx.strokeRect(x-baseW/2, y-baseH, baseW, baseH);
@@ -437,6 +453,11 @@ function render(){
       ctx.fillRect(cx-cw/2, pY-ch/2, cw, ch); ctx.strokeRect(cx-cw/2, pY-ch/2, cw, ch);
     }
   }else{
+    // デバッグ情報
+    if(!imgPlayer.complete) console.log('プレイヤー画像: 読み込み未完了');
+    if(!imgPlayer.naturalWidth) console.log('プレイヤー画像: naturalWidth =', imgPlayer.naturalWidth);
+    if(imgPlayer.onerror) console.log('プレイヤー画像: エラー状態');
+    
     ctx.fillStyle=css('--carFill'); ctx.strokeStyle=css('--car'); ctx.lineWidth=3;
     ctx.fillRect(cx-cw/2, pY-ch/2, cw, ch); ctx.strokeRect(cx-cw/2, pY-ch/2, cw, ch);
   }
