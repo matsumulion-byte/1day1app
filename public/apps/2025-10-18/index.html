@@ -103,13 +103,30 @@ addEventListener('orientationchange',resize);
 if(window.visualViewport) window.visualViewport.addEventListener('resize',resize);
 
 /* ---------- assets ---------- */
-const asset = p => new URL(p, import.meta.url).toString();
-const imgPlayer=new Image(); imgPlayer.src=asset('./assets/player.png');
-const imgCone=new Image();   imgCone.src=asset('./assets/cone.png');
-const imgMatsu=new Image();  imgMatsu.src=asset('./assets/matsumurazou.png');
-const bgm=new Audio(asset('./assets/bgm.mp3')); bgm.loop=true; bgm.volume=0.4;
-// 松村です（m4aに変更）
-const seMatsu=new Audio(asset('./assets/matsumura_desu.m4a')); seMatsu.volume=1.0;
+// Vercel対応: 相対パスを直接使用
+const imgPlayer=new Image(); 
+const imgCone=new Image();   
+const imgMatsu=new Image();  
+const bgm=new Audio(); 
+const seMatsu=new Audio(); 
+
+// アセット読み込み（エラーハンドリング付き）
+function loadAssets() {
+  try {
+    imgPlayer.src='./assets/player.png';
+    imgCone.src='./assets/cone.png';
+    imgMatsu.src='./assets/matsumurazou.png';
+    bgm.src='./assets/bgm.mp3';
+    bgm.loop=true; 
+    bgm.volume=0.4;
+    seMatsu.src='./assets/matsumura_desu.m4a'; 
+    seMatsu.volume=1.0;
+  } catch(e) {
+    console.warn('アセット読み込みエラー:', e);
+  }
+}
+
+loadAssets();
 let bgmEnabled=true;
 
 /* ---------- input ---------- */
@@ -200,7 +217,11 @@ function drawWireBackground(){
 btnStart.onclick=()=>{startLayer.style.display='none'; start();};
 muteBtn.onclick=()=>{
   bgmEnabled=!bgmEnabled; muteBtn.textContent=bgmEnabled?'🔊 BGM':'🔇 Mute';
-  if(bgmEnabled){bgm.play().catch(()=>{});} else {bgm.pause();}
+  if(bgmEnabled){
+    bgm.play().catch(e=>console.warn('BGM再生エラー:', e));
+  } else { 
+    bgm.pause(); 
+  }
 };
 function currentMultiplier(){ return Math.max(1, 1 + Math.floor(combo/5)); }
 function resetComboUI(){
@@ -216,7 +237,7 @@ function start(){
   roadScroll=0; spawnAccPx=0; nextSpawnPx=180;
   shoutT=0; finishing=false; finishT=0; run=true; last=performance.now();
   combo=0; comboTimer=0; resetComboUI();
-  if(bgmEnabled){bgm.currentTime=0; bgm.play().catch(()=>{});}
+  if(bgmEnabled){bgm.currentTime=0; bgm.play().catch(e=>console.warn('BGM再生エラー:', e));}
   requestAnimationFrame(loop);
 }
 function loop(now){
@@ -313,7 +334,7 @@ function update(dt){
       player.speed*=0.38;      // 速度ペナルティやや重く
       timeLeft-=3;             // 時間ペナルティ増
       combo=0; comboTimer=0; resetComboUI();
-      if(o.type==='matsu'){ shoutText='松村です'; shoutT=1.2; try{seMatsu.currentTime=0; seMatsu.play();}catch{} }
+      if(o.type==='matsu'){ shoutText='松村です'; shoutT=1.2; try{seMatsu.currentTime=0; seMatsu.play().catch(e=>console.warn('SE再生エラー:', e));}catch(e){console.warn('SE再生エラー:', e);} }
     }
   }
 
