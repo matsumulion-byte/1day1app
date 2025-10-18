@@ -141,8 +141,18 @@ function loadAssets() {
   // 画像の読み込みを順次実行（エラーを防ぐため）
   const loadImageWithRetry = (img, src, retries = 3) => {
     const attemptLoad = () => {
-      img.src = src;
-      img.onerror = () => {
+      // 画像のクロスオリジン設定
+      img.crossOrigin = 'anonymous';
+      
+      // キャッシュバスターを追加
+      const cacheBuster = `?v=${Date.now()}`;
+      const fullSrc = src + cacheBuster;
+      
+      console.log(`画像読み込み試行: ${fullSrc}`);
+      
+      img.src = fullSrc;
+      img.onerror = (e) => {
+        console.warn(`画像読み込みエラー: ${fullSrc}`, e);
         if (retries > 0) {
           console.warn(`画像読み込み再試行: ${src} (残り${retries}回)`);
           setTimeout(attemptLoad, 500);
@@ -151,20 +161,49 @@ function loadAssets() {
           console.error(`画像読み込み最終失敗: ${src}`);
         }
       };
+      img.onload = () => {
+        console.log(`画像読み込み成功: ${src}`);
+      };
     };
     attemptLoad();
   };
   
+  // 代替方法: fetch APIを使用した画像読み込み
+  const loadImageWithFetch = async (img, src) => {
+    try {
+      console.log(`Fetch APIで画像読み込み: ${src}`);
+      const response = await fetch(src);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const blob = await response.blob();
+      const objectURL = URL.createObjectURL(blob);
+      img.src = objectURL;
+      img.onload = () => {
+        console.log(`Fetch API画像読み込み成功: ${src}`);
+        URL.revokeObjectURL(objectURL); // メモリ解放
+      };
+      img.onerror = (e) => {
+        console.error(`Fetch API画像読み込み失敗: ${src}`, e);
+        URL.revokeObjectURL(objectURL);
+      };
+    } catch (error) {
+      console.error(`Fetch API画像読み込みエラー: ${src}`, error);
+      // フォールバック: 通常の読み込み方法
+      loadImageWithRetry(img, src);
+    }
+  };
+  
   setTimeout(() => {
-    loadImageWithRetry(imgPlayer, `${basePath}/assets/player.png`);
+    loadImageWithFetch(imgPlayer, `${basePath}/assets/player.png`);
   }, 100);
   
   setTimeout(() => {
-    loadImageWithRetry(imgCone, `${basePath}/assets/cone.png`);
+    loadImageWithFetch(imgCone, `${basePath}/assets/cone.png`);
   }, 200);
   
   setTimeout(() => {
-    loadImageWithRetry(imgMatsu, `${basePath}/assets/matsumurazou.png`);
+    loadImageWithFetch(imgMatsu, `${basePath}/assets/matsumurazou.png`);
   }, 300);
   
   bgm.src = `${basePath}/assets/bgm.mp3`;
