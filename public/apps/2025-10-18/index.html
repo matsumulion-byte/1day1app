@@ -123,8 +123,6 @@ function loadAssets() {
   
   // アセット読み込み（Vercel対応パス）
   const basePath = window.location.pathname.replace('/index.html', '').replace(/\/$/, '') || '.';
-  console.log('Base path:', basePath);
-  console.log('Current URL:', window.location.href);
   
   imgPlayer.src = `${basePath}/assets/player.png`;
   imgCone.src = `${basePath}/assets/cone.png`;
@@ -134,9 +132,6 @@ function loadAssets() {
   bgm.volume = 0.4;
   seMatsu.src = `${basePath}/assets/matsumura_desu.m4a`; 
   seMatsu.volume = 1.0;
-  
-  console.log('Player image src:', imgPlayer.src);
-  console.log('BGM src:', bgm.src);
 }
 
 loadAssets();
