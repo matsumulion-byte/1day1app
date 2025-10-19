@@ -74,8 +74,10 @@
 
 <script type="module">
 /* 動的アセット（Vercel/ローカル両立） */
-const asset = (p) => new URL(p, import.meta.url).toString();
-
+const asset = (p) => {
+  const currentDir = window.location.pathname.replace(/\/[^\/]*$/, '/');
+  return `${currentDir}assets/${p}`;
+};
 /* ===== 設定 ===== */
 const PHOTO_FILE = asset("./assets/matsumura_photo.jpg"); // 差し替えOK
 
