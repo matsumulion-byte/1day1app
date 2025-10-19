@@ -42,6 +42,14 @@
   .card h2{margin:0 0 8px; font-size:20px}
   .card p{margin:6px 0 14px; color:var(--muted)}
   .card button{all:unset; background:#34d399; color:#052017; padding:10px 14px; border-radius:12px; font-weight:700; cursor:pointer}
+  /* ==== スマホでのテキスト選択やハイライト無効 ==== */
+canvas, button, body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;  /* 長押しメニュー無効（画像保存とか） */
+  -webkit-tap-highlight-color: transparent; /* 青いハイライト無効 */
+}
+
 </style>
 </head>
 <body>
