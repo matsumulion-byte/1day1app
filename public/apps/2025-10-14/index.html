@@ -155,6 +155,19 @@ const DEFAULT_MENU = [
   { name: "マグロユッケ丼", price: 750, tags:["まぐろ","ユッケ風","味しっかり","ピリ辛"], image: "/apps/2025-10-14/images/maguro-yukke-don.png" },
   { name: "えんがわ丼", price: 650, tags:["白身","あっさり","えんがわ"], image: "/apps/2025-10-14/images/engawa-don.png" },
   { name: "お子様テリチキ丼", price: 500, tags:["甘だれ","鶏","子ども向け"], image: "/apps/2025-10-14/images/terichiki-kids-don.png" },
+  // ▼ ここから追加
+{ name: "お子様しらす丼",       price: 500, tags:["あっさり","白身","しらす","子ども向け"], image: "/apps/2025-10-14/images/shirasu-kids-don.png" },
+{ name: "サーモンユッケ丼",     price: 750, tags:["サーモン","ユッケ風","脂のり"],             image: "/apps/2025-10-14/images/salmon-yukke-don.png" },
+{ name: "塩だれネギトロユッケ丼", price: 750, tags:["ねぎとろ","ユッケ風","塩"],               image: "/apps/2025-10-14/images/negitoro-yukke-don.png" },
+{ name: "バラアボカド丼",       price: 650, tags:["アボカド","こってり","楽しい","づけ"],       image: "/apps/2025-10-14/images/abocado-barachirashi.png" },
+{ name: "バラ温玉丼",           price: 650, tags:["温玉","こってり","づけ"],                   image: "/apps/2025-10-14/images/barachirashi-onigiri.png" },
+{ name: "ぐるまぜ丼",           price: 650, tags:["ミックス","楽しい","納豆","まぐろ","いか","たくあん","とろろ"], image: "/apps/2025-10-14/images/gurume-mix-don.png" },
+{ name: "三色丼",               price: 750, tags:["ミックス","まぐろ","サーモン","いか","ご褒美"], image: "/apps/2025-10-14/images/sankosei-don.png" },
+{ name: "家族丼",               price: 750, tags:["ミックス","サーモン","いくら","ねぎとろ","ご褒美","ほたて"], image: "/apps/2025-10-14/images/kazoku-don.png" },
+{ name: "まぐろアボカド丼",     price: 750, tags:["まぐろ","アボカド","ミックス","こってり"],  image: "/apps/2025-10-14/images/maguro-abocado-don.png" },
+{ name: "サーモンイクラ丼",     price: 750, tags:["サーモン","いくら","ミックス","ご褒美"],     image: "/apps/2025-10-14/images/salmon-ikura-don.png" },
+// ▲ ここまで追加
+
 ];
 
 /*********************
@@ -173,6 +186,13 @@ const QUESTIONS = [
   { id:'ikura', text:'いくらを乗せたい？', plus:['いくら','ご褒美'] },
   { id:'avo', text:'アボカドのまろやか系が好き？', plus:['アボカド','まろやか'], minus:['赤身'] },
   { id:'sweet', text:'甘だれが好き？', plus:['甘だれ','やわらか'] },
+  // 例：QUESTIONS配列の末尾に追加
+{ id:"ikura",   text:"いくらを乗せたい？",           plus:["いくら","ご褒美"] },
+{ id:"avocado", text:"アボカドが好き？",             plus:["アボカド","まろやか"] },
+{ id:"shirasu", text:"しらす系が食べたい？",         plus:["しらす","白身","あっさり"] },
+{ id:"kids",    text:"子ども？",   plus:["子ども向け","甘だれ"] },
+{ id:"natto",   text:"納豆やとろろなど“ねばねば”OK？", plus:["納豆","とろろ"] },
+{ id:"salt",    text:"塩だれ・塩味が好み？",         plus:["塩"] },
 ];
 
 /*********************

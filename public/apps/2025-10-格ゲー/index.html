@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>松村ファイター｜スプライト読み込みテスト（fixed）</title>
+<style>
+  :root{ --bg:#0b0f14; --fg:#e7edf3; --muted:#9fb0c0; --ok:#34d399; --acc:#38bdf8; }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{height:100%; margin:0; background:var(--bg); color:var(--fg); font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;}
+  #wrap{display:flex; flex-direction:column; height:100%;}
+  #hud{display:grid; grid-template-columns:1fr auto 1fr; gap:8px; padding:8px 12px; align-items:center}
+  .bar{height:14px; background:#192532; border-radius:999px; overflow:hidden; position:relative}
+  .bar>.fill{position:absolute; inset:0 auto 0 0; width:100%; background:linear-gradient(90deg,var(--ok),#0ea5e9)}
+  /* ← デバッグで見やすくするなら #canvas の背景を #eee に */
+  #canvas{flex:1; background:#0f1823; touch-action:none
+  /* 既存に追加 */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+  #cta{padding:10px 12px; text-align:center; background:rgba(255,255,255,.05); border-top:1px solid rgba(255,255,255,.08); font-weight:700}
+  #cta small{display:block; color:var(--muted); font-weight:500}
+  #toast{position:fixed; left:0; right:0; bottom:44%; margin:auto; width:max-content; max-width:92vw; background:rgba(0,0,0,.6); color:#fff; padding:10px 16px; border-radius:999px; text-align:center; opacity:0; transform:translateY(16px); transition:.25s; backdrop-filter:blur(6px); pointer-events:none}
+  #toast.show{opacity:1; transform:translateY(0)}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="hud">
+    <div>
+      <div style="font-size:12px;color:var(--muted)">像 HP</div>
+      <div class="bar"><div id="hp" class="fill" style="width:100%"></div></div>
+    </div>
+    <div id="status" style="font-variant-numeric:tabular-nums">TPS 0.0 • SCORE 0 • 10.0s</div>
+    <div style="text-align:right">
+      <div style="font-size:12px;color:var(--muted)">モード</div>
+      <div id="mode" style="font-weight:700">IDLE</div>
+    </div>
+  </div>
+  <canvas id="canvas"></canvas>
+  <div id="cta">画面<strong>連打</strong>で攻撃（PCは<strong>Space</strong>）<small>TPSしきい値で必殺波紋／10秒後にスコア判定（低いと残念ポーズ）</small></div>
+</div>
+<div id="toast"></div>
+
+<!-- モジュールスクリプト（ここからここまでが1つの <script> で完結） -->
+<script type="module">
+/* ===================== 画像ロード＆起動 ===================== */
+const FILES = {
+  fighter: 'matsumura_fighter.png',  // 3x2 シート
+  wave:    'effect_wave.png',        // 横4コマ
+  fail:    'matsumura_fail.png'      // 1コマ
+};
+
+const asset = (p)=> new URL(p, import.meta.url).toString();
+
+function showOverlay(msg){
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);color:#fff;font:600 14px/1.6 system-ui;padding:16px;z-index:9999;text-align:center;white-space:pre-wrap';
+  el.textContent = msg;
+  document.body.appendChild(el);
+}
+function loadImage(rel){
+  return new Promise((resolve,reject)=>{
+    const url = asset(`./assets/${rel}`);
+    console.log('[load]', url);
+    const im = new Image();
+    im.onload = ()=> resolve(im);
+    im.onerror = ()=> reject(new Error('Image load failed: ' + url));
+    im.src = url + `?v=${Date.now()}`;
+  });
+}
+
+Promise.all([
+  loadImage(FILES.fighter),
+  loadImage(FILES.wave),
+  loadImage(FILES.fail),
+]).then(([fighter, wave, fail])=>{
+  startGame({fighter, wave, fail});
+}).catch(err=>{
+  console.error(err);
+  showOverlay('画像を読み込めませんでした。\n' + err.message +
+              '\n\n1) /app/2025-10-19/assets/ に置いたか\n2) ファイル名が FILES と一致するか\n3) Networkで404が出ていないか を確認してください。');
+});
+
+/* ===================== ゲーム本体 ===================== */
+
+
+function startGame(IMG){
+  const SPR = {
+    // ★ここはダミー値のままでOK（後で自動上書き）
+    cellW: 128, cellH: 128,
+    cols: 3, rows: 2,
+    order: ['idle','punch','special','kick','break','win'],
+    tpsThreshold: 8.0
+  };
+
+ // スプライト元コマは画像から自動算出
+SPR.cellW = Math.floor(IMG.fighter.naturalWidth  / SPR.cols);
+SPR.cellH = Math.floor(IMG.fighter.naturalHeight / SPR.rows);
+
+ // 画面に出す“見た目サイズ”を小さく（ここで調整）
+const DRAW = { w: 128, h: 128 }; // ←デカいなら 112 / 96 とかに落としてOK
+
+  // ...この下はそのまま...
+
+
+  const cvs = document.getElementById('canvas');
+  const ctx = cvs.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  const hpBar = document.getElementById('hp');
+  const status = document.getElementById('status');
+  const modeEl = document.getElementById('mode');
+  const toast = document.getElementById('toast');
+
+  const CFG = {
+    W: 1280, H: 720, ground: 560,
+    roundTime: 10.0,
+    hitDamage: 1.2,
+    waveSpeed: 900
+  };
+
+  const game = {
+    time: CFG.roundTime, score: 0, hp: 100, over:false,
+    tps: 0, tapLog: [], press:false,
+    state: 'idle',
+    wave: null
+  };
+
+  function fit(){
+    const hud = document.getElementById('hud').offsetHeight;
+    const cta = document.getElementById('cta').offsetHeight;
+    const h = window.innerHeight - hud - cta;
+    const w = window.innerWidth;
+    const r = Math.min(w/CFG.W, h/CFG.H);
+    cvs.width = Math.floor(CFG.W * r);
+    cvs.height = Math.floor(CFG.H * r);
+    ctx.setTransform(r,0,0,r,0,0);
+  }
+  addEventListener('resize', fit);
+
+  function regTap(){
+    if(game.over) return;
+    const t = performance.now();
+    game.tapLog.push(t);
+    const cutoff = t - 1000;
+    while(game.tapLog.length && game.tapLog[0] < cutoff) game.tapLog.shift();
+    game.tps = game.tapLog.length;
+    game.score += 10;
+    applyDamage(CFG.hitDamage);
+
+    const n = game.score/10;
+    game.state = (n % 2 === 0) ? 'punch' : 'kick';
+    setTimeout(()=>{ if(!game.over) game.state='idle'; }, 100);
+
+    if(game.tps >= SPR.tpsThreshold){ special(); }
+  }
+  addEventListener('touchstart', (e)=>{ e.preventDefault(); regTap(); }, {passive:false});
+  addEventListener('mousedown', (e)=>{ e.preventDefault(); regTap(); });
+  addEventListener('keydown', (e)=>{ if(e.code==='Space' && !game.press){ game.press=true; regTap(); } });
+  addEventListener('keyup', (e)=>{ if(e.code==='Space') game.press=false; });
+
+  function idxOf(name){ return SPR.order.indexOf(name); }
+  function frameRectByName(name){
+  const i = SPR.order.indexOf(name);
+  const col = i % SPR.cols;
+  const row = Math.floor(i / SPR.cols);
+
+  // 元の等分コマ
+  let sx = col * SPR.cellW;
+  let sy = row * SPR.cellH;
+  let sw = SPR.cellW;
+  let sh = SPR.cellH;
+
+  // ★安全マージン（にじみ/隣りコマ誤爆を避ける）
+  const PAD = 10; // 8〜12の間で微調整。足が写るなら増やす
+  sx += PAD;  sy += PAD;
+  sw -= PAD*2; sh -= PAD*2;
+
+  return { sx, sy, sw, sh };
+}
+
+  function applyDamage(d){ game.hp = Math.max(0, game.hp - d); }
+  function special(){
+    game.state = 'special';
+    const startX = CFG.W*0.50 + 60; // 中央より右手前
+    const startY = CFG.ground - 160;
+    game.wave = { x:startX, y:startY, frame:0 };
+    setTimeout(()=>{ if(!game.over) game.state='idle'; }, 220);
+  }
+  function toastMsg(m){
+    toast.textContent=m; toast.classList.add('show');
+    clearTimeout(toast._t); toast._t=setTimeout(()=>toast.classList.remove('show'), 1200);
+  }
+
+  let last = performance.now();
+  fit();
+  requestAnimationFrame(step);
+
+  function step(){
+    const now = performance.now();
+    let dt = Math.min(50, now - last); last = now;
+
+    if(!game.over){
+      game.time -= dt/1000;
+      if(game.time<=0){
+        game.time=0; game.over = true;
+        game.state = (game.score < 300) ? 'fail' : 'win';
+        toastMsg(game.state==='fail' ? 'スコア不足…' : 'ナイス！');
+      }
+    }
+
+    if(game.wave){
+      game.wave.x += CFG.waveSpeed * (dt/1000);
+      game.wave.frame = (game.wave.frame + (dt/1000)*12) % 4;
+      applyDamage(0.35 * (dt/1000) * 60);
+      if(game.wave.x > CFG.W - 64) game.wave = null;
+    }
+
+    hpBar.style.width = `${game.hp}%`;
+    status.textContent = `TPS ${game.tps.toFixed(1)} • SCORE ${game.score} • ${game.time.toFixed(1)}s`;
+    modeEl.textContent = game.state.toUpperCase();
+
+    render();
+    requestAnimationFrame(step);
+  }
+
+  /* ============ 描画 ============ */
+  const SHOW_SHEET = false; // ← true にすると左上にスプライトシート全体を表示（切り出し不具合の切り分け用）
+
+  function render(){
+    ctx.clearRect(0,0,CFG.W,CFG.H);
+
+    // デバッグ：シート全体をそのまま表示
+    if (SHOW_SHEET && IMG.fighter && IMG.fighter.complete) {
+        ctx.drawImage(
+  IMG.fighter,
+  r.sx, r.sy, r.sw, r.sh,              // ← ソース矩形（自動計測）
+  px - DRAW.w/2, py - DRAW.h, DRAW.w, DRAW.h  // ← 画面に出すサイズ
+);
+    }
+
+    // 地面
+    ctx.fillStyle = '#132235';
+    ctx.fillRect(0, CFG.ground, CFG.W, 4);
+
+    // プレイヤー位置（中央寄り＆少し上げる）
+    const px = CFG.W * 0.50;
+    const py = CFG.ground - 0;
+
+    // 影
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.beginPath(); ctx.ellipse(px, py+4, 70, 16, 0, 0, Math.PI*2); ctx.fill();
+
+    // fail時は break の上から fail画像を重ねる
+    const name = (game.state==='fail') ? 'break' : game.state;
+    const r = frameRectByName(SPR.order.includes(name) ? name : 'idle');
+
+    if(IMG.fighter.complete && IMG.fighter.naturalWidth){
+      ctx.globalAlpha = 1;
+// 本体
+ctx.drawImage(
+  IMG.fighter,
+  r.sx, r.sy, r.sw, r.sh,                  // ←ソースは安全マージン後
+  px - DRAW.w/2, py - DRAW.h, DRAW.w, DRAW.h
+);
+
+// 残念ポーズ重ね
+if(game.state==='fail' && IMG.fail.complete && IMG.fail.naturalWidth){
+  ctx.drawImage(
+    IMG.fail,
+    0, 0, SPR.cellW, SPR.cellH,             // failは1コマ想定（必要なら同じPADロジックを適用可）
+    px - DRAW.w/2, py - DRAW.h, DRAW.w, DRAW.h
+  );
+}
+    }else{
+      ctx.fillStyle='#3bc6a8'; ctx.fillRect(px-64, py-128, 128, 128);
+    }
+
+    if(game.state==='fail' && IMG.fail.complete && IMG.fail.naturalWidth){
+      ctx.drawImage(IMG.fail, 0, 0, SPR.cellW, SPR.cellH, px - SPR.cellW/2, py - SPR.cellH, SPR.cellW, SPR.cellH);
+    }
+
+    if(game.wave && IMG.wave.complete && IMG.wave.naturalWidth){
+      const f = Math.floor(game.wave.frame) % 4;
+      ctx.drawImage(IMG.wave, f*SPR.cellW, 0, SPR.cellW, SPR.cellH, game.wave.x, game.wave.y, SPR.cellW, SPR.cellH);
+    }
+
+    // デバッグ枠：描画領域
+    // ctx.strokeStyle = 'red';
+    // ctx.strokeRect(px - SPR.cellW/2, py - SPR.cellH, SPR.cellW, SPR.cellH);
+  }
+} // ← startGame の閉じカッコ
+</script>
+</body>
+</html>
