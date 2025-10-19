@@ -1,0 +1,6 @@
+const asset = (p) => {
+    // 現在URLの末尾（例: /2025-10-19/）をそのまま基準にする
+    const base = window.location.pathname.replace(/\/[^\/]*$/, '/');
+    return `${base}assets/${p}`;
+  };
+  
