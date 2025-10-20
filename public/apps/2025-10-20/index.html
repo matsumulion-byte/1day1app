@@ -74,6 +74,10 @@
     object-fit:contain;
     border-radius:18px; border:1px solid var(--bd); background:#0f151d;
   }
+  @media (max-width: 640px){
+    /* SPは結果画像を少し大きめに */
+    .r-face{ width:min(82vw, 360px); }
+  }
   .r-title{font-size:18px; color:var(--muted); letter-spacing:.08em}
   .r-main{font-size: clamp(28px, 6vw, 48px); font-weight:900; line-height:1.1; margin-top:4px;}
   .r-sub{font-size:14px; opacity:.85}
