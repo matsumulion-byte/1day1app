@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>mtmr診断｜スワイプ＋5段階結果画像</title>
+<style>
+  :root{ --bg:#0b0f14; --fg:#e7edf3; --muted:#95a3b3; --card:#121a24; --yes:#ffcf33; --no:#ff6b6b; --bd:#1c2733; }
+  *{box-sizing:border-box}
+  html,body{height:100%; margin:0}
+  body{
+    font-family:ui-sans-serif,system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Roboto,sans-serif;
+    color:var(--fg);
+    background:radial-gradient(1200px 800px at 70% -10%, #16202c 0%, var(--bg) 60%) fixed;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #app{width:100%; max-width:560px; padding:16px; position:relative}
+
+  /* 質問カード（テキスト→画像の順） */
+  .question-card{
+    position:relative; width:100%; min-height:420px; border-radius:18px;
+    background:var(--card); border:1px solid var(--bd);
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    text-align:center; padding:18px; user-select:none; touch-action:pan-y;
+    will-change: transform, opacity; transition: transform .25s ease, opacity .25s ease;
+  }
+  .q-title{margin:10px 0 8px; font-size:18px; color:var(--muted); letter-spacing:.04em; order:1;}
+  .q-text{font-size:22px; font-weight:800; line-height:1.35; padding:0 10px; margin:8px 0 10px; order:2;}
+  .q-face{
+    order:3;
+    width:68%; max-width:320px; aspect-ratio: 2/3; object-fit:contain;
+    border-radius:18px; border:1px solid var(--bd); background:#0f151d; margin-bottom:10px;
+  }
+
+  /* Tinder風バッジ */
+  .badge{
+    position:absolute; top:14px; padding:8px 12px; border:4px solid currentColor;
+    font-weight:900; font-size:16px; border-radius:10px; opacity:0; transform:rotate(-10deg);
+    transition:opacity .15s ease;
+  }
+  .badge.yes{ right:14px; color:#332200; background:var(--yes); border-color:#d7a800; transform:rotate(10deg) }
+  .badge.no{ left:14px; color:#220000; background:var(--no); border-color:#bb4a4a }
+  .badge.show{ opacity:1 }
+
+  .answer-btns{display:flex; gap:16px; margin-top:16px}
+  .btn{flex:1; border:0; border-radius:12px; padding:14px; font-size:16px; font-weight:800; cursor:pointer}
+  .btn:active{transform:translateY(1px)}
+  .no{background:var(--no); color:#220000}
+  .yes{background:var(--yes); color:#222}
+
+  /* 結果はフルスクリーンのオーバーレイ（クラス .show で表示） */
+  #result{
+    position: fixed !important;
+    inset: 0;
+    z-index: 9999;
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+    background: radial-gradient(1200px 800px at 70% -10%, #16202c 0%, #06090e 60%);
+    padding: 22px;
+    color: var(--fg);
+    transition: opacity .25s ease;
+  }
+  #result.show{ opacity:1; pointer-events:auto; }
+
+  .result-inner{
+    max-width:480px; margin:0 auto; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:12px; text-align:center; padding:20px;
+  }
+  .r-face{
+    width:min(65vw, 300px);
+    aspect-ratio: 2/3;
+    object-fit:contain;
+    border-radius:18px; border:1px solid var(--bd); background:#0f151d;
+  }
+  .r-title{font-size:18px; color:var(--muted); letter-spacing:.08em}
+  .r-main{font-size: clamp(28px, 6vw, 48px); font-weight:900; line-height:1.1; margin-top:4px;}
+  .r-sub{font-size:14px; opacity:.85}
+  .r-actions{display:flex; gap:10px; margin-top:8px; flex-wrap:wrap; justify-content:center}
+  .r-btn{border:1px solid var(--bd); background:#101722; color:var(--fg); padding:10px 14px; border-radius:12px; font-weight:700; cursor:pointer}
+</style>
+</head>
+<body>
+<div id="app" aria-live="polite">
+  <div id="card" class="question-card" role="group" aria-label="質問カード" tabindex="0">
+    <div id="badgeNo" class="badge no">NO</div>
+    <div id="badgeYes" class="badge yes">YES</div>
+    <div class="q-title">Q.</div>
+    <div id="qText" class="q-text"></div>
+    <img id="qImg" class="q-face" alt="質問中の画像" />
+  </div>
+
+  <div class="answer-btns">
+    <button id="btnNo" class="btn no" type="button">いいえ</button>
+    <button id="btnYes" class="btn yes" type="button">はい</button>
+  </div>
+</div>
+
+<!-- 結果オーバーレイ -->
+<div id="result" role="dialog" aria-modal="true" aria-label="診断結果">
+  <div class="result-inner">
+    <div class="r-title">診断結果</div>
+    <img id="rImg" class="r-face" alt="結果画像" />
+    <div id="rMain" class="r-main"></div>
+    <div id="rSub" class="r-sub"></div>
+    <div class="r-actions">
+      <button id="retryBtn" class="r-btn" type="button">もう一度</button>
+      <button id="closeBtn" class="r-btn" type="button">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  // 動的アセット解決
+  const asset = (p) => new URL(p, import.meta.url).toString();
+
+  // 画像
+  const QUESTION_IMG = asset('./assets/question.png');
+  const TIERS = [
+    { min:   0, max:  19, img: asset('./assets/result_0.png'), label: 'Lv1 まだ松村の入口' },
+    { min:  20, max:  39, img: asset('./assets/result_1.png'), label: 'Lv2 松村見習い' },
+    { min:  40, max:  59, img: asset('./assets/result_2.png'), label: 'Lv3 そこそこ松村' },
+    { min:  60, max:  79, img: asset('./assets/result_3.png'), label: 'Lv4 かなり松村' },
+    { min:  80, max: 100, img: asset('./assets/result_4.png'), label: 'Lv5 超松村' },
+  ];
+
+  // 質問（“はい”が松村ポイント）
+  const QUESTIONS = [
+    { q: "1日1アプリ的な“毎日小さく作る”が好き？", yes:true },
+    { q: "筋トレは週2以上している？", yes:true },
+    { q: "サックスを見ると吹きたくなる？", yes:true },
+    { q: "“松村です！”と自然に言う？", yes:true },
+    { q: "髭がくるんとしてる？", yes:true },
+    { q: "あなたは松村ですか？", yes:true },
+  ];
+
+  // DOM参照
+  const card   = document.getElementById('card');
+  const qImg   = document.getElementById('qImg');
+  const qText  = document.getElementById('qText');
+  const badgeNo  = document.getElementById('badgeNo');
+  const badgeYes = document.getElementById('badgeYes');
+
+  const btnNo  = document.getElementById('btnNo');
+  const btnYes = document.getElementById('btnYes');
+
+  const result = document.getElementById('result');
+  const rImg   = document.getElementById('rImg');
+  const rMain  = document.getElementById('rMain');
+  const rSub   = document.getElementById('rSub');
+  const retryBtn = document.getElementById('retryBtn');
+  const closeBtn = document.getElementById('closeBtn');
+
+  // 状態
+  let i = 0, score = 0;
+
+  // 質問表示（テキスト→画像）
+  function showQuestion(){
+    if(i >= QUESTIONS.length){ return showResult(); }
+
+    // 見た目完全リセット（スワイプ痕跡を消す）
+    hideBadges();
+    card.style.transition = 'none';
+    card.style.transform  = 'translateX(0px) rotate(0deg)';
+    card.style.opacity    = '1';
+
+    qText.textContent = QUESTIONS[i].q;
+    qImg.src = QUESTION_IMG;
+    qImg.onerror = ()=>{ qImg.removeAttribute('src'); };
+
+    requestAnimationFrame(()=>{ card.style.transition = 'transform .25s ease, opacity .25s ease'; });
+  }
+
+  // ティア選択
+  function pickTier(percent){
+    for(const t of TIERS){ if(percent >= t.min && percent <= t.max) return t; }
+    return TIERS[0];
+  }
+
+  // 結果表示（%＋画像）— クラスでオーバーレイ表示
+  function showResult(){
+    const ratio = score / QUESTIONS.length;
+    const percent = Math.round(ratio * 100);
+    const tier = pickTier(percent);
+
+    rMain.textContent = `松村度 ${percent}%`;
+    rSub.textContent  = tier.label;
+
+    // まず質問画像→tier画像が読み込めたら差し替え（フォールバック安全）
+    rImg.src = QUESTION_IMG;
+    const test = new Image();
+    test.onload = ()=>{ rImg.src = tier.img; };
+    test.onerror = ()=>{/* question.png のまま */}
+    test.src = tier.img;
+
+    result.classList.add('show');
+  }
+
+  // 完全初期化（「もう一度」）
+  function resetAll(e){
+    if(e) e.preventDefault();
+    i = 0; score = 0;
+    result.classList.remove('show');
+
+    // カード状態を念入りに初期化
+    hideBadges();
+    card.style.transition = 'none';
+    card.style.transform  = 'translateX(0px) rotate(0deg)';
+    card.style.opacity    = '1';
+
+    requestAnimationFrame(()=>{
+      card.style.transition = 'transform .25s ease, opacity .25s ease';
+      showQuestion();
+      card.focus?.();
+    });
+  }
+
+  // 回答処理
+  function answer(isYes){
+    if(isYes === QUESTIONS[i].yes) score++;
+    const dir = isYes ? 1 : -1;
+    card.style.transform = `translateX(${dir*220}px) rotate(${dir*12}deg)`;
+    card.style.opacity = '0';
+    setTimeout(()=>{ i++; (i < QUESTIONS.length) ? showQuestion() : showResult(); }, 220);
+  }
+
+  // バッジ
+  function hideBadges(){ badgeNo.classList.remove('show'); badgeYes.classList.remove('show'); }
+  function showBadge(dir){ if(dir>0){ badgeYes.classList.add('show'); badgeNo.classList.remove('show'); } else { badgeNo.classList.add('show'); badgeYes.classList.remove('show'); } }
+
+  // ボタン
+  btnYes.addEventListener('click', ()=>answer(true));
+  btnNo .addEventListener('click', ()=>answer(false));
+
+  // スワイプ（Pointer Events）
+  let startX=null, dragging=false;
+  card.addEventListener('pointerdown', (e)=>{ dragging=true; startX=e.clientX; card.setPointerCapture(e.pointerId); card.style.transition='none'; });
+  card.addEventListener('pointermove', (e)=>{
+    if(!dragging || startX===null) return;
+    const dx = e.clientX - startX;
+    card.style.transform = `translateX(${dx}px) rotate(${dx*0.05}deg)`;
+    card.style.opacity = String(Math.max(0.3, 1 - Math.abs(dx)/400));
+    if(Math.abs(dx) > 20) showBadge(dx>0 ? 1 : -1); else hideBadges();
+  });
+  function endDrag(e){
+    if(!dragging) return;
+    dragging=false;
+    const dx = e.clientX - startX; startX=null; hideBadges();
+    const TH=80;
+    if(Math.abs(dx)>=TH){ answer(dx>0); }
+    else{
+      card.style.transition='transform .2s ease, opacity .2s ease';
+      card.style.transform='translateX(0px) rotate(0deg)';
+      card.style.opacity='1';
+    }
+  }
+  card.addEventListener('pointerup', endDrag);
+  card.addEventListener('pointercancel', endDrag);
+
+  // 結果オーバーレイ操作
+  retryBtn.addEventListener('click', resetAll);
+  closeBtn.addEventListener('click', ()=>{ result.classList.remove('show'); });
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') result.classList.remove('show'); });
+
+  // 初期化
+  showQuestion();
+</script>
+</body>
+</html>
