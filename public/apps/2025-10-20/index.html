@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-<title>mtmr診断｜スワイプ＋5段階結果画像</title>
+<title>mtmr診断</title>
 <style>
   :root{ --bg:#0b0f14; --fg:#e7edf3; --muted:#95a3b3; --card:#121a24; --yes:#ffcf33; --no:#ff6b6b; --bd:#1c2733; }
   *{box-sizing:border-box}
@@ -118,21 +118,21 @@
   // 画像
   const QUESTION_IMG = asset('./assets/question.png');
   const TIERS = [
-    { min:   0, max:  19, img: asset('./assets/result_0.png'), label: 'Lv1 まだ松村の入口' },
-    { min:  20, max:  39, img: asset('./assets/result_1.png'), label: 'Lv2 松村見習い' },
-    { min:  40, max:  59, img: asset('./assets/result_2.png'), label: 'Lv3 そこそこ松村' },
-    { min:  60, max:  79, img: asset('./assets/result_3.png'), label: 'Lv4 かなり松村' },
-    { min:  80, max: 100, img: asset('./assets/result_4.png'), label: 'Lv5 超松村' },
+    { min:   0, max:  19, img: asset('./assets/result_0.png'), label: '松村じゃないです！' },
+    { min:  20, max:  39, img: asset('./assets/result_1.png'), label: '何村ですか？' },
+    { min:  40, max:  59, img: asset('./assets/result_2.png'), label: '松村ですか？' },
+    { min:  60, max:  79, img: asset('./assets/result_3.png'), label: '松村っぽいです！' },
+    { min:  80, max: 100, img: asset('./assets/result_4.jpg'), label: '松村です！' },
   ];
 
   // 質問（“はい”が松村ポイント）
   const QUESTIONS = [
-    { q: "1日1アプリ的な“毎日小さく作る”が好き？", yes:true },
-    { q: "筋トレは週2以上している？", yes:true },
-    { q: "サックスを見ると吹きたくなる？", yes:true },
-    { q: "“松村です！”と自然に言う？", yes:true },
+    { q: "サックス吹く？", yes:true },
+    { q: "筋トレは好き？", yes:true },
+    { q: "ドレッドだったことある？", yes:true },
+    { q: "「松村です！」って毎日言ってる？", yes:true },
     { q: "髭がくるんとしてる？", yes:true },
-    { q: "あなたは松村ですか？", yes:true },
+    { q: "松村ですか？", yes:true },
   ];
 
   // DOM参照
