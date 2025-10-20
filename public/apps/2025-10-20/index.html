@@ -112,17 +112,28 @@
 </div>
 
 <script type="module">
-  // 動的アセット解決
-  const asset = (p) => new URL(p, import.meta.url).toString();
+  // 動的アセット解決（Vercel/ローカル両対応）
+  const asset = (fileName) => {
+    try{
+      const p = location.pathname;
+      // /YYYY-MM-DD または /YYYY-MM-DD/... の先頭ディレクトリを抽出
+      const m = p.match(/^\/(\d{4}-\d{2}-\d{2})(?:\/.*)?$/);
+      const base = m ? `/${m[1]}` : '';
+      return `${base}/assets/${fileName.replace(/^\/+/, '')}`;
+    }catch(e){
+      // フォールバック（相対）
+      return `assets/${fileName}`;
+    }
+  };
 
   // 画像
-  const QUESTION_IMG = asset('./assets/question.png');
+  const QUESTION_IMG = asset('question.png');
   const TIERS = [
-    { min:   0, max:  19, img: asset('./assets/result_0.png'), label: '松村じゃないです！' },
-    { min:  20, max:  39, img: asset('./assets/result_1.png'), label: '何村ですか？' },
-    { min:  40, max:  59, img: asset('./assets/result_2.png'), label: '松村ですか？' },
-    { min:  60, max:  79, img: asset('./assets/result_3.png'), label: '松村っぽいです！' },
-    { min:  80, max: 100, img: asset('./assets/result_4.jpg'), label: '松村です！' },
+    { min:   0, max:  19, img: asset('result_0.png'), label: '松村じゃないです！' },
+    { min:  20, max:  39, img: asset('result_1.png'), label: '何村ですか？' },
+    { min:  40, max:  59, img: asset('result_2.png'), label: '松村ですか？' },
+    { min:  60, max:  79, img: asset('result_3.png'), label: '松村っぽいです！' },
+    { min:  80, max: 100, img: asset('result_4.jpg'), label: '松村です！' },
   ];
 
   // 質問（“はい”が松村ポイント）
