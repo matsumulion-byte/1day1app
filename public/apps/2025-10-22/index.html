@@ -95,7 +95,7 @@ const IMAGES = {
   player: new Image(), // 例: 32〜64px四方・透過PNG推奨
 };
 IMAGES.player.decoding = 'async';
-IMAGES.player.src = asset('./assets/player.png');
+IMAGES.player.src = asset('/2025-10-22/assets/player.png');
 const IMG_READY = { player:false };
 IMAGES.player.addEventListener('load', ()=> IMG_READY.player = true);
 
