@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>松村横断ゲーム</title>
+<style>
+  :root{
+    --lcd:#e5f0da; --seg:#1b3324; --seg-dim:#5b7a67; --bezel:#333; --accent:#c8d9bf;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; display:grid; place-items:center; color:#222;
+    font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+    background:radial-gradient(1200px 800px at 70% -10%, #111 0%, #000 50%, #000 100%);
+  }
+  .cabinet{
+    width:min(92vw,460px); aspect-ratio: 3/4.6;
+    background:linear-gradient(180deg,#6b6b6b,#4a4a4a 40%,#2b2b2b);
+    border-radius:24px; padding:18px 16px 14px;
+    display:flex; flex-direction:column; gap:10px; align-items:center; justify-content:space-between;
+    box-shadow: inset 0 4px 10px rgba(255,255,255,.15), inset 0 -6px 14px rgba(0,0,0,.6), 0 20px 60px rgba(0,0,0,.6);
+  }
+  .title{ color:#ddd; letter-spacing:.08em; font-weight:700; text-shadow:0 1px 0 #0008; font-size:14px }
+  .screen-wrap{ width:100%; background:#111; border-radius:14px; padding:10px; box-shadow:inset 0 0 0 2px #000, inset 0 0 30px #000; }
+  .screen{ width:100%; aspect-ratio: 3/4; background:var(--lcd); border-radius:10px; position:relative; box-shadow: inset 0 0 0 2px #0008, inset 0 0 40px rgba(0,0,0,.35); overflow:hidden; }
+  canvas{ width:100%; height:100%; display:block }
+  .hud{ position:absolute; inset:8px 8px auto 8px; display:flex; justify-content:space-between; font-size:12px; color:#1a2b22; mix-blend-mode:multiply; font-weight:700; }
+  .badge{ position:absolute; left:0; right:0; bottom:6px; text-align:center; font-size:12px; color:#2b3a2f; opacity:.7; letter-spacing:.1em; }
+  .ctrl{ width:100%; display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+  .dpad,.buttons{ background:#1e1e1e; border-radius:16px; padding:10px; display:grid; place-items:center; gap:8px; box-shadow: inset 0 0 0 2px #000, inset 0 10px 20px #0008; }
+  .dpad{ grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(3, 54px); }
+  .dpad button,.buttons button{ height:54px; border-radius:12px; background:#2b2b2b; border:0; box-shadow: inset 0 -4px 0 #0008; color:#eee; font-weight:800; }
+  .dpad button{ width:54px }
+  .dpad .void{ visibility:hidden }
+  .hint{ margin-top:-2px; font-size:11px; color:#c9c9c9; opacity:.85; text-align:center; }
+  @media (hover:none) and (pointer:coarse){ .hint{ display:none } }
+</style>
+</head>
+<body>
+  <div class="cabinet">
+    <div class="title">MATSUMURA CROSSING</div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="hud"><div id="score">SCORE 0000</div><div id="lives">LIFE ♥♥♥</div></div>
+        <div class="badge">← 3回ぶつかったら終了 →</div>
+        <canvas id="game" width="360" height="480" aria-label="松村横断 実写版"></canvas>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="dpad">
+        <span class="void"></span><button id="up">▲</button><span class="void"></span>
+        <button id="left">◀</button><span class="void"></span><button id="right">▶</button>
+        <span class="void"></span><button id="down">▼</button><span class="void"></span>
+      </div>
+      <div class="buttons">
+        <button id="startBtn">START / RESTART</button>
+        <button id="pauseBtn">PAUSE</button>
+      </div>
+    </div>
+    <div class="hint">PCは矢印キー、スマホはボタンで操作</div>
+  </div>
+
+<!-- module にして asset() を使えるようにする（プロジェクトルール対応） -->
+<script type="module">
+/* ==========================================================
+   松村横断 – 実写ポーズ版（移動のたびにランダム）
+   - ROWS=6 / roadRows=[1,2,3,4]
+   - 画像: ./assets/matsu_pose_0.png ... matsu_pose_9.png
+   - import.meta.url を使った asset() 参照
+========================================================== */
+const asset = (p) => new URL(p, import.meta.url).toString();
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+const W = canvas.width, H = canvas.height;
+const getCSS = (name, fallback) =>
+  getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+
+const COL_BG  = getCSS('--lcd', '#e5f0da');
+const COL_SEG = getCSS('--seg', '#1b3324');
+const COL_DIM = getCSS('--seg-dim', '#5b7a67');
+const COL_ACC = getCSS('--accent', '#c8d9bf');
+
+const COLS = 7, ROWS = 6;
+const CELL = Math.floor(Math.min(W/COLS, H/ROWS));
+const OX = Math.floor((W - COLS*CELL)/2);
+const OY = Math.floor((H - ROWS*CELL)/2);
+
+const player = { c: Math.floor(COLS/2), r: ROWS-1 };
+let score=0, lives=3, level=1, running=false, paused=false;
+
+// 車レーン
+const roadRows = [1,2,3,4];
+const lanes = roadRows.map((rowIdx, i) => ({
+  row: rowIdx,
+  dir: (i % 2 === 0) ? 1 : -1,
+  speed: 0.9 + i*0.08,
+  cars: []
+}));
+lanes.forEach((lane,i)=>{
+  const count = 2 + (i%2);
+  for(let k=0;k<count;k++){
+    lane.cars.push({ x: (k*(COLS/count))*CELL, w: CELL*(0.9), h: CELL*0.7 });
+  }
+});
+
+// ===== 実写ポーズ画像の用意 =====
+const POSE_FILES = [
+  '/2025-10-21/assets/matsu_pose_0.png',
+  '/2025-10-21/assets/matsu_pose_1.png',
+  '/2025-10-21/assets/matsu_pose_2.png',
+  '/2025-10-21/assets/matsu_pose_3.png',
+  '/2025-10-21/assets/matsu_pose_4.png',
+  '/2025-10-21/assets/matsu_pose_5.png',
+  '/2025-10-21/assets/matsu_pose_6.png',
+  '/2025-10-21/assets/matsu_pose_7.png',
+  '/2025-10-21/assets/matsu_pose_8.png',
+  '/2025-10-21/assets/matsu_pose_9.png',
+];
+const poses = POSE_FILES.map(src => {
+  const img = new Image();
+  img.src = asset(src);
+  img.decode?.().catch(()=>{});
+  return img;
+});
+const hasPose = (r) => {
+  const idx = r % poses.length;
+  const im = poses[idx];
+  return im && im.complete && im.naturalWidth > 0;
+};
+
+// ▼▼▼ ランダム化のための追加：行ごとの「現在ポーズ番号」を持つ ▼▼▼
+const randPoseIndex = () => Math.floor(Math.random() * poses.length);
+// 段ごとの現在ポーズ（ゲーム開始時にランダム初期化）
+let rowPose = Array.from({ length: ROWS }, randPoseIndex);
+// 表示時は「その段の現在ポーズ」を参照
+const poseForRow = (r) => poses[rowPose[r % ROWS]];
+// ▲▲▲ ここまで追加／変更 ▲▲▲
+
+// ===== 入力
+const bindBtn = (id, dx, dy) => {
+  const el = document.getElementById(id);
+  const act = () => { if (running && !paused) tryMove(dx, dy); };
+  el.addEventListener('click', act);
+  el.addEventListener('touchstart', (e)=>{ e.preventDefault(); act(); }, {passive:false});
+};
+bindBtn('up',0,-1); bindBtn('down',0,1); bindBtn('left',-1,0); bindBtn('right',1,0);
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+window.addEventListener('keydown', (e) => {
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+  if (e.key === ' '){ togglePause(); return; }
+  if (!running || paused) return;
+  if (e.key === 'ArrowUp') tryMove(0,-1);
+  if (e.key === 'ArrowDown') tryMove(0,1);
+  if (e.key === 'ArrowLeft') tryMove(-1,0);
+  if (e.key === 'ArrowRight') tryMove(1,0);
+});
+
+// ===== サウンド（軽量ビープ）
+let audioCtx=null;
+function beep(freq=680, time=0.06, vol=0.06){
+  try{
+    if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type='square'; o.frequency.value=freq; g.gain.value=vol;
+    o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+time);
+  }catch(_){}
+}
+
+// ===== HUD
+const scoreEl = document.getElementById('score');
+const livesEl = document.getElementById('lives');
+const updateHUD = () => {
+  scoreEl.textContent = `SCORE ${String(score).padStart(4,'0')}`;
+  livesEl.textContent = `LIFE ${'♥'.repeat(lives)}`;
+};
+
+// ===== 制御
+function reset(){
+  score=0; lives=3; level=1;
+  player.c = Math.floor(COLS/2); player.r = ROWS-1;
+  lanes.forEach((lane,i)=>{
+    lane.speed = 0.9 + i*0.08;
+    lane.cars.forEach((car,k)=>{
+      const count = lane.cars.length;
+      car.x = (k*(COLS/count))*CELL;
+    });
+  });
+  // ▼ 初期化時に段ごとのポーズもランダムにリセット
+  rowPose = Array.from({ length: ROWS }, randPoseIndex);
+  updateHUD();
+}
+function startGame(){ reset(); running=true; paused=false; lastTime=performance.now(); beep(760,.08,.06); }
+function togglePause(){ if(!running) return; paused=!paused; beep(paused?420:680,.06,.05); if(!paused) lastTime=performance.now(); }
+function tryMove(dx,dy){
+  const nc = clamp(player.c+dx,0,COLS-1), nr = clamp(player.r+dy,0,ROWS-1);
+  if (nc===player.c && nr===player.r) return;
+
+  player.c=nc; player.r=nr; beep(720,.03,.045);
+
+  // ▼ 移動のたびに「現在いる段」のポーズをランダムで更新
+  rowPose[player.r] = randPoseIndex();
+
+  if (player.r===0){
+    score += 100*level; level++; lanes.forEach(l=> l.speed*=1.12);
+    // ゴール直後に最下段のポーズも更新して、戻った瞬間も新鮮に
+    rowPose[ROWS - 1] = randPoseIndex();
+
+    player.c = Math.floor(COLS/2); player.r = ROWS-1;
+    beep(880,.07,.07); setTimeout(()=>beep(990,.07,.07),90); updateHUD();
+  }
+}
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+
+// ===== ループ
+let lastTime = performance.now();
+function tick(now){
+  requestAnimationFrame(tick);
+  if (!running || paused){ draw(true); return; }
+  const dt = (now-lastTime)/16.67; lastTime=now;
+
+  // 車更新
+  lanes.forEach(lane=>{
+    const pxSpeed = lane.speed * level * 0.8;
+    lane.cars.forEach(car=>{
+      car.x += (pxSpeed*lane.dir*dt);
+      if (lane.dir>0 && car.x > COLS*CELL) car.x = -CELL;
+      if (lane.dir<0 && car.x < -CELL)     car.x = COLS*CELL;
+    });
+  });
+
+  // 当たり判定
+  if (roadRows.includes(player.r)){
+    const lane = lanes.find(l=>l.row===player.r);
+    const px = OX + player.c*CELL + CELL*0.5;
+    const py = OY + player.r*CELL + CELL*0.5;
+    let hit=false;
+    for (const car of lane.cars){
+      const cx = OX + car.x + CELL*0.5;
+      const cy = OY + lane.row*CELL + CELL*0.5;
+      const dx = Math.abs(px-cx), dy = Math.abs(py-cy);
+      if (dx < CELL*0.52 && dy < CELL*0.45){ hit=true; break; }
+    }
+    if (hit){
+      lives--; beep(220,.08,.08); setTimeout(()=>beep(180,.08,.08),70);
+      player.c=Math.floor(COLS/2); player.r=ROWS-1; updateHUD();
+      if (lives<=0){ running=false; flashGameOver(); }
+    }
+  }
+  draw(false);
+}
+
+// ===== 描画
+function draw(idle){
+  // 背景
+  ctx.fillStyle = COL_BG; ctx.fillRect(0,0,W,H);
+  // レーン線
+  ctx.fillStyle = COL_ACC; for(let r=1;r<ROWS-1;r++){ ctx.fillRect(OX+4, OY+r*CELL, COLS*CELL-8, 1); }
+  // ゴール/スタート帯
+  ctx.globalAlpha=.25; ctx.fillStyle=COL_SEG; ctx.fillRect(OX+2, OY+2, COLS*CELL-4, CELL-4);
+  ctx.globalAlpha=.15; ctx.fillRect(OX+2, OY+(ROWS-1)*CELL+2, COLS*CELL-4, CELL-4); ctx.globalAlpha=1;
+
+  // グリッドの薄残像（LCD感）
+  ctx.fillStyle = COL_DIM;
+  for(let r=0;r<ROWS;r++){ for(let c=0;c<COLS;c++){ const pad=CELL*0.36; ctx.fillRect(OX+c*CELL+pad, OY+r*CELL+pad, CELL-pad*2, CELL-pad*2); } }
+
+  // 車
+  lanes.forEach(lane=>{
+    lane.cars.forEach(car=>{
+      drawCar(mod(car.x, COLS*CELL), lane.row);
+    });
+  });
+
+  // プレイヤー（行ごと「現在ポーズ」を描画）
+  drawPlayerPhoto(player.c, player.r);
+
+  if (!running) drawCenterText('PRESS START', 24);
+  else if (paused) drawCenterText('PAUSED', 26);
+}
+function drawCar(x, row){
+  const y = OY + row*CELL + CELL*0.15;
+  const w = CELL*0.95, h=CELL*0.7;
+  ctx.fillStyle = COL_SEG; roundRect(OX+x, y, w, h, 6, true);
+  ctx.fillStyle = COL_BG; roundRect(OX+x+w*0.15, y+h*0.22, w*0.25, h*0.35, 4, true);
+}
+function roundRect(x,y,w,h,r,fill){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+  if (fill) ctx.fill();
+}
+function mod(a,b){ return ((a%b)+b)%b; }
+
+function drawPlayerPhoto(c, r){
+  const x = OX + c*CELL, y = OY + r*CELL;
+
+  // セル内にフィットさせたうえで、さらに拡大倍率をかける
+  const BASE_INSET_X = CELL*0.08;
+  const BASE_INSET_Y = CELL*0.02;
+  const drawW = CELL - BASE_INSET_X*2;
+  const drawH = CELL - BASE_INSET_Y*2;
+
+  const SCALE = 1.7; // 画面で主役サイズ
+  if (hasPose(r)){
+    const img = poseForRow(r);
+    const fit = Math.min(drawW / img.naturalWidth, drawH / img.naturalHeight) * SCALE;
+
+    const w = img.naturalWidth * fit;
+    const h = img.naturalHeight * fit;
+
+    // ちょい足元寄り・左右中央
+    const dx = x + (CELL - w)/2;
+    const dy = y + (CELL - h) + CELL*0.10;
+
+    ctx.drawImage(img, dx, dy, w, h);
+
+    // 足元の薄影でLCDっぽさ
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = COL_SEG;
+    ctx.fillRect(dx, dy + h - 2, w, 2);
+    ctx.globalAlpha = 1;
+  }else{
+    // フォールバックのシルエットも大きめに
+    ctx.fillStyle = COL_SEG;
+    const sx = x - CELL*0.10, sy = y - CELL*0.10, s = CELL*1.2;
+    ctx.fillRect(sx+s*0.28, sy+s*0.72, s*0.10, s*0.18);
+    ctx.fillRect(sx+s*0.58, sy+s*0.72, s*0.10, s*0.18);
+    roundRect(sx+s*0.25, sy+s*0.35, s*0.5, s*0.4, 6, true);
+    roundRect(sx+s*0.28, sy+s*0.12, s*0.44, s*0.28, 8, true);
+  }
+}
+
+function drawCenterText(t, size=24){
+  ctx.save(); ctx.translate(W/2,H/2);
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font=`700 ${size}px ui-sans-serif, system-ui, -apple-system`;
+  ctx.fillStyle=COL_SEG; ctx.fillText(t,0,0); ctx.restore();
+}
+
+function flashGameOver(){
+  let n=0; const id=setInterval(()=>{
+    n++; ctx.save(); ctx.globalCompositeOperation='difference'; ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H); ctx.restore();
+    if (n>=4){ clearInterval(id); draw(false); drawCenterText('GAME OVER', 26); }
+  },120);
+}
+
+// ===== ループ開始
+updateHUD(); draw(true); requestAnimationFrame(tick);
+</script>
+</body>
+</html>
