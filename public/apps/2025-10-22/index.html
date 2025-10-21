@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>SAFE DROP - Parachute Day</title>
+<style>
+  :root{
+    --bg:#0b1017; --fg:#e9f1f7; --muted:#97a6b3; --acc:#4fd1c5; --danger:#ff5b6e; --ok:#90e06b;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; margin:0; }
+  body{
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN","Yu Gothic", sans-serif;
+    color:var(--fg); background: radial-gradient(1200px 800px at 60% -10%, #17202a 0%, var(--bg) 60%);
+    display:grid; place-items:center;
+  }
+  .wrap{ width:100%; max-width:520px; height:100dvh; max-height:100dvh; display:flex; flex-direction:column; }
+  header{ padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  header .title{ font-weight:700; letter-spacing:.3px; }
+  header .score{ font-variant-numeric:tabular-nums; color:var(--muted); }
+  canvas{ width:100%; height:100%; flex:1; display:block; background:linear-gradient(#5fb3ff 0%, #a5d9ff 40%, #e7f6ff 60%, #dbe8ef 100%); border-top:1px solid rgba(255,255,255,.08); border-bottom:1px solid rgba(0,0,0,.25)}
+  .hud{ position:absolute; inset:auto 0 92px 0; display:flex; justify-content:center; gap:18px; pointer-events:none; }
+  .btns{ position:fixed; left:0; right:0; bottom:0; padding:10px 12px 14px; display:flex; gap:12px; background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.30) 40%); }
+  .btn{ flex:1; padding:14px 10px; border-radius:14px; border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.06); color:var(--fg); font-weight:700; letter-spacing:.2px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 10px 20px rgba(0,0,0,.25); pointer-events:auto; user-select:none; text-align:center; }
+  .btn:active{ transform:translateY(1px); }
+  .btn.primary{ background:linear-gradient(180deg, rgba(79,209,197,.9), rgba(79,209,197,.7)); color:#072d2a }
+  .pill{ font-size:12px; padding:5px 8px; border-radius:999px; background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.12); color:var(--muted) }
+  .msg{ position:absolute; left:50%; top:18%; transform:translateX(-50%); padding:10px 14px; border-radius:12px; background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.15); color:var(--fg); text-align:center; max-width:90%; }
+  .center{ position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; }
+  .card{ pointer-events:auto; background:rgba(8,12,16,.85); border:1px solid rgba(255,255,255,.12); border-radius:16px; box-shadow: 0 20px 40px rgba(0,0,0,.5); padding:18px; width:min(92%,440px); }
+  .card h1{ margin:0 0 8px; font-size:20px }
+  .card p{ margin:6px 0; color:var(--muted); line-height:1.5 }
+  .row{ display:flex; gap:8px; margin-top:12px }
+  .row .btn{ flex:1 }
+  .chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px }
+  .chip{ font-size:11px; padding:4px 8px; border-radius:999px; background:#0f1720; border:1px solid rgba(255,255,255,.1); color:#b7c3cf }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">🪂 SAFE DROP</div>
+    <div class="score">
+      <span id="best" class="pill">BEST: 0</span>
+    </div>
+  </header>
+  <canvas id="game" width="360" height="640" aria-label="game"></canvas>
+
+  <!-- 中央メッセージ -->
+  <div id="message" class="msg" hidden></div>
+
+  <!-- 開始/リザルト -->
+  <div id="overlay" class="center">
+    <div class="card">
+      <h1>🪂 パラシュートを開け！</h1>
+      <p>落下中、<b>緑の安全高度</b>でタップしてパラシュートを開こう。<br>
+      開いたら<b>端末の傾き</b> or <b>左右ボタン</b>でターゲット中心を狙って着地。</p>
+      <div class="chips">
+        <span class="chip">安全高度で開く: +100〜300</span>
+        <span class="chip">着地精度ボーナス: 0〜700</span>
+        <span class="chip">ど遅れ/地面激突: 失敗</span>
+      </div>
+      <div class="row">
+        <button id="play" class="btn primary">スタート</button>
+        <button id="how" class="btn">遊び方</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HUD（高度表示） -->
+  <div class="hud" id="hud" hidden>
+    <span class="pill" id="altPill">ALT: 0m</span>
+    <span class="pill" id="windPill">WIND: 0</span>
+  </div>
+
+  <!-- 操作ボタン -->
+  <div class="btns">
+    <button id="left" class="btn">←</button>
+    <button id="open" class="btn primary">開く</button>
+    <button id="right" class="btn">→</button>
+  </div>
+</div>
+
+<script type="module">
+/* ============================================================
+   1日1アプリ規約：動的アセットは asset() で参照
+   ============================================================ */
+const asset = (p) => new URL(p, import.meta.url).toString();
+
+/* ============================================================
+   画像（落下物＝キャラクター）
+   ============================================================ */
+const IMAGES = {
+  player: new Image(), // 例: 32〜64px四方・透過PNG推奨
+};
+IMAGES.player.decoding = 'async';
+IMAGES.player.src = asset('./assets/player.png');
+const IMG_READY = { player:false };
+IMAGES.player.addEventListener('load', ()=> IMG_READY.player = true);
+
+/* ============================================================
+   基本セットアップ
+   ============================================================ */
+const cvs = document.getElementById('game');
+const ctx = cvs.getContext('2d');
+const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+function fitCanvas(){
+  const w = 360, h = 640;
+  cvs.width = Math.floor(w * DPR);
+  cvs.height = Math.floor(h * DPR);
+  cvs.style.width = '100%';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+fitCanvas();
+addEventListener('resize', fitCanvas);
+
+/* ============================================================
+   ゲーム状態
+   ============================================================ */
+const STATE = { idle:'idle', falling:'falling', canopy:'canopy', landed:'landed', fail:'fail' };
+let state = STATE.idle;
+let tLast = 0; let rafId = 0;
+// 着地点の可視化用（判定と見た目のズレ確認/演出）
+let lastLandingX = null;
+
+const world = { width:360, height:640, groundY:600, safeTop:240, safeBottom:360, targetX:180 };
+
+// 足元オフセット（描画基準点→足先）
+const FOOT_OFFSET = 14;
+
+// 追加：キャノピーとライザーの基準
+const CANOPY_BASE_Y = -18;        // キャノピー下端（drawCanopyの基準）
+const RISER_TOP_Y   = CANOPY_BASE_Y - 2;
+const RISER_SIDE_X  = 20;         // キャノピー側の左右位置
+const HARNESS_SIDE_X = 10;        // 肩（キャラ側）の左右位置
+const HARNESS_ANCHOR_RATIO = 0.30; // 画像高さに対する肩の高さ(0..1)
+
+// 追加：プレイヤー画像の最大サイズ（論理px）
+const PLAYER_MAX_W = 48;   // 横の最大幅
+const PLAYER_MAX_H = 48;   // 縦の最大高
+
+const player = {
+  x:180, y:60,
+  vx:0,
+  vy:0.35,        // ゆっくり目の初期落下速度
+  maxVy:10,
+  wind:0,
+  canopyOpen:false,
+  canopyDrag:0.05, // 開傘時の制動をやや強く
+  bodyDrag:0.002,  // 空気抵抗を強め
+  steer:0,
+};
+
+const rng = (a,b) => a + Math.random()*(b-a);
+let score = 0;
+let best = Number(localStorage.getItem('safe_drop_best')||0);
+
+/* ============================================================
+   UI
+   ============================================================ */
+const overlay = document.getElementById('overlay');
+function showOverlay(show){
+  overlay.hidden = !show;
+  overlay.style.display = show ? 'grid' : 'none';
+}
+
+const playBtn = document.getElementById('play');
+const howBtn = document.getElementById('how');
+const msg = document.getElementById('message');
+const altPill = document.getElementById('altPill');
+const windPill = document.getElementById('windPill');
+const hud = document.getElementById('hud');
+const bestEl = document.getElementById('best');
+bestEl.textContent = `BEST: ${best}`;
+
+const leftBtn = document.getElementById('left');
+const rightBtn = document.getElementById('right');
+const openBtn = document.getElementById('open');
+
+/* ============================================================
+   入力
+   ============================================================ */
+let holdLeft=false, holdRight=false;
+leftBtn.addEventListener('pointerdown', ()=>holdLeft=true);
+leftBtn.addEventListener('pointerup', ()=>holdLeft=false);
+leftBtn.addEventListener('pointerleave', ()=>holdLeft=false);
+rightBtn.addEventListener('pointerdown', ()=>holdRight=true);
+rightBtn.addEventListener('pointerup', ()=>holdRight=false);
+rightBtn.addEventListener('pointerleave', ()=>holdRight=false);
+openBtn.addEventListener('click', tryOpenCanopy);
+
+addEventListener('keydown', (e)=>{
+  if(e.key==='ArrowLeft') holdLeft = true;
+  if(e.key==='ArrowRight') holdRight = true;
+  if(e.key===' ' || e.key==='Enter') tryOpenCanopy();
+});
+addEventListener('keyup', (e)=>{
+  if(e.key==='ArrowLeft') holdLeft = false;
+  if(e.key==='ArrowRight') holdRight = false;
+});
+
+let gyroEnabled = false; let tilt = 0; // -1..1
+if (window.DeviceOrientationEvent) {
+  const req = DeviceOrientationEvent.requestPermission?.bind(DeviceOrientationEvent);
+  howBtn.addEventListener('click', async ()=>{
+    alert('端末を傾けるとパラシュートを左右に操縦できます（許可が必要な場合があります）。\n許可できない/PCでは左右ボタンで操作してください。');
+    if(req){ try{ const r = await req(); gyroEnabled = (r==='granted'); }catch{} }
+  });
+  addEventListener('deviceorientation', (e)=>{
+    if(!gyroEnabled && DeviceOrientationEvent.requestPermission) return;
+    const g = (e.gamma||0);
+    tilt = Math.max(-1, Math.min(1, g/35));
+  });
+}
+
+/* ============================================================
+   風モデル
+   ============================================================ */
+let windTimer = 0;
+function updateWind(dt){
+  windTimer -= dt;
+  if(windTimer <= 0){
+    player.wind = rng(-0.35, 0.35);
+    windTimer = rng(700, 1600);
+  }
+}
+
+/* ============================================================
+   スコア
+   ============================================================ */
+function scoreForOpen(y){
+  const center = (world.safeTop + world.safeBottom) / 2;
+  const d = Math.abs(y - center);
+  const maxD = (world.safeBottom - world.safeTop)/2;
+  const pct = Math.max(0, 1 - (d/maxD));
+  return Math.round(100 + 200*pct);
+}
+function scoreForLanding(dx){
+  const max = 700, falloff = 180;
+  const s = Math.max(0, max*(1 - Math.min(1, Math.abs(dx)/falloff)));
+  return Math.round(s);
+}
+
+/* ============================================================
+   制御
+   ============================================================ */
+function reset(){
+  state = STATE.falling;
+  player.x = 180; player.y = 60;
+  player.vx = 0; player.vy = 0.35;
+  player.canopyOpen = false;
+  player.steer = 0; tilt = 0;
+  player.wind = rng(-0.2,0.2);
+  windTimer = rng(600, 1200);
+
+  const baseTop = 220, band = 140;
+  world.safeTop = Math.round(rng(baseTop-20, baseTop+40));
+  world.safeBottom = world.safeTop + band;
+  world.targetX = Math.round(rng(80, world.width-80));
+
+  score = 0;
+  msg.hidden = true; showOverlay(false); hud.hidden = false;
+
+  cancelAnimationFrame(rafId); tLast = performance.now();
+  loop(tLast);
+}
+playBtn.addEventListener('click', reset);
+
+function end(success, landingScore=0){
+  state = success ? STATE.landed : STATE.fail; 
+  hud.hidden = true;
+
+  // 完全停止：速度・風・入力をゼロ化
+  player.vx = 0; player.vy = 0; player.wind = 0; player.steer = 0;
+  holdLeft = false; holdRight = false;
+  // 足元を地面にスナップ
+  player.y = world.groundY - FOOT_OFFSET;
+
+  const total = success ? (score + landingScore) : 0;
+  if(success){
+    best = Math.max(best, total);
+    localStorage.setItem('safe_drop_best', String(best));
+    bestEl.textContent = `BEST: ${best}`;
+  }
+  showOverlay(true);
+  overlay.querySelector('.card').innerHTML = success ? `
+    <h1>🪂 着地成功！</h1>
+    <p>開傘ボーナス: <b>${score}</b><br>着地精度: <b>${landingScore}</b><br><br>
+    <b>合計: ${total}</b></p>
+    <div class="row">
+      <button class="btn primary" id="replay">もう一度</button>
+      <button class="btn" id="tips">コツ</button>
+    </div>` : `
+    <h1>💥 着地失敗…</h1>
+    <p>遅すぎる/速度が高すぎて制御できませんでした。<br>安全高度の<b>中央付近</b>で開くのがコツ。</p>
+    <div class="row">
+      <button class="btn primary" id="replay">再挑戦</button>
+      <button class="btn" id="tips">ヒント</button>
+    </div>`;
+  overlay.querySelector('#replay').addEventListener('click', reset);
+  overlay.querySelector('#tips').addEventListener('click', ()=>{
+    alert('・緑の帯の「中央」で開くと減速が安定し、得点も高い。\n・風は一定時間ごとに向き/強さが変わる。開いた後は端末を傾けて微調整。\n・端末を傾けられない場合は左右ボタンでOK。');
+  });
+}
+
+function tryOpenCanopy(){
+  if(state !== STATE.falling) return;
+  const footY = player.y + FOOT_OFFSET;
+  if(player.y < world.safeTop){
+    flash('早すぎる！ もう少し下で開こう');
+    return;
+  }
+  // 足元基準で「近すぎ」判定
+  if(footY > world.groundY - 120){
+    openCanopy(); // ほぼ失敗だが許可
+    return;
+  }
+  openCanopy();
+}
+
+function openCanopy(){
+  if(player.canopyOpen) return;
+  player.canopyOpen = true; state = STATE.canopy;
+  const add = scoreForOpen(player.y);
+  score += add; flash(`開傘 +${add}`);
+}
+
+/* ============================================================
+   ループ
+   ============================================================ */
+function loop(t){
+  const dt = Math.min(50, t - tLast); tLast = t;
+  step(dt); render();
+  rafId = requestAnimationFrame(loop);
+}
+
+function step(dt){
+  // 着地/失敗後は物理更新を完全停止（ドリフト防止）
+  if(state===STATE.landed || state===STATE.fail){ return; }
+  updateWind(dt);
+  const steerBtn = (holdRight?1:0) - (holdLeft?1:0);
+  player.steer = clamp(steerBtn*0.9 + tilt*0.7, -1, 1);
+
+  // 横
+  const steerAccel = player.canopyOpen ? 0.08 : 0.02;
+  player.vx += player.wind*0.02*dt + player.steer*steerAccel*dt;
+  player.vx *= 0.992; // 摩擦
+  player.x += player.vx;
+
+  // 縦（ゆっくり化）
+  if(!player.canopyOpen){
+    player.vy = Math.min(player.maxVy, player.vy + 0.006*dt); // 重力弱め
+    player.vy *= (1 - player.bodyDrag*dt);                    // 抵抗強め
+  }else{
+    player.vy = Math.max(0.6, player.vy - player.canopyDrag*dt);
+  }
+  player.y += player.vy*dt*0.09; // 距離スケールを小さく
+
+  // 端
+  player.x = clamp(player.x, 12, world.width-12);
+
+  // 地面（足元基準）
+  const footY = player.y + FOOT_OFFSET;
+  if(footY >= world.groundY){
+    // スナップして判定と見た目を完全一致
+    player.y = world.groundY - FOOT_OFFSET;
+    lastLandingX = player.x;
+    if(!player.canopyOpen){ end(false); return; }
+    const dx = lastLandingX - world.targetX; const bonus = scoreForLanding(dx);
+    end(true, bonus); return;
+  }
+
+  // HUD（足元基準の高度表示）
+  const altitude = Math.max(0, Math.round(world.groundY - footY));
+  altPill.textContent = `ALT: ${altitude}m`;
+  windPill.textContent = `WIND: ${player.wind>=0?'+':''}${player.wind.toFixed(2)}`;
+}
+
+function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
+
+/* ============================================================
+   描画
+   ============================================================ */
+function render(){
+  const w = world.width, h = world.height;
+  ctx.clearRect(0,0,w,h);
+  drawSky();
+  // 安全帯
+  ctx.save(); ctx.globalAlpha = 0.18; ctx.fillStyle = '#74ff8a';
+  ctx.fillRect(0, world.safeTop, w, world.safeBottom-world.safeTop); ctx.restore();
+  drawTarget(world.targetX, world.groundY);
+  drawGround();
+  drawPlayer();
+  // 着地点マーカー（判定用の実際の足下位置）
+  if(lastLandingX!==null && (state===STATE.landed || state===STATE.fail)){
+    drawTouchMarker(lastLandingX, world.groundY);
+  }
+  if(state===STATE.falling){
+    ctx.save(); ctx.globalAlpha = 0.7; ctx.fillStyle = '#122018';
+    ctx.fillRect(10, world.safeTop-18, 120, 16);
+    ctx.fillStyle = '#90e06b'; ctx.font = '12px system-ui, sans-serif';
+    ctx.fillText('ここで開く！', 16, world.safeTop-6); ctx.restore();
+  }
+}
+
+function drawSky(){
+  const t = performance.now()/1000;
+  for(let i=0;i<8;i++){
+    const y = 80 + (i*50) + Math.sin(t*0.2 + i)*8;
+    const x = ((t*20 + i*90) % (world.width+120)) - 60;
+    cloud(x, y, 1 + (i%3)*0.15);
+  }
+  function cloud(x,y,s){
+    ctx.save(); ctx.translate(x,y); ctx.scale(s,s);
+    ctx.fillStyle = 'rgba(255,255,255,.75)';
+    roundRect(-24,-10,48,20,10); ctx.fill();
+    roundRect(-14,-16,28,18,9); ctx.fill();
+    roundRect(4,-12,20,16,8); ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawGround(){
+  ctx.save();
+  ctx.fillStyle = '#75b86b';
+  ctx.fillRect(0, world.groundY, world.width, world.height - world.groundY);
+  ctx.globalAlpha = 0.25; ctx.fillStyle = '#6aaa61';
+  for(let x=-40; x<world.width+100; x+=40){
+    ctx.beginPath();
+    ctx.moveTo(x, world.groundY);
+    ctx.lineTo(x+20, world.groundY);
+    ctx.lineTo(x+80, world.height);
+    ctx.lineTo(x+60, world.height);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawTarget(cx, gy){
+  ctx.save(); const r = 26;
+  // 的（地面センター=gyに揃える）
+  for(let i=3;i>=1;i--){
+    ctx.beginPath(); ctx.arc(cx, gy, r*i/3, 0, Math.PI*2);
+    ctx.fillStyle = (i%2)?'#ffffff':'#ff5b6e'; ctx.fill();
+  }
+  // 旗（支柱は地面から）
+  ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cx, gy); ctx.lineTo(cx, gy-32); ctx.stroke();
+  ctx.fillStyle = '#4fd1c5';
+  ctx.beginPath(); ctx.moveTo(cx, gy-32); ctx.lineTo(cx+18, gy-28); ctx.lineTo(cx, gy-24); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawPlayer(){
+  ctx.save();
+  ctx.translate(player.x, player.y);
+
+  // 影など…（既存のまま）
+
+  // 1) キャノピー（開傘時のみ）
+  if (player.canopyOpen){
+    ctx.save();
+    const swing = (state===STATE.landed || state===STATE.fail) ? 0 :
+      Math.sin(performance.now()/300 + player.x*0.02) * 6 * player.steer;
+    ctx.rotate(swing * Math.PI/180);
+    drawCanopy();                  // ← 先にキャノピーを描画
+    ctx.restore();
+  }
+
+  // 2) 本体（画像優先）
+  let harnessYForLines = -6;       // フォールバック時の肩高さ初期値
+  if (IMG_READY.player){
+    const iw = IMAGES.player.naturalWidth, ih = IMAGES.player.naturalHeight;
+
+    // 画像を最大48x48以内に収める（大きすぎ対応）
+    const PLAYER_MAX_W = 48, PLAYER_MAX_H = 48;
+    const s = Math.min(PLAYER_MAX_W/iw, PLAYER_MAX_H/ih);
+    const w = iw*s, h = ih*s;
+
+    const topY = FOOT_OFFSET - h;  // 下端=足元(FOOT_OFFSET)
+    ctx.drawImage(IMAGES.player, -w/2, topY, w, h);
+
+    // 画像から肩位置を計算
+    harnessYForLines = topY + h * HARNESS_ANCHOR_RATIO;
+  } else {
+    // ベクター本体（フォールバック）
+    ctx.fillStyle = '#243446'; roundRect(-8,-4,16,18,5); ctx.fill();
+    ctx.fillStyle = '#ffcf6a'; ctx.beginPath(); ctx.arc(0,-10,6,0,Math.PI*2); ctx.fill();
+    harnessYForLines = -6; // 胴体の少し上
+  }
+
+  // 3) ライザー（開傘時のみ描く）
+  if (player.canopyOpen){
+    ctx.save();
+    ctx.lineWidth = 1.2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#333';
+
+    // 左
+    ctx.beginPath();
+    ctx.moveTo(-HARNESS_SIDE_X, harnessYForLines);
+    ctx.quadraticCurveTo(
+      -HARNESS_SIDE_X - 6, (harnessYForLines + RISER_TOP_Y)/2,
+      -RISER_SIDE_X, RISER_TOP_Y
+    );
+    ctx.stroke();
+
+    // 右
+    ctx.beginPath();
+    ctx.moveTo(HARNESS_SIDE_X, harnessYForLines);
+    ctx.quadraticCurveTo(
+      HARNESS_SIDE_X + 6, (harnessYForLines + RISER_TOP_Y)/2,
+      RISER_SIDE_X, RISER_TOP_Y
+    );
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+function drawCanopy(){
+  // ベクターのパラシュート（常にこれを使う）
+  const r = 36;
+  ctx.fillStyle = '#e83d57';
+  ctx.beginPath();
+  ctx.moveTo(-r, -18);
+  ctx.quadraticCurveTo(0, -r-4, r, -18);
+  ctx.lineTo(-r, -18);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(255,255,255,.6)';
+  ctx.lineWidth = 1;
+  for (let i=-3; i<=3; i++){
+    const x = (i/3)*r;
+    ctx.beginPath();
+    ctx.moveTo(x, -18);
+    ctx.quadraticCurveTo(x*0.6, -r*0.9, x, -18);
+    ctx.stroke();
+  }
+}
+
+function drawTouchMarker(x, gy){
+  ctx.save();
+  // 足跡十字マーカー
+  ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x-8, gy); ctx.lineTo(x+8, gy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x, gy-8); ctx.lineTo(x, gy+8); ctx.stroke();
+  ctx.restore();
+}
+function fitContain(iw, ih, maxW, maxH){
+  const s = Math.min(maxW/iw, maxH/ih);
+  return { w: iw*s, h: ih*s, scale: s };
+}
+
+/* ============================================================
+   小物
+   ============================================================ */
+function roundRect(x,y,w,h,r){ ctx.beginPath(); const rr=Math.min(r, w/2, h/2);
+  ctx.moveTo(x+rr,y); ctx.arcTo(x+w,y,x+w,y+h,rr); ctx.arcTo(x+w,y+h,x,y+h,rr);
+  ctx.arcTo(x,y+h,x,y,rr); ctx.arcTo(x,y,x+w,y,rr); ctx.closePath(); }
+function flash(text){
+  const msg = document.getElementById('message');
+  msg.textContent = text; msg.hidden = false; msg.style.opacity = '1';
+  msg.animate([{opacity:1},{opacity:0}], {duration:1200, easing:'ease', fill:'forwards'});
+  setTimeout(()=>{ msg.hidden = true; }, 1200);
+}
+
+/* ============================================================
+   初期オーバーレイから開始
+   ============================================================ */
+</script>
+</body>
+</html>
