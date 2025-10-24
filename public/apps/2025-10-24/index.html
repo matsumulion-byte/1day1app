@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>顔スロット（停止維持＋当たり音声）</title>
+<style>
+  :root{ --ink:#e9f1f7; --muted:#9fb0c0; }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{
+    display:grid;place-items:center;background:#0a0f15;color:var(--ink);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  }
+  .app{width:min(92vw,480px);display:grid;gap:14px;padding:18px;background:#0e1520;border:1px solid #1d2836;border-radius:20px}
+  h1{margin:0;font-size:clamp(18px,4.8vw,22px)} .sub{color:var(--muted);font-size:12px}
+  .face{display:grid;grid-template-rows:1fr 1fr 1fr;gap:10px;background:#0b131d;border:1px solid #1b2432;border-radius:14px;padding:10px}
+  .reel{position:relative;border:1px solid #1c2635;border-radius:12px;background:#0f1722;overflow:hidden}
+  .window{height:120px;overflow:hidden;position:relative}
+  .strip{display:flex;position:absolute;top:0;left:0;height:100%;will-change:transform}
+  .cell{flex:0 0 auto;height:100%}
+  .cellBG{
+    width:100%;height:100%;
+    background-repeat:no-repeat;background-size:100% 300%;
+    background-position-x:50%;
+  }
+  .seg-top .cellBG{background-position-y:0%}
+  .seg-mid .cellBG{background-position-y:50%}
+  .seg-bot .cellBG{background-position-y:100%}
+  .status{text-align:center;color:var(--muted);min-height:1.4em;font-size:14px}
+  .controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .btn{appearance:none;cursor:pointer;border:0;border-radius:14px;padding:12px 18px;font-weight:700;background:#1e7d78;color:white}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  footer{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <div>
+      <h1>顔スロット</h1>
+    </div>
+  </header>
+
+  <section class="face">
+    <div class="reel seg-top"><div class="window"><div class="strip"></div></div></div>
+    <div class="reel seg-mid"><div class="window"><div class="strip"></div></div></div>
+    <div class="reel seg-bot"><div class="window"><div class="strip"></div></div></div>
+  </section>
+
+  <div class="status" id="status">STARTで回転します。</div>
+  <div class="controls">
+    <button id="start" class="btn">START</button>
+    <button id="stop"  class="btn" disabled>STOP</button>
+  </div>
+  <footer>
+    <div>当たり: <span id="wins">0</span> / ハズレ: <span id="loses">0</span></div>
+  </footer>
+</main>
+
+<script type="module">
+const asset = (p) => {
+  // Vercel用のパス調整
+  const basePath = '/apps/2025-10-24';
+  return basePath + p;
+};
+const VARIANTS = 5;
+const SPEED = 2000;   // STOPするまで一定速度で回り続ける
+const SNAP  = 0.25;   // 停止スナップの吸着係数
+const SEGMENTS = ["top","mid","bot"];
+
+// 当たり音声（初回のユーザー操作でミュート解除）
+const sOk = new Audio(asset('./assets/matsumura_desu.m4a')); sOk.preload='auto';
+['click','touchstart','pointerdown'].forEach(ev=>{
+  window.addEventListener(ev,()=>{ sOk.muted = false; }, {once:true});
+});
+
+class Reel {
+  constructor(root, seg){
+    this.root=root; this.seg=seg;
+    this.strip=root.querySelector('.strip');
+    this.window=root.querySelector('.window');
+    this.width=0; this.maxOffset=0;
+    this.offset=0; this.speed=0;
+    this.state="idle"; // idle/spin/stopping/stopped
+    this.target=0;
+  }
+  build(){
+    this.width=this.window.clientWidth;
+    this.strip.innerHTML="";
+    for(let i=1;i<=VARIANTS;i++){
+      const c=document.createElement("div");
+      c.className="cell"; c.style.width=this.width+"px";
+      const b=document.createElement("div");
+      b.className="cellBG";
+      b.style.backgroundImage=`url(${asset('./assets/face_'+i+'.png')})`;
+      c.appendChild(b); this.strip.appendChild(c);
+    }
+    // ループ用の複製
+    const clone=this.strip.firstElementChild.cloneNode(true);
+    this.strip.appendChild(clone);
+    this.maxOffset=this.width*VARIANTS;
+    this.offset=Math.random()*this.maxOffset;
+    this.render();
+  }
+  start(){
+    this.speed=SPEED*(0.9+Math.random()*0.2);
+    this.state="spin";
+  }
+  requestStop(){ // ランダムの目で中央に止める
+    if(this.state!=="spin")return;
+    const idx=Math.floor(Math.random()*VARIANTS);
+    this.target = idx*this.width;
+    this.state="stopping";
+  }
+  tick(dt){
+    if(this.state==="spin"){
+      this.offset+=this.speed*dt;                 // 減速なしで回り続ける
+    }else if(this.state==="stopping"){
+      const cur=(this.offset%this.maxOffset+this.maxOffset)%this.maxOffset;
+      let diff=this.target-cur;
+      if(diff> this.maxOffset/2) diff-=this.maxOffset;
+      if(diff<-this.maxOffset/2) diff+=this.maxOffset;
+      this.offset+=diff*SNAP;                     // 吸着
+      if(Math.abs(diff)<0.5){
+        this.offset=this.target;
+        this.state="stopped";
+      }
+    }
+    if(this.offset>=this.maxOffset) this.offset-=this.maxOffset;
+    this.render();
+  }
+  render(){ this.strip.style.transform=`translateX(${-this.offset}px)`; }
+  currentIndex(){ return Math.round(this.offset/this.width)%VARIANTS; }
+  isStopped(){ return this.state==="stopped"; }
+}
+
+const reels=[...document.querySelectorAll(".reel")].map((r,i)=>new Reel(r,SEGMENTS[i]));
+reels.forEach(r=>r.build());
+
+// ループ
+let last=performance.now();
+function loop(now){
+  const dt=(now-last)/1000; last=now;
+  reels.forEach(r=>r.tick(dt));
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// UI
+const elStart=document.getElementById("start");
+const elStop =document.getElementById("stop");
+const elStatus=document.getElementById("status");
+const elWins=document.getElementById("wins");
+const elLoses=document.getElementById("loses");
+let phase="idle", wins=0, loses=0, stopCount=0;
+
+function setIdleUI(){
+  phase="idle";
+  elStart.disabled=false; elStop.disabled=true;
+  elStatus.textContent="STARTで回転します。";
+}
+
+elStart.onclick=()=>{
+  // 停止後の状態からでも再スタートできる：毎回再構築してから回す
+  reels.forEach(r=>r.build());
+  reels.forEach(r=>r.start());
+  phase="spinning"; stopCount=0;
+  elStart.disabled=true; elStop.disabled=false;
+  elStatus.textContent="回転中… STOPで上→中→下の順に停止";
+};
+
+elStop.onclick=()=>{
+  if(phase!=="spinning") return;
+  if(stopCount<3){
+    reels[stopCount].requestStop();
+    stopCount++;
+    if(stopCount===1) elStatus.textContent="上を停止… 次は中";
+    if(stopCount===2) elStatus.textContent="中を停止… 次は下";
+    if(stopCount===3){
+      elStop.disabled=true;
+      elStatus.textContent="下を停止… 判定中";
+      // すでに止まっていれば即、まだなら止まるのを短く待つ
+      waitUntil(()=>reels.every(r=>r.isStopped()), 1500).then(()=>{
+        const [a,b,c]=reels.map(r=>r.currentIndex());
+        if(a===0 && b===0 && c===0){
+          wins++; elWins.textContent=wins;
+          elStatus.textContent="松村です！";
+          try{ sOk.currentTime=0; sOk.play(); }catch{}
+        }else{
+          loses++; elLoses.textContent=loses;
+          elStatus.textContent=`🙃 ハズレ（上${a+1}・中${b+1}・下${c+1}）`;
+        }
+        // ← 自動で回し直さない。STARTが押されるまで静止。
+        // 次ゲームのために START を再び有効化
+        elStart.disabled=false;
+      });
+    }
+  }
+};
+
+const waitUntil=(fn,limit=2000)=>new Promise(res=>{
+  const t0=performance.now();
+  (function poll(){
+    if(fn()) return res(true);
+    if(performance.now()-t0>limit) return res(false);
+    requestAnimationFrame(poll);
+  })();
+});
+</script>
+</body>
+</html>
