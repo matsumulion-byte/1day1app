@@ -76,7 +76,7 @@ const SEGMENTS = ["top","mid","bot"];
 // =========================================
 // 当たり音声（松村です）
 // =========================================
-const sOk = new Audio(asset('./assets/matsumura_desu.m4a'));
+const sOk = new Audio(asset('/apps/2025-10-24/assets/matsumura_desu.m4a'));
 sOk.preload = 'auto';
 ['click','touchstart','pointerdown'].forEach(ev=>{
   window.addEventListener(ev,()=>{ sOk.muted = false; }, {once:true});
@@ -103,7 +103,7 @@ class Reel {
       c.className="cell"; c.style.width=this.width+"px";
       const b=document.createElement("div");
       b.className="cellBG";
-      b.style.backgroundImage=`url(${asset('./assets/face_'+i+'.png')})`;
+      b.style.backgroundImage=`url(${asset('/apps/2025-10-24/assets/face_'+i+'.png')})`;
       c.appendChild(b); this.strip.appendChild(c);
     }
     const clone=this.strip.firstElementChild.cloneNode(true);
