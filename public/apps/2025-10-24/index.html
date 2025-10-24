@@ -103,7 +103,7 @@ class Reel {
       c.className="cell"; c.style.width=this.width+"px";
       const b=document.createElement("div");
       b.className="cellBG";
-      b.style.backgroundImage=`url(${asset('/apps/2025-10-24/assets/face_'+i+'.png')})`;
+      b.style.backgroundImage=`url(${asset('./apps/2025-10-24/assets/face_'+i+'.png')})`;
       c.appendChild(b); this.strip.appendChild(c);
     }
     const clone=this.strip.firstElementChild.cloneNode(true);
