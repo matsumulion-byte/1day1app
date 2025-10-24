@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-<title>顔スロット（停止維持＋当たり音声）</title>
+<title>顔スロット</title>
 <style>
   :root{ --ink:#e9f1f7; --muted:#9fb0c0; }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -39,7 +39,7 @@
   <header>
     <div>
       <h1>顔スロット</h1>
-      <div class="sub">STARTで回転 → STOPで上/中/下の順に停止（1,1,1のみ当たり）</div>
+      <div class="sub">STARTで回転 → STOPで上/中/下の順に止まります</div>
     </div>
   </header>
 
@@ -55,7 +55,7 @@
     <button id="stop"  class="btn" disabled>STOP</button>
   </div>
   <footer>
-    <div>当たり(1,1,1): <span id="wins">0</span> / ハズレ: <span id="loses">0</span></div>
+    <div>当たり: <span id="wins">0</span> / ハズレ: <span id="loses">0</span></div>
   </footer>
 </main>
 
@@ -76,7 +76,7 @@ const SEGMENTS = ["top","mid","bot"];
 // =========================================
 // 当たり音声（松村です）
 // =========================================
-const sOk = new Audio(asset('/apps/2025-10-24/assets/matsumura_desu.m4a'));
+const sOk = new Audio(asset('./apps/2025-10-24/assets/matsumura_desu.m4a'));
 sOk.preload = 'auto';
 ['click','touchstart','pointerdown'].forEach(ev=>{
   window.addEventListener(ev,()=>{ sOk.muted = false; }, {once:true});
