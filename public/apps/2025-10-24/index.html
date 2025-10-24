@@ -60,9 +60,8 @@
 
 <script type="module">
 const asset = (p) => {
-  // Vercel用のパス調整
-  const basePath = '/apps/2025-10-24';
-  return basePath + p;
+  // Vercel用のパス調整 - /apps/ が省略される
+  return '/2025-10-24' + p;
 };
 const VARIANTS = 5;
 const SPEED = 2000;   // STOPするまで一定速度で回り続ける
