@@ -59,7 +59,10 @@
 </main>
 
 <script type="module">
-const asset = (p)=> new URL(p, import.meta.url).toString();
+const asset = (p) => {
+  // Next.jsのリライトルールに合わせて絶対パスを使用
+  return '/2025-10-24' + p;
+};
 const VARIANTS = 5;
 const SPEED = 2000;   // STOPするまで一定速度で回り続ける
 const SNAP  = 0.25;   // 停止スナップの吸着係数
