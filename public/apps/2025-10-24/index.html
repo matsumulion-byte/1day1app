@@ -39,6 +39,7 @@
   <header>
     <div>
       <h1>顔スロット</h1>
+      <div class="sub">STARTで回転 → STOPで上/中/下の順に停止（1,1,1のみ当たり）</div>
     </div>
   </header>
 
@@ -54,23 +55,36 @@
     <button id="stop"  class="btn" disabled>STOP</button>
   </div>
   <footer>
-    <div>当たり: <span id="wins">0</span> / ハズレ: <span id="loses">0</span></div>
+    <div>当たり(1,1,1): <span id="wins">0</span> / ハズレ: <span id="loses">0</span></div>
   </footer>
 </main>
 
 <script type="module">
-const asset = (p)=> new URL(p, import.meta.url).toString();
+// =========================================
+// Vercel用 assetヘルパー
+// =========================================
+const asset = (p) => new URL(p, import.meta.url).toString();
+
+// =========================================
+// 基本設定
+// =========================================
 const VARIANTS = 5;
-const SPEED = 2000;   // STOPするまで一定速度で回り続ける
-const SNAP  = 0.25;   // 停止スナップの吸着係数
+const SPEED = 2000;   // 回転スピード(px/s)
+const SNAP  = 0.25;   // 停止吸着係数
 const SEGMENTS = ["top","mid","bot"];
 
-// 当たり音声（初回のユーザー操作でミュート解除）
-const sOk = new Audio(asset('./assets/matsumura_desu.m4a')); sOk.preload='auto';
+// =========================================
+// 当たり音声（松村です）
+// =========================================
+const sOk = new Audio(asset('./assets/matsumura_desu.m4a'));
+sOk.preload = 'auto';
 ['click','touchstart','pointerdown'].forEach(ev=>{
   window.addEventListener(ev,()=>{ sOk.muted = false; }, {once:true});
 });
 
+// =========================================
+// リールクラス
+// =========================================
 class Reel {
   constructor(root, seg){
     this.root=root; this.seg=seg;
@@ -92,7 +106,6 @@ class Reel {
       b.style.backgroundImage=`url(${asset('./assets/face_'+i+'.png')})`;
       c.appendChild(b); this.strip.appendChild(c);
     }
-    // ループ用の複製
     const clone=this.strip.firstElementChild.cloneNode(true);
     this.strip.appendChild(clone);
     this.maxOffset=this.width*VARIANTS;
@@ -103,7 +116,7 @@ class Reel {
     this.speed=SPEED*(0.9+Math.random()*0.2);
     this.state="spin";
   }
-  requestStop(){ // ランダムの目で中央に止める
+  requestStop(){
     if(this.state!=="spin")return;
     const idx=Math.floor(Math.random()*VARIANTS);
     this.target = idx*this.width;
@@ -111,13 +124,13 @@ class Reel {
   }
   tick(dt){
     if(this.state==="spin"){
-      this.offset+=this.speed*dt;                 // 減速なしで回り続ける
+      this.offset+=this.speed*dt;
     }else if(this.state==="stopping"){
       const cur=(this.offset%this.maxOffset+this.maxOffset)%this.maxOffset;
       let diff=this.target-cur;
       if(diff> this.maxOffset/2) diff-=this.maxOffset;
       if(diff<-this.maxOffset/2) diff+=this.maxOffset;
-      this.offset+=diff*SNAP;                     // 吸着
+      this.offset+=diff*SNAP;
       if(Math.abs(diff)<0.5){
         this.offset=this.target;
         this.state="stopped";
@@ -131,10 +144,15 @@ class Reel {
   isStopped(){ return this.state==="stopped"; }
 }
 
+// =========================================
+// リール生成
+// =========================================
 const reels=[...document.querySelectorAll(".reel")].map((r,i)=>new Reel(r,SEGMENTS[i]));
 reels.forEach(r=>r.build());
 
-// ループ
+// =========================================
+// アニメーションループ
+// =========================================
 let last=performance.now();
 function loop(now){
   const dt=(now-last)/1000; last=now;
@@ -143,22 +161,18 @@ function loop(now){
 }
 requestAnimationFrame(loop);
 
-// UI
+// =========================================
+// UI制御
+// =========================================
 const elStart=document.getElementById("start");
 const elStop =document.getElementById("stop");
 const elStatus=document.getElementById("status");
 const elWins=document.getElementById("wins");
 const elLoses=document.getElementById("loses");
+
 let phase="idle", wins=0, loses=0, stopCount=0;
 
-function setIdleUI(){
-  phase="idle";
-  elStart.disabled=false; elStop.disabled=true;
-  elStatus.textContent="STARTで回転します。";
-}
-
 elStart.onclick=()=>{
-  // 停止後の状態からでも再スタートできる：毎回再構築してから回す
   reels.forEach(r=>r.build());
   reels.forEach(r=>r.start());
   phase="spinning"; stopCount=0;
@@ -171,24 +185,20 @@ elStop.onclick=()=>{
   if(stopCount<3){
     reels[stopCount].requestStop();
     stopCount++;
-    if(stopCount===1) elStatus.textContent="上を停止… 次は中";
-    if(stopCount===2) elStatus.textContent="中を停止… 次は下";
+    elStatus.textContent=["上を停止… 次は中","中を停止… 次は下","下を停止… 判定中"][stopCount-1];
     if(stopCount===3){
       elStop.disabled=true;
-      elStatus.textContent="下を停止… 判定中";
-      // すでに止まっていれば即、まだなら止まるのを短く待つ
       waitUntil(()=>reels.every(r=>r.isStopped()), 1500).then(()=>{
         const [a,b,c]=reels.map(r=>r.currentIndex());
         if(a===0 && b===0 && c===0){
           wins++; elWins.textContent=wins;
-          elStatus.textContent="松村です！";
+          elStatus.textContent="🎉 当たり！（1,1,1）";
           try{ sOk.currentTime=0; sOk.play(); }catch{}
         }else{
           loses++; elLoses.textContent=loses;
           elStatus.textContent=`🙃 ハズレ（上${a+1}・中${b+1}・下${c+1}）`;
         }
-        // ← 自動で回し直さない。STARTが押されるまで静止。
-        // 次ゲームのために START を再び有効化
+        // 止まったまま。再度STARTで新しいゲームへ。
         elStart.disabled=false;
       });
     }
