@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>松村カレイドクイズ（Edge-Boost統合版）</title>
+<style>
+  :root{ --bg:#07090d; --fg:#e8eef5; --muted:#9fb0c0; --acc:#6ad3ff; --ok:#8ae6a2; --ng:#ff6b7a }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent }
+  html,body{ height:100%; margin:0 }
+  body{ background:#000; color:var(--fg); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; overflow:hidden }
+  header{
+    position:fixed; inset:0 0 auto 0; height:48px; display:flex; align-items:center; gap:6px;
+    padding:8px 10px; background:linear-gradient(#0b111acc,#0b111a55,transparent); z-index:3; -webkit-user-select:none; user-select:none;
+  }
+  .logo{ letter-spacing:.08em; font-weight:600; font-size:11px; opacity:.9; flex-shrink:0 }
+  .stats{ margin-left:auto; display:flex; flex-direction:column; gap:2px; font-size:9px; opacity:.9 }
+  .pill{ display:inline-flex; align-items:center; gap:3px; background:#0e1622cc; border:1px solid #1c2837; padding:3px 5px; border-radius:999px; font-size:9px; }
+  .btn{ border:1px solid #1c2837; background:#0e1622dd; color:var(--fg); padding:4px 6px; border-radius:8px; font-size:10px; cursor:pointer; white-space:nowrap; }
+  #stage{ position:fixed; inset:0; width:100%; height:100%; display:block; touch-action:none }
+  .panel{
+    position:fixed; left:0; right:0; bottom:0; padding:10px; z-index:4;
+    display:grid; gap:8px; background:linear-gradient(180deg, transparent, #0a0f18aa 20%, #0a0f18ee 60%, #0a0f18ee 100%);
+  }
+  .qtext{ font-size:13px; opacity:.9; text-align:center }
+  .choices{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding:0 4px }
+  .choice{
+    display:flex; flex-direction:column; gap:4px; background:#0e1622cc; border:1px solid #1c2837; border-radius:10px; overflow:hidden;
+    box-shadow:0 4px 12px rgba(0,0,0,.25);
+  }
+  .choice button{ all:unset; display:block; cursor:pointer; padding:4px }
+  .thumb{ display:block; width:100%; aspect-ratio:1/1; object-fit:cover; background:#111; border-radius:6px }
+  .cap{ font-size:10px; color:#cfd7e3; padding:4px 6px; opacity:.85; line-height:1.3 }
+  .choice.correct{ outline:2px solid var(--ok) }
+  .choice.wrong{ outline:2px solid var(--ng) }
+  .foot{ display:flex; gap:6px; justify-content:space-between; align-items:center; padding:2px 2px 0 }
+  .toast{
+    position:fixed; top:64px; left:50%; transform:translateX(-50%); background:#0e1622f2; border:1px solid #1c2837; padding:8px 12px; border-radius:8px; z-index:5; font-size:12px;
+    box-shadow:0 8px 20px rgba(0,0,0,.35); max-width:calc(100vw - 20px);
+  }
+  .hidden{ display:none }
+  @media (min-width:768px){ 
+    header{ height:56px; gap:10px; padding:10px 14px }
+    .logo{ font-size:13px; letter-spacing:.12em }
+    .stats{ flex-direction:row; gap:12px; font-size:12px }
+    .pill{ gap:8px; padding:6px 10px; font-size:12px }
+    .btn{ padding:6px 10px; border-radius:12px; font-size:12px }
+    .choices{ grid-template-columns:repeat(6,1fr); gap:10px; padding:0 }
+    .choice{ gap:6px; border-radius:12px }
+    .choice button{ padding:0 }
+    .thumb{ border-radius:0 }
+    .cap{ font-size:11px; padding:6px 8px }
+    .toast{ font-size:13px; padding:10px 14px; border-radius:10px }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="logo">MATSUMURA KALEIDO QUIZ</div>
+    <button id="shuffleBtn" class="btn">🎲 シャッフル</button>
+    <div class="stats">
+      <div class="pill">Q:<span id="qnum">1</span>/<span id="qtotal">10</span></div>
+      <div class="pill">SCORE:<span id="score">0</span></div>
+      <div class="pill">TIME:<span id="time">60</span>s</div>
+    </div>
+  </header>
+
+  <canvas id="stage"></canvas>
+
+  <div class="panel">
+    <div class="qtext">どの松村が<strong>元</strong>でしょう？</div>
+    <div class="choices" id="choices"></div>
+    <div class="foot">
+      <button class="btn" id="pauseBtn">⏯ 一時停止</button>
+        <button class="btn" id="skipBtn">⏭ スキップ</button>
+    </div>
+  </div>
+
+  <div class="toast hidden" id="toast"></div>
+
+<script type="module">
+/* アセット解決 */
+const asset = (p) => new URL(p, import.meta.url).toString();
+
+/* ====== 設定 ====== */
+const QUESTION_COUNT = 10;
+const CHOICES_PER_Q = 3;
+const TIME_LIMIT_SEC  = 60;
+const IMAGE_FILES = [
+  '/apps/2025-10-25/assets/m1.jpg','/apps/2025-10-25/assets/m2.jpg','/apps/2025-10-25/assets/m3.jpg',
+  '/apps/2025-10-25/assets/m4.jpg','/apps/2025-10-25/assets/m5.jpg','/apps/2025-10-25/assets/m6.jpg','/apps/2025-10-25/assets/m7.jpg'
+];
+
+/* ====== DOM ====== */
+const canvas = document.getElementById('stage');
+const gl = canvas.getContext('webgl', { alpha:false, antialias:true });
+if(!gl){ alert('WebGL未対応'); throw new Error('no webgl'); }
+const qnumEl = document.getElementById('qnum');
+const qtotalEl = document.getElementById('qtotal');
+const scoreEl = document.getElementById('score');
+const timeEl = document.getElementById('time');
+const choicesEl = document.getElementById('choices');
+const toastEl = document.getElementById('toast');
+const pauseBtn = document.getElementById('pauseBtn');
+// const hintBtn = document.getElementById('hintBtn');
+const skipBtn = document.getElementById('skipBtn');
+const shuffleBtn = document.getElementById('shuffleBtn');
+qtotalEl.textContent = QUESTION_COUNT.toString();
+
+/* ====== リサイズ ====== */
+function fit(){
+  const dpr = Math.max(1, Math.min(3, devicePixelRatio||1));
+  const w = innerWidth|0, h = innerHeight|0;
+  canvas.style.width = w+'px'; canvas.style.height = h+'px';
+  canvas.width = (w*dpr)|0; canvas.height = (h*dpr)|0;
+  gl.viewport(0,0,canvas.width,canvas.height);
+}
+addEventListener('resize', fit, {passive:true}); fit();
+
+/* ====== シェーダ ====== */
+const vertSrc = `
+attribute vec2 a_pos; varying vec2 v_uv;
+void main(){ v_uv=a_pos*0.5+0.5; gl_Position=vec4(a_pos,0.0,1.0); }`;
+
+const fragSrc = `
+precision mediump float;
+uniform sampler2D u_tex;
+uniform vec2  u_res;
+uniform float u_time;
+uniform float u_segments;
+uniform float u_rotation;
+uniform float u_zoom;
+uniform float u_aberration;
+uniform float u_lockCenter;   // 0:自由 / 1:中央固定
+uniform vec2  u_texOffset;    // 画像上の初期オフセット（0-1）
+varying vec2 v_uv;
+
+vec2 kaleido(vec2 p, float seg, float angle){
+  float segA = 6.28318530718/max(seg,2.0);
+  float r = length(p);
+  float th = atan(p.y, p.x) + angle;
+  th = mod(th, segA);
+  th = abs(th - segA*0.5);
+  return vec2(cos(th), sin(th))*r;
+}
+vec2 polarSample(vec2 q, float scale, vec2 texOffset){
+  q *= scale;
+  vec2 t = q*0.5 + 0.5 + (texOffset - 0.5); // オフセットで“柄の出る位置”へ
+  t = abs(fract(t)-0.5)*2.0;                // ミラー反復（テクスチャラップ非依存）
+  return t;
+}
+float vignette(vec2 uv){
+  float d = distance(uv, vec2(0.5));
+  return smoothstep(1.05, 0.45, d);
+}
+void main(){
+  vec2 uv = gl_FragCoord.xy / u_res;
+  vec2 asp = vec2(u_res.x/u_res.y, 1.0);
+
+  vec2 center = mix(uv, vec2(0.5), u_lockCenter); // ヒントON時は中心固定
+  vec2 p = (uv - center) * asp;
+
+  float t = u_time*0.001;
+  float angle = t*u_rotation;
+  vec2 q = kaleido(p, u_segments, angle);
+
+  float breath = 0.08*sin(t*0.7);
+  float scale = (u_zoom*(1.0+breath));
+
+  q += 0.02*vec2(sin(t*0.3), cos(t*0.21)); // 微小ドリフト
+
+  float ab = u_aberration/100.0;
+  vec2 tcR = polarSample(q + ab*vec2( 1.0, 0.6), scale, u_texOffset);
+  vec2 tcG = polarSample(q + ab*vec2(-0.4,-1.0), scale, u_texOffset);
+  vec2 tcB = polarSample(q + ab*vec2( 0.2, 0.4), scale, u_texOffset);
+
+  vec3 col = vec3(texture2D(u_tex, tcR).r, texture2D(u_tex, tcG).g, texture2D(u_tex, tcB).b);
+  col *= vignette(uv);
+  col = mix(col, col*col*1.15, 0.25);
+  gl_FragColor = vec4(col,1.0);
+}`;
+
+/* GL helpers */
+function sh(type, src){ const s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s);
+  if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s)); return s; }
+const vs = sh(gl.VERTEX_SHADER, vertSrc);
+const fs = sh(gl.FRAGMENT_SHADER, fragSrc);
+const prog = gl.createProgram(); gl.attachShader(prog,vs); gl.attachShader(prog,fs); gl.linkProgram(prog);
+if(!gl.getProgramParameter(prog, gl.LINK_STATUS)) console.error(gl.getProgramInfoLog(prog));
+gl.useProgram(prog);
+const quad = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+const aPos = gl.getAttribLocation(prog,'a_pos'); gl.enableVertexAttribArray(aPos);
+gl.vertexAttribPointer(aPos,2,gl.FLOAT,false,0,0);
+
+/* uniforms */
+const U = {
+  tex: gl.getUniformLocation(prog,'u_tex'),
+  res: gl.getUniformLocation(prog,'u_res'),
+  time: gl.getUniformLocation(prog,'u_time'),
+  segments: gl.getUniformLocation(prog,'u_segments'),
+  rotation: gl.getUniformLocation(prog,'u_rotation'),
+  zoom: gl.getUniformLocation(prog,'u_zoom'),
+  aberration: gl.getUniformLocation(prog,'u_aberration'),
+  lockCenter: gl.getUniformLocation(prog,'u_lockCenter'),
+  texOffset: gl.getUniformLocation(prog,'u_texOffset'),
+};
+
+/* テクスチャ（NPOT安全） */
+let texture = gl.createTexture();
+gl.activeTexture(gl.TEXTURE0);
+gl.bindTexture(gl.TEXTURE_2D, texture);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+// 仮2x2
+{
+  const d=new Uint8Array([200,200,210,255, 40,40,50,255, 40,40,50,255, 200,200,210,255]);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,2,2,0,gl.RGBA,gl.UNSIGNED_BYTE,d);
+}
+
+/* 画像読み込み */
+const pool = [];
+await Promise.all(IMAGE_FILES.map(url => new Promise(res=>{
+  const img = new Image(); img.crossOrigin='anonymous';
+  img.onload = ()=>{ pool.push({url, img, ok:true}); res(); }
+  img.onerror = ()=>{ console.warn('load fail', url); pool.push({url, img:null, ok:false}); res(); }
+  img.src = url;
+})));
+if(pool.filter(p=>p.ok).length < CHOICES_PER_Q){
+  alert('選択肢に使える画像が足りません（assetsに画像を追加してください）');
+}
+
+/* テクスチャ反映 */
+function useImage(img){
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);
+}
+
+/* ====== Edge-Boost: 候補抽出＆選択 ====== */
+// 上位K個の高コントラストブロックを返す
+function estimateTexOffsetCandidates(img, k = 8){
+  const s = 96, bs = 8; // 12x12ブロック
+  const c = document.createElement('canvas'); c.width = s; c.height = s;
+  const x = c.getContext('2d', { willReadFrequently: true });
+  x.drawImage(img, 0, 0, s, s);
+  const d = x.getImageData(0, 0, s, s).data;
+
+  const items = [];
+  for (let by = 0; by < s; by += bs){
+    for (let bx = 0; bx < s; bx += bs){
+      let sum=0, sum2=0, n=0;
+      for (let y=0; y<bs; y++){
+        for (let z=0; z<bs; z++){
+          const px = ((by+y)*s + (bx+z))*4;
+          const r=d[px], g=d[px+1], b=d[px+2];
+          const l = 0.299*r + 0.587*g + 0.114*b;
+          sum += l; sum2 += l*l; n++;
+        }
+      }
+      const mean = sum / n, variance = sum2 / n - mean*mean;
+      const score = variance;
+      const cx = (bx + bs/2) / s, cy = (by + bs/2) / s;
+      items.push({ cx, cy, score });
+    }
+  }
+  items.sort((a,b)=> b.score - a.score);
+  return items.slice(0, k);
+}
+// しきい値を満たす候補から選ぶ（なければ1位、さらにダメならランダム）
+function pickTexOffset(cands){
+  if (!cands.length) return { x: Math.random(), y: Math.random(), score: 0 };
+  const top = cands[0];
+  const threshold = Math.max(80, top.score * 0.45); // 画像に応じて可変
+  const good = cands.filter(c => c.score >= threshold);
+  const arr = good.length ? good : [top];
+  const pick = arr[(Math.random()*arr.length)|0];
+  return { x: pick.cx, y: pick.cy, score: pick.score };
+}
+
+/* ====== クイズ進行 ====== */
+let qIndex = 0, score = 0, paused = false;
+let hintOn = false;
+let lockCenter = 1.0;                 // 0→自由 / 1→中央固定（初期は固定）
+let timeLeft = TIME_LIMIT_SEC * 1000;
+let params = {
+  segments: 18,
+  rotation: 0.18,
+  zoom: 1.2,
+  aberr: 0.6,
+  texOffset: { x: 0.5, y: 0.5 }
+};
+let answer = null;
+
+/* UI：選択肢生成 */
+function makeChoices(correctUrl){
+  const oks = pool.filter(p=>p.ok).map(p=>p.url);
+  const others = oks.filter(u=>u!==correctUrl);
+  shuffle(others);
+  const picks = [correctUrl, ...others.slice(0, CHOICES_PER_Q-1)];
+  shuffle(picks);
+
+  choicesEl.innerHTML = '';
+  picks.forEach(u=>{
+    const wrap = document.createElement('div'); wrap.className='choice';
+    const btn = document.createElement('button');
+    const img = document.createElement('img'); img.src = u; img.alt='option'; img.className='thumb';
+    btn.appendChild(img); wrap.appendChild(btn);
+    const cap = document.createElement('div'); cap.className='cap'; cap.textContent = u.split('/').pop();
+    wrap.appendChild(cap);
+
+    btn.addEventListener('click', ()=>{
+      if(wrap.classList.contains('correct') || wrap.classList.contains('wrong')) return;
+      const isCorrect = (u === correctUrl);
+      wrap.classList.add(isCorrect ? 'correct' : 'wrong');
+      if(isCorrect){
+        ding('正解！ +1'); score++; scoreEl.textContent = score.toString();
+        setTimeout(nextQuestion, 450);
+      }else{
+        ding('不正解…');
+        [...choicesEl.children].forEach(c=>{
+          const name = c.querySelector('.cap')?.textContent;
+          if(name === correctUrl.split('/').pop()) c.classList.add('correct');
+        });
+        setTimeout(nextQuestion, 800);
+      }
+    });
+    choicesEl.appendChild(wrap);
+  });
+}
+
+/* トースト */
+let toastTimer=null;
+function ding(text){
+  toastEl.textContent = text;
+  toastEl.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> toastEl.classList.add('hidden'), 900);
+}
+
+/* “派手め”プリセット（柄スコアで可変） */
+function punchyPreset(textureScore = 120){
+  const zoomBase = textureScore < 120 ? 1.55 : 1.35; // 弱ければズーム強め
+  const segs = [8,10,12,14,16,18];                   // 星形出やすい偶数
+  params.segments = segs[(Math.random()*segs.length)|0];
+  params.rotation = (Math.random()<0.5?-1:1) * rnd(0.10, 0.22);
+  params.zoom     = rnd(zoomBase, zoomBase + 0.4);
+  params.aberr    = rnd(0.5, 1.1);
+}
+
+/* 次の問題 */
+function nextQuestion(){
+  if(qIndex >= QUESTION_COUNT){ endGame(); return; }
+
+  // 毎問：ヒント状態はリセット
+  hintOn = false;
+  lockCenter = 1.0;  // 初期は万華鏡状態
+  // hintBtn.textContent = '🔍 ヒント（中心を固定）';
+
+  const oks = pool.filter(p=>p.ok);
+  const pick = oks[(Math.random()*oks.length)|0];
+  answer = { url: pick.url };
+
+  // テクスチャ反映
+  useImage(pick.img);
+
+  // 候補抽出 → しきい値選択
+  const candidates = estimateTexOffsetCandidates(pick.img, 8);
+  const first = pickTexOffset(candidates);
+  params.texOffset = { x: first.x, y: first.y };
+
+  // 見え方プリセット（スコア依存）
+  punchyPreset(first.score);
+
+  // スコアが弱いときは2回まで自動リロール
+  let attempts = 0;
+  while (attempts < 2 && first.score < 120){
+    const altCand = candidates[attempts+1] || { cx: Math.random(), cy: Math.random(), score: first.score };
+    params.texOffset = { x: (altCand.cx ?? Math.random()), y: (altCand.cy ?? Math.random()) };
+    attempts++;
+  }
+
+  // 冒頭0.8秒だけ中心固定で安定表示（既に固定状態なのでそのまま）
+  // lockCenter = 1.0; setTimeout(()=>{ lockCenter = 0.0; }, 800);
+
+  qIndex++;
+  qnumEl.textContent = qIndex.toString();
+  makeChoices(answer.url);
+}
+
+/* 終了 */
+function endGame(){
+  paused = true;
+  const div = document.createElement('div');
+  div.style.cssText = `position:fixed; inset:0; display:grid; place-items:center; z-index:9;
+    background:linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.7) 30%, rgba(0,0,0,.9));`;
+  const card = document.createElement('div');
+  card.style.cssText = `background:#0e1622f2; border:1px solid #1c2837; border-radius:16px; padding:18px 20px; text-align:center;
+    box-shadow:0 20px 40px rgba(0,0,0,.45); width:min(92vw,420px)`;
+  card.innerHTML = `
+    <div style="font-weight:700; font-size:18px; letter-spacing:.06em; margin-bottom:6px">RESULT</div>
+    <div style="font-size:32px; font-weight:800; margin:6px 0 2px">${score} / ${QUESTION_COUNT}</div>
+    <div style="opacity:.8; font-size:12px; margin-bottom:14px">スコア</div>
+    <button id="retry" class="btn" style="font-size:14px; padding:10px 14px">🔁 もう一度</button>`;
+  div.appendChild(card); document.body.appendChild(div);
+  card.querySelector('#retry').addEventListener('click', ()=>{
+    document.body.removeChild(div); resetGame();
+  });
+}
+
+/* リセット */
+function resetGame(){
+  score=0; qIndex=0; timeLeft=TIME_LIMIT_SEC*1000; paused=false;
+  scoreEl.textContent='0'; qnumEl.textContent='0';
+  nextQuestion();
+}
+
+/* 入力 */
+pauseBtn.addEventListener('click', ()=>{ paused=!paused; pauseBtn.textContent = paused ? '▶ 再開' : '⏯ 一時停止'; });
+// hintBtn.addEventListener('click', ()=>{
+//   hintOn = !hintOn;
+//   lockCenter = hintOn ? 0.0 : 1.0;  // 逆転：ヒントONで自由、OFFで固定
+//   hintBtn.textContent = hintOn ? '🔓 ヒント解除' : '🔍 ヒント（中心を固定）';
+// });
+skipBtn.addEventListener('click', ()=>{ ding('スキップ'); nextQuestion(); });
+shuffleBtn.addEventListener('click', ()=>{
+  const rec = pool.find(p => p.ok && p.url === answer?.url);
+  if (rec?.img) {
+    const cands = estimateTexOffsetCandidates(rec.img, 8);
+    const chosen = pickTexOffset(cands);
+    params.texOffset = { x: chosen.x, y: chosen.y };
+    punchyPreset(chosen.score);
+  } else {
+    params.texOffset = { x: Math.random(), y: Math.random() };
+    punchyPreset(80);
+  }
+  lockCenter = 0.0; setTimeout(()=>{ lockCenter = 1.0; }, 600);  // 逆転：シャッフル時は一時的に自由
+  hintOn = false;
+  // hintBtn.textContent = '🔍 ヒント（中心を固定）';
+  ding('見え方をシャッフル');
+});
+
+/* ループ */
+let t0 = performance.now();
+function frame(now){
+  if(!paused && qIndex <= QUESTION_COUNT){
+    const dt = now - t0; t0 = now; timeLeft -= dt;
+    if(timeLeft <= 0){ timeLeft = 0; endGame(); }
+    timeEl.textContent = Math.ceil(timeLeft / 1000).toString();
+  } else {
+    t0 = now;
+  }
+
+  gl.clearColor(0,0,0,1);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+
+  if(!paused){
+    gl.useProgram(prog);
+    gl.uniform1i(U.tex, 0);
+    gl.uniform2f(U.res, canvas.width, canvas.height);
+    gl.uniform1f(U.time, now);
+    gl.uniform1f(U.segments, params.segments);
+    gl.uniform1f(U.rotation, params.rotation);
+    gl.uniform1f(U.zoom, params.zoom);
+    gl.uniform1f(U.aberration, params.aberr);
+    gl.uniform1f(U.lockCenter, lockCenter);
+    gl.uniform2f(U.texOffset, params.texOffset.x, params.texOffset.y);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* Util */
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function rnd(a,b){ return a + Math.random()*(b-a); }
+function rndInt(a,b){ return (a + Math.floor(Math.random()*(b-a+1))); }
+
+/* start */
+resetGame();
+</script>
+</body>
+</html>
