@@ -1,0 +1,15 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/(\\d{4}-\\d{2}-\\d{2})",
+      "destination": "/apps/$1/index.html"
+    },
+    {
+      "source": "/(\\d{4}-\\d{2}-\\d{2})/(.*)",
+      "destination": "/apps/$1/$2"
+    }
+  ]
+}

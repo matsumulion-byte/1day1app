@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>松村ルーレット（松村だけ回転・外部入力対応）</title>
+<style>
+  :root{
+    --bg:#0b1017; --panel:#101826; --ink:#e9f1f7; --muted:#9fb0c0; --acc:#4fd1c5; --mark:#e9f1f7;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{
+    background: radial-gradient(1200px 800px at 80% -10%, #0a0f15 0%, #06090f 50%, #05070c 100%);
+    color:var(--ink); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN","Yu Gothic", sans-serif;
+    display:grid; place-items:center; padding:16px;
+  }
+  .app{ width:min(96vw,820px); display:grid; gap:14px; }
+  .title{font-weight:700; font-size:clamp(18px,4vw,26px); letter-spacing:.02em}
+  .grid{ display:grid; gap:14px; grid-template-columns:1fr }
+  @media (min-width:840px){ .grid{ grid-template-columns: 1fr 360px; align-items:start } }
+  .board{
+    background:linear-gradient(180deg, #0f1826 0%, #0b121c 100%);
+    border:1px solid #172237; border-radius:18px; padding:18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.04);
+  }
+  .wheel-wrap{ position:relative; aspect-ratio:1/1; width:100%; display:grid; place-items:center; }
+  .wheel{ width:100%; height:100%; filter: drop-shadow(0 18px 40px rgba(0,0,0,.5)); }
+  /* 盤面は回さない！ */
+  .center{
+    position:absolute; width:26%; aspect-ratio:1/1; border-radius:999px; display:grid; place-items:center;
+  }
+  .center::before{
+    content:""; position:absolute; inset:-6px; border-radius:inherit;
+    background: radial-gradient(60% 60% at 50% 40%, rgba(255,255,255,.08), rgba(255,255,255,0) 70%);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+  }
+  .center img{ width:100%; height:100%; object-fit:contain; border-radius:999px; user-select:none; -webkit-user-drag:none; }
+  /* 上の白▲は“基準”として残す（松村が回ってそこを指す） */
+  .marker{
+    position:absolute; top:-6px; left:50%; transform:translateX(-50%);
+    width:0; height:0; border-left:10px solid transparent; border-right:10px solid transparent;
+    border-bottom:18px solid var(--mark); filter: drop-shadow(0 6px 10px rgba(0,0,0,.5));
+  }
+  .result{ margin-top:12px; text-align:center; font-size:clamp(16px,3.5vw,22px); min-height:1.6em; }
+  .panel{
+    background:linear-gradient(180deg, #0f1826 0%, #0b121c 100%);
+    border:1px solid #172237; border-radius:18px; padding:16px; display:grid; gap:12px;
+  }
+  .row{display:grid; gap:8px}
+  label{font-size:13px; color:var(--muted)}
+  textarea, input{
+    width:100%; background:#0b121c; color:var(--ink); border:1px solid #1b2a41; border-radius:10px;
+    padding:10px 12px; font-size:14px; outline:none;
+  }
+  textarea{min-height:110px; resize:vertical}
+  .hint,.muted{font-size:12px; color:var(--muted)}
+  .btns{display:flex; gap:8px; flex-wrap:wrap}
+  button{
+    background:var(--acc); color:#02131a; border:none; border-radius:12px; padding:10px 14px; font-weight:700; cursor:pointer;
+    box-shadow: 0 8px 20px rgba(79,209,197,.25);
+  }
+  button.secondary{ background:#152237; color:var(--ink); border:1px solid #223456; box-shadow:none; font-weight:600; }
+  .share{display:flex; gap:8px}
+  .mini{font-size:12px; padding:8px 10px; border-radius:10px}
+  .chips{ display:flex; flex-wrap:wrap; gap:6px }
+  .chip{ font-size:11px; border:1px solid #223456; padding:4px 8px; border-radius:999px; color:var(--muted) }
+</style>
+</head>
+<body>
+  <div class="app">
+    <div class="title">松村ルーレット <span style="opacity:.6;font-weight:600">— 忘年会・抽選・当番決めに</span></div>
+    <div class="grid">
+      <!-- ルーレット盤（固定） -->
+      <div class="board">
+        <div class="wheel-wrap">
+          <div class="marker" aria-hidden="true"></div>
+          <svg class="wheel" viewBox="-50 -50 100 100" aria-label="roulette"></svg>
+          <!-- 松村（矢印役）だけ回転 -->
+          <div class="center"><img id="matsu" alt="Matsumura Arrow" /></div>
+        </div>
+        <div class="result" id="result"></div>
+        <div class="btns" style="justify-content:center">
+          <button id="spin">回す</button>
+          <button id="stop" class="secondary">止める</button>
+          <button id="reset" class="secondary">リセット</button>
+        </div>
+      </div>
+
+      <!-- 設定パネル -->
+      <div class="panel">
+        <div class="row">
+          <label for="labels">項目（カンマ区切り）</label>
+          <textarea id="labels" placeholder="例）ピザ,寿司,焼肉,鍋">ピザ,寿司,焼肉,鍋,中華,イタリアン,カレー,ラーメン</textarea>
+          <div class="hint">URLパラメータ例：<span class="muted">?labels=ピザ,寿司,焼肉</span></div>
+        </div>
+        <div class="row">
+          <label for="weights">重み（任意・カンマ区切り / 合計に応じて確率が変化）</label>
+          <input id="weights" type="text" placeholder="例）1,2,1,1（未指定は均等）" />
+          <div class="chips">
+            <span class="chip">未入力＝均等</span>
+            <span class="chip">項目数と同じ数にすると安定</span>
+          </div>
+        </div>
+        <div class="btns">
+          <button id="apply">設定を反映</button>
+          <button id="shuffle" class="secondary">色をシャッフル</button>
+        </div>
+        <div class="share">
+          <button id="copyLink" class="mini">この設定でリンクをコピー</button>
+          <span id="copied" class="muted"></span>
+        </div>
+        <div class="muted">白い▲が“当たり位置”。盤面は固定、松村だけが回転します。</div>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  /* プロジェクトルール：動的アセット解決 */
+  const asset = (p) => new URL(p, import.meta.url).toString();
+
+  // ---- DOM
+  const svg = document.querySelector('.wheel');
+  const resultEl = document.getElementById('result');
+  const spinBtn = document.getElementById('spin');
+  const stopBtn = document.getElementById('stop');
+  const resetBtn = document.getElementById('reset');
+  const labelsInput = document.getElementById('labels');
+  const weightsInput = document.getElementById('weights');
+  const applyBtn = document.getElementById('apply');
+  const shuffleBtn = document.getElementById('shuffle');
+  const copyLinkBtn = document.getElementById('copyLink');
+  const copiedEl = document.getElementById('copied');
+  const matsuImg = document.getElementById('matsu');
+
+  // 画像設定（フォールバックあり）
+  matsuImg.src = asset('./assets/matsu-arrow.png');
+  matsuImg.addEventListener('error', () => {
+    matsuImg.style.display = 'none';
+    const fallback = document.createElement('div');
+    fallback.style.width = '100%';
+    fallback.style.height = '100%';
+    fallback.style.borderRadius = '999px';
+    fallback.style.background = 'conic-gradient(from 0deg, #1c2a43, #132031)';
+    fallback.style.border = '2px solid #2a3f64';
+    document.querySelector('.center').appendChild(fallback);
+  });
+
+  // ---- 状態
+  let slices = [];       // [{label,color,weight}]
+  let colors = [];
+  let totalWeight = 0;
+
+  let spinning = false;
+  let pointerAngle = 0;  // 松村（矢印）の現在角度（deg, 時計回り+）
+  let rafId = null;
+  let anim = null;       // アニメ設定
+
+  // ---- ユーティリティ
+  const rand = (a,b)=>Math.random()*(b-a)+a;
+  const easeOutCubic = (t)=>1 - Math.pow(1-t,3);
+
+  function parseParams(){
+    const p = new URLSearchParams(location.search);
+    const pLabels = p.get('labels');
+    const pWeights = p.get('weights');
+    if(pLabels){ labelsInput.value = decodeURIComponent(pLabels); }
+    if(pWeights){ weightsInput.value = decodeURIComponent(pWeights); }
+  }
+
+  function buildSlices(){
+    const labels = labelsInput.value.split(',').map(s=>s.trim()).filter(Boolean);
+    let weights = weightsInput.value.trim()
+      ? weightsInput.value.split(',').map(s=>Number(s.trim())).map(n=>isFinite(n)&&n>0?n:1)
+      : [];
+    if(weights.length !== labels.length){ weights = Array(labels.length).fill(1); }
+    if(!colors.length || colors.length !== labels.length){ colors = genColors(labels.length); }
+
+    slices = labels.map((label,i)=>({ label, color: colors[i], weight: weights[i] }));
+    totalWeight = weights.reduce((a,b)=>a+b,0);
+    drawWheel();
+    resultEl.textContent = '';
+  }
+
+  function genColors(n){
+    const arr=[]; const base = Math.floor(Math.random()*360);
+    for(let i=0;i<n;i++){
+      const h=(base + i*(360/n))%360, s=70+Math.floor(rand(-8,8)), l=48+Math.floor(rand(-8,8));
+      arr.push(`hsl(${h} ${s}% ${l}%)`);
+    }
+    return arr;
+  }
+
+  function drawWheel(){
+    svg.innerHTML = '';
+    let start = -90; // 12時から
+    for(const s of slices){
+      const sweep = 360*(s.weight/totalWeight);
+      const end = start + sweep;
+      svg.appendChild(arcPath(start,end,s.color));
+      svg.appendChild(labelText(s.label,(start+end)/2));
+      start = end;
+    }
+    const rim = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    rim.setAttribute('cx','0'); rim.setAttribute('cy','0'); rim.setAttribute('r','49.2');
+    rim.setAttribute('fill','none'); rim.setAttribute('stroke','#0c1626'); rim.setAttribute('stroke-width','1.6');
+    svg.appendChild(rim);
+  }
+
+  function arcPath(a1,a2,fill){
+    const r=48, p=(deg)=>[ r*Math.cos(deg*Math.PI/180), r*Math.sin(deg*Math.PI/180) ];
+    const [x1,y1]=p(a1), [x2,y2]=p(a2), large=(a2-a1)>180?1:0;
+    const d=`M0 0 L ${x1.toFixed(3)} ${y1.toFixed(3)} A ${r} ${r} 0 ${large} 1 ${x2.toFixed(3)} ${y2.toFixed(3)} Z`;
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',d); path.setAttribute('fill',fill);
+    path.setAttribute('stroke','rgba(0,0,0,.08)'); path.setAttribute('stroke-width','0.5');
+    return path;
+  }
+
+  function labelText(text,deg){
+    const r=30, x=r*Math.cos(deg*Math.PI/180), y=r*Math.sin(deg*Math.PI/180);
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('transform',`translate(${x.toFixed(3)} ${y.toFixed(3)}) rotate(${deg})`);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.textContent=text; t.setAttribute('text-anchor','middle'); t.setAttribute('dominant-baseline','central');
+    t.setAttribute('fill','#0b1017'); t.setAttribute('font-size','5'); t.setAttribute('font-weight','700');
+    t.setAttribute('paint-order','stroke'); t.setAttribute('stroke','#ffffff'); t.setAttribute('stroke-width','.6');
+    g.appendChild(t); return g;
+  }
+
+  // 12時基準（0deg）から時計回りに角度を測って、指しているスライスを得る
+  function pickByPointer(theta){
+    const rel = ((theta%360)+360)%360; // 0..360
+    let acc = 0;
+    for(const s of slices){
+      const span = 360*(s.weight/totalWeight);
+      if(rel >= acc && rel < acc+span) return s;
+      acc += span;
+    }
+    return slices.at(-1);
+  }
+
+  function sliceStartAngle(target){
+    let acc=0;
+    for(const s of slices){
+      if(s===target) break;
+      acc += (s.weight/totalWeight)*360;
+    }
+    return acc; // 12時=0deg基準
+  }
+
+  // ---- 回転制御（松村だけ回す）
+  function startSpin(){
+    if(spinning || !slices.length) return;
+    spinning = true; resultEl.textContent=''; copiedEl.textContent='';
+
+    const target = weightedPick();
+    const span = 360*(target.weight/totalWeight);
+    const start = sliceStartAngle(target);
+    const hitTheta = start + rand(0,span); // 12時基準で当たり角
+
+    const extraTurns = Math.floor(rand(4,6)); // 周回
+    const from = pointerAngle;
+    const to = hitTheta + 360*extraTurns;
+
+    const duration = 2800 + Math.random()*1000;
+    const t0 = performance.now();
+
+    cancelAnimationFrame(rafId);
+    anim = {from,to,duration,t0};
+    tick();
+  }
+
+  function tick(now=performance.now()){
+    const {from,to,duration,t0} = anim;
+    const t = Math.min(1, (now - t0)/duration);
+    const eased = easeOutCubic(t);
+    pointerAngle = from + (to - from)*eased;
+    matsuImg.style.transform = `rotate(${pointerAngle}deg)`;
+    if(t < 1 && spinning){
+      rafId = requestAnimationFrame(tick);
+    }else{
+      spinning = false;
+      matsuImg.style.transform = `rotate(${pointerAngle}deg)`;
+      const win = pickByPointer(pointerAngle%360);
+      resultEl.textContent = `結果：${win.label}`;
+    }
+  }
+
+  function stopNow(){
+    if(!spinning) return;
+    spinning = false; cancelAnimationFrame(rafId);
+    const win = pickByPointer(pointerAngle%360);
+    resultEl.textContent = `結果（早止め）：${win.label}`;
+  }
+
+  function resetSpin(){
+    spinning=false; cancelAnimationFrame(rafId);
+    pointerAngle = 0; matsuImg.style.transform = 'rotate(0deg)';
+    resultEl.textContent='';
+  }
+
+  function weightedPick(){
+    const r = Math.random()*totalWeight; let acc=0;
+    for(const s of slices){ acc+=s.weight; if(r<=acc) return s; }
+    return slices.at(-1);
+  }
+
+  // ---- UI
+  spinBtn.addEventListener('click', startSpin);
+  stopBtn.addEventListener('click', stopNow);
+  resetBtn.addEventListener('click', resetSpin);
+  applyBtn.addEventListener('click', ()=>{ resetSpin(); buildSlices(); });
+  shuffleBtn.addEventListener('click', ()=>{ colors = genColors(slices.length||8); buildSlices(); });
+  copyLinkBtn.addEventListener('click', ()=>{
+    const u = new URL(location.href);
+    u.searchParams.set('labels', encodeURIComponent(labelsInput.value.trim()));
+    if(weightsInput.value.trim()){ u.searchParams.set('weights', encodeURIComponent(weightsInput.value.trim())); }
+    else{ u.searchParams.delete('weights'); }
+    navigator.clipboard.writeText(u.toString()).then(()=>{
+      copiedEl.textContent='リンクをコピーしました！';
+      setTimeout(()=>copiedEl.textContent='',2000);
+    });
+  });
+
+  // ---- 初期化
+  parseParams(); buildSlices();
+</script>
+</body>
+</html>

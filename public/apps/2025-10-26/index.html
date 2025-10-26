@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>火の輪くぐり｜高速ゆる判定＋静音</title>
+<style>
+  :root{ --bg:#000; --fg:#e9f1f7; --muted:#9fb0c0; --ok:#8ae6a2; --ng:#ff6b7a }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent }
+  html,body{ height:100%; margin:0 }
+  body{ background:#000; color:var(--fg); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+        overflow:hidden; display:grid; grid-template-rows:auto 1fr }
+  header{ padding:8px 12px; display:flex; align-items:center; justify-content:space-between; gap:8px }
+  header h1{ font-size:clamp(16px,3.6vw,20px); margin:0 }
+  header .hint{ font-size:12px; color:var(--muted) }
+  #wrap{ display:grid; place-items:center }
+  canvas{ width:min(94vw,560px); aspect-ratio:9/16; max-height:82vh; background:transparent; border-radius:18px }
+  .ui{ position:fixed; inset:auto 0 10px 0; display:flex; flex-direction:column; align-items:center; gap:10px }
+  .row{ display:flex; gap:8px; justify-content:center }
+  button{ border:0; border-radius:999px; padding:14px 20px; font-weight:800; letter-spacing:.02em;
+          box-shadow:0 8px 24px rgba(0,0,0,.35); background:linear-gradient(#ffe199,#ffb23e); color:#5b3300; font-size:16px }
+  button.secondary{ background:#1b2432; color:#dbe7f3 }
+  #btnJump{ width:min(94vw,560px); padding:16px 20px; font-size:18px }
+  .stat{ position:fixed; top:10px; background:rgba(0,0,0,.35); padding:6px 10px; border-radius:999px; font-size:12px; backdrop-filter:blur(6px) }
+  #best{ right:12px }  #streak{ left:12px }
+  .toast{ position:fixed; top:14%; left:50%; transform:translateX(-50%); font-size:clamp(22px,6vw,36px); font-weight:800;
+          text-shadow:0 2px 10px rgba(0,0,0,.4); opacity:0; transition:opacity .2s, transform .25s }
+  .toast.show{ opacity:1; transform:translateX(-50%) scale(1.02) }
+  .err{ position:fixed; left:10px; bottom:8px; font:12px/1.4 ui-monospace,monospace; color:#ffd2d2; opacity:.9; text-shadow:0 1px 2px #000 }
+</style>
+</head>
+<body>
+  <header>
+    <h1>🎪 火の輪くぐり</h1>
+    <div class="hint">右から来る輪をジャンプでくぐれ！（タップ/スペース）</div>
+  </header>
+
+  <div id="wrap"><canvas id="c"></canvas></div>
+
+  <div id="streak" class="stat">STREAK 0</div>
+  <div id="best" class="stat">BEST 0</div>
+  <div class="toast" id="toast">松村です！</div>
+  <div id="err" class="err"></div>
+
+  <div class="ui">
+    <div class="row">
+      <button id="btnStart">スタート</button>
+      <button id="btnRetry" class="secondary" style="display:none">もう一度</button>
+    </div>
+    <button id="btnJump">J U M P</button>
+  </div>
+
+<script type="module">
+  const asset = (p) => new URL(p, import.meta.url).toString();
+
+  // ====== 設定 ======
+  const CONFIG = {
+    // 表示サイズ（大きめ）
+    playerSizeRatio: 0.13,     // プレイヤー半径（短辺比）
+    ringInnerRatio:  0.27,     // 輪の内径（短辺比）
+    ringThickRatio:  0.34,     // 輪厚
+    ringDrawScale:   2.75,     // 輪画像の見た目倍率
+    minRingGapVh:    10,
+
+    // 物理（px/秒）
+    jumpV0H:         0.95,
+    gravityH:        2.4,
+
+    // 難易度（常に高速／加速なし）
+    ringSpeedBaseW:  1.35,      // 高速スタート（画面幅×係数 px/s）
+    ringSpeedGainW:  0.3,      // ← 加速しない
+    ringSpeedMaxW:   2.0,      // ← 上限も同じ
+
+    // 判定（超ゆる）
+    TOL_X:           1.0,     // X方向の余裕（大きいほど甘い）
+    TOL_R_INNER:     0.1,     // Y方向（穴）の余裕（小さいほど甘い）
+    TOUCH_SHIELD:    1.0,     // 中心近傍は触れてもOK扱い
+
+    // 音量
+    volume: { bgm: 0.15, ok: 0.35, ng: 0.25 },
+
+    // アセット（背景はPNGを既定に）
+    imgIdle:  './assets/matsu_idle.png',
+    imgJump:  './assets/matsu_jump.png',
+    imgRing:  './assets/fire_ring.png',
+    bgImage:  './assets/bg_circus.png',   // ← ここをPNG名に
+    seOK:     './assets/matsumura_desu.m4a',
+    seNG:     './assets/fail.m4a',
+    bgm:      './assets/bgm.mp3'
+  };
+
+  // DOM
+  const canvas = document.getElementById('c'); const ctx = canvas.getContext('2d');
+  const toastEl = document.getElementById('toast');
+  const btnStart = document.getElementById('btnStart'); const btnRetry = document.getElementById('btnRetry'); const btnJump = document.getElementById('btnJump');
+  const bestEl = document.getElementById('best'); const streakEl = document.getElementById('streak'); const errEl = document.getElementById('err');
+
+  // リサイズ（縦画面）
+  function resize(){
+    const cssW = Math.min(window.innerWidth*0.94, 560);
+    const cssH = cssW * 16/9;
+    const targetH = Math.min(cssH, window.innerHeight*0.82);
+    const dpr = Math.max(1, Math.min(window.devicePixelRatio||1, 2));
+    canvas.style.width = cssW+'px'; canvas.style.height = targetH+'px';
+    canvas.width = Math.floor(cssW*dpr); canvas.height = Math.floor(targetH*dpr);
+
+    GRAVITY = canvas.height * CONFIG.gravityH;
+    JUMP_V0 = -canvas.height * CONFIG.jumpV0H;
+
+    resetPlayer(); placeRing(true);
+  }
+  addEventListener('resize', resize);
+
+  // 画像
+  const imgIdle = new Image(), imgJump = new Image(), imgRing = new Image(), imgBG = new Image();
+  let bgReady = false, bgError = '';
+  imgIdle.src = asset(CONFIG.imgIdle);
+  imgJump.src = asset(CONFIG.imgJump);
+  imgRing.src = asset(CONFIG.imgRing);
+  imgBG.onload  = ()=>{ bgReady = true; bgError=''; };
+  imgBG.onerror = ()=>{ bgReady = false; bgError = `背景が読み込めません: ${asset(CONFIG.bgImage)}`; };
+  imgBG.src   = asset(CONFIG.bgImage);
+
+  // 音
+  let sOK=null, sNG=null, bgm=null;
+  function ensureSounds(){
+    try{
+      if(!sOK){ sOK = new Audio(asset(CONFIG.seOK)); sOK.preload='auto'; sOK.volume=CONFIG.volume.ok; }
+      if(!sNG){ sNG = new Audio(asset(CONFIG.seNG)); sNG.preload='auto'; sNG.volume=CONFIG.volume.ng; }
+      if(!bgm){ bgm = new Audio(asset(CONFIG.bgm)); bgm.loop = true; bgm.volume = CONFIG.volume.bgm; }
+    }catch{}
+  }
+  async function playBGM(){ try{ ensureSounds(); bgm && await bgm.play(); }catch{} }
+  function stopBGM(){ try{ bgm && bgm.pause(); }catch{} }
+
+  // 単位
+  const vw = (px)=>px*(canvas.width/360);
+  const vh = (px)=>px*(canvas.height/640);
+  const groundY = ()=>canvas.height - vh(40);
+
+  // 状態
+  let state='ready', best=0, streak=0;
+  let GRAVITY=0, JUMP_V0=0, ringSpeed=0;
+
+  // プレイヤー
+  const p = { x:0, y:0, r:0, vy:0, canJump:true, jumping:false, jumpTimer:0 };
+
+  // 輪
+  const ring = { cx:0, cy:0, innerR:0, thick:0, speed:0, active:false, passed:false };
+
+  // 背景スクロール
+  let bgX = 0;
+  function bgTick(dt){
+    const scroll = (ringSpeed*0.12) * dt;
+    bgX = (bgX - scroll) % canvas.width;
+  }
+
+  function resetPlayer(){
+    const base = Math.min(canvas.width, canvas.height);
+    p.r = Math.max(18, base * CONFIG.playerSizeRatio);
+    p.x = canvas.width*0.30;
+    p.y = groundY();
+    p.vy = 0; p.canJump = true; p.jumping=false; p.jumpTimer=0;
+  }
+
+  function placeRing(onlyPlace=false){
+    const base = Math.min(canvas.width, canvas.height);
+    ring.innerR = Math.max(64, base * CONFIG.ringInnerRatio);
+    ring.thick  = Math.max(14, ring.innerR * CONFIG.ringThickRatio);
+    ring.cx = canvas.width + (ring.innerR+ring.thick)*1.8;
+    ring.cy = groundY() - ring.innerR - ring.thick*0.5 - vh(CONFIG.minRingGapVh);
+    ring.speed = canvas.width * CONFIG.ringSpeedBaseW; // 常に高速
+    ring.passed = false;
+    ring.active = !onlyPlace;
+  }
+
+  function toast(text,color='#fff'){
+    toastEl.textContent=text||''; toastEl.style.color=color;
+    if(!text){ toastEl.classList.remove('show'); return; }
+    toastEl.classList.add('show'); setTimeout(()=>toastEl.classList.remove('show'), 800);
+  }
+
+  function startGame(){
+    state='playing';
+    streak=0;
+    btnStart.style.display='none'; btnRetry.style.display='none';
+    bestEl.textContent = `BEST ${best}`; streakEl.textContent = `STREAK ${streak}`;
+    toast(''); resetPlayer(); placeRing(false); ensureSounds(); playBGM();
+  }
+
+  function onPass(){
+    streak++; best = Math.max(best, streak);
+    bestEl.textContent = `BEST ${best}`; streakEl.textContent = `STREAK ${streak}`;
+    toast('松村です！', '#eaff9b'); try{ sOK && (sOK.currentTime=0, sOK.play().catch(()=>{})); }catch{}
+    placeRing(false); // 加速なしで即次へ（常に高速）
+  }
+
+  function gameOver(){
+    state='fail';
+    toast('アチチ！', '#ffd2d2'); try{ sNG && (sNG.currentTime=0, sNG.play().catch(()=>{})); }catch{}
+    btnRetry.style.display='inline-block'; btnStart.style.display='inline-block'; stopBGM();
+  }
+
+  // 入力
+  function tryJump(){
+    if(state==='ready'){ startGame(); return; }
+    if(state!=='playing') return;
+    if(p.canJump){ p.vy = JUMP_V0; p.canJump=false; p.jumping=true; p.jumpTimer=0.20; }
+  }
+  btnJump.addEventListener('click', tryJump, {passive:true});
+  canvas.addEventListener('pointerdown', tryJump, {passive:true});
+  addEventListener('keydown', (e)=>{ if(e.code==='Space') tryJump(); });
+
+  btnStart.addEventListener('click', ()=>{ if(state!=='playing') startGame(); });
+  btnRetry.addEventListener('click', ()=>{ if(state!=='playing'){ state='ready'; startGame(); } });
+
+  // ループ
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min(0.033, (now - last)/1000); last = now;
+
+    if(state==='playing'){
+      bgTick(dt);
+
+      // プレイヤー
+      p.vy += GRAVITY * dt;
+      p.y  += p.vy * dt;
+      const gy = groundY();
+      if(p.y >= gy){ p.y = gy; p.vy = 0; p.canJump = true; p.jumping = false; p.jumpTimer = 0; }
+      if(p.jumpTimer>0){ p.jumpTimer -= dt; if(p.jumpTimer<=0) p.jumping=false; }
+
+      // 輪
+      if(ring.active){
+        ring.cx -= ring.speed * dt;
+
+        // 超ゆる判定
+        const outer = ring.innerR + ring.thick*0.5;
+        const inner = ring.innerR - ring.thick*0.5;
+        const dx = Math.abs(p.x - ring.cx);
+        const dy = Math.abs(p.y - ring.cy);
+
+        const withinX = dx < outer - p.r*CONFIG.TOL_X;
+        const withinHole = dy < (inner - p.r*CONFIG.TOL_R_INNER);
+
+        const dist = Math.hypot(p.x-ring.cx, p.y-ring.cy);
+        const touchingBand = (dist + p.r > inner) && (dist - p.r < outer);
+        const nearCenterY = Math.abs(dy) < ring.thick*CONFIG.TOUCH_SHIELD;
+
+        if(withinX && withinHole) ring.passed = true;
+        if(withinX && touchingBand && !withinHole && !nearCenterY){ gameOver(); }
+
+        if(ring.cx + outer < p.x - p.r){
+          ring.active=false;
+          if(ring.passed){ onPass(); } else { gameOver(); }
+        }
+      }
+    }
+
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  // 画像描画（アスペクト比維持）
+  function drawImageContain(img, cx, cy, targetW, targetH){
+    const iw = img.naturalWidth || img.width || 1;
+    const ih = img.naturalHeight || img.height || 1;
+    const ir = iw/ih;
+    let w = targetW, h = targetH;
+    if(w/h > ir){ w = h*ir; } else { h = w/ir; }
+    ctx.drawImage(img, cx - w/2, cy - h/2, w, h);
+  }
+
+  // 背景（PNG対応・確実表示）
+  function drawBG(){
+    const w=canvas.width, h=canvas.height;
+    if(bgReady && imgBG.naturalWidth){
+      const iw = imgBG.naturalWidth, ih = imgBG.naturalHeight;
+      const s = Math.max(w/iw, h/ih);
+      const drawW = iw*s, drawH = ih*s;
+      const x1 = (bgX % drawW), x2 = x1 + drawW;
+      ctx.drawImage(imgBG, x1, 0, drawW, drawH);
+      ctx.drawImage(imgBG, x2, 0, drawW, drawH);
+      ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(0,0,w,h);
+    } else {
+      const grd = ctx.createLinearGradient(0,0,0,h);
+      grd.addColorStop(0,'#0b1017'); grd.addColorStop(1,'#07101a');
+      ctx.fillStyle = grd; ctx.fillRect(0,0,w,h);
+      if(bgError) document.getElementById('err').textContent = bgError + '（PNG名が合っているか確認）';
+    }
+  }
+
+  function draw(){
+    const w=canvas.width, h=canvas.height;
+    ctx.clearRect(0,0,w,h);
+
+    // 背景
+    drawBG();
+
+    // 地面
+    ctx.fillStyle='#0c141e'; ctx.fillRect(0, groundY()+h*0.01, w, h);
+
+    // 輪
+    if(ring.active){
+      if(imgRing.complete && (imgRing.naturalWidth||imgRing.width)){
+        const sOuter = (ring.innerR + ring.thick*0.5)*CONFIG.ringDrawScale;
+        drawImageContain(imgRing, ring.cx, ring.cy, sOuter, sOuter);
+      } else {
+        ctx.save(); ctx.translate(ring.cx, ring.cy);
+        ctx.beginPath(); ctx.arc(0,0, ring.innerR + ring.thick*0.5, 0, Math.PI*2);
+        ctx.lineWidth=Math.max(10, ring.thick); ctx.strokeStyle='#ffb23e';
+        ctx.shadowBlur=26; ctx.shadowColor='#ff6b00'; ctx.stroke();
+        ctx.beginPath(); ctx.arc(0,0, ring.innerR, 0, Math.PI*2);
+        ctx.lineWidth=Math.max(4, ring.thick*0.36); ctx.strokeStyle='#ff6b00'; ctx.stroke();
+        ctx.restore(); ctx.shadowBlur=0;
+      }
+    }
+
+    // プレイヤー
+    const useJumpImg = (state==='playing' && (p.jumping || p.vy< -50));
+    const src = useJumpImg ? imgJump : imgIdle;
+    const s = p.r*2.7;
+    if(src.complete && (src.naturalWidth||src.width)){
+      drawImageContain(src, p.x, p.y, s, s);
+    } else {
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fillStyle = useJumpImg ? '#e5ffd9' : '#e5f1ff'; ctx.fill();
+      ctx.lineWidth=3; ctx.strokeStyle='#335d97'; ctx.stroke();
+    }
+
+    if(state==='ready'){
+      ctx.fillStyle='#d9e7f7'; ctx.textAlign='center';
+      ctx.font=`800 ${vw(24)}px/1.2 sans-serif`; ctx.fillText('タップでスタート', w*0.5, h*0.42);
+      ctx.fillStyle='#9fb0c0'; ctx.font=`600 ${vw(16)}px/1.2 sans-serif`;
+      ctx.fillText('連続でくぐってSTREAKを伸ばせ！', w*0.5, h*0.48);
+    }
+  }
+
+  // 初期化
+  function init(){
+    const cssW = Math.min(window.innerWidth*0.94, 560);
+    const cssH = cssW * 16/9;
+    const targetH = Math.min(cssH, window.innerHeight*0.82);
+    const dpr = Math.max(1, Math.min(window.devicePixelRatio||1, 2));
+    canvas.style.width = cssW+'px'; canvas.style.height = targetH+'px';
+    canvas.width = Math.floor(cssW*dpr); canvas.height = Math.floor(targetH*dpr);
+
+    GRAVITY = canvas.height * CONFIG.gravityH;
+    JUMP_V0 = -canvas.height * CONFIG.jumpV0H;
+    ringSpeed = canvas.width * CONFIG.ringSpeedBaseW;
+
+    resetPlayer(); placeRing(true);
+    draw(); requestAnimationFrame(loop);
+    bestEl.textContent = `BEST ${best}`; streakEl.textContent = `STREAK ${streak}`;
+  }
+  init();
+</script>
+</body>
+</html>
