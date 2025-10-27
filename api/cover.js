@@ -40,7 +40,7 @@ ${styleHint}
 Portrait 2:3 aspect, safe margins, rich lighting and texture.`;
 
     // 公式 Images API。b64_json で受け取り（CORS問題回避）
-    const endpoint = "https://api.openai.com/v1/images";
+    const endpoint = "https://api.openai.com/v1/images/generations";
     const r = await fetch(endpoint, {
       method: "POST",
       headers: {
