@@ -53,7 +53,7 @@ export default function App() {
     const load = async () => {
       try {
         const img = await loadImageWithFallback([
-          "./assets/mustache.png",
+          "./apps/2025-10-01/assets/mustache.png",
         ]);
         setMustacheImg(img);
       } catch {}

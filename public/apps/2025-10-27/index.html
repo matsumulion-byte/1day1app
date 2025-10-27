@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>松村ブックメーカー｜おもしろ版</title>
+<style>
+  :root{ --bg:#f4efe6; --ink:#222; --acc:#b48b6a; --card:#fff }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent }
+  html,body{ height:100%; margin:0; background:var(--bg); color:var(--ink);
+    font-family: "Yu Mincho","Hiragino Mincho ProN",serif; }
+  .wrap{ min-height:100%; display:flex; flex-direction:column; gap:14px; padding:14px }
+  h1{ margin:0; font-size:clamp(18px,3.6vw,26px); letter-spacing:.02em }
+  .panel{ width:100%; max-width:920px; margin:0 auto; background:var(--card);
+    border:1px solid #e2e2e2; border-radius:14px; padding:14px; box-shadow:0 6px 18px rgba(0,0,0,.06) }
+  .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:14px }
+  @media (max-width:860px){ .grid{ grid-template-columns:1fr } }
+  .controls{ display:grid; gap:10px }
+  input, textarea, select{
+    width:100%; font:inherit; font-size:16px; padding:10px 12px;
+    border:1px solid #cfcfcf; border-radius:10px; background:#fff; color:#111;
+  }
+  .row{ display:flex; gap:8px; flex-wrap:wrap }
+  button{
+    font:inherit; font-weight:700; font-size:15px; border:none; border-radius:10px;
+    background:var(--acc); color:#fff; padding:11px 14px; cursor:pointer;
+  }
+  .ghost{ background:#eee; color:#222; font-weight:600 }
+  .tiny{ font-size:13px; padding:8px 10px }
+  .canvas-wrap{ display:flex; justify-content:center; align-items:center }
+  canvas{ width:min(92vw,520px); height:auto; border:1px solid #ddd; border-radius:12px; background:#fff }
+  .note{ font-size:12px; color:#666 }
+  .shelf{ display:grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap:10px; margin-top:12px }
+  .thumb{ aspect-ratio: 3/4; border:1px solid #ddd; border-radius:8px; overflow:hidden; position:relative; background:#fafafa; cursor:pointer }
+  .thumb img{ width:100%; height:100%; object-fit:cover; display:block }
+  .thumb span{ position:absolute; left:6px; bottom:6px; background:rgba(0,0,0,.55); color:#fff; font-size:11px; padding:3px 6px; border-radius:6px }
+  .pill{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; font-size:12px; border-radius:999px; background:#f0f0f0 }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>松村ブックメーカー <span class="pill" id="seedBadge">seed: -</span></h1>
+
+  <div class="panel">
+    <div class="grid">
+      <div class="controls">
+        <input id="titleInput" placeholder="タイトルを入力（例：走れ松村）" autocomplete="off" />
+        <textarea id="subtitleInput" rows="2" placeholder="サブタイトル／一文（例：ブルースとメロンパンの間で）"></textarea>
+        <div class="row">
+          <select id="presetSel" title="装丁テンプレ">
+            <option value="classic">Classic（金箔風）</option>
+            <option value="penguin">Penguin（下帯）</option>
+            <option value="bunko">Bunko（文庫）</option>
+            <option value="photo">Photo（余白×写真）</option>
+            <option value="modern">Modern（極細）</option>
+            <option value="kids">Kids（ポップ）</option>
+          </select>
+          <button id="btnRandomTitle" class="ghost">ランダムタイトル</button>
+          <button id="btnPrompt" class="ghost">お題3ワード</button>
+        </div>
+        <div class="row">
+          <button id="btnGenerate">表紙をつくる</button>
+          <button id="btnSave" class="ghost">PNG保存</button>
+          <button id="btnCopyUrl" class="ghost">この表紙のURLをコピー</button>
+          <button id="btnCopyCaption" class="ghost tiny">投稿文言コピー</button>
+        </div>
+        <div class="note">※ seed固定で**同じURL**なら同じ表紙を再現できます</div>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="bookCanvas" width="720" height="1080" aria-label="book cover"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="row" style="justify-content:space-between;align-items:center;">
+      <strong>本棚（作った表紙）</strong>
+      <span class="note">※ サムネをタップで保存／再表示</span>
+    </div>
+    <div id="shelf" class="shelf"></div>
+  </div>
+</div>
+
+<script type="module">
+  const asset = (p) => new URL(p, import.meta.url).toString();
+
+  // ====== DOM ======
+  const canvas = document.getElementById('bookCanvas');
+  const ctx = canvas.getContext('2d', { alpha:false });
+  const $ = (id)=>document.getElementById(id);
+  const titleInput=$('titleInput'), subtitleInput=$('subtitleInput'), presetSel=$('presetSel');
+  const btnGenerate=$('btnGenerate'), btnSave=$('btnSave'), btnCopyUrl=$('btnCopyUrl'), btnCopyCaption=$('btnCopyCaption');
+  const btnRandomTitle=$('btnRandomTitle'), btnPrompt=$('btnPrompt'), seedBadge=$('seedBadge');
+  const shelf=$('shelf');
+
+  // ====== SEED RNG ======
+  function mulberry32(a){ return function(){ a|=0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a>>>15,1|a); t = t + Math.imul(t ^ t>>>7,61|t) ^ t; return ((t ^ t>>>14) >>> 0) / 4294967296; } }
+  function seededChoice(rng, arr){ return arr[Math.floor(rng()*arr.length)] }
+  function seededInt(rng, min, max){ return Math.floor(rng()*(max-min+1))+min }
+
+  // URLからseed復元 or 生成
+  const params = new URLSearchParams(location.search);
+  let seed = parseInt(params.get('seed') || Date.now().toString().slice(-9), 10);
+  let rng = mulberry32(seed);
+  seedBadge.textContent = `seed: ${seed}`;
+
+  // ====== ランダム語彙 ======
+  const W1 = ["沈黙","走れ","青い","微熱","電波","路地裏","透明","夜明け","秘密","記憶","渇き","風景","光","断章","孤独","予感"];
+  const W2 = ["の","と","から","より","についての","以後の","だけの","だけど"];
+  const W3 = ["松村","ブルース","雨粒","メロンパン","旅路","紙飛行機","心臓","フーガ","斜陽","標本","図書室","ダンス","真夜中","万華鏡","漂流"];
+  function randomTitle(){
+    const use2 = rng() < 0.6;
+    return use2 ? `${seededChoice(rng,W1)} ${seededChoice(rng,W2)} ${seededChoice(rng,W3)}` :
+                  `${seededChoice(rng,W1)}${seededChoice(rng,W3)}`;
+  }
+  function randomPrompt(){
+    const pool = [...W1, ...W3];
+    const a = seededChoice(rng,pool), b = seededChoice(rng,pool), c = seededChoice(rng,pool);
+    return [...new Set([a,b,c])].slice(0,3).join("・");
+  }
+
+  // ====== カラーパレット ======
+  const palettes = [
+    ["#f2ebe0","#1f1f1f","#b78e74"], // warm classic
+    ["#e9eff6","#121212","#5a7ea6"], // cool classic
+    ["#fff7e6","#1a1a1a","#c78b3b"], // penguin
+    ["#f0f3f5","#202020","#7f8c8d"], // modern gray
+    ["#fff0f5","#282828","#c86b98"], // pink kids
+    ["#eef7f2","#222","#3aa87a"],   // green
+  ];
+
+  // ====== テクスチャ生成（紙ノイズ） ======
+  function noiseTexture(w,h,alpha=20){
+    const c = document.createElement('canvas'); c.width=w; c.height=h;
+    const x = c.getContext('2d');
+    const img = x.createImageData(w,h);
+    for(let i=0;i<img.data.length;i+=4){
+      const n = 240 + Math.floor((rng()*alpha)); // 240-260あたり
+      img.data[i]=img.data[i+1]=img.data[i+2]=n; img.data[i+3]=255;
+    }
+    x.putImageData(img,0,0);
+    return c;
+  }
+
+  // ====== 共通描画 ======
+  function strokeFrame(color="#0006"){
+    ctx.strokeStyle=color; ctx.lineWidth=2;
+    ctx.strokeRect(36,36,canvas.width-72,canvas.height-72);
+  }
+  function foilText(text, x,y, size=64, font="serif"){
+    // 金箔風：グラデ＋影
+    const grad = ctx.createLinearGradient(x-100,y-60,x+100,y+20);
+    grad.addColorStop(0, "#aa8d56");
+    grad.addColorStop(0.5, "#f3e6b1");
+    grad.addColorStop(1, "#9b7f4a");
+    ctx.font = `700 ${size}px ${font}`;
+    ctx.textAlign="center";
+    ctx.shadowColor = "rgba(0,0,0,.25)";
+    ctx.shadowBlur = 6; ctx.shadowOffsetY = 2;
+    ctx.fillStyle = grad;
+    ctx.fillText(text, x,y);
+    ctx.shadowColor="transparent";
+  }
+  function wrapCenter(text, x, y, maxW, lh, font, size=32, color="#222"){
+    ctx.font = `400 ${size}px ${font}`; ctx.fillStyle=color; ctx.textAlign="center";
+    const words = text.split('');
+    let line="", lines=[];
+    for(const ch of words){
+      const test=line+ch;
+      if(ctx.measureText(test).width>maxW && line!==""){ lines.push(line); line=ch; }
+      else line=test;
+    }
+    if(line) lines.push(line);
+    let yy=y;
+    for(const L of lines){ ctx.fillText(L, x, yy); yy+=lh; }
+  }
+
+  // ====== プリセット描画 ======
+  function drawCover({title, subtitle, preset}){
+    const pal = seededChoice(rng, palettes);
+    const bg = pal[0], ink = pal[1], acc = pal[2];
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = bg; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    const fontSerif = `"Yu Mincho","Hiragino Mincho ProN",serif`;
+    const fontSans = `ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif`;
+
+    if(preset==="classic"){
+      strokeFrame();
+      foilText(title||"無題の本", canvas.width/2, 420, 66, fontSerif);
+      if(subtitle) wrapCenter(subtitle, canvas.width/2, 560, canvas.width-200, 40, fontSerif, 28, "#333");
+      ctx.font=`500 30px ${fontSerif}`; ctx.fillStyle=ink; ctx.textAlign="center";
+      ctx.fillText("松村ひろのり", canvas.width/2, canvas.height-110);
+      ctx.font=`700 18px ${fontSerif}`; ctx.fillStyle="#0008";
+      ctx.fillText("BOOK MAKER", canvas.width/2, canvas.height-42);
+    }
+    else if(preset==="penguin"){
+      // 下帯
+      const bandH=220; ctx.fillStyle = acc+"cc"; ctx.fillRect(0, canvas.height-bandH, canvas.width, bandH);
+      strokeFrame("#0005");
+      ctx.fillStyle=ink; ctx.textAlign="center";
+      ctx.font=`800 68px ${fontSerif}`;
+      wrapCenter(title||"無題の本", canvas.width/2, 360, canvas.width-160, 74, fontSerif, 60, ink);
+      if(subtitle){ ctx.font=`400 28px ${fontSerif}`; wrapCenter(subtitle, canvas.width/2, canvas.height-bandH+70, canvas.width-160, 38, fontSerif, 26, "#111"); }
+      ctx.font=`600 30px ${fontSerif}`; ctx.fillText("松村ひろのり", canvas.width/2, canvas.height-36);
+    }
+    else if(preset==="bunko"){
+      strokeFrame("#0003");
+      // 縦組みっぽく（疑似）：縦ブロックを左に
+      const x = 200, top=200, lh=54, maxLines=8;
+      ctx.fillStyle=ink; ctx.textAlign="left"; ctx.font=`700 48px ${fontSerif}`;
+      const t = (title||"無題の本").slice(0, maxLines);
+      for(let i=0;i<t.length;i++){ ctx.fillText(t[i], x, top + i*lh); }
+      ctx.font=`400 24px ${fontSerif}`; ctx.fillStyle="#333";
+      if(subtitle){ wrapCenter(subtitle, canvas.width/2+80, 540, canvas.width-360, 36, fontSerif, 24, "#333"); }
+      ctx.textAlign="center"; ctx.font=`500 26px ${fontSerif}`;
+      ctx.fillText("松村ひろのり", canvas.width/2, canvas.height-90);
+    }
+    else if(preset==="photo"){
+      strokeFrame("#0004");
+      // 余白×写真風：中央に矩形写真（実画像なし・色面）
+      const pw=canvas.width-220, ph=Math.floor((pw)*0.62), px=110, py=220;
+      ctx.fillStyle = acc; ctx.fillRect(px,py,pw,ph);
+      ctx.fillStyle="#ffffff66"; ctx.fillRect(px,py,pw,72); // フェイク見出し帯
+      ctx.fillStyle=ink; ctx.textAlign="center";
+      ctx.font=`800 54px ${fontSans}`;
+      ctx.fillText(title||"Untitled", canvas.width/2, py-40);
+      ctx.font=`400 24px ${fontSans}`; ctx.fillStyle="#333";
+      if(subtitle){ wrapCenter(subtitle, canvas.width/2, py+ph+60, canvas.width-200, 34, fontSans, 22, "#333"); }
+      ctx.font=`600 26px ${fontSans}`; ctx.fillStyle=ink; ctx.fillText("Hironori Matsumura", canvas.width/2, canvas.height-46);
+    }
+    else if(preset==="modern"){
+      strokeFrame("#0002");
+      ctx.fillStyle=ink; ctx.textAlign="center";
+      ctx.font=`800 64px ${fontSans}`;
+      wrapCenter(title||"TITLE", canvas.width/2, 420, canvas.width-160, 72, fontSans, 56, ink);
+      ctx.font=`400 24px ${fontSans}`; if(subtitle){ wrapCenter(subtitle, canvas.width/2, 620, canvas.width-200, 36, fontSans, 22, "#444"); }
+      ctx.font=`600 26px ${fontSans}`; ctx.fillStyle=ink; ctx.fillText("Matsumura", canvas.width/2, canvas.height-56);
+    }
+    else if(preset==="kids"){
+      strokeFrame("#0005");
+      // カラーブロック×丸
+      for(let i=0;i<18;i++){
+        ctx.beginPath();
+        ctx.fillStyle = `hsl(${seededInt(rng,0,360)},${seededInt(rng,40,80)}%,${seededInt(rng,55,75)}%)`;
+        ctx.arc(seededInt(rng,60,660), seededInt(rng,80,1000), seededInt(rng,10,36), 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.fillStyle="#000"; ctx.textAlign="center";
+      ctx.font=`900 64px ${fontSans}`;
+      wrapCenter(title||"MATSUMURA", canvas.width/2, 420, canvas.width-140, 68, fontSans, 56, "#111");
+      ctx.font=`500 26px ${fontSans}`; ctx.fillText("by Hironori", canvas.width/2, canvas.height-60);
+    }
+
+    // 紙ノイズ重ね
+    const tex = noiseTexture(canvas.width, canvas.height, 18);
+    ctx.globalCompositeOperation = "multiply";
+    ctx.drawImage(tex,0,0);
+    ctx.globalCompositeOperation = "source-over";
+  }
+
+  // ====== 本棚ギャラリー ======
+  function addToShelf(title){
+    const thumb = document.createElement('div'); thumb.className='thumb';
+    const img = new Image(); img.src = canvas.toDataURL('image/jpeg', 0.9);
+    const span = document.createElement('span'); span.textContent = (title||"無題");
+    thumb.appendChild(img); thumb.appendChild(span);
+    thumb.onclick = ()=>{ // クリックでDL
+      const a=document.createElement('a'); a.download = `${(title||'book').replace(/\s+/g,'_')}.jpg`;
+      a.href = img.src; a.click();
+    };
+    shelf.prepend(thumb);
+  }
+
+  // ====== ハンドラ ======
+  function currentPreset(){ return presetSel.value }
+  function generate(){
+    // 同じseedで再現できるよう、明示的にrngを更新せず seed固定
+    rng = mulberry32(seed);
+    drawCover({ title:titleInput.value.trim(), subtitle:subtitleInput.value.trim(), preset: currentPreset() });
+    addToShelf(titleInput.value.trim());
+  }
+
+  btnGenerate.addEventListener('click', generate);
+  btnSave.addEventListener('click', ()=>{
+    const a=document.createElement('a'); a.download='book_matsumura.png';
+    a.href=canvas.toDataURL('image/png'); a.click();
+  });
+  btnCopyUrl.addEventListener('click', ()=>{
+    const u = new URL(location.href);
+    u.searchParams.set('seed', String(seed));
+    u.searchParams.set('preset', currentPreset());
+    u.searchParams.set('t', encodeURIComponent(titleInput.value.trim()||""));
+    u.searchParams.set('s', encodeURIComponent(subtitleInput.value.trim()||""));
+    navigator.clipboard.writeText(u.toString()).then(()=>alert('この表紙のURLをコピーしました'));
+  });
+  btnCopyCaption.addEventListener('click', ()=>{
+    const t = titleInput.value.trim()||"（無題）";
+    const s = subtitleInput.value.trim();
+    const caption = `#1日1アプリ｜松村ブックメーカー\n「${t}」${s?` — ${s}\n`:`\n`}10/27 #文字活字文化の日`;
+    navigator.clipboard.writeText(caption).then(()=>alert('投稿文言をコピーしました'));
+  });
+  btnRandomTitle.addEventListener('click', ()=>{
+    // ランダムに寄せたいときはseedを変える
+    seed = Math.floor(Math.random()*1e9);
+    rng = mulberry32(seed);
+    seedBadge.textContent = `seed: ${seed}`;
+    titleInput.value = randomTitle();
+    if(!subtitleInput.value) subtitleInput.value = "松村的断章集";
+  });
+  btnPrompt.addEventListener('click', ()=>{
+    subtitleInput.value = `お題：${randomPrompt()}`;
+  });
+
+  // ====== URL復元（シェア対応） ======
+  const qPreset = params.get('preset'); if(qPreset) presetSel.value = qPreset;
+  const qTitle = params.get('t'); if(qTitle) titleInput.value = decodeURIComponent(qTitle);
+  const qSub = params.get('s'); if(qSub) subtitleInput.value = decodeURIComponent(qSub);
+
+  // 初期レンダ
+  generate();
+</script>
+</body>
+</html>
