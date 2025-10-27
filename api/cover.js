@@ -1,13 +1,17 @@
 // /api/cover.js — Vercel Serverless Function
 export default async function handler(req, res) {
-  // ヘルスチェック: GETで状態確認
-  if (req.method === "GET") {
-    return res.status(200).json({
-      ok: true,
-      hasKey: !!process.env.OPENAI_API_KEY,
-      hint: "POST {title, author, style} to generate",
-    });
-  }
+// GETの部分だけ一時的にこうしてOK（デプロイしたら /api/cover を開いて確認）
+if (req.method === "GET") {
+  const k = process.env.OPENAI_API_KEY;
+  return res.status(200).json({
+    ok: true,
+    hasKey: !!k,
+    // 環境変数が読めているか、先頭だけマスク表示
+    keyPreview: k ? (k.slice(0,3) + "…") : null,
+    env: process.env.VERCEL_ENV || process.env.NODE_ENV // "production" になってるか確認
+  });
+}
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
