@@ -1,8 +1,8 @@
-// /api/cover.js — Vercel Serverless Function
-export const config = { runtime: "nodejs18.x" }; // 念のためNode実行に固定
+// /api/cover.js — Vercel Serverless Function (Node.js Runtime)
+export const config = { runtime: "nodejs" }; // ← ここだけ修正
 
 export default async function handler(req, res) {
-  // ヘルスチェック
+  // ヘルスチェック（GET）
   if (req.method === "GET") {
     return res.status(200).json({
       ok: true,
@@ -10,6 +10,7 @@ export default async function handler(req, res) {
       hint: "POST {title, author, style} to generate",
     });
   }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -18,7 +19,7 @@ export default async function handler(req, res) {
     const key = process.env.OPENAI_API_KEY;
     if (!key) return res.status(500).json({ error: "OPENAI_API_KEY is missing" });
 
-    // Vercelのbodyはstringのことがある
+    // Vercelでは req.body が string のことがあるので両対応
     const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
     const { title, author, style } = body;
     if (!title) return res.status(400).json({ error: "title is required" });
@@ -38,7 +39,7 @@ High-quality publishing style suitable for overlaying typography later.
 ${styleHint}
 Portrait 2:3 aspect, safe margins, rich lighting and texture.`;
 
-    // 公式の Images API（/v1/images）。b64_jsonで受け取る
+    // 公式 Images API。b64_json で受け取り（CORS問題回避）
     const endpoint = "https://api.openai.com/v1/images";
     const r = await fetch(endpoint, {
       method: "POST",
@@ -55,7 +56,7 @@ Portrait 2:3 aspect, safe margins, rich lighting and texture.`;
       }),
     });
 
-    const raw = await r.text(); // まずテキストで受けて、失敗時も中身を返せるように
+    const raw = await r.text(); // まずテキストで受ける（失敗時の詳細を返せるように）
     if (!r.ok) {
       return res.status(502).json({
         error: "image generation failed",
@@ -66,7 +67,9 @@ Portrait 2:3 aspect, safe margins, rich lighting and texture.`;
     }
 
     let json;
-    try { json = JSON.parse(raw); } catch {
+    try {
+      json = JSON.parse(raw);
+    } catch {
       return res.status(502).json({ error: "bad json from provider", sample: raw.slice(0, 300) });
     }
 
