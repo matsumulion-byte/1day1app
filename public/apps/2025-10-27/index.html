@@ -3,202 +3,292 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>松村ブックメーカー｜AI表紙版</title>
+<title>松村ブックメーカー</title>
 <style>
-  :root{ --bg:#f4efe6; --ink:#222; --acc:#b48b6a; --card:#fff }
+  :root{ --bg:#f5f2ea; --ink:#222; --acc:#b48b6a; --card:#fff; --bar:#111 }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent }
   html,body{ height:100%; margin:0; background:var(--bg); color:var(--ink);
     font-family:"Yu Mincho","Hiragino Mincho ProN",serif; }
-  .wrap{ min-height:100%; display:flex; flex-direction:column; gap:14px; padding:14px }
-  h1{ margin:0; font-size:clamp(18px,3.6vw,26px) }
-  .panel{ width:100%; max-width:920px; margin:0 auto; background:var(--card);
-    border:1px solid #e2e2e2; border-radius:14px; padding:14px; box-shadow:0 6px 18px rgba(0,0,0,.06) }
-  .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:14px }
-  @media (max-width:860px){ .grid{ grid-template-columns:1fr } }
-  .controls{ display:grid; gap:10px }
-  input, select{
-    width:100%; font:inherit; font-size:16px; padding:10px 12px;
-    border:1px solid #cfcfcf; border-radius:10px; background:#fff; color:#111;
+  .wrap{ min-height:100dvh; display:flex; flex-direction:column; }
+  header{ padding:14px 16px; }
+  h1{ margin:0; font-size:clamp(18px,4.8vw,26px); display:flex; align-items:center; gap:8px }
+  .tag{ font-size:11px; padding:4px 8px; border-radius:999px; background:#eee; font-family:ui-sans-serif,system-ui,Roboto,sans-serif }
+
+  .panel{ background:var(--card); border-radius:16px; box-shadow:0 6px 18px rgba(0,0,0,.08);
+    padding:12px; margin:0 12px; }
+  .fields{ display:grid; grid-template-columns:1fr; gap:10px }
+  .field input{
+    width:100%; font:inherit; font-size:16px; padding:12px 14px;
+    border:1px solid #d8d8d8; border-radius:12px; background:#fff; color:#111;
   }
-  .row{ display:flex; gap:8px; flex-wrap:wrap }
-  button{
-    font:inherit; font-weight:700; font-size:15px; border:none; border-radius:10px;
-    background:var(--acc); color:#fff; padding:11px 14px; cursor:pointer;
+  .canvas-wrap{ flex:1; display:flex; align-items:center; justify-content:center; padding:10px 12px 92px }
+  canvas{ width:min(92vw,520px); height:auto; border:1px solid #ddd; border-radius:12px; background:#fff; }
+
+  /* 下部操作バー（SP用） */
+  .dock{
+    position:fixed; left:0; right:0; bottom:0; z-index:10;
+    background:linear-gradient(180deg, rgba(245,242,234,0.0), rgba(245,242,234,1) 16px) , var(--bg);
+    padding:10px 12px 12px; border-top:1px solid #e6e1d9;
   }
-  .ghost{ background:#eee; color:#222; font-weight:600 }
-  .canvas-wrap{ display:flex; justify-content:center; align-items:center }
-  canvas{ width:min(92vw,520px); height:auto; border:1px solid #ddd; border-radius:12px; background:#fff; touch-action:manipulation }
-  .note{ font-size:12px; color:#666; white-space:pre-wrap }
+  .btns{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
+  .btn{
+    appearance:none; border:none; border-radius:14px; padding:14px 16px; font-weight:800; font-size:16px; cursor:pointer;
+    font-family:ui-sans-serif,system-ui,Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  }
+  .btn.primary{ background:var(--acc); color:#fff }
+  .btn.ghost{ background:#111; color:#fff; opacity:.9 }
+  .note{ text-align:center; font-size:12px; color:#666; padding:6px 0 0 }
+
+  /* PCでは横並びで少し余白広め */
+  @media (min-width:900px){
+    .panel{ max-width:980px; margin:0 auto 8px; }
+    .canvas-wrap{ padding-bottom:110px }
+    .btns{ max-width:980px; margin:0 auto; grid-template-columns:2fr 1fr }
+  }
+
+  /* クロスフェード用 */
+  .fade-layer{ position:absolute; inset:0; pointer-events:none; opacity:0; transition:opacity .35s ease }
+  .fade-layer.show{ opacity:1 }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>松村ブックメーカー <small style="font-size:.8em; color:#666">AI表紙</small></h1>
+  <header>
+    <h1>松村ブックメーカー</h1>
+  </header>
 
   <div class="panel">
-    <div class="grid">
-      <div class="controls">
-        <input id="titleInput" placeholder="タイトル（例：走れ松村）" autocomplete="off" />
-        <input id="authorInput" placeholder="著者名（例：松村ひろのり）" value="松村ひろのり" />
-        <div class="row">
-          <select id="styleSel" title="装丁スタイル">
-            <option value="literary">文学ミニマル</option>
-            <option value="vintage">ビンテージ質感</option>
-            <option value="photo">写真エッセイ</option>
-            <option value="modern">モダングラフィック</option>
-          </select>
-          <button id="btnGenerate">生成</button>
-          <button id="btnSave" class="ghost">PNG保存</button>
-          <button id="btnShare" class="ghost">この設定のURLをコピー</button>
-        </div>
-        <div class="note">※ 背景は生成AIで作成。文字はCanvasで高解像度組版します。</div>
-        <div id="status" class="note"></div>
-      </div>
+    <div class="fields">
+      <label class="field"><input id="titleInput" placeholder="タイトル（空欄OK）"></label>
+      <label class="field"><input id="authorInput" placeholder="著者名（空欄OK）"></label>
+    </div>
+    <div class="note" id="status">松村画像はプロジェクト内 assets から読み込みます（AI未使用）</div>
+  </div>
 
-      <div class="canvas-wrap">
-        <canvas id="bookCanvas" width="1024" height="1536" aria-label="book cover"></canvas>
-      </div>
+  <div class="canvas-wrap">
+    <div style="position:relative">
+      <canvas id="bookCanvas" width="1024" height="1536" aria-label="book cover"></canvas>
+      <canvas id="fadeCanvas" width="1024" height="1536" class="fade-layer"></canvas>
+    </div>
+  </div>
+
+  <div class="dock">
+    <div class="btns">
+      <button id="btnGenerate" class="btn primary">ランダム生成</button>
+      <button id="btnSave" class="btn ghost">保存</button>
     </div>
   </div>
 </div>
 
 <script type="module">
-  const $ = (id)=>document.getElementById(id);
-  const canvas = $('bookCanvas'); const ctx = canvas.getContext('2d', { alpha:false });
-  const titleInput=$('titleInput'), authorInput=$('authorInput'), styleSel=$('styleSel');
-  const btnGenerate=$('btnGenerate'), btnSave=$('btnSave'), btnShare=$('btnShare'), statusEl=$('status');
+/* ============ セットアップ ============ */
+const asset = (p)=> new URL(p, import.meta.url).toString();
+const IMAGES = [
+  './assets/matsu_01.jpg','./assets/matsu_02.jpg','./assets/matsu_03.jpg','./assets/matsu_04.jpg',
+  './assets/matsu_05.jpg','./assets/matsu_06.jpg','./assets/matsu_07.jpg'
+].map(src => asset(src));
 
-  const fontSerif = `"Yu Mincho","Hiragino Mincho ProN",serif`;
-  const fontSans = `ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif`;
+const $ = (id)=>document.getElementById(id);
+const canvas = $('bookCanvas'), ctx = canvas.getContext('2d', {alpha:false});
+const fadeCanvas = $('fadeCanvas'), fctx = fadeCanvas.getContext('2d', {alpha:false});
+const titleInput=$('titleInput'), authorInput=$('authorInput'), statusEl=$('status');
+const btnGenerate=$('btnGenerate'), btnSave=$('btnSave');
 
-  function setStatus(msg){ statusEl.textContent = msg||""; }
-  function drawBase(bgImg){
-    ctx.fillStyle="#fff"; ctx.fillRect(0,0,canvas.width,canvas.height);
+const fontSerif = `"Yu Mincho","Hiragino Mincho ProN",serif`;
+const fontSans = `ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif`;
+const styles = ["literary","vintage","photo","modern"];
 
-    if(bgImg){
-      // 画像をアスペクト比維持で “cover” 描画（中央トリミング）
-      const cw = canvas.width, ch = canvas.height;
-      const iw = bgImg.width, ih = bgImg.height;
-      const scale = Math.max(cw/iw, ch/ih);
-      const sw = cw / scale, sh = ch / scale;
-      const sx = (iw - sw) / 2, sy = (ih - sh) / 2;
-      ctx.drawImage(bgImg, sx, sy, sw, sh, 0, 0, cw, ch);
+function setStatus(t){ statusEl.textContent = t; }
+function pick(a){ return a[(Math.random()*a.length)|0]; }
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+/* ============ 背景描画（cover） ============ */
+function drawCoverImage(img, toCtx=ctx){
+  const cw=toCtx.canvas.width, ch=toCtx.canvas.height;
+  const iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height;
+  const s=Math.max(cw/iw, ch/ih), sw=cw/s, sh=ch/s, sx=(iw-sw)/2, sy=(ih-sh)/2;
+  toCtx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
+}
+
+/* ============ 万華鏡エフェクト ============ */
+/* 画像を正方形サンプルに整えてから、扇形スライスを交互反転で放射配置 */
+function kaleidoscope(img, options={}){
+  const k = options.sectors ?? (6 + (Math.random()*6|0));   // 6〜11枚あたり
+  const rot = (Math.random()*Math.PI*2);                    // ランダム回転
+  const zoom = 1.0 + Math.random()*0.35;                    // ちょいズーム
+
+  const size = Math.max(canvas.width, canvas.height);
+  const off = document.createElement('canvas'); off.width = off.height = size;
+  const ox = off.getContext('2d');
+  // 背景をまず敷く（cover）
+  const iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height;
+  const s=Math.max(size/iw, size/ih)*zoom, sw=size/s, sh=size/s, sx=(iw-sw)/2, sy=(ih-sh)/2;
+
+  // 1) 基本スライスを用意（中心から扇形でクリップ）
+  const slice = document.createElement('canvas'); slice.width = slice.height = size;
+  const sxctx = slice.getContext('2d');
+  const cx=size/2, cy=size/2;
+  const sliceAngle = Math.PI*2 / k;
+
+  // 基本スライスを描画（扇形クリップ）
+  sxctx.save();
+  sxctx.translate(cx, cy);
+  sxctx.rotate(rot);
+  sxctx.beginPath();
+  sxctx.moveTo(0,0);
+  sxctx.arc(0,0, size/2, -sliceAngle/2, sliceAngle/2);
+  sxctx.closePath();
+  sxctx.clip();
+  // 画像を貼る
+  sxctx.drawImage(img, sx, sy, sw, sh, -size/2, -size/2, size, size);
+  sxctx.restore();
+
+  // 2) スライスを放射状に敷き詰め。奇数スライスはミラーに。
+  for(let i=0;i<k;i++){
+    ox.save();
+    ox.translate(cx, cy);
+    ox.rotate(i*sliceAngle);
+    if(i%2===1){ // ミラー
+      ox.scale(1,-1);
     }
+    ox.drawImage(slice, -cx, -cy);
+    ox.restore();
+  }
 
-    ctx.strokeStyle="#0006"; ctx.lineWidth=2;
-    ctx.strokeRect(24,24,canvas.width-48,canvas.height-48);
+  // 3) 出力キャンバスにフィット（縦長へcover）
+  ctx.drawImage(off, 0, 0, size, size, 0, 0, canvas.width, canvas.height);
+}
+
+/* ============ その他の“味付け”エフェクト ============ */
+function effectGrain(amount=0.12, toCtx=ctx){
+  const w=toCtx.canvas.width,h=toCtx.canvas.height;
+  const id=toCtx.getImageData(0,0,w,h), d=id.data;
+  for(let i=0;i<d.length;i+=4){
+    const n=(Math.random()*2-1)*255*amount;
+    d[i]=clamp(d[i]+n,0,255); d[i+1]=clamp(d[i+1]+n,0,255); d[i+2]=clamp(d[i+2]+n,0,255);
   }
-  function wrapCenter(text, x, y, maxW, lh, size, font, color="#111"){
-    ctx.font = `700 ${size}px ${font}`;
-    ctx.fillStyle = color; ctx.textAlign="center";
-    const chars = [...text];
-    let line="", lines=[];
-    for(const ch of chars){
-      const test=line+ch;
-      if(ctx.measureText(test).width>maxW && line!==""){ lines.push(line); line=ch; }
-      else line=test;
-    }
-    if(line) lines.push(line);
-    let yy=y;
-    for(const L of lines){ ctx.fillText(L, x, yy); yy+=lh; }
-  }
-  function typoset({title, author, style}){
-    if(style==='literary'){
-      wrapCenter(title, canvas.width/2, 540, canvas.width-200, 88, 78, fontSerif, "#111");
-      ctx.font=`500 30px ${fontSerif}`; ctx.fillStyle="#111"; ctx.textAlign="center";
-      ctx.fillText(author, canvas.width/2, canvas.height-120);
-    } else if(style==='vintage'){
-      const h=220; ctx.fillStyle="rgba(0,0,0,.22)"; ctx.fillRect(0, canvas.height-h, canvas.width, h);
-      wrapCenter(title, canvas.width/2, 520, canvas.width-180, 82, 72, fontSerif, "#111");
-      ctx.font=`600 30px ${fontSerif}`; ctx.fillStyle="#fff"; ctx.textAlign="center";
-      ctx.fillText(author, canvas.width/2, canvas.height-60);
-    } else if(style==='photo'){
-      wrapCenter(title, canvas.width/2, 300, canvas.width-160, 70, 62, fontSans, "#111");
-      ctx.font=`500 28px ${fontSans}`; ctx.fillStyle="#111"; ctx.textAlign="center";
-      ctx.fillText(author, canvas.width/2, 420);
-    } else { // modern
-      wrapCenter(title.toUpperCase(), canvas.width/2, 560, canvas.width-160, 80, 68, fontSans, "#111");
-      ctx.font=`600 28px ${fontSans}`; ctx.fillStyle="#111"; ctx.textAlign="center";
-      ctx.fillText(author, canvas.width/2, canvas.height-64);
+  toCtx.putImageData(id,0,0);
+}
+function effectVignette(str=0.35, toCtx=ctx){
+  const w=toCtx.canvas.width,h=toCtx.canvas.height,cx=w/2,cy=h/2,max=Math.hypot(cx,cy);
+  const id=toCtx.getImageData(0,0,w,h), d=id.data;
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      const i=(y*w+x)*4, v=1 - Math.pow(Math.hypot(x-cx,y-cy)/max, 1.8)*str;
+      d[i]*=v; d[i+1]*=v; d[i+2]*=v;
     }
   }
+  toCtx.putImageData(id,0,0);
+}
+function effectPaperFade(fade=0.12, toCtx=ctx){
+  const w=toCtx.canvas.width,h=toCtx.canvas.height,id=toCtx.getImageData(0,0,w,h), d=id.data;
+  for(let i=0;i<d.length;i+=4){
+    d[i]=clamp(d[i]* (1 - fade*0.05) + 240*fade*0.05, 0,255);
+    d[i+1]=clamp(d[i+1]*(1 - fade*0.05) + 240*fade*0.05, 0,255);
+    d[i+2]=clamp(d[i+2]*(1 - fade*0.09) + 235*fade*0.09, 0,255);
+  }
+  toCtx.putImageData(id,0,0);
+}
 
-  async function generate(){
-    const title = titleInput.value.trim() || "無題";
-    const author = authorInput.value.trim() || "作者不詳";
-    const style = styleSel.value;
+/* ============ タイポ（4スタイルからランダム） ============ */
+function wrapCenter(text, x, y, maxW, lh, size, font, color="#111", toCtx=ctx){
+  toCtx.font = `700 ${size}px ${font}`;
+  toCtx.fillStyle = color; toCtx.textAlign="center";
+  const chars=[...text]; let line="", lines=[];
+  for(const ch of chars){
+    const test=line+ch;
+    if(toCtx.measureText(test).width>maxW && line!==""){ lines.push(line); line=ch; }
+    else line=test;
+  }
+  if(line) lines.push(line);
+  let yy=y;
+  for(const L of lines){ toCtx.fillText(L, x, yy); yy+=lh; }
+}
+function typoset({title, author, style}, toCtx=ctx){
+  const W=toCtx.canvas.width, H=toCtx.canvas.height;
+  if(style==='literary'){
+    toCtx.fillStyle="rgba(255,255,255,.22)"; toCtx.fillRect(20,20,W-40,H-40);
+    wrapCenter(title||"無題", W/2, 540, W-200, 88, 78, fontSerif, "#111", toCtx);
+    toCtx.font=`500 30px ${fontSerif}`; toCtx.fillStyle="#111"; toCtx.textAlign="center";
+    toCtx.fillText(author||"", W/2, H-120);
+  }else if(style==='vintage'){
+    const h=220; toCtx.fillStyle="rgba(0,0,0,.28)"; toCtx.fillRect(0, H-h, W, h);
+    wrapCenter(title||"無題", W/2, 520, W-180, 82, 72, fontSerif, "#fff", toCtx);
+    toCtx.font=`600 30px ${fontSerif}`; toCtx.fillStyle="#fff"; toCtx.textAlign="center";
+    toCtx.fillText(author||"", W/2, H-60);
+  }else if(style==='photo'){
+    toCtx.fillStyle="rgba(255,255,255,.6)"; toCtx.fillRect(80, 200, W-160, 140);
+    wrapCenter(title||"無題", W/2, 300, W-160, 70, 62, fontSans, "#111", toCtx);
+    toCtx.font=`500 28px ${fontSans}`; toCtx.fillStyle="#111"; toCtx.textAlign="center";
+    toCtx.fillText(author||"", W/2, 420);
+  }else{ // modern
+    toCtx.fillStyle="rgba(255,255,255,.18)"; toCtx.fillRect(60, 460, W-120, 180);
+    wrapCenter((title||"無題").toUpperCase(), W/2, 560, W-160, 80, 68, fontSans, "#111", toCtx);
+    toCtx.font=`600 28px ${fontSans}`; toCtx.fillStyle="#111"; toCtx.textAlign="center";
+    toCtx.fillText(author||"", W/2, H-64);
+  }
+  toCtx.strokeStyle="#0006"; toCtx.lineWidth=2; toCtx.strokeRect(24,24,W-48,H-48);
+}
 
-    setStatus("生成中…");
-    btnGenerate.disabled = true;
+/* ============ 生成ルーチン ============ */
+function crossfadeFrom(bufferDrawer){
+  // 今の絵をfadeCanvasへコピーしてフェードさせる
+  fctx.drawImage(canvas, 0,0);
+  fadeCanvas.classList.remove('show'); // reset
+  void fadeCanvas.offsetWidth; // reflow
+  fadeCanvas.classList.add('show');    // fade in old
+  // 新規描画（メインに先に描く）
+  bufferDrawer();
+  // 少し待ってからフェードアウト
+  setTimeout(()=> fadeCanvas.classList.remove('show'), 350);
+}
 
-    try{
-      const res = await fetch("/api/cover", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ title, author, style })
-      });
+function generate(){
+  const title = titleInput.value.trim();
+  const author = authorInput.value.trim();
+  const style = pick(styles);
+  const src = pick(IMAGES);
+  const img = new Image(); img.src = src;
 
-      const raw = await res.text();
-      if(!res.ok){
-        setStatus("APIエラー: " + raw.slice(0,160));
-        btnGenerate.disabled = false;
-        // 背景なしでフォールバック
-        drawBase(null); typoset({ title, author, style });
-        return;
+  img.onload = ()=>{
+    crossfadeFrom(()=>{
+      // 背景（万華鏡 or 通常+味付け）をランダム選択
+      ctx.fillStyle="#fff"; ctx.fillRect(0,0,canvas.width,canvas.height);
+      const useKaleido = Math.random() < 0.7; // 7割くらいで万華鏡
+      if(useKaleido){
+        kaleidoscope(img);
+        // 万華鏡は少し紙感＆周辺減光で締める
+        effectPaperFade(0.08);
+        effectVignette(0.28);
+      }else{
+        drawCoverImage(img);
+        // ライトな味付けを2つくらいランダム適用
+        const fx = [()=>effectGrain(0.08), ()=>effectVignette(0.25), ()=>effectPaperFade(0.12)];
+        pick(fx)(); pick(fx)();
       }
 
-      let data;
-      try { data = JSON.parse(raw); } catch(e) {
-        setStatus("API応答の解析に失敗");
-        btnGenerate.disabled = false;
-        drawBase(null); typoset({ title, author, style });
-        return;
-      }
-
-      const img = new Image();
-      img.onload = ()=>{
-        drawBase(img);
-        typoset({ title, author, style });
-        setStatus("生成完了");
-        btnGenerate.disabled = false;
-      };
-      img.onerror = ()=>{
-        drawBase(null);
-        typoset({ title, author, style });
-        setStatus("画像読み込みに失敗。背景なしで組版しました。");
-        btnGenerate.disabled = false;
-      };
-      img.src = `data:image/png;base64,${data.b64}`;
-
-    }catch(e){
-      drawBase(null);
+      // タイポ
       typoset({ title, author, style });
-      setStatus("通信に失敗しました。背景なしで組版しました。");
-      btnGenerate.disabled = false;
-    }
-  }
 
-  btnGenerate.addEventListener('click', generate);
-  btnSave.addEventListener('click', ()=>{
-    const a=document.createElement('a'); a.download='book_cover.png';
-    a.href=canvas.toDataURL('image/png'); a.click();
-  });
-  btnShare.addEventListener('click', ()=>{
-    const u = new URL(location.href);
-    u.searchParams.set('title', titleInput.value.trim());
-    u.searchParams.set('author', authorInput.value.trim());
-    u.searchParams.set('style', styleSel.value);
-    navigator.clipboard.writeText(u.toString()).then(()=> alert("URLをコピーしました"));
-  });
+      setStatus(`画像:${src.split('/').pop()} / スタイル:${style} / 万華鏡:${useKaleido?"ON":"OFF"}`);
+    });
+  };
+  img.onerror = ()=>{
+    ctx.fillStyle="#ece7dc"; ctx.fillRect(0,0,canvas.width,canvas.height);
+    typoset({ title, author, style:"literary" });
+    setStatus("画像読み込み失敗：/assets の配置を確認してください");
+  };
+}
 
-  // URL復元
-  const params = new URLSearchParams(location.search);
-  if(params.get('title')) titleInput.value = params.get('title');
-  if(params.get('author')) authorInput.value = params.get('author');
-  if(params.get('style')) styleSel.value = params.get('style');
+/* ============ ボタン類 ============ */
+btnGenerate.addEventListener('click', generate);
+btnSave.addEventListener('click', ()=>{
+  const a=document.createElement('a'); a.download='matsumura_cover.png';
+  a.href = canvas.toDataURL('image/png'); a.click();
+});
 
-  // 初期プレビュー（背景なし）
-  (function(){ drawBase(null); typoset({ title:titleInput.value||"無題", author:authorInput.value||"作者不詳", style:styleSel.value }); })();
+/* 初期生成 */
+generate();
 </script>
 </body>
 </html>
