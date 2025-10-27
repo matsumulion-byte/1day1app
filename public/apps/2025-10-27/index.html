@@ -28,7 +28,7 @@
   .ghost{ background:#eee; color:#222; font-weight:600 }
   .canvas-wrap{ display:flex; justify-content:center; align-items:center }
   canvas{ width:min(92vw,520px); height:auto; border:1px solid #ddd; border-radius:12px; background:#fff; touch-action:manipulation }
-  .note{ font-size:12px; color:#666 }
+  .note{ font-size:12px; color:#666; white-space:pre-wrap }
 </style>
 </head>
 <body>
@@ -63,8 +63,6 @@
 </div>
 
 <script type="module">
-  const asset = (p) => new URL(p, import.meta.url).toString();
-
   const $ = (id)=>document.getElementById(id);
   const canvas = $('bookCanvas'); const ctx = canvas.getContext('2d', { alpha:false });
   const titleInput=$('titleInput'), authorInput=$('authorInput'), styleSel=$('styleSel');
@@ -80,7 +78,6 @@
     ctx.strokeStyle="#0006"; ctx.lineWidth=2;
     ctx.strokeRect(24,24,canvas.width-48,canvas.height-48);
   }
-
   function wrapCenter(text, x, y, maxW, lh, size, font, color="#111"){
     ctx.font = `700 ${size}px ${font}`;
     ctx.fillStyle = color; ctx.textAlign="center";
@@ -95,7 +92,6 @@
     let yy=y;
     for(const L of lines){ ctx.fillText(L, x, yy); yy+=lh; }
   }
-
   function typoset({title, author, style}){
     if(style==='literary'){
       wrapCenter(title, canvas.width/2, 540, canvas.width-200, 88, 78, fontSerif, "#111");
@@ -131,8 +127,24 @@
         headers:{ "Content-Type":"application/json" },
         body: JSON.stringify({ title, author, style })
       });
-      if(!res.ok){ throw new Error("APIエラー"); }
-      const data = await res.json();
+
+      const raw = await res.text();
+      if(!res.ok){
+        setStatus("APIエラー: " + raw.slice(0,160));
+        btnGenerate.disabled = false;
+        // 背景なしでフォールバック
+        drawBase(null); typoset({ title, author, style });
+        return;
+      }
+
+      let data;
+      try { data = JSON.parse(raw); } catch(e) {
+        setStatus("API応答の解析に失敗");
+        btnGenerate.disabled = false;
+        drawBase(null); typoset({ title, author, style });
+        return;
+      }
+
       const img = new Image();
       img.onload = ()=>{
         drawBase(img);
@@ -147,10 +159,11 @@
         btnGenerate.disabled = false;
       };
       img.src = `data:image/png;base64,${data.b64}`;
+
     }catch(e){
       drawBase(null);
       typoset({ title, author, style });
-      setStatus("APIに接続できませんでした。背景なしで組版しました。");
+      setStatus("通信に失敗しました。背景なしで組版しました。");
       btnGenerate.disabled = false;
     }
   }
@@ -174,7 +187,7 @@
   if(params.get('author')) authorInput.value = params.get('author');
   if(params.get('style')) styleSel.value = params.get('style');
 
-  // 初期プレビュー
+  // 初期プレビュー（背景なし）
   (function(){ drawBase(null); typoset({ title:titleInput.value||"無題", author:authorInput.value||"作者不詳", style:styleSel.value }); })();
 </script>
 </body>
