@@ -74,7 +74,17 @@
   function setStatus(msg){ statusEl.textContent = msg||""; }
   function drawBase(bgImg){
     ctx.fillStyle="#fff"; ctx.fillRect(0,0,canvas.width,canvas.height);
-    if(bgImg){ ctx.drawImage(bgImg,0,0,canvas.width,canvas.height); }
+
+    if(bgImg){
+      // 画像をアスペクト比維持で “cover” 描画（中央トリミング）
+      const cw = canvas.width, ch = canvas.height;
+      const iw = bgImg.width, ih = bgImg.height;
+      const scale = Math.max(cw/iw, ch/ih);
+      const sw = cw / scale, sh = ch / scale;
+      const sx = (iw - sw) / 2, sy = (ih - sh) / 2;
+      ctx.drawImage(bgImg, sx, sy, sw, sh, 0, 0, cw, ch);
+    }
+
     ctx.strokeStyle="#0006"; ctx.lineWidth=2;
     ctx.strokeRect(24,24,canvas.width-48,canvas.height-48);
   }
@@ -132,16 +142,20 @@
       if(!res.ok){
         setStatus("APIエラー: " + raw.slice(0,160));
         btnGenerate.disabled = false;
+        // 背景なしでフォールバック
         drawBase(null); typoset({ title, author, style });
         return;
       }
 
       let data;
-      try { data = JSON.parse(raw); }
-      catch(e){ setStatus("API応答の解析に失敗"); btnGenerate.disabled=false; drawBase(null); typoset({ title, author, style }); return; }
+      try { data = JSON.parse(raw); } catch(e) {
+        setStatus("API応答の解析に失敗");
+        btnGenerate.disabled = false;
+        drawBase(null); typoset({ title, author, style });
+        return;
+      }
 
       const img = new Image();
-      img.crossOrigin = "anonymous";
       img.onload = ()=>{
         drawBase(img);
         typoset({ title, author, style });
@@ -154,8 +168,7 @@
         setStatus("画像読み込みに失敗。背景なしで組版しました。");
         btnGenerate.disabled = false;
       };
-      // ★ b64が返ればb64優先（CORS汚染を避けPNG保存安定）／無ければURL使用
-      img.src = data.b64 ? `data:image/png;base64,${data.b64}` : data.url;
+      img.src = `data:image/png;base64,${data.b64}`;
 
     }catch(e){
       drawBase(null);
@@ -168,8 +181,7 @@
   btnGenerate.addEventListener('click', generate);
   btnSave.addEventListener('click', ()=>{
     const a=document.createElement('a'); a.download='book_cover.png';
-    a.href=canvas.toDataURL('image/png');
-    a.click();
+    a.href=canvas.toDataURL('image/png'); a.click();
   });
   btnShare.addEventListener('click', ()=>{
     const u = new URL(location.href);

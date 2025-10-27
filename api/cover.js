@@ -1,5 +1,5 @@
-// /api/cover.js — v6 URL+b64 併用版
-const VERSION = "v6-url-plus-b64";
+// /api/cover.js — v7 square-only (1024x1024) + URL/b64 併用
+const VERSION = "v7-square-1024-url+b64";
 
 export const config = { runtime: "nodejs" };
 
@@ -37,47 +37,46 @@ export default async function handler(req, res) {
       `Theme derived from: Title: "${title}" Author: "${author}".`,
       "High-quality publishing style suitable for overlaying typography later.",
       styleHint,
-      "Portrait composition with safe margins, rich lighting and texture."
+      "Square composition with ample negative space for typography overlay, rich lighting and texture."
     ].join(" ");
 
     const endpoint = "https://api.openai.com/v1/images/generations";
 
-    async function gen(size) {
-      const r = await fetch(endpoint, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "gpt-image-1", prompt, size, n: 1 }),
-      });
-      const raw = await r.text();
-      return { ok: r.ok, status: r.status, raw };
-    }
+    const r = await fetch(endpoint, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "gpt-image-1",
+        prompt,
+        size: "1024x1024", // ← 正方形に固定
+        n: 1
+      }),
+    });
 
-    // まずは 1024x1792、ダメなら 1024x1024
-    let resp = await gen("1024x1792");
-    if (!resp.ok) {
-      const fb = await gen("1024x1024");
-      if (fb.ok) resp = fb;
-    }
-    if (!resp.ok) {
-      return res.status(502).json({ error: "image generation failed", status: resp.status, version: VERSION, detail: resp.raw?.slice(0, 1200) });
+    const raw = await r.text();
+    if (!r.ok) {
+      return res.status(502).json({
+        error: "image generation failed",
+        status: r.status,
+        version: VERSION,
+        detail: raw?.slice(0, 1200),
+      });
     }
 
     let json;
-    try { json = JSON.parse(resp.raw); }
-    catch { return res.status(502).json({ error: "bad json from provider", version: VERSION, sample: resp.raw?.slice(0, 300) }); }
+    try { json = JSON.parse(raw); }
+    catch { return res.status(502).json({ error: "bad json from provider", version: VERSION, sample: raw?.slice(0, 300) }); }
 
     const url = json?.data?.[0]?.url;
     if (!url) return res.status(502).json({ error: "no image url returned", version: VERSION });
 
-    // ここがポイント：URLの画像をサーバ側で取得して b64 に変換（CORS回避）
+    // URL画像をサーバ側で取得→b64化（CORS汚染回避）
     let b64 = null;
     try {
       const imgRes = await fetch(url);
       const buf = Buffer.from(await imgRes.arrayBuffer());
       b64 = buf.toString("base64");
-    } catch (_) {
-      // b64生成に失敗したら null のまま（URLだけでもフロントは動く）
-    }
+    } catch (_) { /* b64生成に失敗したらURLだけ返す */ }
 
     return res.status(200).json({ url, b64, version: VERSION });
   } catch (e) {
