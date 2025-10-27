@@ -1,6 +1,5 @@
-// /api/cover.js — Vercel Serverless Function (Node.js)
-// ★ この文字列が /api/cover の GET で見えたら最新が反映できてます
-const VERSION = "v5-no-response-format-1792>1024 fallback";
+// /api/cover.js — v6 URL+b64 併用版
+const VERSION = "v6-url-plus-b64";
 
 export const config = { runtime: "nodejs" };
 
@@ -13,7 +12,6 @@ export default async function handler(req, res) {
       hint: "POST {title, author, style} to generate",
     });
   }
-
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed", version: VERSION });
   }
@@ -45,49 +43,43 @@ export default async function handler(req, res) {
     const endpoint = "https://api.openai.com/v1/images/generations";
 
     async function gen(size) {
-      const payload = {
-        model: "gpt-image-1",
-        prompt,
-        size,        // ← response_format は付けない！
-        n: 1
-      };
       const r = await fetch(endpoint, {
         method: "POST",
         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ model: "gpt-image-1", prompt, size, n: 1 }),
       });
       const raw = await r.text();
-      return { ok: r.ok, status: r.status, raw, payload };
+      return { ok: r.ok, status: r.status, raw };
     }
 
-    // まず縦長（サポートサイズ）の 1024x1792 を試す → ダメなら 1024x1024
+    // まずは 1024x1792、ダメなら 1024x1024
     let resp = await gen("1024x1792");
     if (!resp.ok) {
-      const fallback = await gen("1024x1024");
-      if (fallback.ok) resp = fallback;
+      const fb = await gen("1024x1024");
+      if (fb.ok) resp = fb;
     }
-
     if (!resp.ok) {
-      return res.status(502).json({
-        error: "image generation failed",
-        status: resp.status,
-        version: VERSION,
-        provider: endpoint,
-        // 送ったパラメータを確認（response_format が入ってないことの確認用）
-        sent: { ...resp.payload },
-        detail: resp.raw?.slice(0, 1200),
-      });
+      return res.status(502).json({ error: "image generation failed", status: resp.status, version: VERSION, detail: resp.raw?.slice(0, 1200) });
     }
 
     let json;
     try { json = JSON.parse(resp.raw); }
     catch { return res.status(502).json({ error: "bad json from provider", version: VERSION, sample: resp.raw?.slice(0, 300) }); }
 
-    // gpt-image-1 はデフォルト URL 返却
     const url = json?.data?.[0]?.url;
-    if (!url) return res.status(502).json({ error: "no image url returned", version: VERSION, sample: JSON.stringify(json).slice(0, 300) });
+    if (!url) return res.status(502).json({ error: "no image url returned", version: VERSION });
 
-    return res.status(200).json({ url, version: VERSION });
+    // ここがポイント：URLの画像をサーバ側で取得して b64 に変換（CORS回避）
+    let b64 = null;
+    try {
+      const imgRes = await fetch(url);
+      const buf = Buffer.from(await imgRes.arrayBuffer());
+      b64 = buf.toString("base64");
+    } catch (_) {
+      // b64生成に失敗したら null のまま（URLだけでもフロントは動く）
+    }
+
+    return res.status(200).json({ url, b64, version: VERSION });
   } catch (e) {
     return res.status(500).json({ error: "server error", version: VERSION, message: String(e?.message || e) });
   }
