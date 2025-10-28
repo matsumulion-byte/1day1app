@@ -106,23 +106,101 @@
     }catch(e){ alert('コピーに失敗しました'); }
   };
 
-  // 入力
-  let input={tilt:0,keyL:false,keyR:false,touchL:false,touchR:false};
-  async function enableGyro(){
-    const isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
-    if(typeof DeviceOrientationEvent!=='undefined' && DeviceOrientationEvent.requestPermission && isiOS){
-      try{ const s=await DeviceOrientationEvent.requestPermission(); if(s!=='granted'){} }catch(e){}
+ // 入力（ジャイロ＋キー＋タッチ）— ジャイロだけマイルド調整入り
+let input = { keyL:false, keyR:false, touchL:false, touchR:false };
+
+// ジャイロ・チューニング（数値を触るだけで挙動調整）
+const GYRO = {
+  gain: 0.55,   // 感度：小さいほどマイルド
+  dead: 0.10,   // デッドゾーン：広いほど中央で動きにくい
+  smooth: 0.18, // スムージング：大きいほどヌルッと
+  expo: 0.35,   // 弱傾きをさらにマイルドにするカーブ
+  max: 0.75     // 出力上限：暴れ防止
+};
+
+let gyroRaw = 0;   // 生の傾き（-1..1）
+let gyroBias = 0;  // キャリブレーション（オフセット）
+let gyroFilt = 0;  // フィルタ後
+
+async function enableGyro(){
+  const isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+  if(typeof DeviceOrientationEvent!=='undefined' &&
+     DeviceOrientationEvent.requestPermission && isiOS){
+    try{ await DeviceOrientationEvent.requestPermission(); }catch(e){}
+  }
+  addEventListener('deviceorientation',(e)=>{
+    if(e.gamma!=null){
+      const raw = clamp(e.gamma/45, -1, 1); // -90〜90度 → -1..1
+      gyroRaw = raw;
     }
-    addEventListener('deviceorientation',(e)=>{ if(e.gamma!=null) input.tilt = clamp(e.gamma/45,-1,1); }, true);
+  }, true);
+
+  // 起動時の自動キャリブ（約300ms平均）
+  await new Promise((res)=>{
+    let t0=performance.now(), sum=0, n=0;
+    (function collect(){
+      sum+=gyroRaw; n++;
+      if(performance.now()-t0<300) requestAnimationFrame(collect);
+      else { gyroBias = (n? sum/n : 0); res(); }
+    })();
+  });
+
+  // 画面ダブルタップ/ダブルクリックで再キャリブ
+  addEventListener('dblclick', ()=> { gyroBias = gyroRaw; }, {passive:true});
+  addEventListener('touchend',(e)=>{ if(e.detail===2) gyroBias = gyroRaw; }, {passive:true});
+}
+
+// キー
+addEventListener('keydown',(e)=>{
+  if(e.key==='ArrowLeft'||e.key==='a') input.keyL=true;
+  if(e.key==='ArrowRight'||e.key==='d') input.keyR=true;
+});
+addEventListener('keyup',(e)=>{
+  if(e.key==='ArrowLeft'||e.key==='a') input.keyL=false;
+  if(e.key==='ArrowRight'||e.key==='d') input.keyR=false;
+});
+
+// タッチボタン
+const leftBtn  = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+bindHold(leftBtn, v=>input.touchL=v);
+bindHold(rightBtn,v=>input.touchR=v);
+function bindHold(el,cb){
+  const on=()=>cb(true), off=()=>cb(false);
+  el.addEventListener('touchstart', on, {passive:true});
+  el.addEventListener('touchend',   off, {passive:true});
+  el.addEventListener('touchcancel',off, {passive:true});
+  el.addEventListener('mousedown',  on);
+  addEventListener('mouseup',       off);
+  addEventListener('mouseleave',    off);
+}
+
+// 毎フレーム呼び出す：マイルド化したジャイロ値を返す
+function getGyroControl(){
+  // オフセット補正
+  let t = clamp(gyroRaw - gyroBias, -1, 1);
+
+  // デッドゾーン
+  const ad = Math.abs(t);
+  if(ad < GYRO.dead){
+    t = 0;
+  }else{
+    const s = Math.sign(t);
+    t = (ad - GYRO.dead) / (1 - GYRO.dead);
+    t *= s;
   }
-  addEventListener('keydown',(e)=>{ if(e.key==='ArrowLeft'||e.key==='a') input.keyL=true; if(e.key==='ArrowRight'||e.key==='d') input.keyR=true; });
-  addEventListener('keyup',(e)=>{ if(e.key==='ArrowLeft'||e.key==='a') input.keyL=false; if(e.key==='ArrowRight'||e.key==='d') input.keyR=false; });
-  bindHold($('leftBtn'),v=>input.touchL=v); bindHold($('rightBtn'),v=>input.touchR=v);
-  function bindHold(el,cb){ const on=()=>cb(true),off=()=>cb(false);
-    el.addEventListener('touchstart',on,{passive:true}); el.addEventListener('touchend',off,{passive:true});
-    el.addEventListener('touchcancel',off,{passive:true}); el.addEventListener('mousedown',on);
-    addEventListener('mouseup',off); addEventListener('mouseleave',off);
-  }
+
+  // エクスポネンシャル（弱傾きさらに緩やか）
+  const sgn = Math.sign(t), abs = Math.abs(t);
+  t = sgn * ((1 - GYRO.expo)*abs + GYRO.expo*(abs**2));
+
+  // スムージング（一次IIR）
+  gyroFilt += (t - gyroFilt) * GYRO.smooth;
+
+  // 感度＆上限
+  return clamp(gyroFilt * GYRO.gain, -GYRO.max, GYRO.max);
+}
+
 
   // 難易度（マイルド版）
   const LIMIT_DEG=65, LIMIT=LIMIT_DEG*Math.PI/180;
