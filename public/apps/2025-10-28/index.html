@@ -46,21 +46,20 @@
   <div class="panel">
     <h1>あそびかた</h1>
     <p>左右の傾き（ジャイロ）で支えます。PCは矢印キー。<br>
-      限界角（約 <b>65°</b>）を超えるとスローモーションで崩壊 → 結果表示。<br>
-      スコアは生存秒数。ハイスコアは端末保存。</p>
+      限界角（約 <b>65°</b>）を超えると崩壊 <br>
+      目指せ1分！</p>
     <div class="row"><button class="btn" id="back">戻る</button></div>
   </div>
 </div>
 
 <div class="overlay" id="gameover" style="display:none">
   <div class="panel" id="resultPanel">
-    <h1 id="resultTitle">崩壊…！</h1>
+    <h1 id="resultTitle">自由崩壊！</h1>
     <p id="resultText" class="tiny">自由を守った秒数：</p>
     <div class="row" style="margin:.6rem 0 .8rem">
       <button class="btn" id="retry">もう一度</button>
       <button class="btn ghost" id="share">スコアをコピー</button>
     </div>
-    <div class="tiny">画像差替：<code>./assets/matsumura_liberty.png</code></div>
   </div>
 </div>
 
@@ -68,7 +67,6 @@
   <button class="btn" id="leftBtn">←</button>
   <button class="btn" id="rightBtn">→</button>
 </div>
-
 <script type="module">
   // プロジェクト規約のアセットヘルパ
   const asset = (p) => new URL(p, import.meta.url).toString();
@@ -88,7 +86,7 @@
 
   // 画像
   const statueImg = new Image();
-  statueImg.src = asset('./assets/matsumura_liberty.png');
+  statueImg.src = asset('./apps/2025-10-28/assets/matsumura_liberty.png');
   await new Promise(r=> statueImg.onload=r);
 
   // UI
