@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>松村・オブ・リバティ - Balance the Statue (soft)</title>
+<style>
+  :root{ --bg:#0b1017; --ink:#e9f1f7; --muted:#9fb0c0; --acc:#7ad1ff; --ok:#9ae6b4; --danger:#ff6b7a }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{background:#000;color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;overflow:hidden}
+  #canvas{width:100vw;height:100vh;display:block;touch-action:none}
+  .overlay{position:fixed;inset:0;display:grid;place-items:center;background:linear-gradient(180deg,#06101a 0%,rgba(6,16,26,.55) 45%,rgba(6,16,26,.82) 100%)}
+  .panel{
+    width:min(92vw,520px);background:rgba(15,21,32,.8);
+    border-radius:20px;padding:18px 16px 14px;border:1px solid rgba(255,255,255,.08);
+    box-shadow:0 10px 40px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.04);backdrop-filter:blur(6px)
+  }
+  .panel h1{margin:.2rem 0 .2rem;font-size:clamp(20px,5vw,28px)}
+  .panel p{margin:.4rem 0 1rem;color:var(--muted);line-height:1.6}
+  .row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .btn{cursor:pointer;border:0;border-radius:14px;padding:12px 16px;font-weight:700;background:linear-gradient(180deg,#1e2a3a,#122033);color:#eaf3ff}
+  .btn:active{transform:translateY(1px)} .ghost{background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--muted)}
+  .tiny{font-size:12px;color:var(--muted)}
+  .controls{position:fixed;left:0;right:0;bottom:10px;display:flex;justify-content:center;gap:10px}
+  .controls .btn{min-width:88px}
+  @media (min-width:900px){ .controls{display:none} }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div class="overlay" id="start">
+  <div class="panel">
+    <h1>松村・オブ・リバティ</h1>
+    <p>スマホを左右に傾けて、像が倒れないように支えてください。<br>風はだんだん強くなります。</p>
+    <div class="row" style="margin:.4rem 0 .8rem">
+      <button class="btn" id="play">はじめる</button>
+      <button class="btn ghost" id="how">あそびかた</button>
+    </div>
+    <div class="tiny">スマホ：傾ける ／ PC：← →</div>
+  </div>
+</div>
+
+<div class="overlay" id="howPanel" style="display:none">
+  <div class="panel">
+    <h1>あそびかた</h1>
+    <p>左右の傾き（ジャイロ）で支えます。PCは矢印キー。<br>
+      限界角（約 <b>65°</b>）を超えるとスローモーションで崩壊 → 結果表示。<br>
+      スコアは生存秒数。ハイスコアは端末保存。</p>
+    <div class="row"><button class="btn" id="back">戻る</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="gameover" style="display:none">
+  <div class="panel" id="resultPanel">
+    <h1 id="resultTitle">崩壊…！</h1>
+    <p id="resultText" class="tiny">自由を守った秒数：</p>
+    <div class="row" style="margin:.6rem 0 .8rem">
+      <button class="btn" id="retry">もう一度</button>
+      <button class="btn ghost" id="share">スコアをコピー</button>
+    </div>
+    <div class="tiny">画像差替：<code>./assets/matsumura_liberty.png</code></div>
+  </div>
+</div>
+
+<div class="controls" id="touchControls">
+  <button class="btn" id="leftBtn">←</button>
+  <button class="btn" id="rightBtn">→</button>
+</div>
+
+<script type="module">
+  // プロジェクト規約のアセットヘルパ
+  const asset = (p) => new URL(p, import.meta.url).toString();
+
+  // Canvas
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  let dpr = Math.max(1, devicePixelRatio||1);
+  function resize(){
+    canvas.width = Math.floor(innerWidth*dpr);
+    canvas.height = Math.floor(innerHeight*dpr);
+    canvas.style.width = innerWidth+'px';
+    canvas.style.height = innerHeight+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  addEventListener('resize', resize, {passive:true}); resize();
+
+  // 画像
+  const statueImg = new Image();
+  statueImg.src = asset('./assets/matsumura_liberty.png');
+  await new Promise(r=> statueImg.onload=r);
+
+  // UI
+  const $ = (id)=>document.getElementById(id);
+  const elStart=$('start'), elHow=$('howPanel'), elOver=$('gameover');
+  const elPlay=$('play'), elHowBtn=$('how'), elBack=$('back'), elRetry=$('retry'), elShare=$('share');
+  const elResultTitle=$('resultTitle'), elResultText=$('resultText');
+
+  elPlay.onclick = async()=>{ elStart.style.display='none'; await enableGyro(); startGame(); };
+  elHowBtn.onclick=()=>{ elStart.style.display='none'; elHow.style.display='grid'; };
+  elBack.onclick=()=>{ elHow.style.display='none'; elStart.style.display='grid'; };
+  elRetry.onclick=()=>{ elOver.style.display='none'; startGame(); };
+  elShare.onclick=async()=>{
+    try{
+      await navigator.clipboard.writeText(elResultText.dataset.copy || elResultText.textContent);
+      elShare.textContent='コピーしました！'; setTimeout(()=>elShare.textContent='スコアをコピー',1100);
+    }catch(e){ alert('コピーに失敗しました'); }
+  };
+
+  // 入力
+  let input={tilt:0,keyL:false,keyR:false,touchL:false,touchR:false};
+  async function enableGyro(){
+    const isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+    if(typeof DeviceOrientationEvent!=='undefined' && DeviceOrientationEvent.requestPermission && isiOS){
+      try{ const s=await DeviceOrientationEvent.requestPermission(); if(s!=='granted'){} }catch(e){}
+    }
+    addEventListener('deviceorientation',(e)=>{ if(e.gamma!=null) input.tilt = clamp(e.gamma/45,-1,1); }, true);
+  }
+  addEventListener('keydown',(e)=>{ if(e.key==='ArrowLeft'||e.key==='a') input.keyL=true; if(e.key==='ArrowRight'||e.key==='d') input.keyR=true; });
+  addEventListener('keyup',(e)=>{ if(e.key==='ArrowLeft'||e.key==='a') input.keyL=false; if(e.key==='ArrowRight'||e.key==='d') input.keyR=false; });
+  bindHold($('leftBtn'),v=>input.touchL=v); bindHold($('rightBtn'),v=>input.touchR=v);
+  function bindHold(el,cb){ const on=()=>cb(true),off=()=>cb(false);
+    el.addEventListener('touchstart',on,{passive:true}); el.addEventListener('touchend',off,{passive:true});
+    el.addEventListener('touchcancel',off,{passive:true}); el.addEventListener('mousedown',on);
+    addEventListener('mouseup',off); addEventListener('mouseleave',off);
+  }
+
+  // 難易度（マイルド版）
+  const LIMIT_DEG=65, LIMIT=LIMIT_DEG*Math.PI/180;
+  const GRAVITY=9.5;      // 小さめ：粘れる
+  const CONTROL=36.0;     // 操作強め
+  const DAMP=0.997;       // 減衰強め
+  const WIND_BASE=0.35;   // 風弱め
+  const WIND_GROWTH=0.035;// 成長も緩やか
+  const WIND_GUST=1.0;    // 突風控えめ
+  const SPRING=0.8;       // 角度ゼロへ戻るスプリング（安定化）
+
+  // 状態
+  let running=false, gameTime=0, best=+(localStorage.getItem('liberty_best')||0);
+  let angle=0, angVel=0, shards=[], shattering=false, slowmoT=0;
+  let loopLast=performance.now();
+
+  // 雲
+  const clouds=[];
+  function resetClouds(){
+    clouds.length=0; const W=innerWidth,H=innerHeight;
+    for(let i=0;i<10;i++){
+      clouds.push({x:Math.random()*W,y:H*0.15+Math.random()*H*0.5,r:40+Math.random()*110,a:0.18+Math.random()*0.2});
+    }
+  } resetClouds();
+
+  function startGame(){
+    running=true; gameTime=0; angle=(Math.random()*0.12-0.06); angVel=0;
+    shards.length=0; shattering=false; slowmoT=0; resetClouds(); loopLast=performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function windForce(t){
+    const base=WIND_BASE + WIND_GROWTH*t;
+    const smooth = Math.sin(t*0.7)*0.5 + Math.sin(t*1.4+1.1)*0.35;
+    const gust = Math.sin(t*5.2 + (t|0)%8) * Math.max(0, Math.sin(t*0.28));
+    return base*smooth + WIND_GUST*0.22*gust;
+  }
+
+  function loop(now){
+    if(!running) return;
+    let dt=Math.min(0.032,(now-loopLast)/1000); loopLast=now;
+
+    drawSky(ctx);
+    const t=(now)/1000; const w=windForce(gameTime);
+
+    // 雲
+    for(const c of clouds){ c.x += (6 + w*14)*dt; if(c.x-c.r>innerWidth+40){ c.x=-c.r-40; c.y=innerHeight*0.12+Math.random()*innerHeight*0.55; } drawCloud(ctx,c.x,c.y,c.r,c.a); }
+
+    // スローモーション短縮（→すぐリトライ可能）
+    if(slowmoT>0){ dt*=0.25; slowmoT-=dt; }
+
+    // 入力
+    const key = (input.keyL?-1:0) + (input.keyR?1:0);
+    const touch = (input.touchL?-1:0) + (input.touchR?1:0);
+    const control = input.tilt + 0.9*(key+touch);
+
+    // 物理：重力＋風＋プレイヤー＋スプリング
+    const torque = GRAVITY*Math.sin(angle) + w*0.7 - CONTROL*control - SPRING*angle;
+    angVel += torque*dt;
+    angVel *= DAMP;
+    angle += angVel*dt;
+
+    // 描画
+    const cx=innerWidth*0.5, groundY=innerHeight*0.93;
+    drawGround(ctx);
+
+    const scale = autoScale(statueImg); // ← 高さ・幅の両方で自動フィット
+    drawStatue(ctx, statueImg, cx, groundY, scale, angle);
+
+    // スコア
+    if(slowmoT<=0) gameTime+=dt;
+    drawScore(ctx, gameTime, best, w);
+
+    // 限界角
+    if(!shattering && Math.abs(angle)>LIMIT){
+      shattering=true; slowmoT=0.6; // 短め
+      createShards(statueImg, cx, groundY, scale, angle);
+      // すぐ結果へ（体感待ち時間を短く）
+      setTimeout(()=> showResult(), 380);
+    }
+
+    // 砕け
+    if(shattering){ for(const s of shards){ s.step(dt); s.draw(ctx); } }
+
+    requestAnimationFrame(loop);
+  }
+
+  function showResult(){
+    if(!running) return;
+    running=false;
+    const score=Math.max(0, gameTime);
+    if(score>best){ best=score; localStorage.setItem('liberty_best', String(best)); elResultTitle.textContent='更新！自由を守った'; }
+    else { elResultTitle.textContent='崩壊…！'; }
+    const sec=score.toFixed(2), bestSec=best.toFixed(2);
+    const text=`生存 ${sec} 秒（ベスト ${bestSec} 秒）`;
+    elResultText.textContent=text;
+    elResultText.dataset.copy = `#1日1アプリ 松村・オブ・リバティ｜生存 ${sec} 秒（ベスト ${bestSec} 秒）`;
+    elOver.style.display='grid';
+  }
+
+  // ── 描画系 ──
+  function drawSky(ctx){
+    const w=innerWidth,h=innerHeight;
+    const g=ctx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0,'#0a1a2a'); g.addColorStop(0.5,'#12263a'); g.addColorStop(1,'#081520');
+    ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+    // うっすら街並み
+    ctx.globalAlpha=0.14; ctx.fillStyle='#0a1726';
+    const base=h*0.93;
+    for(let i=0;i<16;i++){ const x=20+i*(w-40)/15, bw=6+Math.random()*16, bh=40+Math.random()*110; ctx.fillRect(x,base-bh,bw,bh); }
+    ctx.globalAlpha=1;
+  }
+  function drawCloud(ctx,x,y,r,a){
+    ctx.save(); ctx.globalAlpha=a;
+    const g=ctx.createRadialGradient(x,y,r*0.2,x,y,r);
+    g.addColorStop(0,'rgba(255,255,255,.8)'); g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.restore();
+  }
+  function drawGround(ctx){
+    const w=innerWidth,h=innerHeight;
+    ctx.fillStyle='#0a1522'; ctx.fillRect(0,h*0.93,w,h*0.07);
+    ctx.strokeStyle='rgba(255,255,255,.06)'; ctx.beginPath(); ctx.moveTo(0,h*0.93); ctx.lineTo(w,h*0.93); ctx.stroke();
+  }
+  function autoScale(img){
+    // 高さも幅も収まる比率を計算（上下に余白あり）
+    const maxH = innerHeight*0.78; // 以前より小さめ
+    const maxW = innerWidth*0.80;
+    const sH = maxH / img.naturalHeight;
+    const sW = maxW / img.naturalWidth;
+    return clamp(Math.min(sH, sW), 0.5, 1.1);
+  }
+  function drawStatue(ctx,img,cx,baseY,scale,angle){
+    const iw=img.naturalWidth*scale, ih=img.naturalHeight*scale;
+    ctx.save();
+    ctx.translate(cx, baseY);
+    ctx.rotate(angle);
+    ctx.translate(-iw/2, -ih); // 下端センター支点
+    ctx.drawImage(img, 0, 0, iw, ih);
+    ctx.restore();
+  }
+
+  // 砕け
+  class Shard{
+    constructor(img,sx,sy,sw,sh,x,y,vx,vy,r,vr){ Object.assign(this,{img,sx,sy,sw,sh,x,y,vx,vy,r,vr,a:1}); }
+    step(dt){ this.vy += 980*dt*0.9; this.x += this.vx*dt; this.y += this.vy*dt; this.r += this.vr*dt; this.a -= 0.6*dt; }
+    draw(ctx){ if(this.a<=0) return; ctx.save(); ctx.globalAlpha=Math.max(0,this.a); ctx.translate(this.x,this.y); ctx.rotate(this.r);
+      ctx.drawImage(this.img,this.sx,this.sy,this.sw,this.sh,-this.sw/2,-this.sh/2,this.sw,this.sh); ctx.restore(); }
+  }
+  function createShards(img,cx,baseY,scale,angle){
+    const iw=img.naturalWidth*scale, ih=img.naturalHeight*scale;
+    const cols=8, rows=9; shards.length=0;
+    const temp=document.createElement('canvas'); temp.width=Math.ceil(iw); temp.height=Math.ceil(ih);
+    const tctx=temp.getContext('2d'); tctx.drawImage(img,0,0,iw,ih);
+    for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+      const sw=Math.ceil(iw/cols), sh=Math.ceil(ih/rows), sx=x*sw, sy=y*sh;
+      const localX=(sx+sw/2)-iw/2, localY=(sy+sh/2)-ih;
+      const rotX=localX*Math.cos(angle)-localY*Math.sin(angle);
+      const rotY=localX*Math.sin(angle)+localY*Math.cos(angle);
+      const worldX=cx+rotX, worldY=baseY+rotY;
+      const dir=Math.sign(angle)||1, spd=120+Math.random()*360;
+      const vx=dir*spd*(0.6+Math.random()*0.8), vy=-70 + Math.random()*-150;
+      const r0=(Math.random()-0.5)*1.0, vr=(Math.random()-0.5)*3.2;
+      shards.push(new Shard(temp,sx,sy,sw,sh,worldX,worldY,vx,vy,r0,vr));
+    }
+  }
+
+  // スコア
+  function drawScore(ctx,time,best,wind){
+    ctx.save(); ctx.font='600 14px ui-sans-serif,system-ui,-apple-system'; ctx.fillStyle='rgba(255,255,255,.86)';
+    ctx.fillText(`TIME  ${time.toFixed(2)}s`,12,22); ctx.fillText(`BEST  ${best.toFixed(2)}s`,12,40); ctx.fillText(`WIND  ${wind.toFixed(2)}`,12,58);
+    ctx.restore();
+  }
+
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+</script>
+</body>
+</html>
