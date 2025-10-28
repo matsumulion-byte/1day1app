@@ -25,6 +25,15 @@
   .controls{position:fixed;left:0;right:0;bottom:10px;display:flex;justify-content:center;gap:10px}
   .controls .btn{min-width:88px}
   @media (min-width:900px){ .controls{display:none} }
+  html, body {
+  touch-action: manipulation; /* ダブルタップズーム無効（モダンブラウザ） */
+  overscroll-behavior: none;  /* スクロール反応も抑制 */
+}
+
+button, canvas {
+  touch-action: manipulation; /* ボタン連打時のズーム防止 */
+}
+
 </style>
 </head>
 <body>
@@ -68,6 +77,14 @@
   <button class="btn" id="rightBtn">→</button>
 </div>
 <script type="module">
+    // ダブルタップズームを抑止（iOS Safari対策）
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 350) e.preventDefault(); // ダブルタップ判定
+  lastTouchEnd = now;
+}, { passive: false });
+
   // プロジェクト規約のアセットヘルパ
   const asset = (p) => new URL(p, import.meta.url).toString();
 
