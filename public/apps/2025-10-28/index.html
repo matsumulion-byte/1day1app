@@ -255,7 +255,7 @@ function getGyroControl(){
     // 入力
     const key = (input.keyL?-1:0) + (input.keyR?1:0);
     const touch = (input.touchL?-1:0) + (input.touchR?1:0);
-    const control = input.tilt + 0.9*(key+touch);
+    const control = getGyroControl() + 0.9 * (key + touch);
 
     // 物理：重力＋風＋プレイヤー＋スプリング
     const torque = GRAVITY*Math.sin(angle) + w*0.7 - CONTROL*control - SPRING*angle;
