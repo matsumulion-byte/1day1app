@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>斬松（きりまつ）- 和服の日</title>
+<style>
+  :root{
+    --ink:#eef3f7; --muted:#b9c3cf; --acc:#f6e08f; --danger:#ff5b6e; --shadow:0 8px 24px rgba(0,0,0,.35);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; margin:0; }
+  body{
+    background:#06090f; color:var(--ink);
+    font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+    overflow:hidden;
+  }
+  #wrap{ position:fixed; inset:0; display:grid; grid-template-rows:auto 1fr auto; }
+  header{
+  position: fixed;      /* ← これを追加 */
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;          /* ← キャンバスより前へ */
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 16px; gap:12px; 
+  pointer-events:none; 
+  mix-blend-mode:screen;
+}
+
+  header .pill{
+    background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.18);
+    border-radius:999px; padding:6px 12px; box-shadow:var(--shadow); font-weight:700; letter-spacing:.06em; pointer-events:auto;
+  }
+  #hud{ display:flex; gap:8px; align-items:center }
+  #score{ font-variant-numeric:tabular-nums; }
+  #life{ display:flex; gap:6px }
+  .heart{ width:14px; height:14px; border-radius:50%; background:var(--acc); box-shadow:0 0 10px rgba(255,230,120,.35) }
+  canvas{
+  position:fixed; inset:0; touch-action:none;
+  z-index: 0;            /* ← 明示しておくと安心 */
+}
+#overlay{
+  position:fixed; inset:0; 
+  display:grid; place-items:center; 
+  background:linear-gradient(180deg, rgba(0,0,0,.6), rgba(0,0,0,.85));
+  z-index: 20;          /* ← ヘッダーより上 */
+}
+
+  .panel{
+    width:min(92vw,520px); background:rgba(10,12,18,.85);
+    border:1px solid rgba(255,255,255,.12); border-radius:24px; padding:20px;
+    box-shadow:var(--shadow); text-align:center;
+  }
+  h1{ margin:.2em 0 .2em; font-size:clamp(22px,5vw,34px); letter-spacing:.08em }
+  p{ margin:.6em 0; color:var(--muted); line-height:1.6 }
+  .row{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:12px }
+  button{
+    appearance:none; border:0; border-radius:14px; padding:12px 18px; font-weight:700; letter-spacing:.05em;
+    background:linear-gradient(180deg,#2a3344,#1d2533); color:#fff; box-shadow:var(--shadow); cursor:pointer;
+  }
+  button.accent{ background:linear-gradient(180deg,#e9cf6d,#c3a848); color:#16181f; }
+  .small{ font-size:.9em }
+  .badge{ display:inline-block; padding:4px 8px; border:1px solid rgba(255,255,255,.18); border-radius:999px; margin-top:6px; color:var(--muted) }
+  #toast{
+    position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
+    background:rgba(0,0,0,.6); border:1px solid rgba(255,255,255,.12);
+    padding:8px 12px; border-radius:12px; font-size:.9em; display:none;
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <div id="hud" class="pill">
+      <span>Score: <span id="score">0</span></span>
+      <span style="margin:0 .6em; opacity:.5">|</span>
+      <span>Time: <span id="time">60</span>s</span>
+    </div>
+    <div id="life" class="pill" aria-label="残機">
+      <span class="heart"></span><span class="heart"></span><span class="heart"></span>
+    </div>
+    <button id="soundBtn" class="pill" aria-pressed="false" aria-label="サウンドON/OFF">🔊 SOUND</button>
+
+  </header>
+  <canvas id="game"></canvas>
+
+  <div id="overlay">
+    <div class="panel">
+      <div class="badge">10/29 和服の日</div>
+      <h1>斬松（きりまつ）</h1>
+      <p id="howto">スマホ：指でスワイプして斬る<br>PC：マウスでドラッグして斬る</p>
+      <p class="small">通常（1点）／俊敏（2点）／<b>強松村</b>（3点）</p>
+      <div class="row">
+
+        <button id="startHard">斬りまくる</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script type="module">
+  // アセットURLヘルパ（プロジェクトルール）
+  const asset = (p) => new URL(p, import.meta.url).toString();
+
+  // 画面・描画
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  let dpr = Math.max(1, window.devicePixelRatio || 1);
+
+  let horizonY = 0, hitY = 0;
+  
+  const fit = () => {
+    const w = innerWidth, h = innerHeight;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    canvas.width = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    // 投影ライン更新
+    horizonY = h * 0.53;   // 遠方
+    hitY = h * 0.92;        // 手前（到達ライン）
+  };
+  addEventListener('resize', fit, {passive:true});
+  fit();
+
+ // 画像・音 —— ここ置換
+const bgImg = new Image(); bgImg.src = './apps/2025-10-29/assets/bg.jpg';
+bgImg.onerror = () => console.error('[bg] load error:', bgImg.src);
+
+function loadSamurai(name){
+  const img = new Image();
+  img.src = './apps/2025-10-29/assets/' + name;
+  img.onload = () => console.log('[ok]', name, img.naturalWidth+'x'+img.naturalHeight);
+  img.onerror = () => console.error('[error] samurai image not found:', img.src);
+  return img;
+}
+const samuraiImgs = ['samurai1.png','samurai2.png','samurai3.png'].map(loadSamurai);
+
+const sfxSlash = new Audio('./apps/2025-10-29/assets/slash.m4a');
+const sfxHit   = new Audio('./apps/2025-10-29/assets/matsumura_desu.m4a');
+[sfxSlash,sfxHit].forEach(a=>a.preload='auto');
+
+// 🎵 BGM
+const bgm = new Audio('./apps/2025-10-29/assets/bgm.mp3');
+bgm.loop = true;
+bgm.volume = 0.6;
+
+  // HUD
+  const $overlay = document.getElementById('overlay');
+  // ==== Sound toggle ====
+const $soundBtn = document.getElementById('soundBtn');
+let soundOn = localStorage.getItem('soundOn') !== 'false'; // 既定ON
+
+function applySoundState() {
+  // Audioが定義されてから呼ばれるように、後で再度呼ぶ想定
+  try {
+    [sfxSlash, sfxHit, bgm].forEach(a => { a.muted = !soundOn; });
+  } catch(e) {}
+  $soundBtn.setAttribute('aria-pressed', String(soundOn));
+  $soundBtn.textContent = soundOn ? '🔊 SOUND' : '🔈 MUTE';
+}
+
+$soundBtn.addEventListener('click', () => {
+  soundOn = !soundOn;
+  localStorage.setItem('soundOn', String(soundOn));
+  applySoundState();
+});
+applySoundState(); // Audio要素にmute反映
+
+  const $score = document.getElementById('score');
+  const $time = document.getElementById('time');
+  const $life = document.getElementById('life');
+  const $toast = document.getElementById('toast');
+
+  // デバイス別の操作表記
+  const isTouch = matchMedia('(pointer:coarse)').matches;
+  document.getElementById('howto').innerHTML = isTouch
+    ? 'スマホ：指でスワイプして斬る'
+    : 'PC：マウスでドラッグして斬る';
+
+  const showToast = (t, ms=900) => {
+    $toast.textContent = t; $toast.style.display='block';
+    clearTimeout(showToast.tid); showToast.tid = setTimeout(()=>{ $toast.style.display='none'; }, ms);
+  };
+
+
+
+  // ゲーム状態
+  const State = {
+    running:false, score:0, timeLeft:60, lives:3,
+    enemies:[], particles:[], slowMo:0,
+    spawnTimer:0, spawnEvery:800, // ms
+    speedBase: 0.006,
+  };
+
+  // 難易度
+  const DIFF = {
+  hard: { time: 60, lives: 2, spawnEvery: 480, speedBase: 0.0090 },
+};
+
+  // スラッシュ軌跡
+  const SlashTrail = {
+    trail: [],
+    push(x,y){
+      const t=performance.now();
+      this.trail.push({x,y,t});
+      const ttl=180; const now=t;
+      this.trail = this.trail.filter(p=> now - p.t < ttl);
+    },
+    clear(){ this.trail.length=0; },
+    render(){
+      if(this.trail.length<2) return;
+      ctx.lineWidth = 6; ctx.lineCap='round'; ctx.lineJoin='round';
+      for(let i=1;i<this.trail.length;i++){
+        const a=this.trail[i-1], b=this.trail[i];
+        const age = performance.now() - b.t;
+        const alpha = Math.max(0, 1 - age/180);
+        ctx.strokeStyle = `rgba(255,255,255,${alpha*0.9})`;
+        ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+      }
+    },
+    segments(){
+      const segs=[]; for(let i=1;i<this.trail.length;i++){
+        const a=this.trail[i-1], b=this.trail[i];
+        if(performance.now()-b.t < 120) segs.push([a,b]);
+      } return segs;
+    }
+  };
+
+  // 擬似3Dで迫る敵
+  class Enemy {
+    constructor(type){
+      this.type = type; // 0:通常,1:俊敏,2:強松村
+      this.img = samuraiImgs[type];
+      const w = innerWidth;
+      // 遠方の出現Xと手前ターゲットX（手前で横に散る感じ）
+      this.spawnX = w*0.4 + Math.random()*w*0.2; // 消失点付近
+      this.targetX = Math.random()*w*0.9 + w*0.05;
+      this.z = 0; // 0→1 で手前
+      const base = State.speedBase;
+      const mul = [1,1.25,0.85][type];
+      this.zSpeed = base * mul * (0.9 + Math.random()*0.3);
+      this.alive = true; this.deadTime=0; this.split=null;
+      this.sizeBase = 80; // 基準サイズ
+      this.swayT = Math.random()*Math.PI*2; // 微妙な横ゆれ
+    }
+    proj(){
+      // depth = this.z（0:遠, 1:近）
+      const depth = this.z;
+      const x = lerp(this.spawnX, this.targetX, depth) + Math.sin(this.swayT)*3*depth;      const y = lerp(horizonY, hitY, depth);
+      const scale = 0.7 + depth*1.6; // 手前で2.0倍くらい
+      const size = this.sizeBase * (this.type===2?1.3:1.1) * scale;
+      const aspectY = 1.15; // ←縦方向の伸び率（1.0で等倍）
+      const height = size * aspectY;
+      return {x,y,size, height, r:size*0.38};
+    }
+    update(dt, dtc){
+  if(!this.alive){
+    this.deadTime += dt;
+    if(this.split){
+      this.split.vy += 0.0015*dt;
+      this.split.left.x  += this.split.vxL * dt; this.split.right.x += this.split.vxR * dt;
+      this.split.left.y  += this.split.vy  * dt; this.split.right.y += this.split.vy  * dt;
+    }
+    return;
+  }
+  const spMul = (State.slowMo?0.33:1);
+  this.z += this.zSpeed * (dtc/16.67) * spMul; // ← dtc を使う
+  this.swayT += 0.002*dt;
+  if(this.z >= 1){
+    this.hitPlayer();
+  }
+}
+
+    draw(){
+    const p = this.proj();
+
+ // 足元の影（共通）
+ ctx.save();
+ ctx.translate(p.x, p.y);
+ ctx.fillStyle = 'rgba(0,0,0,0.35)';
+ ctx.beginPath();
+ ctx.ellipse(0, p.size*0.35, p.size*0.45, p.size*0.18, 0, 0, Math.PI*2);
+ ctx.fill();
+ ctx.restore();
+
+    // 斬った後の分裂表示
+    if(this.split){
+      const {left,right} = this.split;
+      ctx.save();
+      ctx.translate(left.x, left.y);
+      if (this.img && this.img.complete && this.img.naturalWidth > 0) {
+        ctx.drawImage(
+          this.img,
+          0, 0, this.img.width/2, this.img.height,
+          -p.size*0.5, -p.size*0.5, p.size*0.5, p.size, p.height
+        );
+      } else {
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.beginPath(); ctx.arc(0, 0, p.r*0.7, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(right.x, right.y);
+      if (this.img && this.img.complete && this.img.naturalWidth > 0) {
+        ctx.drawImage(
+          this.img,
+          this.img.width/2, 0, this.img.width/2, this.img.height,
+          0, -p.size*0.5, p.size*0.5, p.size, p.height
+        );
+      } else {
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.beginPath(); ctx.arc(0, 0, p.r*0.7, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
+      return;
+    }
+
+    // 通常描画（画像が読めていれば画像、ダメならシルエット）
+    const ready = this.img && this.img.complete && this.img.naturalWidth > 0;
+    if(!ready){
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.beginPath(); ctx.ellipse(0, p.size*0.35, p.size*0.45, p.size*0.18, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.beginPath(); ctx.arc(0, 0, p.r, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = this.type===2 ? 'rgba(230,200,100,0.9)' : 'rgba(255,255,255,0.6)';
+      ctx.lineWidth = this.type===2 ? 3 : 2;
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
+
+    // 画像あり
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.drawImage(this.img, -p.size*0.5, -p.size*0.5, p.size, p.height);
+    ctx.restore();
+  }
+
+    slash(seg){
+      if(!this.alive) return false;
+      const p = this.proj();
+      const [a,b]=seg;
+      const hit = distSegToPoint(a.x,a.y,b.x,b.y, p.x,p.y) <= p.r;
+      if(hit) this.dieWithSplit(p);
+      return hit;
+    }
+    dieWithSplit(p){
+      this.alive=false;
+      sfxSlash.currentTime=0; try{ sfxSlash.play(); }catch{}
+      State.slowMo = 180; // ms
+      this.split = {
+        left:{ x:p.x - p.size*0.25, y:p.y },
+        right:{ x:p.x + p.size*0.25, y:p.y },
+        vxL: -0.08, vxR: 0.08, vy: -0.22
+      };
+      spawnPetals(p.x, p.y, this.type===2?26:14);
+      State.score += [1,2,3][this.type];
+      $score.textContent = State.score;
+    }
+    hitPlayer(){
+      if(State.running){
+        State.lives--;
+        updateLives();
+        flashRed();
+        sfxHit.currentTime=0; try{ sfxHit.play(); }catch{}
+        showToast('松村です!!', 700);
+        if(State.lives<=0) endGame();
+      }
+    }
+  }
+
+  // ユーティリティ
+  function lerp(a,b,t){ return a + (b-a)*t; }
+  function distSegToPoint(x1,y1,x2,y2, px,py){
+    const vx=x2-x1, vy=y2-y1; const wx=px-x1, wy=py-y1;
+    const c1 = vx*wx + vy*wy;
+    if(c1<=0) return Math.hypot(px-x1, py-y1);
+    const c2 = vx*vx + vy*vy;
+    if(c2<=c1) return Math.hypot(px-x2, py-y2);
+    const t = c1/c2;
+    const projx = x1 + t*vx, projy = y1 + t*vy;
+    return Math.hypot(px-projx, py-projy);
+  }
+  function fmtTimeSec(t){
+  const s = Math.max(0, Math.ceil(t));
+  const m = Math.floor(s/60), ss = s%60;
+  return `${m}:${ss.toString().padStart(2,'0')}`;
+}
+
+  function spawnEnemy(){
+    const r = Math.random();
+    const type = (r<.5)?0 : (r<.8)?1 : 2; // 通常50%/俊敏30%/強20%
+    const e = new Enemy(type);
+    State.enemies.push(e);
+  }
+  function spawnPetals(x,y,n=12){
+    for(let i=0;i<n;i++){
+      State.particles.push({
+        x, y, vx:(Math.random()-.5)*.8, vy:(Math.random()-.6)*.9,
+        g:.0012, life: 500+Math.random()*400, t:0, r: Math.random()*6+4
+      });
+    }
+  }
+  let flash=0; function flashRed(){ flash=120; }
+  function updateLives(){
+    $life.innerHTML = '';
+    for(let i=0;i<Math.max(State.lives,0);i++){
+      const s = document.createElement('span'); s.className='heart'; $life.appendChild(s);
+    }
+  }
+
+  // 入力
+  let dragging=false;
+  const getPos = (e)=>{
+    if(e.touches && e.touches[0]) return { x:e.touches[0].clientX, y:e.touches[0].clientY };
+    return { x:e.clientX, y:e.clientY };
+  };
+  canvas.addEventListener('pointerdown', e=>{
+    if(!State.running) return;
+    dragging=true;
+    const p=getPos(e); SlashTrail.push(p.x,p.y);
+  });
+  canvas.addEventListener('pointermove', e=>{
+    if(!State.running || !dragging) return;
+    const p=getPos(e); SlashTrail.push(p.x,p.y);
+    const segs = SlashTrail.segments();
+    if(segs.length){
+      const seg = segs[segs.length-1];
+      for(const en of State.enemies){ en.slash(seg); }
+    }
+  });
+  addEventListener('pointerup', ()=>{ dragging=false; SlashTrail.clear(); });
+  addEventListener('pointercancel', ()=>{ dragging=false; SlashTrail.clear(); });
+
+  // ループ
+  let last=performance.now();
+  function loop(now){
+    const dt = now-last; last=now;
+    const dtc = Math.min(dt, 33);
+
+    // 背景（カバー）
+    if(bgImg.complete){
+      const cw = innerWidth, ch = innerHeight;
+      const iw = bgImg.naturalWidth, ih = bgImg.naturalHeight;
+      const scale = Math.max(cw/iw, ch/ih);
+      const dw = iw*scale, dh = ih*scale;
+      ctx.globalAlpha = 1; ctx.drawImage(bgImg, (cw-dw)/2, (ch-dh)/2, dw, dh);
+    }else{
+      ctx.fillStyle='#0a0f17'; ctx.fillRect(0,0,innerWidth,innerHeight);
+    }
+
+    if(State.slowMo>0) State.slowMo = Math.max(0, State.slowMo - dt);
+
+    // spawn
+    if(State.running){
+      State.spawnTimer += dt*(State.slowMo?0.5:1);
+      if(State.spawnTimer >= State.spawnEvery){
+        State.spawnTimer = 0; spawnEnemy();
+      }
+    }
+
+    // 敵
+    for(const en of State.enemies) en.update(dt, dtc);
+    for(const en of State.enemies) en.draw();
+    State.enemies = State.enemies.filter(en=> en.alive || en.deadTime<800);
+
+    // パーティクル
+    for(const p of State.particles){
+      p.t += dt; p.vy += p.g*dt; p.x += p.vx*dt; p.y += p.vy*dt;
+      const alpha = Math.max(0, 1 - p.t/p.life);
+      ctx.fillStyle = `rgba(250,220,190,${alpha})`;
+      ctx.beginPath(); ctx.ellipse(p.x,p.y, p.r, p.r*0.7, 0, 0, Math.PI*2); ctx.fill();
+    }
+    State.particles = State.particles.filter(p=> p.t<p.life);
+
+    // スラッシュ軌跡
+    SlashTrail.render();
+
+    // ヒットフラッシュ
+    if(flash>0){
+      ctx.fillStyle = `rgba(255,60,60,${flash/160})`;
+      ctx.fillRect(0,0,innerWidth,innerHeight);
+      flash = Math.max(0, flash - dt);
+    }
+
+    // タイマー
+    if(State.running){
+      State.timeLeft -= dt/1000 * (State.slowMo?0.33:1);
+      if(State.timeLeft<=0){ State.timeLeft=0; endGame(); }
+      $time.textContent = fmtTimeSec(State.timeLeft);    }
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // ゲーム開始/終了
+  function startGame(preset){
+    Object.assign(State, {
+      running:true, score:0, timeLeft:preset.time, lives:preset.lives,
+      enemies:[], particles:[], slowMo:0, spawnTimer:0,
+      spawnEvery:preset.spawnEvery, speedBase:preset.speedBase
+    });
+    updateLives(); $score.textContent = 0; $time.textContent = fmtTimeSec(preset.time);    $overlay.style.display='none';
+    showToast(isTouch?'指でスワイプして斬る！':'マウスでドラッグして斬る！', 1200);
+    try { bgm.currentTime = 0; bgm.volume = 0.6; if (soundOn) bgm.play(); } catch {}
+  }
+  function endGame(){
+  if(!State.running) return;
+  State.running = false;
+
+  // BGMフェードアウトを入れている場合はここで呼ぶ
+  // （入れてなければこのブロックは無視してOK）
+
+  setTimeout(()=>{
+    $overlay.style.display='grid';
+    const panel = $overlay.querySelector('.panel');
+
+    // 🔁 ここを丸ごと置換（「むずい」だけ）
+    panel.innerHTML = `
+      <div class="badge">RESULT</div>
+      <h1>スコア：${State.score}</h1>
+      <div class="row">
+        <button data-retry="hard" class="accent">もう一度</button>
+      </div>`;
+
+    const btn = panel.querySelector('[data-retry="hard"]');
+    btn.addEventListener('click', ()=>{
+      startGame(DIFF.hard);
+    }, { once:true });
+  }, 200);
+}
+
+  // スタートボタン
+  document.getElementById('startHard').addEventListener('click', ()=> startGame(DIFF.hard), {once:true});
+
+
+  // iOSサウンド解放
+   addEventListener('pointerdown', ()=>{
+   [sfxSlash, sfxHit, bgm].forEach(a=>{
+     try{ a.play().then(()=>a.pause()).catch(()=>{});}catch{}
+   });
+ }, {once:true});
+</script>
+</body>
+</html>
