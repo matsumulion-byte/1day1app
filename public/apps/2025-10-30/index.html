@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>初恋松村 - First Love Matsumura</title>
+<style>
+  :root{
+    --ink:#eef3f7; --muted:#a7b4c4; --acc:#ff86b3;
+    --panel:rgba(10,14,20,.6); --shadow:0 10px 28px rgba(0,0,0,.35);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent }
+  html,body{ height:100%; margin:0; background:#000; color:var(--ink); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif }
+  body{ overflow:hidden }
+
+  /* 背景 */
+  #bg{
+    position:fixed; inset:0; width:100%; height:100%;
+    object-fit:cover; z-index:0; opacity:1; transition:opacity .35s ease;
+    background:radial-gradient(1200px 800px at 70% -10%, #0f1520 0%, #090d14 50%, #000 100%);
+  }
+
+  /* ヒロイン（選択肢より下） */
+  #heroine{
+    position:fixed; left:50%; transform:translateX(-50%);
+    bottom:18vh;
+    width:auto; height:auto; max-height:62vh;
+    display:block; pointer-events:none;
+    opacity:0; transition:opacity .45s ease, transform .45s ease;
+    z-index:3;
+  }
+  .heroine-in{ opacity:1 }
+  .heroine-pop{ transform:translateX(-50%) translateY(-6px) }
+  @media(min-width:1024px){
+    #heroine{ bottom:20vh; max-height:58vh }
+  }
+
+  /* UI（選択肢・テキストは最前面） */
+  #stage{
+    position:fixed; inset:0; display:flex; flex-direction:column; justify-content:flex-end;
+    z-index:5; pointer-events:none;
+  }
+  .overlay{
+    pointer-events:auto; display:flex; flex-direction:column; gap:10px;
+    padding:0 16px calc(max(env(safe-area-inset-bottom,0px), 18px));
+  }
+
+  .titlebox{
+    position:absolute; top:10vh; left:0; right:0; margin:auto; text-align:center;
+    display:grid; gap:10px; place-items:center; z-index:7;
+    transition:opacity .3s ease, transform .3s ease;
+  }
+  .title{ font-size:clamp(22px,6vw,42px); font-weight:800; letter-spacing:.05em }
+  .subtitle{ color:var(--muted); font-size:clamp(12px,3.2vw,14px) }
+  .btn{
+    appearance:none; border:0; border-radius:16px; padding:12px 18px; font-weight:700;
+    background:linear-gradient(180deg,#ff9fc4,#ff6ea5); color:#1a0f15; box-shadow:var(--shadow);
+    cursor:pointer; touch-action:manipulation; font-size:16px;
+  }
+  .btn:active{ transform:translateY(1px) scale(.99) }
+
+  .textbox{
+    width:100%; max-width:760px; margin:0 auto; background:var(--panel);
+    border:1px solid rgba(255,255,255,.06); border-radius:18px; padding:12px 14px;
+    box-shadow:var(--shadow); backdrop-filter:blur(8px);
+  }
+  .name{ font-weight:800; color:#fff; font-size:14px; opacity:.9; margin-bottom:2px }
+  .line{ font-size:clamp(14px,3.8vw,18px); line-height:1.6; min-height:3lh; letter-spacing:.02em }
+
+  .choices{
+    width:100%; max-width:760px; margin:8px auto 0; display:grid; gap:8px;
+    z-index:6; /* ヒロインより前 */
+  }
+  .choice{
+    background:rgba(255,255,255,.92); color:#1b1f26; border-radius:14px; padding:12px 14px;
+    border:1px solid rgba(255,255,255,.7); font-weight:700; text-align:center; cursor:pointer;
+    box-shadow:var(--shadow); touch-action:manipulation; font-size:16px;
+  }
+  .choice:active{ transform:translateY(1px) }
+
+  #gameover{
+    position:fixed; inset:0; display:grid; place-items:center; background:rgba(0,0,0,.78);
+    opacity:0; pointer-events:none; transition:opacity .35s ease; z-index:10;
+  }
+  #gameover.in{ opacity:1; pointer-events:auto }
+  .overcard{
+    width:min(88vw,560px); background:linear-gradient(180deg,#111722,#0b1017);
+    border:1px solid rgba(255,255,255,.08); border-radius:22px; padding:18px; text-align:center; box-shadow:var(--shadow);
+  }
+  .overcard h2{ margin:6px 0 2px; font-size:clamp(22px,6vw,34px) }
+  .overcard p{ color:var(--muted); margin:4px 0 14px; font-size:14px }
+  .over-actions{ display:grid; gap:10px; grid-auto-rows:minmax(44px,auto) }
+
+  /* サウンドトグル（右上） */
+  #soundToggle{
+    position:fixed; top:env(safe-area-inset-top,12px); right:12px; z-index:9;
+    display:flex; align-items:center; gap:6px;
+    background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.12);
+    padding:8px 10px; border-radius:14px; font-weight:700; font-size:14px; color:#fff;
+    backdrop-filter:blur(6px);
+  }
+  #soundToggle .dot{ width:10px; height:10px; border-radius:50%; background:#999; }
+  #soundToggle.on .dot{ background:#5bf58f }
+</style>
+</head>
+<body>
+  <img id="bg" alt="背景">
+  <img id="heroine" alt="美少女松村">
+
+  <button id="soundToggle" aria-pressed="false"><span class="dot"></span><span class="label">♪ OFF</span></button>
+
+  <div id="stage">
+    <div class="overlay">
+      <div id="titlebox" class="titlebox">
+        <div class="title">初恋松村</div>
+        <div class="subtitle">— 遅刻、そして運命 —</div>
+        <div id="sound-select" style="display:grid;gap:8px;">
+          <button id="sound-on"  class="btn">音ありで始める 🎵</button>
+          <button id="sound-off" class="btn" style="background:linear-gradient(180deg,#ccc,#999);color:#111;">音なしで始める 🔇</button>
+        </div>
+      </div>
+
+      <div class="textbox" id="textbox" hidden>
+        <div class="name" id="speaker">—</div>
+        <div class="line" id="line"></div>
+      </div>
+
+      <div class="choices" id="choices" hidden></div>
+    </div>
+  </div>
+
+  <div id="gameover">
+    <div class="overcard">
+      <h2>GAME OVER</h2>
+      <div class="over-actions">
+        <button id="retry" class="btn">もう一度恋をする</button>
+        <button id="share" class="choice">結果をXでシェア</button>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+/* ========== 基本ユーティリティ ========== */
+const asset = (p)=> new URL(p, import.meta.url).toString();
+const $ = (s)=> document.querySelector(s);
+
+// DOM
+const bg = $('#bg'), heroine = $('#heroine');
+const titlebox = $('#titlebox'), textbox = $('#textbox'), speakerEl = $('#speaker'), lineEl = $('#line');
+const choices = $('#choices'), over = $('#gameover');
+const retry = $('#retry'), share = $('#share');
+const soundToggle = $('#soundToggle'), soundLabel = soundToggle.querySelector('.label');
+
+// アセット
+const IMG = {
+  room:   './apps/2025-10-30/assets/bg_room.png',
+  street: './apps/2025-10-30/assets/bg_street.png',
+  cross:  './apps/2025-10-30/assets/bg_cross.png',
+  heroine:'./apps/2025-10-30/assets/matsumura_heroine.png',
+};
+const AUDIO_FILES = {
+  bgm:     './apps/2025-10-30/assets/bgm.mp3',
+  hit:     './apps/2025-10-30/assets/hit.m4a',
+  sparkle: './apps/2025-10-30/assets/sparkle.m4a',        // ← UFO
+  matsu:   './apps/2025-10-30/assets/matsumura_desu.m4a', // ← 松村です
+};
+
+// 画像ロード
+function setBG(src){
+  const url = asset(src);
+  const img = new Image();
+  img.onload = ()=>{ bg.src = url; bg.style.opacity = 1; };
+  img.onerror = ()=>{ bg.removeAttribute('src'); bg.style.opacity = 1; };
+  bg.style.opacity = 0.001;
+  img.src = url;
+}
+function clearHeroine(){ heroine.classList.remove('heroine-in','heroine-pop'); heroine.removeAttribute('src'); heroine.style.opacity = 0; }
+
+// タイプライター
+let typingTimer=null, typingToken=0, locked=false;
+function typeLine(text, cb){
+  if (typingTimer){ clearInterval(typingTimer); typingTimer=null }
+  const token=++typingToken; lineEl.textContent=''; let i=0; locked=true;
+  typingTimer = setInterval(()=>{
+    if (token!==typingToken){ clearInterval(typingTimer); return }
+    i++; lineEl.textContent = text.slice(0, i);
+    if (i>=text.length){ clearInterval(typingTimer); typingTimer=null; locked=false; cb&&cb() }
+  }, 24);
+}
+
+/* ========== サウンド ========== */
+const makeSafeAudio = (path, {loop=false, vol=0.7}={})=>{
+  try{
+    const a = new Audio(asset(path));
+    a.loop = loop; a.volume = vol;
+    a.onerror = ()=>{ a.play = ()=>{}; };
+    return a;
+  }catch{ return { play:()=>{}, pause:()=>{}, currentTime:0 } }
+};
+
+const BGM = makeSafeAudio(AUDIO_FILES.bgm, {loop:true, vol:0.5});
+const SFX = {
+  hit:     makeSafeAudio(AUDIO_FILES.hit, {vol:0.7}),
+  sparkle: makeSafeAudio(AUDIO_FILES.sparkle, {vol:0.7}),
+  matsu:   makeSafeAudio(AUDIO_FILES.matsu, {vol:1.0}),
+};
+let soundOn = false;
+let bgmReady = false;
+
+function updateSoundUI(){ soundToggle.classList.toggle('on', soundOn); soundToggle.setAttribute('aria-pressed', String(soundOn)); soundLabel.textContent = soundOn ? '♪ ON' : '♪ OFF'; }
+function ensureBGMStart(){
+  if (!bgmReady){
+    try{ BGM.currentTime = 0; }catch{}
+    BGM.play().then(()=>{ bgmReady=true; if(!soundOn) BGM.pause(); }).catch(()=>{});
+  }else{
+    if (soundOn){ BGM.play().catch(()=>{}); } else { BGM.pause(); }
+  }
+}
+soundToggle.addEventListener('click', ()=>{ soundOn=!soundOn; updateSoundUI(); ensureBGMStart(); });
+
+/* ========== シナリオ ========== */
+const scenes = [
+  { bg: IMG.room,
+    lines:[
+      { who:'主人公', text:'やばい、遅刻遅刻ー！' },
+      { who:'主人公', text:'（着替えて、家を飛び出す！）' },
+    ]},
+  { bg: IMG.street,
+    lines:[
+      { who:'主人公', text:'はぁ…はぁ…！ 間に合えー！！' },
+      { who:'主人公', text:'（角を曲がった、その瞬間——）' },
+    ]},
+  { bg: IMG.cross, heroine: IMG.heroine, enterSfx:'sparkle',
+    lines:[
+      { who:'SE', text:'ドンッ！！' },
+      { who:'？？？', text:'きゃっ……！' },
+      { who:'主人公', text:'（目の前には——美少女、松村）' },
+      { who:'主人公', text:'（どうする！？）' },
+    ],
+    choices:[
+      '大丈夫？ケガない？',
+      'お、お前転校生の！',
+      '恋に落ちた…',
+      '松村です。',
+    ]},
+];
+
+// 選択肢ごとの物語（あなたの指定どおり）
+const postTalk = {
+  0: [
+    { who:'？？？', text:'大丈夫…ごめんね' },
+    { who:'主人公', text:'いや、こちらこそ' },
+    { who:'SE',     text:'その時突然トラックが…' },
+    { who:'Narration', text:'GAME OVER' },
+  ],
+  1: [
+    { who:'？？？', text:'え、私のこと知ってるの？' },
+    { who:'主人公', text:'うん、みんな話してたからね。昨日からだよね。どこからきたの？' },
+    { who:'？？？', text:'ちょっと遠いところ…' },
+    { who:'SE',     text:'（彼女が空を見上げると上から光る飛行物体が近寄ってきた…）' },
+    { who:'Narration', text:'それから彼の姿を見たものはいないという…GAME OVER' },
+  ],
+  2: [
+    { who:'？？？', text:'え、きも…やば…' },
+    { who:'主人公', text:'ううう、ごめんなさい' },
+    { who:'Narration', text:'GAME OVER' },
+  ],
+  3: [
+    { who:'主人公', text:'え？松村なの？' },
+    { who:'？？？', text:'松村です。' },
+    { who:'主人公', text:'松村です。' },
+    { who:'？？？', text:'松村です。' },
+    { who:'Narration', text:'松村です松村です松村です松村です松村です松村です松村です松村です松村です松村です' },
+    { who:'Narration', text:'GAME OVER' },
+  ],
+};
+
+/* ========== 進行 ========== */
+let sIdx=0, lIdx=0, mode='main'; // 'main' | 'after'
+let afterSeq=null, afterIdx=0;
+
+function enterScene(){
+  const sc = scenes[sIdx];
+  setBG(sc.bg);
+  textbox.hidden = false;
+  choices.hidden = true;
+
+  // ヒロインの扱い（消し込みを最小限に）
+  if (sc.heroine){
+    if (!heroine.src){ heroine.src = asset(sc.heroine); }
+    heroine.style.opacity = 1;
+    heroine.classList.add('heroine-in');
+    if (soundOn && sc.enterSfx && SFX[sc.enterSfx]){
+      try{ SFX[sc.enterSfx].currentTime = 0; SFX[sc.enterSfx].play(); }catch{}
+    }
+  } else {
+    heroine.classList.remove('heroine-in');
+    heroine.style.opacity = 0;
+    heroine.removeAttribute('src');
+  }
+
+  setTimeout(()=> showLine(), 220);
+}
+
+function showLine(){
+  const sc=scenes[sIdx]; if(!sc) return;
+  const cur=sc.lines[lIdx];
+  if (!cur){
+    if (sIdx===scenes.length-1 && sc.choices){ showChoices(sc.choices); return; }
+    sIdx++; lIdx=0; if (sIdx>=scenes.length) return;
+    enterScene(); return;
+  }
+  speakerEl.textContent = (cur.who==='SE') ? '—' : cur.who;
+  typeLine(cur.text, ()=>{
+    if (cur.who==='SE' && soundOn){ try{ SFX.hit.currentTime=0; SFX.hit.play(); }catch{} }
+    if (cur.who==='SE'){ heroine.classList.add('heroine-pop'); setTimeout(()=>heroine.classList.remove('heroine-pop'),160); }
+  });
+}
+
+function showChoices(list){
+  textbox.hidden = true;
+  choices.hidden = false;
+  choices.innerHTML = '';
+  list.forEach((label,i)=>{
+    const b=document.createElement('button');
+    b.className='choice'; b.textContent=label;
+    b.addEventListener('click',()=>onChoice(i));
+    choices.appendChild(b);
+  });
+}
+
+function onChoice(i){
+  choices.hidden = true; choices.innerHTML = '';
+  textbox.hidden = false;
+  afterSeq = postTalk[i] || [{who:'？？？',text:'……松村です。'}];
+  afterIdx = 0; mode='after'; showAfter(i);
+}
+
+function showAfter(choiceIndex){
+  const cur = afterSeq[afterIdx];
+  if (!cur){ return gameOver(choiceIndex); }
+  speakerEl.textContent = (cur.who==='SE') ? '—' : cur.who;
+  typeLine(cur.text, ()=>{
+    // UFO行の効果音
+    if (soundOn && /飛行物体/.test(cur.text)){
+      try{ SFX.sparkle.currentTime=0; SFX.sparkle.play(); }catch{}
+    }
+    // 「松村です」行のSFX
+    if (soundOn && /松村です/.test(cur.text)){
+      try{ SFX.matsu.currentTime=0; SFX.matsu.play(); }catch{}
+    }
+  });
+}
+
+function next(){
+  if (locked) return;
+  if (mode==='after'){ afterIdx++; return showAfter(); }
+  const sc=scenes[sIdx];
+  if (sIdx===scenes.length-1 && lIdx>=sc.lines.length){ return showChoices(sc.choices); }
+  lIdx++; showLine();
+}
+
+function gameOver(choiceIndex){
+  // 松村ルートは最後に“多重再生”で狂気演出
+  if (soundOn && choiceIndex===3){
+    let count=0;
+    const loop=setInterval(()=>{
+      count++;
+      const a=new Audio(asset(AUDIO_FILES.matsu));
+      a.volume=Math.min(1,0.25+count*0.05);
+      a.play().catch(()=>{});
+      if(count>9)clearInterval(loop);
+    },380);
+  }
+  try{ if (soundOn) BGM.pause(); }catch{}
+  bg.style.filter='brightness(.7)';
+  over.classList.add('in');
+}
+
+/* ========== ライフサイクル ========== */
+function resetGame(){
+  over.classList.remove('in');
+  bg.style.filter='none';
+
+  titlebox.style.display='grid'; titlebox.style.opacity='1'; titlebox.style.transform='translateY(0)';
+
+  textbox.hidden=true; lineEl.textContent=''; speakerEl.textContent='—';
+  choices.hidden=true; choices.innerHTML='';
+  clearHeroine();
+
+  sIdx=0; lIdx=0; mode='main'; afterSeq=null; afterIdx=0; locked=false;
+  if (typingTimer){ clearInterval(typingTimer); typingTimer=null }
+  setBG(IMG.room);
+}
+
+const soundOnBtn  = document.getElementById('sound-on');
+const soundOffBtn = document.getElementById('sound-off');
+
+function startGame(){
+  ensureBGMStart();
+  titlebox.style.opacity='0'; titlebox.style.transform='translateY(-8px)';
+  setTimeout(()=>{ titlebox.style.display='none' }, 260);
+  sIdx=0; lIdx=0; mode='main'; afterSeq=null; afterIdx=0;
+  if (soundOn){ BGM.play().catch(()=>{}); }
+  enterScene();
+}
+
+/* イベント */
+soundOnBtn.addEventListener('click', ()=>{ soundOn=true; updateSoundUI(); ensureBGMStart(); startGame(); });
+soundOffBtn.addEventListener('click', ()=>{ soundOn=false; updateSoundUI(); ensureBGMStart(); startGame(); });
+document.getElementById('soundToggle').addEventListener('click', ()=>{ /* 右上トグルでオンオフ切替のみ */ });
+
+textbox.addEventListener('click', next);
+retry.addEventListener('click', resetGame);
+share.addEventListener('click', ()=>{
+  const u=location.href.split('#')[0];
+  const text=encodeURIComponent('初恋松村｜どれを選んでも初恋は儚い—— #1日1アプリ');
+  const url=`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(u)}`;
+  window.open(url,'_blank');
+});
+
+/* 初期化 */
+resetGame();
+updateSoundUI();
+
+/* iOS ダブルタップズーム抑止 */
+let lastTouchEnd=0;
+document.addEventListener('touchend',(e)=>{
+  const now=Date.now(); if(now-lastTouchEnd<=300){ e.preventDefault() } lastTouchEnd=now;
+},{passive:false});
+</script>
+</body>
+</html>
