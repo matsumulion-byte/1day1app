@@ -181,6 +181,7 @@ function playSE(key, vol=1){
 }
 
 
+
 /* -------- layout -------- */
 function fitCanvas(){
   const r = panel.getBoundingClientRect();
@@ -279,14 +280,20 @@ pick.addEventListener('change', async (e)=>{
 
 btnShoot.addEventListener('click', async ()=>{
   if(!basePhoto){
-    autoShootAfterPick = true;  // 選んだら自動で撮る
-    for (const key in se) { se[key].play().catch(()=>{}); }
+    autoShootAfterPick = true;
+    // 🔇 無音で再生許可だけ取る（音は出さない）
+    for (const key in se) {
+      se[key].volume = 0;
+      se[key].play().catch(()=>{});
+    }
     pick.click();
     return;
   }
-  for (const key in se) { se[key].play().catch(()=>{}); }
+
+  // 撮影開始
   startShootSequence();
 });
+
 
 /* 撮影→グリッチ→ゾンビ→ハロウィン画像 → 保存フレーム作成 */
 async function startShootSequence(){
