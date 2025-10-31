@@ -179,30 +179,26 @@ function playSE(key, vol=1){
   s.volume = vol;
   s.play().catch(()=>{});
 }
+// 🎧 無音で再生許可を取る（AudioContext版）
 let audioArmed = false;
-function armAudio(){
+async function armAudio() {
   if (audioArmed) return;
   audioArmed = true;
-  // 全てのSEを完全ミュートで一瞬だけ再生→即停止→巻き戻し
-  Object.values(se).forEach(a=>{
-    if (!a) return;
-    const prevVol = a.volume;
-    a.muted = true;      // ← ハードミュート（最重要）
-    a.volume = 0;        // 念のため
-    a.play()
-      .then(()=>{
-        a.pause();
-        a.currentTime = 0;
-        a.muted = false; // ここで解除
-        a.volume = prevVol;
-      })
-      .catch(()=>{
-        // 失敗してもミュート解除と音量復元だけはしておく
-        a.muted = false;
-        a.volume = prevVol;
-      });
-  });
+  try {
+    // 無音のAudioContextを生成して再生許可を確保
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const buffer = ctx.createBuffer(1, 1, 22050);
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(ctx.destination);
+    src.start(0);
+    await ctx.resume();
+    setTimeout(() => ctx.close(), 300); // 一瞬で閉じる
+  } catch (e) {
+    console.warn('AudioContext unlock failed', e);
+  }
 }
+
 
 
 
