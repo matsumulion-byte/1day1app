@@ -230,7 +230,7 @@ function drawScene(withGlitch=false, zombieAlpha=1){
     const zW=currentZombie.width, zH=currentZombie.height;
     const targetW = randRange(cvs.width*0.9, cvs.width*1.2);  // 大きめ
     const scale = targetW / zW, targetH = zH * scale;
-    const x = randRange(cvs.width*0.3, cvs.width*0.55);
+    const x = randRange(cvs.width*0.15, cvs.width*0.4);
     const y = randRange(cvs.height*0.05, cvs.height*0.25);
 
     ctx.save();
