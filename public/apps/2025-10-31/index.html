@@ -172,12 +172,14 @@ const se={
   laugh:new Audio(asset('se_laugh_rev.m4a')),
   burst:new Audio(asset('se_noise_burst.m4a')),
 };
-function playSE(key,vol=1){
-  const s=se[key]?.cloneNode(true);
+function playSE(key, vol=1){
+  const s = se[key];
   if(!s) return;
-  s.volume=vol;
+  s.currentTime = 0;
+  s.volume = vol;
   s.play().catch(()=>{});
 }
+
 
 /* -------- layout -------- */
 function fitCanvas(){
@@ -278,9 +280,11 @@ pick.addEventListener('change', async (e)=>{
 btnShoot.addEventListener('click', async ()=>{
   if(!basePhoto){
     autoShootAfterPick = true;  // 選んだら自動で撮る
+    for (const key in se) { se[key].play().catch(()=>{}); }
     pick.click();
     return;
   }
+  for (const key in se) { se[key].play().catch(()=>{}); }
   startShootSequence();
 });
 
