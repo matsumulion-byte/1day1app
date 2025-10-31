@@ -13,6 +13,7 @@
     color:var(--fg);
     font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
     overflow:hidden; touch-action:manipulation;
+    height: 100dvh; /* 動的vhでモバイルのバー除外 */
   }
   #wrap{ position:fixed; inset:0; display:grid; grid-template-rows:auto 1fr }
   header{ text-align:center; padding:10px 16px; opacity:.9 }
@@ -21,7 +22,7 @@
   .main{ position:relative; display:grid; place-items:center; padding:10px }
   .panel{
     width:min(94vw,680px); aspect-ratio:9/16;
-    max-height: calc(100dvh - 100px); /* ← 上下余白を確保（ボタン分） */
+    max-height: calc(100dvh - 100px); /* ボタン分の余白を確保 */
     background:rgba(255,255,255,.04);
     border:1px solid rgba(255,255,255,.08);
     border-radius:18px; box-shadow:0 10px 28px rgba(0,0,0,.45);
@@ -93,15 +94,6 @@
     30%,50%,70%{ transform:translate3d(-4px,0,0) }
     40%,60%{ transform:translate3d(4px,0,0) }
   }
-  /* iOSなどでアドレスバーを除いた高さを使う */
-html, body {
-  height: 100%;
-}
-
-body {
-  height: 100dvh; /* ← 「動的vh」でバー分を除外 */
-}
-
 </style>
 </head>
 <body>
@@ -120,7 +112,7 @@ body {
         <label class="btn secondary" for="pick">写真を選ぶ</label>
         <button class="btn" id="shoot">撮る</button>
         <button class="btn ghost" id="save">保存</button>
-        <input id="pick" type="file" accept="image/*" />
+        <input id="pick" type="file" accept="image/*" capture="environment" />
       </div>
     </div>
   </div>
@@ -132,12 +124,10 @@ body {
 const asset = (fileName) => {
   try{
     const p = location.pathname;
-    // /YYYY-MM-DD または /YYYY-MM-DD/... の先頭ディレクトリを抽出
     const m = p.match(/^\/(\d{4}-\d{2}-\d{2})(?:\/.*)?$/);
     const base = m ? `/${m[1]}` : '';
     return `${base}/assets/${fileName.replace(/^\/+/, '')}`;
   }catch(e){
-    // フォールバック（相対）
     return `assets/${fileName}`;
   }
 };
@@ -157,6 +147,8 @@ let basePhoto=null;
 let currentZombie=null;
 let cuteMode=true;
 let lastComposedDataURL=null;
+/* ← 追加：選択後に自動撮影するためのフラグ */
+let autoShootAfterPick = false;
 
 // ★ 背景専用オフスクリーン（背景だけにグリッチを掛ける）
 const bg = document.createElement('canvas');
@@ -192,11 +184,9 @@ function fitCanvas(){
   const r = panel.getBoundingClientRect();
   cvs.width = 1080;
   cvs.height = Math.round(1080 * (r.height / r.width));
-  // ★ オフスクリーン側も同サイズに
   bg.width = cvs.width;
   bg.height = cvs.height;
 }
-
 fitCanvas();
 addEventListener('resize',fitCanvas);
 
@@ -212,9 +202,7 @@ let stT=null;
 function flashStinger(text){ stinger.textContent=text; stinger.classList.add('show'); clearTimeout(stT); stT=setTimeout(()=>stinger.classList.remove('show'),1000); }
 
 /* -------- drawing -------- */
-// 背景（オフスクリーン）を描いてから本キャンバスへ貼る
 function renderBackground(glitched=false){
-  // 背景下地
   bgCtx.fillStyle = '#0b1017';
   bgCtx.fillRect(0,0,bg.width,bg.height);
 
@@ -228,28 +216,25 @@ function renderBackground(glitched=false){
     glitchSlices(8,6,bgCtx,bg.width,bg.height);
     chromaSplit(bgCtx,bg.width,bg.height);
   }
-  // 本キャンバスへ背景を反映
   ctx.drawImage(bg,0,0);
 }
 
-// withGlitch: 背景にだけグリッチを適用、zombieAlpha: ゾンビの透明度
 function drawScene(withGlitch=false, zombieAlpha=1){
   renderBackground(withGlitch);
 
   if(currentZombie && !cuteMode){
     const zW=currentZombie.width, zH=currentZombie.height;
-    const targetW = randRange(cvs.width*0.9, cvs.width*1.2);  // 大きめ
+    const targetW = randRange(cvs.width*0.9, cvs.width*1.2);
     const scale = targetW / zW, targetH = zH * scale;
-    const x = randRange(cvs.width*0.15, cvs.width*0.4);
+    const x = randRange(cvs.width*0.15, cvs.width*0.4);  // 左寄り
     const y = randRange(cvs.height*0.05, cvs.height*0.25);
 
     ctx.save();
-    ctx.globalAlpha = zombieAlpha * 0.97;  // フェード時にも効く
+    ctx.globalAlpha = zombieAlpha * 0.97;
     ctx.drawImage(currentZombie, x, y, targetW, targetH);
     ctx.restore();
   }
 }
-/* グリッチ処理（背景用・任意のctxに適用できる版） */
 function glitchSlices(n, strength, anyCtx, w, h){
   for(let i=0;i<n;i++){
     const hh = Math.floor(randRange(8, Math.max(10, h/10)));
@@ -259,7 +244,6 @@ function glitchSlices(n, strength, anyCtx, w, h){
     anyCtx.putImageData(d, sh, y);
   }
 }
-
 function chromaSplit(anyCtx, w, h){
   const img = anyCtx.getImageData(0,0,w,h);
   const off = Math.floor(randRange(1,3));
@@ -267,14 +251,12 @@ function chromaSplit(anyCtx, w, h){
     const row = y*w*4;
     for(let x=0;x<w-off;x++){
       const i=row+x*4, j=row+(x+off)*4, k=row+Math.max(0,x-off)*4;
-      img.data[i]   = img.data[j];     // Rを右へ
-      img.data[i+2] = img.data[k+2];   // Bを左へ
+      img.data[i]   = img.data[j];
+      img.data[i+2] = img.data[k+2];
     }
   }
   anyCtx.putImageData(img,0,0);
 }
-
-
 
 /* -------- interactions -------- */
 pick.addEventListener('change', async (e)=>{
@@ -284,11 +266,26 @@ pick.addEventListener('change', async (e)=>{
   cuteMode=true;
   updateFrameVisibility();
   drawScene();
+
+  // 写真選択後に自動で撮影開始
+  if(autoShootAfterPick){
+    autoShootAfterPick = false;
+    await sleep(200);        // iOSのUI復帰待ち
+    startShootSequence();
+  }
 });
 
 btnShoot.addEventListener('click', async ()=>{
-  if(!basePhoto){ pick.click(); return; }
+  if(!basePhoto){
+    autoShootAfterPick = true;  // 選んだら自動で撮る
+    pick.click();
+    return;
+  }
+  startShootSequence();
+});
 
+/* 撮影→グリッチ→ゾンビ→ハロウィン画像 → 保存フレーム作成 */
+async function startShootSequence(){
   cuteMode=true; updateFrameVisibility(); drawScene();
   playSE('shutter', .9); screenFlash();
 
@@ -296,13 +293,11 @@ btnShoot.addEventListener('click', async ()=>{
   panel.classList.add('shake'); showNoise(true); glitch.classList.add('on');
   playSE('burst', .8);
 
-  // 4秒間、背景だけをグリッチ
-  let tick=0;
+  // 4秒間、背景だけグリッチ
   const timer=setInterval(()=>{
     panel.style.transform=`translate(${randRange(-6,6)}px,${randRange(-4,4)}px) rotate(${randRange(-1,1)}deg)`;
     panel.style.filter=`contrast(180%) hue-rotate(${randRange(-25,25)}deg) saturate(200%)`;
     drawScene(true);
-    tick++;
   },100);
 
   await sleep(4000);
@@ -310,7 +305,7 @@ btnShoot.addEventListener('click', async ()=>{
   panel.style.transform=''; panel.style.filter='';
 
   await triggerZombie();
-});
+}
 
 async function triggerZombie(){
   showNoise(true);
@@ -318,20 +313,18 @@ async function triggerZombie(){
   cuteMode = false;
   updateFrameVisibility();
 
-  // 🧟‍♂️ ゾンビをフェードイン（背景グリッチON）
+  // ゾンビをフェードイン（背景グリッチON）
   for(let a = 0; a <= 1.0; a += 0.1){
     await sleep(80);
     drawScene(true, a);
   }
-
-  // 👻 笑い声のみ（テキスト表示は削除）
   playSE('laugh', .9);
 
-  // 余韻：背景グリッチを0.5秒維持
+  // 余韻
   await sleep(500);
   drawScene(true, 1);
 
-  // 🎃 ハロウィン画像を最前面に描画（フェードなし、固定）
+  // ハロウィン画像を最前面に固定描画
   if (happyImg.complete) {
     drawScene(true, 1);
     ctx.save();
@@ -343,13 +336,12 @@ async function triggerZombie(){
     ctx.restore();
   }
 
-  // ✨ 最終フレームを保存対象に
   await sleep(300);
   showNoise(false);
   glitch.classList.remove('on');
   panel.classList.remove('shake');
 
-  // 最後に静止した状態で保存
+  // 最後は停止した状態で保存用に確定
   drawScene(true, 1);
   if (happyImg.complete) {
     ctx.save();
@@ -360,7 +352,6 @@ async function triggerZombie(){
     ctx.drawImage(happyImg, x, y, w, h);
     ctx.restore();
   }
-
   lastComposedDataURL = cvs.toDataURL('image/png', 0.92);
 }
 
