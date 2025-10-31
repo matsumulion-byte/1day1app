@@ -179,6 +179,30 @@ function playSE(key, vol=1){
   s.volume = vol;
   s.play().catch(()=>{});
 }
+let audioArmed = false;
+function armAudio(){
+  if (audioArmed) return;
+  audioArmed = true;
+  // 全てのSEを完全ミュートで一瞬だけ再生→即停止→巻き戻し
+  Object.values(se).forEach(a=>{
+    if (!a) return;
+    const prevVol = a.volume;
+    a.muted = true;      // ← ハードミュート（最重要）
+    a.volume = 0;        // 念のため
+    a.play()
+      .then(()=>{
+        a.pause();
+        a.currentTime = 0;
+        a.muted = false; // ここで解除
+        a.volume = prevVol;
+      })
+      .catch(()=>{
+        // 失敗してもミュート解除と音量復元だけはしておく
+        a.muted = false;
+        a.volume = prevVol;
+      });
+  });
+}
 
 
 
@@ -279,20 +303,17 @@ pick.addEventListener('change', async (e)=>{
 });
 
 btnShoot.addEventListener('click', async ()=>{
+  // まず無音で“再生許可”だけを取得（ここでは絶対に音を出さない）
+  armAudio();
+
   if(!basePhoto){
-    autoShootAfterPick = true;
-    // 🔇 無音で再生許可だけ取る（音は出さない）
-    for (const key in se) {
-      se[key].volume = 0;
-      se[key].play().catch(()=>{});
-    }
+    autoShootAfterPick = true;   // 選んだら自動で撮影へ
     pick.click();
     return;
   }
-
-  // 撮影開始
-  startShootSequence();
+  startShootSequence();          // 既に写真があるなら即演出開始
 });
+
 
 
 /* 撮影→グリッチ→ゾンビ→ハロウィン画像 → 保存フレーム作成 */
