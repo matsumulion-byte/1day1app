@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>回転松村寿司- 1日1アプリ / 2025-11-01</title>
+<style>
+  :root{
+    --bg:#0b1014; --ink:#e9f1f7; --muted:#98a8b8; --acc:#ffd36e; --danger:#ff6b7a; --ok:#8ae6a2;
+    --rail:#202833; --shadow:0 10px 30px rgba(0,0,0,.35);
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --vh: 1vh;
+
+    /* 端末差を吸収するための“実寸px”変数（JSで上書き） */
+    --gap-px: 24px;          /* ネタ↑/シャリ↓ の隙間量 */
+    --open-px: 120px;        /* 開いたときのネタの持ち上げ量 */
+    --matsu-bottom-px: 60px; /* 松村の足元の位置（シャリ上からの距離） */
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent }
+  html,body{ height:100%; margin:0 }
+  body{
+    background:#060a11; color:var(--ink);
+    font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+    overflow:hidden; user-select:none; touch-action:manipulation;
+    overscroll-behavior: none;
+  }
+  #app{
+    position:fixed; inset:0; display:grid; grid-template-rows:auto 1fr auto;
+    height: 100dvh; height: calc(var(--vh) * 100);
+  }
+
+  header{ padding:calc(10px + var(--safe-top)) 14px 10px; display:flex; align-items:center; justify-content:space-between; gap:10px }
+  .ttl{ font-weight:800; letter-spacing:.02em }
+  .pill{ font-size:12px; color:var(--muted); background:#0f1623aa; border:1px solid #24364a; padding:8px 10px; border-radius:999px; box-shadow:var(--shadow) }
+  .pill b{ color:var(--ink) }
+
+  /* ステージ（9:16固定でPC/SP同画角） */
+  .stage{
+    position:relative;
+    height:100%;
+    aspect-ratio: 9 / 16;
+    margin: 0 auto;
+    max-width: min(100vw, calc(100dvh * 9 / 16));
+    background: linear-gradient(180deg, #0c141f 0%, #0a1019 55%, #0a0e14 56%, #05080d 100%);
+    overflow:hidden;
+  }
+  .wall{
+    position:absolute; left:0; right:0; top:0; height:54%;
+    background:
+      radial-gradient(1200px 600px at 70% -20%, #132032 0%, transparent 60%),
+      linear-gradient(180deg,#0f1a2b 0%, #0c1523 100%);
+    opacity:.9;
+  }
+  .belt{
+    position:absolute; left:0; right:0; top:54%; height:22%;
+    background: linear-gradient(180deg,#1a212d 0%, #0f151d 100%);
+    border-top:2px solid #2a3546; border-bottom:2px solid #0a0f16;
+    box-shadow: inset 0 8px 18px rgba(0,0,0,.35), inset 0 -10px 20px rgba(0,0,0,.4);
+    overflow:visible;
+  }
+  .belt::after{
+    content:""; position:absolute; inset:-6px; opacity:.3; pointer-events:none;
+    background: repeating-linear-gradient(90deg, #ffffff1c 0 3px, transparent 3px 60px);
+    animation: tread 2.4s linear infinite;
+  }
+  @keyframes tread { from{ transform:translateX(0) } to{ transform:translateX(-60px) } }
+
+  .floor{
+    position:absolute; left:0; right:0; bottom:0; top:76%;
+    background: linear-gradient(180deg, #0a0e14 0%, #080b10 45%, #05080d 100%);
+  }
+
+  /* HUD */
+  .hud{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:space-between; pointer-events:none; padding:10px 12px }
+  .bar{ display:flex; gap:8px; align-items:center; justify-content:space-between }
+  .chip{ pointer-events:auto; background:#0f1623cc; border:1px solid #22364a; padding:8px 10px; border-radius:10px; color:#dbe7f4; box-shadow:var(--shadow); font-size:13px; min-width:80px; text-align:center }
+  .good{ color:#dbffe7; border-color:#1f3827; background:#0f1a14cc }
+  .bad{  color:#ffd2d7; border-color:#3a1b26; background:#1a0f14cc }
+
+  /* のれん風メッセージ */
+  .noren{ position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; opacity:0; transform:translateY(-20px); transition:opacity .35s ease, transform .35s ease }
+  .noren.show{ opacity:1; transform:translateY(0) }
+  .noren .card{ padding:16px 20px; border-radius:12px; background:#0f1623cc; border:1px solid #22364a; box-shadow:var(--shadow); font-weight:700; letter-spacing:.06em }
+
+  /* 寿司アイテム（ベルト内に対して絶対配置） */
+  .item{
+    position:absolute; left:0; top:50%;
+    transform: translateY(-50%) translateX(0);
+    width:68%;              /* ステージ比：横サイズ */
+    height:84%;             /* ベルト高に対する縦サイズ */
+    display:block; border:none; background:transparent; padding:0; cursor:pointer;
+    filter: drop-shadow(0 12px 10px rgba(0,0,0,.45));
+    will-change: transform;
+  }
+  .sushi{ position:absolute; inset:0; background:#0000; overflow:visible; }
+  .sushi img{ width:100%; height:100%; object-fit:contain; display:block }
+
+  /* サンド寿司（pxベースで安定させる） */
+  .sando .neta, .sando .shari, .sando .core{
+    position:absolute; left:0; right:0; margin:auto; width:100%; height:100%; display:block;
+    transition: transform .22s cubic-bezier(.2,.8,.2,1), opacity .18s ease, filter .18s ease;
+    will-change: transform, opacity, filter;
+  }
+  /* 平常時：ネタは上へ、シャリは下へ（“隙間”を px で一定化） */
+  .sando .neta{  transform: translateY(calc(-1 * var(--gap-px))); z-index:3; }
+  .sando .shari{ transform: translateY(var(--gap-px));            z-index:1; }
+
+  /* 松村はシャリの上に“立つ”位置を px で固定 */
+  .sando .core{ pointer-events:none; opacity:0; z-index:2; }
+  .sando .core img{
+    position:absolute; left:50%; transform:translateX(-50%);
+    width:34%;
+    bottom: var(--matsu-bottom-px);
+  }
+
+  /* 開いた時：ネタだけ大きく上げる（pxで一定） */
+  .sando.open .neta{  transform: translateY(calc(-1 * var(--open-px))) rotate(-8deg); }
+  .sando.open .shari{ transform: translateY(var(--gap-px)) rotate(0); }
+  .sando.open .core { opacity:1; filter: drop-shadow(0 0 20px rgba(255,211,110,.35)) }
+
+  /* 操作域 */
+  .controls{
+    position:fixed; left:0; right:0; bottom:0; padding:10px 12px calc(14px + var(--safe-bottom));
+    display:grid; grid-template-columns: 1fr auto 1fr; gap:10px; align-items:center;
+    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,.35) 25%, rgba(0,0,0,.65) 100%);
+    backdrop-filter: blur(6px);
+  }
+  .btn{ appearance:none; border:none; cursor:pointer; font:inherit; background:#101827; color:#e9f1f7; border:1px solid #2236; border-radius:12px; padding:14px 18px; box-shadow:var(--shadow) }
+  .btn.big{ font-weight:700 } .btn:active{ transform:translateY(1px) }
+
+  /* 結果モーダル */
+  .modal{ position:fixed; inset:0; display:grid; place-items:center; background:rgba(0,0,0,.55); opacity:0; pointer-events:none; transition:opacity .25s }
+  .modal.show{ opacity:1; pointer-events:auto }
+  .panel{ width:min(92vw,520px); background:#0f1623; border:1px solid #2236; border-radius:16px; padding:18px; box-shadow:var(--shadow); text-align:center }
+  .panel h2{ margin:6px 0 12px } .panel p{ margin:0 0 12px; color:var(--muted) }
+  .score{ font-size:40px; font-weight:800; margin:8px 0 2px }
+  .row{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:10px }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="ttl">回転松村寿司</div>
+    <div class="pill">11/1 は <b>すしの日</b></div>
+  </header>
+
+  <main class="stage" id="stage" aria-label="ゲームステージ">
+    <div class="wall"></div>
+    <div class="belt" id="belt"></div>
+    <div class="floor"></div>
+
+    <div class="noren" id="noren"><div class="card">のれんを上げています…「営業中！」</div></div>
+
+    <!-- HUD -->
+    <div class="hud">
+      <div class="bar">
+        <div class="chip good" id="scoreChip">松村：0皿</div>
+        <div class="chip" id="timeChip">60s</div>
+        <div class="chip bad" id="missChip">ミス：0/3</div>
+      </div>
+      <div class="bar" style="justify-content:center">
+        <div class="chip" id="speedChip">速度：1.0x</div>
+      </div>
+    </div>
+  </main>
+
+  <div class="controls">
+    <button class="btn" id="howBtn" type="button">遊び方</button>
+    <button class="btn big" id="startBtn" type="button">スタート</button>
+    <button class="btn" id="muteBtn" type="button" aria-pressed="false">🔊</button>
+  </div>
+</div>
+
+<!-- 結果 -->
+<div class="modal" id="resultModal" role="dialog" aria-modal="true" aria-labelledby="resTtl">
+  <div class="panel">
+    <h2 id="resTtl">結果</h2>
+    <div class="score" id="finalScore">0 皿</div>
+    <p id="finalMsg">パカッと松村、見極め成功！</p>
+    <div class="row">
+      <button class="btn big" id="retryBtn" type="button">もう一度</button>
+      <button class="btn" id="shareBtn" type="button">結果をXでシェア</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  // 動的アセット解決（Vercel/ローカル両対応）
+  const asset = (fileName) => {
+    try{
+      const p = location.pathname;
+      // /YYYY-MM-DD または /YYYY-MM-DD/... の先頭ディレクトリを抽出
+      const m = p.match(/^\/(\d{4}-\d{2}-\d{2})(?:\/.*)?$/);
+      const base = m ? `/${m[1]}` : '';
+      return `${base}/assets/${fileName.replace(/^\/+/, '').replace(/^\.\/assets\//, '')}`;
+    }catch(e){
+      // フォールバック（相対）
+      return `assets/${fileName.replace(/^\/+/, '').replace(/^\.\/assets\//, '')}`;
+    }
+  };
+
+  // DOM
+  const stage = document.getElementById("stage");
+  const belt  = document.getElementById("belt");
+  const beltW = () => belt.offsetWidth;
+
+  const scoreChip = document.getElementById("scoreChip");
+  const timeChip  = document.getElementById("timeChip");
+  const missChip  = document.getElementById("missChip");
+  const speedChip = document.getElementById("speedChip");
+  const startBtn  = document.getElementById("startBtn");
+  const retryBtn  = document.getElementById("retryBtn");
+  const howBtn    = document.getElementById("howBtn");
+  const muteBtn   = document.getElementById("muteBtn");
+  const shareBtn  = document.getElementById("shareBtn");
+  const noren     = document.getElementById("noren");
+  const modal     = document.getElementById("resultModal");
+  const finalScore= document.getElementById("finalScore");
+  const finalMsg  = document.getElementById("finalMsg");
+
+  // 画像
+  const SUSHI_SIDE = [
+    "./assets/sushi_salmon_side.png",
+    "./assets/sushi_tuna_side.png",
+    "./assets/sushi_egg_side.png",
+    "./assets/sushi_shrimp_side.png",
+    "./assets/sushi_kappa_side.png",
+    "./assets/sushi_ikura_side.png",
+  ].map(asset);
+  const NETA_SIDE  = asset("./assets/neta_side.png");
+  const SHARI_SIDE = asset("./assets/shari_side.png");
+  const MATSU_IMG  = asset("./assets/matsumura.png");
+
+  // 音
+  const SE_OK   = new Audio(asset("./assets/se_ok.m4a"));
+  const SE_NG   = new Audio(asset("./assets/se_ng.m4a"));
+  const SE_UP   = new Audio(asset("./assets/se_speedup.m4a"));
+  const VOICE_M = new Audio(asset("./assets/matsumura_desu.m4a"));
+  const BGM     = new Audio(asset("./assets/bgm_loop.mp3"));
+  BGM.loop = true; BGM.volume = 0.28;
+
+  const SOUNDS = [SE_OK, SE_NG, SE_UP, VOICE_M, BGM];
+  let muted=false;
+  const applyMute=()=>{
+    SOUNDS.forEach(a=>a.muted=muted);
+    if(muted){ try{ BGM.pause(); }catch{} }
+    else if(running){ BGM.play().catch(()=>{}); }
+  };
+
+  // 状態
+  const GAME_TIME = 60, MAX_MISS = 3;
+  let running=false, tRemain=GAME_TIME, score=0, miss=0;
+  let speed=280, mult=1.0, spawnInt=0.85, lastSpawnAt=0, upIndex=0, prev=0, rafId=0;
+  const SPEED_UP_S=[45,30,15];
+  let items=[]; // {el,x,isSando,opened,openZoneL,openZoneR}
+  const choice = (arr)=>arr[(Math.random()*arr.length)|0];
+
+  // iOSダブルタップズーム抑止
+  let lastTouch=0;
+  window.addEventListener("touchend",(e)=>{ const now=performance.now(); if(now-lastTouch<300){ e.preventDefault(); } lastTouch=now; },{passive:false});
+
+  // 100vh補正
+  function setVh(){ document.documentElement.style.setProperty('--vh', `${window.innerHeight*0.01}px`); }
+  setVh(); window.addEventListener('resize', setVh);
+
+  // ベルト高さに応じて“実寸px”を算出（端末差を吸収）
+  function updateSandoVars(){
+    const h = belt.offsetHeight || 200;        // ベルト高さ
+    const gap  = h * 0.16;                     // 隙間：16%（好みで 0.12〜0.20）
+    const open = h * 0.86;                     // 開き：86%（しっかりパカッ）
+    const matu = h * 0.26;                     // 松村の足元：26%
+    const root = document.documentElement.style;
+    root.setProperty('--gap-px',  `${gap}px`);
+    root.setProperty('--open-px', `${open}px`);
+    root.setProperty('--matsu-bottom-px', `${matu}px`);
+  }
+  updateSandoVars();
+  window.addEventListener('resize', updateSandoVars);
+
+  // のれん/トースト
+  function showNoren(msg="営業中！"){
+    noren.firstElementChild.textContent=msg;
+    noren.classList.add("show");
+    setTimeout(()=>noren.classList.remove("show"),650);
+  }
+  function shake(el){
+    el.animate(
+      [{transform:'translateY(-50%) translateX(0)'},
+       {transform:'translateY(-50%) translateX(-8px)'},
+       {transform:'translateY(-50%) translateX(8px)'},
+       {transform:'translateY(-50%) translateX(0)'}],
+      {duration:180,iterations:1}
+    );
+  }
+  function toast(text, good=true){
+    const d=document.createElement("div");
+    d.className="chip "+(good?"good":"bad");
+    Object.assign(d.style,{position:"fixed",left:"50%",top:"20%",transform:"translate(-50%,-50%)",zIndex:9999});
+    d.textContent=text; document.body.appendChild(d); setTimeout(()=>d.remove(),650);
+  }
+
+  // 生成
+  function spawn(ts){
+    const isSando = Math.random() < 0.35;
+    let el = document.createElement("button");
+    el.className = "item" + (isSando ? " sando" : "");
+    el.type="button";
+    el.setAttribute("aria-label", isSando ? "サンド寿司（中央でパカッと開く）" : "寿司");
+
+    el.innerHTML = isSando
+      ? `<div class="sushi">
+           <div class="neta"><img alt="" src="${NETA_SIDE}"></div>
+           <div class="core"><img alt="" src="${MATSU_IMG}"></div>
+           <div class="shari"><img alt="" src="${SHARI_SIDE}"></div>
+         </div>`
+      : `<div class="sushi"><img alt="" loading="lazy" src="${choice(SUSHI_SIDE)}"></div>`;
+
+    el.addEventListener("click",()=>{
+      if(!running) return;
+      if(isSando){
+        if(el.classList.contains("open")){ hitMatsu(); remove(el); }
+        else { missOne(); shake(el); }
+      }else{
+        missOne(); shake(el);
+      }
+    });
+
+    belt.appendChild(el);
+
+    const x0  = beltW() + 60;     // 右外スタート（ベルト幅基準）
+    const cxL = beltW() * 0.38;   // 中央ゾーン
+    const cxR = beltW() * 0.62;
+    items.push({ el, x:x0, isSando, opened:false, openZoneL:cxL, openZoneR:cxR });
+    lastSpawnAt = ts;
+  }
+
+  // ロジック
+  function hitMatsu(){
+  score++;
+  scoreChip.textContent=`松村：${score}皿`;
+  if(!muted){
+    try{
+      VOICE_M.currentTime=0;
+      VOICE_M.play();
+    }catch{}
+  }
+  toast("松村ゲット！", true);
+}
+  function missOne(){ miss++; missChip.textContent=`ミス：${miss}/${MAX_MISS}`; if(!muted){ try{ SE_NG.currentTime=0; SE_NG.play(); }catch{} } toast("それは寿司！", false); if(miss>=MAX_MISS) endGame(); }
+  function remove(el){ items = items.filter(it=>it.el!==el); el.remove(); }
+  function speedUp(){ mult=Math.min(2.2, +(mult+0.4).toFixed(1)); speed*=1.22; spawnInt=Math.max(0.55, spawnInt-0.08); speedChip.textContent=`速度：${mult.toFixed(1)}x`; showNoren("本日のおすすめ（加速）"); if(!muted){ try{ SE_UP.currentTime=0; SE_UP.play(); }catch{} } }
+
+  function loop(ts){
+    rafId = requestAnimationFrame(loop);
+    if(!prev) prev=ts;
+    const dt=(ts-prev)/1000; prev=ts;
+    if(!running) return;
+
+    // 時間
+    tRemain -= dt; if(tRemain<0){ endGame(); return; }
+    timeChip.textContent = `${Math.ceil(tRemain)}s`;
+
+    // 加速
+    if(upIndex<SPEED_UP_S.length && tRemain<=SPEED_UP_S[upIndex]){ speedUp(); upIndex++; }
+
+    // スポーン
+    if(ts-lastSpawnAt >= spawnInt*1000) spawn(ts);
+
+    // 移動＆開閉
+    const dx = speed*dt;
+    for(let i=items.length-1;i>=0;i--){
+      const it=items[i];
+      it.x -= dx;
+      it.el.style.transform = `translateY(-50%) translateX(${it.x}px)`;
+
+      if(it.isSando && !it.opened){
+        const mid = it.x + it.el.offsetWidth/2;
+        if(mid < it.openZoneR && mid > it.openZoneL){
+          it.opened = true;
+          it.el.classList.add("open");
+          const openMs = 1400;
+          setTimeout(()=>{ if(it.el.isConnected){ it.el.classList.remove("open"); } }, openMs);
+        }
+      }
+
+      // 画面外（取り逃しはノーペナルティ）
+      if(it.x < - (it.el.offsetWidth + 40)){ remove(it.el); }
+    }
+  }
+
+  function resetGame(){
+    running=false; cancelAnimationFrame(rafId); prev=0;
+    tRemain=GAME_TIME; score=0; miss=0; upIndex=0;
+    speed=280; mult=1.0; spawnInt=0.85;
+    scoreChip.textContent=`松村：0皿`; missChip.textContent=`ミス：0/${MAX_MISS}`;
+    timeChip.textContent=`${GAME_TIME}s`; speedChip.textContent=`速度：${mult.toFixed(1)}x`;
+    items.forEach(it=>it.el.remove()); items.length=0;
+    updateSandoVars();                   // ← ここで毎回実寸を再計算
+    showNoren("のれんを上げています…「営業中！」");
+  }
+  function startGame(){
+    resetGame(); running=true;
+    if(!muted){ BGM.currentTime=0; BGM.play().catch(()=>{}); }
+    requestAnimationFrame(loop);
+  }
+  function endGame(){
+    running=false; cancelAnimationFrame(rafId);
+    try{ BGM.pause(); }catch{}
+    finalScore.textContent = `${score} 皿`;
+    finalMsg.textContent = miss>=MAX_MISS ? "ミス多め…またの挑戦を！" : "閉店です。おつかれさま！";
+    modal.classList.add("show");
+  }
+
+  // UI
+  startBtn.addEventListener("click",()=>{ modal.classList.remove("show"); startGame(); });
+  retryBtn.addEventListener("click",()=>{ modal.classList.remove("show"); startGame(); });
+  howBtn.addEventListener("click",()=>{ alert("ルール\n・寿司が左へ流れます\n・サンド寿司は中央で一度だけパカッと開く！\n・開いている間にタップで松村ゲット\n・通常寿司をタップするとミス\n・サンド寿司の取り逃しはミスになりません\n・60秒 or ミス3回で終了。途中でスピードアップ"); });
+  muteBtn.addEventListener("click",()=>{ muted=!muted; applyMute(); muteBtn.textContent=muted?"🔇":"🔊"; muteBtn.setAttribute("aria-pressed", String(!muted)); });
+  shareBtn.addEventListener("click",()=>{ const text=`回転松村寿司（横リアル）：${score}皿ゲット！ #1日1アプリ #回転寿司`; const url=location.href.split("?")[0]; const u=`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`; window.open(u,"_blank"); });
+
+  // 初期表示
+setVh(); // ← もう定義済みを使うだけ！
+setTimeout(()=>showNoren("準備中→営業中！"),200);
+applyMute();
+
+</script>
+</body>
+</html>
