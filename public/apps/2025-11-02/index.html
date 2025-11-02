@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>ドローンサウンド松村</title>
+<style>
+  :root{
+    --bg:#0b1014; --ink:#e9f1f7; --muted:#9fb0c0;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent }
+  html,body{ height:100%; margin:0 }
+  body{
+    background:radial-gradient(1200px 900px at 70% -10%,#101826 0%,#0b1014 60%,#070a11 100%);
+    color:var(--ink); font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  }
+  #app{ height: 100dvh; display:grid; grid-template-rows:auto 1fr; }
+  header{
+    padding: calc(10px + var(--safe-top)) 12px 10px;
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    background: linear-gradient(to bottom, rgba(0,0,0,.25), rgba(0,0,0,.05));
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .brand{ font-weight:700; letter-spacing:.02em; font-size:1rem }
+  .sub{ color:var(--muted); font-size:.82rem }
+  .spacer{ flex:1; min-width:12px }
+  .btn{
+    appearance:none; border:1px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.06); color:var(--ink);
+    padding:.5rem .7rem; border-radius:12px; cursor:pointer; font-size:.9rem;
+  }
+  .btn:active{ transform:translateY(1px) }
+
+  .stage{ position:relative; overflow:hidden; }
+  #c{ position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; }
+
+  .tip{
+    position:absolute; right:12px; bottom:calc(12px + var(--safe-bottom));
+    color:var(--muted); font-size:.85rem; line-height:1.2;
+    background:rgba(0,0,0,.18); padding:.45rem .55rem; border-radius:10px;
+    border:1px solid rgba(255,255,255,.08); pointer-events:none;
+  }
+
+  @media (min-width: 768px){
+    .brand{ font-size:1.1rem } .sub{ font-size:.9rem }
+    .btn{ font-size:.95rem; padding:.55rem .8rem }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <div class="brand">ドローンサウンド松村</div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn" id="bgmBtn">BGM: OFF</button>
+    <button class="btn" id="stopBtn">全部停止</button>
+    <button class="btn" id="clearBtn">画面クリア</button>
+    <button class="btn" id="saveBtn">PNG保存</button>
+  </header>
+
+  <div class="stage">
+    <canvas id="c"></canvas>
+    <div class="tip">タップしたら楽しいよ</div>
+  </div>
+</div>
+
+<script type="module">
+  // === 基本DOM・描画 ===
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  function fit(){
+    const r = canvas.getBoundingClientRect();
+    canvas.width = Math.round(r.width);
+    canvas.height = Math.round(r.height);
+    ctx.setTransform(1,0,0,1,0,0);
+  }
+  addEventListener('load', fit, {once:true});
+  addEventListener('resize', fit, {passive:true});
+  if (visualViewport){
+    visualViewport.addEventListener('resize', fit, {passive:true});
+    visualViewport.addEventListener('scroll', fit, {passive:true});
+  }
+
+  // === 視覚：リップル・パーティクル ===
+  const ripples = new Set();
+  const particles = new Set();
+  const RIPPLE_LIFE_MIN = 4500, RIPPLE_LIFE_MAX = 8000;
+  const RIPPLE_MAX_FACTOR = 0.65;
+  const easeInOut = (t)=> (t<.5) ? (2*t*t) : (1 - Math.pow(-2*t+2,2)/2);
+
+  // 周波数→色相（低=藍/高=青紫）
+  function hueFromFreq(f){
+    // 120Hz〜1400Hz を 200〜340度にマップ
+    const min=120, max=1400;
+    const n = Math.max(0, Math.min(1, (Math.log(f)-Math.log(min))/(Math.log(max)-Math.log(min))));
+    return 200 + 140*n;
+  }
+
+  function addRipple(x,y, life, freq, isAccent=false){
+    const max = Math.hypot(canvas.width, canvas.height) * RIPPLE_MAX_FACTOR;
+    const hue = hueFromFreq(freq);
+    // 音周期に同期するパルス（phaseBeat）
+    const periodMs = 1000 / Math.max(1, freq); // 粗い周期 [ms]
+    ripples.add({
+      x,y, r:0, max, t:0, life,
+      hue, accent:isAccent,
+      // エコー履歴（可視化）
+      echo: [],
+      nextBeat: periodMs * (0.5 + Math.random()*0.8), // 少しズラす
+      period: periodMs,
+      dead:false
+    });
+  }
+
+  function addParticle(x,y, life, hue, accent=false){
+    particles.add({
+      x,y,
+      r: accent ? 7 + Math.random()*9 : 5 + Math.random()*7,
+      hue, t:0, life,
+      dx:(Math.random()*2-1)*0.28, dy:(Math.random()*2-1)*0.28,
+      accent, dead:false
+    });
+  }
+
+  function renderRipples(dt){
+    const arr = Array.from(ripples);
+    for(const r of arr){
+      r.t += dt;
+      if (r.t > r.life){ r.dead = true; continue; }
+      const k = easeInOut(r.t / r.life);
+      r.r = k * r.max;
+
+      // パルス発光：音周期に同期
+      r.nextBeat -= dt;
+      let pulse = false;
+      if (r.nextBeat <= 0){
+        r.nextBeat += r.period;
+        pulse = true;
+      }
+
+      // 本リング
+      const a = 0.22 * (1-k);
+      ctx.save();
+      ctx.beginPath();
+      ctx.lineWidth = (pulse ? 3.2 : 2.2) + (1-k)*4.0;
+      ctx.strokeStyle = `hsla(${r.hue + (pulse?8:0)}, 72%, ${r.accent?62:65}%, ${a})`;
+      ctx.shadowColor = `hsla(${r.hue}, 90%, 60%, ${a*1.2})`;
+      ctx.shadowBlur = pulse ? 28 : 18;
+      ctx.arc(r.x, r.y, r.r, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
+
+      // エコー（履歴リング）— 時間の痕跡
+      if (pulse) r.echo.push({rad:r.r, alpha:0.18});
+      for (const e of r.echo){
+        e.alpha *= 0.985; // 徐々に消える
+        if (e.alpha < 0.02) continue;
+        ctx.beginPath();
+        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = `hsla(${r.hue},70%,70%,${e.alpha})`;
+        ctx.arc(r.x, r.y, e.rad, 0, Math.PI*2);
+        ctx.stroke();
+      }
+      r.echo = r.echo.filter(e=> e.alpha>0.02);
+    }
+    for(const r of Array.from(ripples)) if(r.dead) ripples.delete(r);
+
+    // モアレ干渉：近い半径のリングが重なると差分で薄く見せる
+    // 計算量抑制のため先頭12個まででO(N^2)
+    const lim = Math.min(12, arr.length);
+    for(let i=0;i<lim;i++){
+      for(let j=i+1;j<lim;j++){
+        const a = arr[i], b = arr[j];
+        if (a.dead||b.dead) continue;
+        const d = Math.hypot(a.x-b.x, a.y-b.y);
+        // 半径差が小さく、中心距離が半径の±一定範囲にあるとき干渉表現
+        if (Math.abs(a.r - b.r) < 24 && d < a.r + b.r + 24 && d > Math.abs(a.r - b.r) - 24){
+          ctx.save();
+          ctx.globalCompositeOperation = 'difference';
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = `rgba(180,220,255,0.08)`;
+          ctx.beginPath();
+          ctx.arc((a.x+b.x)/2, (a.y+b.y)/2, (a.r+b.r)/2, 0, Math.PI*2);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    }
+  }
+
+  function renderParticles(dt){
+    for(const p of particles){
+      p.t += dt;
+      if (p.t > p.life){ p.dead = true; continue; }
+      const k = p.t / p.life;
+      p.x += p.dx; p.y += p.dy;
+      p.r += 0.012 * (1-k) * 14;
+      const alpha = (k<0.2 ? k/0.2 : 1-(k-0.2)/0.8) * (p.accent ? 0.6 : 0.5);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fillStyle = `hsla(${p.hue}, 80%, ${p.accent?60:65}%, ${alpha})`;
+      ctx.shadowColor = `hsla(${p.hue}, 90%, 60%, ${alpha*0.9})`;
+      ctx.shadowBlur = p.accent ? 26 : 20;
+      ctx.fill();
+      ctx.restore();
+    }
+    for(const p of Array.from(particles)) if(p.dead) particles.delete(p);
+  }
+
+  // === グリッチ ===
+  const frame = document.createElement('canvas');
+  const fctx  = frame.getContext('2d');
+  function syncFrame(){ frame.width = canvas.width; frame.height = canvas.height; }
+  addEventListener('load', syncFrame, {once:true});
+  addEventListener('resize', syncFrame, {passive:true});
+  if (visualViewport){
+    visualViewport.addEventListener('resize', syncFrame, {passive:true});
+    visualViewport.addEventListener('scroll', syncFrame, {passive:true});
+  }
+
+  let glitchActive=false, glitchUntil=0, nextGlitchAt=1200;
+  function maybeStartGlitch(now){
+    // ランダム発火（ベース）
+    if (!glitchActive && now >= nextGlitchAt){
+      const gap = 1400 + Math.random()*4200;
+      nextGlitchAt = now + gap;
+      glitchActive = true;
+      glitchUntil = now + (80 + Math.random()*140);
+    }
+  }
+  function applyGlitch(now){
+    fctx.clearRect(0,0,frame.width,frame.height);
+    fctx.drawImage(canvas, 0, 0);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const r = Math.random();
+    if (r < 0.33){
+      ctx.save();
+      ctx.drawImage(frame, 0, 0);
+      ctx.globalCompositeOperation='lighter';
+      ctx.globalAlpha = 0.6; ctx.filter='hue-rotate(22deg) contrast(1.05)';
+      ctx.drawImage(frame, 3, 0);
+      ctx.filter='hue-rotate(-18deg) contrast(1.05)'; ctx.globalAlpha = 0.55;
+      ctx.drawImage(frame, -3, 0);
+      ctx.restore();
+    } else if (r < 0.66){
+      ctx.drawImage(frame, 0, 0);
+      const bands = 4 + (Math.random()*5|0);
+      for(let i=0;i<bands;i++){
+        const h = 8 + Math.random()*(frame.height*0.12);
+        const y = Math.random()*(frame.height - h);
+        const xoff = (Math.random()<0.5?-1:1) * (4 + Math.random()*16);
+        ctx.drawImage(frame, 0, y, frame.width, h, xoff, y, frame.width, h);
+      }
+      ctx.save();
+      ctx.globalAlpha = 0.08;
+      for(let y=0;y<canvas.height;y+=2){ ctx.fillStyle='rgba(255,255,255,0.12)'; ctx.fillRect(0,y,canvas.width,1); }
+      ctx.restore();
+    } else {
+      ctx.save(); ctx.filter='contrast(1.15) saturate(1.1)'; ctx.drawImage(frame,0,0); ctx.restore();
+      const cx=Math.random()*canvas.width, cy=Math.random()*canvas.height, r0=40+Math.random()*120, hue=180+Math.random()*150;
+      const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r0);
+      g.addColorStop(0,`hsla(${hue},100%,60%,0.35)`); g.addColorStop(0.6,`hsla(${hue},95%,55%,0.12)`); g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.save(); ctx.globalCompositeOperation='screen'; ctx.fillStyle=g; ctx.fillRect(cx-r0,cy-r0,r0*2,r0*2); ctx.restore();
+    }
+    if (now > glitchUntil) glitchActive = false;
+  }
+
+  // === Audio（松村味デフォ）===
+  let ac, unlocked=false;
+  const drones = new Set();
+  const MAX_VOICES = 18;
+  function unlock(){
+    if (unlocked){ if(ac && ac.state==='suspended') ac.resume(); return; }
+    ac = ac || new (window.AudioContext||window.webkitAudioContext)();
+    if (ac.state==='suspended') ac.resume();
+    try{ const g=ac.createGain(); g.gain.value=0.001; const o=ac.createOscillator(); o.frequency.value=440; o.connect(g).connect(ac.destination); const t=ac.currentTime; o.start(t); o.stop(t+0.02);}catch{}
+    unlocked = true;
+  }
+  addEventListener('pointerdown', unlock, {once:true, passive:true});
+  function ensureAudio(){ ac = ac || new (window.AudioContext||window.webkitAudioContext)(); if (ac.state==='suspended') ac.resume(); }
+
+  const MATSU_STEPS=[0,2,3,5,7,9,10]; const ROOT_FREQ=130.8128; // C3
+  function quantizeFreq(freq){
+    const n = Math.round(12 * Math.log2(freq/ROOT_FREQ));
+    const oct = Math.floor(n/12);
+    const within = ((n%12)+12)%12;
+    let best=MATSU_STEPS[0], diff=Infinity;
+    for(const s of MATSU_STEPS){ const d=Math.abs(s-within); if(d<diff){diff=d; best=s;} }
+    return ROOT_FREQ * Math.pow(2, (oct*12+best)/12);
+  }
+  const maybeFifth = (f)=> (Math.random()<0.25 ? f*1.4983 : null);
+
+  function createDrone(x,y){
+    ensureAudio();
+    if (drones.size >= MAX_VOICES){ const first = drones.values().next().value; stopDrone(first); }
+
+    const r = canvas.getBoundingClientRect();
+    const nx = Math.min(1, Math.max(0, x / r.width));
+    const ny = Math.min(1, Math.max(0, y / r.height));
+    const raw = 120 * Math.pow(1400/120, nx);
+    const freq = quantizeFreq(raw);
+    const harm = maybeFifth(freq);
+
+    const makeVoice = (f)=>{
+      const g = ac.createGain(); g.gain.value=0;
+      const o1 = ac.createOscillator(); o1.type='sine';     o1.frequency.value=f;
+      const o2 = ac.createOscillator(); o2.type='triangle'; o2.frequency.value=f*0.5;
+      const lp = ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value = 800 + (1-ny)*5200;
+      o1.connect(g); o2.connect(g); g.connect(lp).connect(ac.destination);
+      const now=ac.currentTime, attack=0.12+ny*0.25, sustain=2.0+nx*1.8, release=1.4+(1-ny)*1.8, peak=0.28;
+      g.gain.setValueAtTime(0,now);
+      g.gain.linearRampToValueAtTime(peak, now+attack);
+      g.gain.setTargetAtTime(0.0, now+attack+sustain, release);
+      o1.start(now); o2.start(now);
+      const stopAt = now+attack+sustain+release+0.6;
+      o1.stop(stopAt); o2.stop(stopAt);
+      const v = { o1,o2,g,lp, life:(stopAt-now)*1000 };
+      drones.add(v);
+      setTimeout(()=> stopDrone(v), v.life);
+    };
+
+    makeVoice(freq);
+    if (harm) makeVoice(harm);
+
+    // 視覚：音高→色。ゆっくり波紋＋粒。たまにアクセント。
+    const life = RIPPLE_LIFE_MIN + Math.random()*(RIPPLE_LIFE_MAX-RIPPLE_LIFE_MIN);
+    const hue = hueFromFreq(freq);
+    const accent = Math.random() < 0.25;
+    addRipple(x,y, life, freq, accent);
+    addParticle(x,y, life*0.9, hue, accent);
+
+    // 音周期に同期するミニ・グリッチを短時間発火
+    const periodMs = 1000/Math.max(1,freq);
+    if (Math.random() < 0.18){
+      glitchActive = true;
+      const now = performance.now();
+      glitchUntil = now + Math.min(160, periodMs*0.8);
+    }
+  }
+
+  function stopDrone(v){ try{ v.o1.stop(); v.o2.stop(); }catch{} drones.delete(v); }
+  function stopAll(){ for(const v of Array.from(drones)) stopDrone(v); }
+
+  // === BGM ===
+  let bgm=null, bgmOn=false;
+  function startBGM(){
+    ensureAudio(); if (bgm) return;
+    const master=ac.createGain(); master.gain.value=0.11;
+    const a=ac.createOscillator(), b=ac.createOscillator(); a.type='sawtooth'; b.type='sawtooth';
+    const roots=[98,110,123.47,130.81]; let idx=0;
+    a.frequency.value=roots[idx]; b.frequency.value=roots[idx]*1.498;
+    const seqTimer=setInterval(()=>{ idx=(idx+1)%roots.length; const to=roots[idx]; const now=ac.currentTime;
+      a.frequency.linearRampToValueAtTime(to, now+3.0);
+      b.frequency.linearRampToValueAtTime(to*1.498, now+3.0);
+    }, 5000);
+    a.detune.value=-4; b.detune.value=+5;
+    const hp=ac.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=80;
+    const lp=ac.createBiquadFilter(); lp.type='lowpass';  lp.frequency.value=1000;
+    const lfo=ac.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.06;
+    const lfoG=ac.createGain(); lfoG.gain.value=500; lfo.connect(lfoG).connect(lp.frequency);
+    const del=ac.createDelay(2.0); del.delayTime.value=0.36;
+    const fb=ac.createGain(); fb.gain.value=0.24; del.connect(fb).connect(del);
+    a.connect(hp); b.connect(hp); hp.connect(lp).connect(del).connect(master); lp.connect(master);
+    master.connect(ac.destination);
+    const now=ac.currentTime; lfo.start(now); a.start(now); b.start(now);
+    bgm={master,a,b,hp,lp,lfo,lfoG,del,fb,seqTimer};
+  }
+  function stopBGM(){
+    if(!bgm) return; const now=ac.currentTime;
+    try{ clearInterval(bgm.seqTimer); bgm.master.gain.setTargetAtTime(0.0, now, 0.5);
+      setTimeout(()=>{ try{bgm.a.stop();bgm.b.stop();bgm.lfo.stop();}catch{} bgm=null; },800);
+    }catch{}
+  }
+
+  // === ループ描画 & オーバーロード ===
+  let last = performance.now();
+  function tick(now){
+    const dt = now - last; last = now;
+
+    // 残像フェード
+    ctx.globalCompositeOperation='source-over';
+    ctx.globalAlpha = 0.14; ctx.fillStyle = '#0b1014';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // メイン要素
+    ctx.globalAlpha = 1.0;
+    renderRipples(dt);
+    renderParticles(dt);
+
+    // オーバーロード（音が多すぎると熱暴走風）
+    const overload = drones.size >= 12;
+    if (overload){
+      ctx.save();
+      // コントラスト/サチュレーション強め＋微振動
+      const ox = (Math.random()-0.5)*2, oy=(Math.random()-0.5)*2;
+      ctx.filter='contrast(1.2) saturate(1.15)';
+      ctx.drawImage(canvas, ox, oy);
+      ctx.restore();
+    }
+
+    // たまに/または同期でグリッチ
+    maybeStartGlitch(now);
+    if (glitchActive) applyGlitch(now);
+
+    requestAnimationFrame(tick);
+  }
+  fit(); requestAnimationFrame(tick);
+
+  // === 入力 ===
+  function pos(e){
+    if (e.target===canvas && typeof e.offsetX==='number') return {x:e.offsetX,y:e.offsetY};
+    const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top};
+  }
+  canvas.addEventListener('pointerdown', e=>{
+    e.preventDefault(); if(e.button===2) return;
+    const p=pos(e); createDrone(p.x,p.y);
+  }, {passive:false});
+
+  // ダブルタップズーム抑制
+  let lastTouchEnd=0;
+  document.addEventListener('touchend', e=>{
+    const n=Date.now(); if(n-lastTouchEnd<=350){ e.preventDefault(); } lastTouchEnd=n;
+  }, {passive:false});
+
+  // === UI ===
+  document.getElementById('stopBtn').addEventListener('click', stopAll);
+  document.getElementById('clearBtn').addEventListener('click', ()=>{
+    stopAll(); ripples.clear(); particles.clear();
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  });
+  document.getElementById('saveBtn').addEventListener('click', ()=>{
+    const a=document.createElement('a'); a.download='matsumura-drone-phase2.png';
+    a.href=canvas.toDataURL('image/png'); a.click();
+  });
+  const bgmBtn=document.getElementById('bgmBtn');
+  bgmBtn.addEventListener('click', ()=>{
+    unlock();
+    if(!bgmOn){ startBGM(); bgmOn=true; bgmBtn.textContent='BGM: ON'; }
+    else { stopBGM(); bgmOn=false; bgmBtn.textContent='BGM: OFF'; }
+  });
+</script>
+</body>
+</html>
