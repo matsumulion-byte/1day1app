@@ -9,7 +9,7 @@
     --ink:#e9f1f7; --shadow:0 10px 30px rgba(0,0,0,.35);
     --safe-top: env(safe-area-inset-top, 0px);
   }
-  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none }
   html,body{ height:100%; margin:0; background:#000; color:var(--ink);
     font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif }
   #wrap{ position:fixed; inset:0; display:grid; grid-template-rows:auto 1fr }
@@ -83,6 +83,9 @@
 <script type="module">
 /* Vercel本番用に固定パス（public直下） */
 const asset = (p)=> '/apps/2025-11-04/' + p.replace(/^\.\//,'');
+  // 長押しのコンテキストメニュー等を無効化
+  window.addEventListener('contextmenu', e=> e.preventDefault());
+  window.addEventListener('selectstart', e=> e.preventDefault());
 
 /* ★差し替えポイント：昨日の爆発音と背景画像 */
 const SFX_EXPLODE = asset('./assets/explosion.mp3'); // ←手持ちの音に変更OK
