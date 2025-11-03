@@ -399,7 +399,7 @@ class Heli{
     // World containers
     let buildings=[], enemies=[], props=[];
     let stageEnd = 0;
-    function buildStage(){ buildings.length=0; enemies.length=0; props.length=0; dust.length=0; sparks.length=0; smokes.length=0; fireballs.length=0; debris.length=0; state.totalTargets=0; state.destroyed=0; state.score=0; state.roarCD=0; camera.t=0; flashAlpha=0; let x=80; const end=W*5.0; stageEnd = end; while(x<end){ const w=80+Math.floor(Math.random()*80); const h=90+Math.floor(Math.random()*150); buildings.push(new Building(x,w,h)); // 小物配置
+    function buildStage(){ buildings.length=0; enemies.length=0; props.length=0; dust.length=0; sparks.length=0; smokes.length=0; fireballs.length=0; debris.length=0; state.totalTargets=0; state.destroyed=0; state.score=0; state.roarCD=0; camera.t=0; flashAlpha=0; let x=80; const targetTime=45.0; const end = 80 + player.speed * targetTime + 1600; stageEnd = end; while(x<end){ const w=80+Math.floor(Math.random()*80); const h=90+Math.floor(Math.random()*150); buildings.push(new Building(x,w,h)); // 小物配置
         if(Math.random()<0.6) props.push(new Car(x + w*0.5 + 20 + Math.random()*40));
         if(Math.random()<0.45) props.push(new Barrel(x - 30 - Math.random()*50));
         x += w + (14+Math.random()*20); }
