@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>ゾンビ松村大爆破</title>
+<style>
+  :root{
+    --ink:#e9f1f7; --shadow:0 10px 30px rgba(0,0,0,.35);
+    --safe-top: env(safe-area-inset-top, 0px);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent }
+  html,body{ height:100%; margin:0; background:#000; color:var(--ink);
+    font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif }
+  #wrap{ position:fixed; inset:0; display:grid; grid-template-rows:auto 1fr }
+  header{
+    display:flex; gap:.6rem; align-items:center;
+    padding:calc(8px + var(--safe-top)) 10px 8px;
+    background:linear-gradient(180deg,rgba(8,12,18,.7),rgba(8,12,18,.15));
+    border-bottom:1px solid rgba(255,255,255,.06);
+    backdrop-filter: blur(6px)
+  }
+  header h1{ font-size:13px; margin:0; opacity:.9 }
+  .controls{ margin-left:auto; display:flex; gap:.5rem; flex-wrap:wrap; align-items:center }
+  .pill{ display:inline-flex; align-items:center; gap:.5rem; padding:.35rem .6rem; border-radius:999px;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08) }
+  .pill label{ font-size:12px; opacity:.85 }
+  .pill input[type="range"]{ width:130px }
+  .pill select{ background:transparent; border:none; color:var(--ink); font-size:12px }
+  .btn{ cursor:pointer; user-select:none }
+
+  /* 9:16フレーム（PC左右黒帯） */
+  #stage-wrap{
+    position:fixed; inset:0; display:grid; place-items:center; background:#000;
+  }
+  #frame{
+    position:relative;
+    width: min(100vw, calc(100vh * 9 / 16));
+    height: min(100vh, calc(100vw * 16 / 9));
+    aspect-ratio: 9 / 16;
+    overflow:hidden; background:#000; box-shadow: var(--shadow);
+  }
+  #videoBg, #imgBg, #canvas{ position:absolute; inset:0; width:100%; height:100% }
+  #imgBg, #videoBg{ object-fit: cover; filter: contrast(1.08) brightness(.92) saturate(1.05) }
+  #canvas{ touch-action:none }
+  #hint{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    background:rgba(0,0,0,.45); padding:.75rem 1rem; border-radius:12px; border:1px solid rgba(255,255,255,.1);
+    font-size:14px; color:#dfe7ef; pointer-events:none; box-shadow:var(--shadow); text-align:center; opacity:.9
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <h1>爆発タップ – 炎ブースト</h1>
+    <div class="controls">
+      <div class="pill"><label>威力</label><input id="power" type="range" min="0.4" max="2.5" step="0.1" value="1.3"></div>
+      <div class="pill"><label>炎</label><input id="flame" type="range" min="0" max="1" step="0.05" value="0.9"></div>
+      <div class="pill"><label>背景</label>
+        <select id="bgMode">
+          <option value="image">画像</option>
+          <option value="camera">カメラ（AR）</option>
+          <option value="none">なし</option>
+        </select>
+      </div>
+      <div class="pill btn" id="clear">焦げ跡クリア</div>
+      <div class="pill btn" id="mute">音: ON</div>
+    </div>
+  </header>
+
+  <div id="stage-wrap">
+    <div id="frame">
+      <video id="videoBg" playsinline muted></video>
+      <img id="imgBg" alt="">
+      <canvas id="canvas"></canvas>
+      <div id="hint">タップ / クリックで爆発（長押しで強威力）</div>
+    </div>
+  </div>
+</div>
+
+<!-- ★モジュールにして asset() を使用 -->
+<script type="module">
+/* Vercel本番用に固定パス（public直下） */
+const asset = (p)=> '/apps/2025-11-04/' + p.replace(/^\.\//,'');
+
+/* ★差し替えポイント：昨日の爆発音と背景画像 */
+const SFX_EXPLODE = asset('./assets/explosion.mp3'); // ←手持ちの音に変更OK
+const BG_IMAGE     = asset('./assets/bg.png');       // ←背景画像
+
+const frame  = document.getElementById('frame');
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d', { alpha:true });
+const video  = document.getElementById('videoBg');
+const imgBg  = document.getElementById('imgBg');
+const hint   = document.getElementById('hint');
+
+const powerEl = document.getElementById('power');
+const flameEl = document.getElementById('flame');
+const bgModeEl= document.getElementById('bgMode');
+const clearEl  = document.getElementById('clear');
+const muteEl   = document.getElementById('mute');
+
+const DPR = Math.min(2, window.devicePixelRatio || 1);
+let W=0, H=0;
+
+/* オーディオ */
+let audioCtx, bufExplode=null, muted=false;
+async function initAudio(){
+  if (audioCtx) return;
+  try{
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const res = await fetch(SFX_EXPLODE);
+    const arr = await res.arrayBuffer();
+    bufExplode = await audioCtx.decodeAudioData(arr);
+  }catch(e){ /* 音なしでも動く */ }
+}
+function playExplode(gain=1){
+  if (muted || !bufExplode || !audioCtx) return;
+  const src = audioCtx.createBufferSource();
+  src.buffer = bufExplode;
+  const g = audioCtx.createGain(); g.gain.value = gain;
+  src.connect(g).connect(audioCtx.destination);
+  src.start(0);
+}
+// --- 炙り出しテキスト設定 ---
+const SECRET_TEXT = '松村です';  // 好きな言葉に変えてOK
+const SECRET_FONT = `bold ${Math.floor(72*DPR)}px "Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif`;
+
+let veilCtx = null;  // 黒い煤
+let textCtx = null;  // 下地の文字
+
+function initSecretLayers(){
+  // テキストレイヤー（下地）
+  const under = document.createElement('canvas');
+  under.width = W; under.height = H;
+  textCtx = under.getContext('2d');
+  textCtx.clearRect(0,0,W,H);
+  textCtx.save();
+  textCtx.globalAlpha = 0.9;
+  textCtx.fillStyle = 'rgba(255,220,60,0.95)'; // 炙り出された文字の色
+  textCtx.strokeStyle = 'rgba(0,0,0,0.5)';
+  textCtx.lineWidth = 10 * DPR;
+  textCtx.font = SECRET_FONT;
+  textCtx.textAlign = 'center';
+  textCtx.textBaseline = 'middle';
+  // 画面上部あたりに表示（位置調整可）
+  textCtx.strokeText(SECRET_TEXT, W * 0.5, H * 0.18);
+  textCtx.fillText(SECRET_TEXT, W * 0.5, H * 0.18);
+  textCtx.restore();
+
+  // 黒い煤（最初は文字を隠す）
+  const veil = document.createElement('canvas');
+  veil.width = W; veil.height = H;
+  veilCtx = veil.getContext('2d');
+  veilCtx.fillStyle = 'rgba(0,0,0,0.6)';
+  veilCtx.fillRect(0, 0, W, H);
+}
+
+// 煤を吹き飛ばす
+function punchVeil(x, y, r){
+  if(!veilCtx) return;
+  const g = veilCtx.createRadialGradient(x, y, r * 0.2, x, y, r);
+  g.addColorStop(0, 'rgba(0,0,0,1)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  veilCtx.globalCompositeOperation = 'destination-out';
+  veilCtx.fillStyle = g;
+  veilCtx.beginPath();
+  veilCtx.arc(x, y, r, 0, Math.PI * 2);
+  veilCtx.fill();
+  veilCtx.globalCompositeOperation = 'source-over';
+}
+
+/* ステート */
+const state = {
+  effects: [],
+  scorch: null,
+  flash: 0,
+  shake: 0,
+  last: performance.now(),
+  gravity: 900,
+  bgMode: 'image',
+};
+
+/* リサイズ（9:16フレーム基準） */
+function resize(){
+  const r = frame.getBoundingClientRect();
+  W = Math.floor(r.width * DPR);
+  H = Math.floor(r.height * DPR);
+  canvas.width = W; canvas.height = H;
+  canvas.style.width = r.width+'px'; canvas.style.height = r.height+'px';
+  const s = document.createElement('canvas'); s.width=W; s.height=H;
+  state.scorch = s.getContext('2d');
+  initSecretLayers(); // 炙り出しレイヤー初期化
+
+}
+window.addEventListener('resize', resize, { passive:true }); resize();
+
+/* 背景切替 */
+async function setBg(mode){
+  state.bgMode = mode;
+  video.style.display = 'none';
+  imgBg.style.display = 'none';
+  if (mode === 'image'){
+    imgBg.src = BG_IMAGE;
+    imgBg.style.display = 'block';
+  } else if (mode === 'camera'){
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' }, audio:false });
+      video.srcObject = stream;
+      await video.play();
+      video.style.display = 'block';
+    }catch(e){
+      // 権限NGやhttp環境でも graceful に無視
+    }
+  }
+}
+bgModeEl.addEventListener('change', e=> setBg(e.target.value));
+setBg('image');
+
+/* 入力座標（ズレ修正：frame内座標→DPR補正→canvas座標） */
+function getPos(e){
+  const rect = canvas.getBoundingClientRect();
+  const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+  const cy = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+  return { x: cx * DPR, y: cy * DPR };
+}
+
+/* 疑似ノイズ（炎の揺らぎ） */
+function nrand(x,y,t){
+  return Math.sin(0.035*x + 0.04*y + 0.0027*t + 3.1) * Math.cos(0.025*y + 0.0033*t + 1.7);
+}
+
+/* 色（熱） */
+function heatColor(t){
+  if (t<.18) return `rgba(255,255,255,1)`;
+  if (t<.4)  return `rgba(255,235,150,1)`;
+  if (t<.65) return `rgba(255,170,80,1)`;
+  if (t<.85) return `rgba(255,95,45,0.95)`;
+  return `rgba(120,110,110,0.9)`;
+}
+
+/* 焦げ跡 */
+function scorch(x,y,r){
+  const s = state.scorch;
+  const g = s.createRadialGradient(x,y,r*0.3,x,y,r);
+  g.addColorStop(0,'rgba(0,0,0,0.36)');
+  g.addColorStop(1,'rgba(0,0,0,0)');
+  s.globalCompositeOperation='multiply';
+  s.fillStyle=g; s.beginPath(); s.arc(x,y,r,0,Math.PI*2); s.fill();
+  s.globalCompositeOperation='source-over';
+}
+
+/* 爆発生成（炎だまり入り） */
+function spawnExplosion(x,y,power=1, flameAmt=0.9){
+  const sparks = Math.floor(110*power);
+  const smoke  = Math.floor(55*power);   // 炎を見やすく
+  const debris = Math.floor(30*power);
+  const flameN = Math.floor(120 * power * flameAmt);
+
+  const now = performance.now();
+  const fx = { t0:now, x,y, shock:{ r:0, life:420*power }, particles:[] };
+
+  // 火花
+  for(let i=0;i<sparks;i++){
+    const a = Math.random()*Math.PI*2;
+    const sp= (280 + Math.random()*320)*power;
+    fx.particles.push({kind:'spark', x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:380+Math.random()*320, age:0, size:2+Math.random()*2.4});
+  }
+  // 破片
+  for(let i=0;i<debris;i++){
+    const a=Math.random()*Math.PI*2, sp=(140+Math.random()*200)*power;
+    fx.particles.push({kind:'debris',x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:900+Math.random()*800,age:0,size:3+Math.random()*4,rot:Math.random()*Math.PI,vr:(Math.random()-.5)*0.02});
+  }
+  // 煙（上昇）
+  for(let i=0;i<smoke;i++){
+    const a=Math.random()*Math.PI*2, sp=(30+Math.random()*80)*power;
+    fx.particles.push({kind:'smoke', x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - (100+60*Math.random()), life:1400+Math.random()*1200, age:0, size:12+Math.random()*26*power});
+  }
+  // 炎だまり（上向き＋ゆらぎ）
+  for(let i=0;i<flameN;i++){
+    const a = (Math.random()*Math.PI*0.9) + Math.PI*0.05; // ほぼ上向き
+    const sp= (40 + Math.random()*90) * power;
+    fx.particles.push({
+      kind:'flame', x,y,
+      vx: Math.cos(a)*sp*0.3,
+      vy: -Math.abs(Math.sin(a))*sp,
+      life: 320 + Math.random()*420,
+      age: 0,
+      size: 12 + Math.random()*30*power,
+      seed: Math.random()*1000
+    });
+  }
+
+  state.flash = Math.min(1, state.flash + 0.95*power);
+  state.shake = Math.min(1, state.shake + 0.85*power);
+  scorch(x,y, 70*power);
+  state.effects.push(fx);
+  punchVeil(x, y, 90 * power); // 爆発地点の煤を吹き飛ばす
+
+}
+
+/* ループ */
+function loop(t){
+  const dt = Math.min(32, t - state.last); state.last = t;
+// --- 炙り出しテキスト（下地→煤） ---
+if (textCtx) ctx.drawImage(textCtx.canvas, 0, 0);
+if (veilCtx) ctx.drawImage(veilCtx.canvas, 0, 0);
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,W,H);
+
+  // シェイク
+  if (state.shake>0){
+    const mag = 7*state.shake*DPR;
+    ctx.translate((Math.random()*2-1)*mag, (Math.random()*2-1)*mag);
+    state.shake*=0.9; if (state.shake<.01) state.shake=0;
+  }
+
+  // 焦げ跡
+  ctx.globalCompositeOperation='source-over';
+  ctx.drawImage(state.scorch.canvas, 0, 0);
+
+  // 各エフェクト
+  for(let i=state.effects.length-1;i>=0;i--){
+    const fx = state.effects[i];
+
+    // 衝撃波リング
+    if (fx.shock){
+      fx.shock.r += (850 * dt/1000);
+      const a = Math.max(0, 1 - (fx.shock.r / (fx.shock.life)));
+      if (a>0){
+        ctx.beginPath();
+        ctx.lineWidth = Math.max(1, 9*a*DPR);
+        ctx.strokeStyle = `rgba(255,255,255,${0.28*a})`;
+        ctx.arc(fx.x, fx.y, fx.shock.r, 0, Math.PI*2);
+        ctx.stroke();
+      }else fx.shock=null;
+    }
+
+    // 粒子
+    for(let j=fx.particles.length-1;j>=0;j--){
+      const p = fx.particles[j];
+      p.age += dt; if (p.age>=p.life){ fx.particles.splice(j,1); continue; }
+      const k = p.age/p.life;
+
+      // 物理
+      if (p.kind!=='smoke' && p.kind!=='flame'){ p.vy += state.gravity*(dt/1000); }
+      if (p.kind==='spark'){
+        // 炎同化のため少し上方向揺らぎ
+        p.vy -= 35*(dt/1000);
+        p.vx += nrand(p.x, p.y, performance.now()) * 20 * (dt/1000);
+      }
+
+      // 位置更新
+      p.x += p.vx*(dt/1000);
+      p.y += p.vy*(dt/1000);
+
+      // 描画
+      if (p.kind==='spark'){
+        const fade = 1-k;
+        const col  = heatColor(k);
+        ctx.globalCompositeOperation='lighter';
+        const r = (7 + p.size)*DPR*fade;
+        const rg = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*2);
+        rg.addColorStop(0, col);
+        rg.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = rg;
+        ctx.beginPath(); ctx.arc(p.x,p.y,r*1.3,0,Math.PI*2); ctx.fill();
+        ctx.globalCompositeOperation='screen';
+        ctx.fillStyle='rgba(255,255,255,.9)';
+        ctx.beginPath(); ctx.arc(p.x,p.y,1.8*DPR,0,Math.PI*2); ctx.fill();
+      }
+      else if (p.kind==='debris'){
+        const fade = 1-k;
+        ctx.globalCompositeOperation='source-over';
+        ctx.save(); ctx.translate(p.x,p.y); p.rot+=p.vr*dt; ctx.rotate(p.rot);
+        const s = (p.size*DPR);
+        ctx.fillStyle=`rgba(80,80,85,${0.9*fade})`;
+        ctx.fillRect(-s*0.5,-s*0.3,s,s*0.6);
+        ctx.restore();
+        ctx.globalCompositeOperation='lighter';
+        ctx.fillStyle=`rgba(255,120,60,${0.25*fade})`;
+        ctx.beginPath(); ctx.arc(p.x,p.y,3*DPR,0,Math.PI*2); ctx.fill();
+      }
+      else if (p.kind==='smoke'){
+        ctx.globalCompositeOperation='source-over';
+        const fade=1-k;
+        const r = p.size*(1+1.8*k)*DPR;
+        const g2 = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r);
+        const a  = 0.26*fade;
+        g2.addColorStop(0,`rgba(60,60,65,${a})`);
+        g2.addColorStop(1,`rgba(60,60,65,0)`);
+        ctx.fillStyle=g2;
+        ctx.beginPath(); ctx.arc(p.x,p.y,r,0,Math.PI*2); ctx.fill();
+        // 煙はゆっくり上へ
+        p.vy -= 20*(dt/1000);
+      }
+      else if (p.kind==='flame'){
+        const fade = 1-k;
+        const tnow = performance.now();
+        // 横揺らぎ＆浮力
+        const turbX = nrand(p.x + p.seed*1000, p.y, tnow) * 40;
+        const turbY = Math.abs(nrand(p.x, p.y + p.seed*1000, tnow)) * 20;
+        p.vx += (turbX * (dt/1000));
+        p.vy -= (60 + turbY) * (dt/1000);
+
+        const r = p.size * (0.6 + 1.6*k) * DPR;
+        const g3 = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r);
+        g3.addColorStop(0.00, 'rgba(255,255,255,0.95)');
+        g3.addColorStop(0.20, 'rgba(255,235,150,0.92)');
+        g3.addColorStop(0.55, 'rgba(255,170,80,0.85)');
+        g3.addColorStop(0.85, `rgba(200,80,40,${0.35*fade})`);
+        g3.addColorStop(1.00, 'rgba(0,0,0,0)');
+
+        ctx.globalCompositeOperation='lighter';
+        ctx.fillStyle = g3;
+        ctx.beginPath(); ctx.arc(p.x,p.y,r,0,Math.PI*2); ctx.fill();
+
+        ctx.globalCompositeOperation='screen';
+        ctx.fillStyle = `rgba(255,255,255,${0.08*fade})`;
+        ctx.beginPath(); ctx.arc(p.x,p.y, r*0.22, 0, Math.PI*2); ctx.fill();
+      }
+    }
+
+    if (fx.particles.length===0 && !fx.shock){
+      state.effects.splice(i,1);
+    }
+  }
+
+  // 熱フラッシュ
+  if (state.flash>0){
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.globalCompositeOperation='screen';
+    ctx.fillStyle=`rgba(255,255,255,${0.22*state.flash})`;
+    ctx.fillRect(0,0,W,H);
+    state.flash*=0.86; if (state.flash<.02) state.flash=0;
+  }
+
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* クリア＆ミュート */
+clearEl.addEventListener('click', ()=> state.scorch.clearRect(0,0,W,H));
+muteEl.addEventListener('click', ()=>{
+  muted = !muted;
+  muteEl.textContent = '音: ' + (muted?'OFF':'ON');
+});
+
+/* 入力（長押しでブースト） */
+let pressT=0;
+function fireAt(e, boost=1){
+  const p = getPos(e);
+  spawnExplosion(p.x, p.y, parseFloat(powerEl.value)*boost, parseFloat(flameEl.value));
+  hint.style.display='none';
+  initAudio().then(()=> playExplode(Math.min(1, 0.7*boost)));
+}
+canvas.addEventListener('pointerdown', e=>{ pressT=performance.now(); fireAt(e,1); }, { passive:true });
+canvas.addEventListener('pointerup',   e=>{
+  const d = performance.now()-pressT;
+  if (d>350){ const b = Math.min(2.5, 1.1+d/900); fireAt(e,b); }
+}, { passive:true });
+
+/* 初期ヒント消し */
+setTimeout(()=>{ hint.style.display='none'; }, 2400);
+</script>
+</body>
+</html>
