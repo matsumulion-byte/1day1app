@@ -112,8 +112,11 @@
   </div>
 
   <script type="module">
-    // 1day1app assets rule
-    const asset = (p) => new URL(p, import.meta.url).toString();
+    // 1day1app assets rule (robust on Vercel: resolve relative to current directory path)
+    const asset = (p)=>{
+      const dir = (location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^/]+$/,''));
+      return dir + p.replace(/^\.\//,'');
+    };
 
     // ===== Audio (single definition) =====
     function pickAudio(candidates){
