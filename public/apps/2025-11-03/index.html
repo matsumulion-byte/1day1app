@@ -112,11 +112,8 @@
   </div>
 
   <script type="module">
-    // 1day1app assets rule (robust on Vercel: resolve relative to current directory path)
-    const asset = (p)=>{
-      const dir = (location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^/]+$/,''));
-      return dir + p.replace(/^\.\//,'');
-    };
+    // Vercel本番用に固定パス（public直下）
+    const asset = (p)=> '/apps/2025-11-03/' + p.replace(/^\.\//,'');
 
     // ===== Audio (single definition) =====
     function pickAudio(candidates){
