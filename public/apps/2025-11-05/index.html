@@ -93,11 +93,11 @@ function success(){
   document.body.classList.add('flash'); setTimeout(()=>document.body.classList.remove('flash'),500);
   const rays=document.getElementById('rays'); const rb=document.getElementById('rainbow'); if(rays)rays.classList.add('on'); if(rb)rb.classList.add('on');
   fanfare(); confetti();
-  setTimeout(()=>{ if(rays)rays.classList.remove('on'); if(rb)rb.classList.remove('on'); }, 2600);
+  setTimeout(()=>{ if(rays)rays.classList.remove('on'); if(rb)rb.classList.remove('on'); }, 5000);
 }
 function fail(vals){ tsukkomi(); const m=["誰？","違う！","おしい！","え？誰？","知らん人！"]; showMsg(`${vals.join('と')}<span class="tuk">❌ ${m[Math.floor(Math.random()*m.length)]}</span>`,'fail'); }
 
-function showMsg(html,type){ const el=document.getElementById('msg'), cont=document.getElementById('msgContent'); cont.innerHTML=html; el.className=`msg show ${type||''}`; setTimeout(()=> el.classList.remove('show'), 2500); }
+function showMsg(html,type){ const el=document.getElementById('msg'), cont=document.getElementById('msgContent'); cont.innerHTML=html; el.className=`msg show ${type||''}`; setTimeout(()=> el.classList.remove('show'), 5000); }
 
 // ===== 紙吹雪 =====
 function confetti(){ const c=document.getElementById('confetti'); if(!c) return; const ctx=c.getContext('2d'); c.width=innerWidth; c.height=innerHeight; const parts=[]; for(let i=0;i<140;i++){ parts.push({x:innerWidth/2,y:innerHeight/3,vx:(Math.random()-.5)*6,vy:-Math.random()*5-2,g:.1+Math.random()*.05,r:2+Math.random()*3,a:1}) } let t=0; (function ani(){ ctx.clearRect(0,0,c.width,c.height); parts.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.a*=.992; ctx.globalAlpha=p.a; ctx.fillStyle=`hsl(${(p.x+p.y)%360},90%,70%)`; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill(); }); ctx.globalAlpha=1; if(t++<180) requestAnimationFrame(ani); })(); }
