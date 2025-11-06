@@ -18,6 +18,7 @@
     color:var(--ink);
     font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
     overflow:hidden; touch-action:manipulation; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
+    min-height:100svh; /* mobile URLバー考慮 */
   }
   #wrap{ position:fixed; inset:0; display:grid; grid-template-rows: auto 1fr auto; }
 
@@ -31,7 +32,10 @@
   .brand{ font-size:18px }
 
   main{ position:relative; display:grid; place-items:center; padding:10px; }
-  .stack{ position:relative; width:min(92vw, 420px); height:min(84vh, 760px); }
+  .stack{ position:relative; width:min(92vw, 420px); height:min(84svh, 760px); }
+  @supports (height: 100dvh){
+    .stack{ height:min(84dvh, 760px); }
+  }
 
   /* Card */
   .card{ position:absolute; inset:0; border-radius:24px; background:var(--card); overflow:hidden; box-shadow:var(--shadow);
@@ -87,7 +91,10 @@
   @media (width >= 700px){
     .controls{ gap:26px }
     .btn{ width:78px; height:78px; font-size:30px }
-    .stack{ width:min(40vw, 520px); height:min(80vh, 720px); }
+    .stack{ width:min(40vw, 520px); height:min(80svh, 720px); }
+    @supports (height: 100dvh){
+      .stack{ height:min(80dvh, 720px); }
+    }
   }
 </style>
 </head>
