@@ -126,9 +126,12 @@
 
 <script type="module">
   // ======== Helpers ========
+  // Ensure asset paths resolve under "/YYYY-MM-DD/" even when accessed without a trailing slash
+  const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+  const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : '/';
   const asset = (p) => {
-    try { return new URL(p, document.baseURI).toString(); }
-    catch(e){ try { return new URL(p, import.meta.url).toString(); } catch { return p } }
+    const clean = String(p || '').replace(/^\.?\//, '');
+    return `${DATE_BASE}${clean}`;
   };
 
   // ======== Domain data ========
@@ -139,7 +142,7 @@
 
   // 画像（ベース名＋拡張子候補を順に試す）
   const imageFiles = ['m1.jpg','m2.jpg','m3.jpg','m4.jpg','m5.jpg','m6.jpg','m7.jpg'];
-  const images = imageFiles.map(f => asset(`./assets/${f}`));
+  const images = imageFiles.map(f => asset(`assets/${f}`));
   console.log('[Matsunder] image sources:', images);
 
   // ======== Elements ========
@@ -151,7 +154,7 @@
   const btnLike = document.getElementById('btnLike');
   const btnNope = document.getElementById('btnNope');
 
-  let seMatch; try{ seMatch = new Audio(asset('./assets/matsumura_desu.m4a')); }catch(e){ seMatch = null }
+  let seMatch; try{ seMatch = new Audio(asset('assets/matsumura_desu.m4a')); }catch(e){ seMatch = null }
 
   function newCardData(){
     const img = images[(Math.random()*images.length)|0];
