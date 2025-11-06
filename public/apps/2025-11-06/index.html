@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-<title>Matsunder - お見合いの日（松村オンリー）</title>
+<title>Matsunder </title>
 <style>
   :root{
     --bg:#0b1014; --ink:#e9f1f7; --muted:#9fb0c0; --acc:#ff6b9d; --ok:#64e1a5; --danger:#ff6b6b;
@@ -32,9 +32,9 @@
   .brand{ font-size:18px }
 
   main{ position:relative; display:grid; place-items:center; padding:10px; }
-  .stack{ position:relative; width:min(92vw, 420px); height:min(84svh, 760px); }
+  .stack{ position:relative; width:min(92vw, 420px); height: var(--stack-h, min(84svh, 760px)); }
   @supports (height: 100dvh){
-    .stack{ height:min(84dvh, 760px); }
+    .stack{ height: var(--stack-h, min(84dvh, 760px)); }
   }
 
   /* Card */
@@ -91,9 +91,9 @@
   @media (width >= 700px){
     .controls{ gap:26px }
     .btn{ width:78px; height:78px; font-size:30px }
-    .stack{ width:min(40vw, 520px); height:min(80svh, 720px); }
+    .stack{ width:min(40vw, 520px); height: var(--stack-h, min(80svh, 720px)); }
     @supports (height: 100dvh){
-      .stack{ height:min(80dvh, 720px); }
+      .stack{ height: var(--stack-h, min(80dvh, 720px)); }
     }
   }
 </style>
@@ -140,6 +140,23 @@
     const clean = String(p || '').replace(/^\.?\//, '');
     return `${DATE_BASE}${clean}`;
   };
+
+  // ======== Layout: dynamic stack height ========
+  function updateStackHeight(){
+    const header = document.querySelector('header');
+    const controls = document.querySelector('.controls');
+    const vv = window.visualViewport?.height || window.innerHeight;
+    const headerH = header ? header.offsetHeight : 0;
+    const controlsH = controls ? controls.offsetHeight : 0;
+    const available = Math.max(0, vv - headerH - controlsH - 20);
+    const maxH = 760; // design cap
+    const h = Math.min(maxH, Math.floor(available));
+    document.documentElement.style.setProperty('--stack-h', `${h}px`);
+  }
+  // Initial and reactive updates
+  window.addEventListener('resize', updateStackHeight);
+  window.visualViewport && window.visualViewport.addEventListener('resize', updateStackHeight);
+  window.addEventListener('orientationchange', updateStackHeight);
 
   // ======== Domain data ========
   const NAME = '松村広則（42）';
@@ -240,6 +257,8 @@
       card.style.transform = `translate(0, ${i*2}px)`;
       stack.appendChild(card);
     }
+    // ensure correct height after content mounted
+    updateStackHeight();
   }
 
   const topCard = () => stack.lastElementChild;
@@ -286,6 +305,9 @@
     if(e.key === 'ArrowRight'){ const el = topCard(); if(el) like(el); }
     if(e.key === 'ArrowLeft'){ const el = topCard(); if(el) nope(el); }
   });
+
+  // kick initial layout
+  updateStackHeight();
 </script>
 </body>
 </html>
