@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>Matsunder - お見合いの日（松村オンリー）</title>
+<style>
+  :root{
+    --bg:#0b1014; --ink:#e9f1f7; --muted:#9fb0c0; --acc:#ff6b9d; --ok:#64e1a5; --danger:#ff6b6b;
+    --rail:#202833; --card:#111723; --shadow:0 14px 36px rgba(0,0,0,.45);
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent }
+  html,body{ height:100%; margin:0 }
+  body{
+    background: radial-gradient(1200px 900px at 70% -10%, #0f1621 0%, #0b1014 55%, #060a0f 100%);
+    color:var(--ink);
+    font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+    overflow:hidden; touch-action:manipulation; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
+  }
+  #wrap{ position:fixed; inset:0; display:grid; grid-template-rows: auto 1fr auto; }
+
+  header{
+    height:56px; padding: max(8px, var(--safe-top)) 14px 8px;
+    display:flex; align-items:center; justify-content:space-between;
+    background:linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,0));
+  }
+  .logo{ display:flex; align-items:center; gap:8px; font-weight:800; letter-spacing:.1em; }
+  .logo .heart{ width:24px; height:24px; border-radius:8px; background:conic-gradient(from 210deg, var(--acc), #ff9ed1, #ff6b9d, var(--acc)); box-shadow:0 6px 14px rgba(255,107,157,.35); }
+  .brand{ font-size:18px }
+
+  main{ position:relative; display:grid; place-items:center; padding:10px; }
+  .stack{ position:relative; width:min(92vw, 420px); height:min(84vh, 760px); }
+
+  /* Card */
+  .card{ position:absolute; inset:0; border-radius:24px; background:var(--card); overflow:hidden; box-shadow:var(--shadow);
+    display:grid; grid-template-rows: 1fr auto; transform-origin: 50% 100%;
+  }
+  .photo{ position:relative; background:#0a0f16; z-index:0; }
+  .photo img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 30%; display:block; z-index:1; }
+  .photo .fallback{ position:absolute; inset:0; display:grid; place-items:center; background:linear-gradient(145deg,#151c28,#0f1520); color:#c6d0e0; font-size:64px; font-weight:900; z-index:2 }
+  .badge{ position:absolute; top:14px; left:14px; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.15) }
+
+  .meta{ padding:14px 16px 18px; background:linear-gradient(to bottom, rgba(0,0,0,.0), rgba(0,0,0,.3)); }
+  .name{ font-size:22px; font-weight:800; margin:0 0 6px }
+  .row{ display:flex; align-items:center; gap:10px; color:var(--muted); font-size:14px; }
+  .pill{ padding:4px 10px; background:#131a26; border:1px solid #263042; border-radius:999px; font-weight:600 }
+  .comment{ margin-top:10px; font-size:15px }
+
+  /* Like/Nope stamps */
+  .stamp{ position:absolute; top:16px; right:16px; padding:8px 12px; border:4px solid; border-radius:12px; font-weight:900; font-size:18px; letter-spacing:.08em; transform:rotate(15deg); opacity:0; }
+  .stamp.like{ color:var(--ok); border-color:var(--ok) }
+  .stamp.nope{ color:var(--danger); border-color:var(--danger); right:auto; left:16px; transform:rotate(-15deg) }
+
+  /* Controls */
+  .controls{ height:90px; padding:8px 18px max(8px, var(--safe-bottom)); display:flex; align-items:center; justify-content:center; gap:18px; }
+  .btn{
+    width:68px; height:68px; border-radius:999px; display:grid; place-items:center; font-size:28px; font-weight:900;
+    background:#0f1621; border:2px solid #273244; color:#cfe2ff; box-shadow:var(--shadow); cursor:pointer; user-select:none;
+    transition: transform .08s ease; touch-action:manipulation;
+  }
+  .btn:active{ transform:scale(.95) }
+  .btn.like{ border-color:rgba(100,225,165,.6) }
+  .btn.nope{ border-color:rgba(255,107,107,.6) }
+
+  /* Start & Match screens */
+  .screen{ position:absolute; inset:0; display:grid; place-items:center; background:rgba(0,0,0,.65); backdrop-filter: blur(8px); z-index:999; }
+  .panel{ width:min(92vw, 440px); background:#0e1520; border:1px solid #1d293b; border-radius:22px; box-shadow:var(--shadow); padding:22px; text-align:center }
+  .panel h1{ margin:10px 0 4px; font-size:26px }
+  .panel p{ margin:6px 0 14px; color:var(--muted) }
+  .cta{ display:inline-block; padding:12px 18px; border-radius:999px; background:linear-gradient(135deg, var(--acc), #ff9ed1); color:#1a0b12; font-weight:900; border:none; cursor:pointer; box-shadow:0 10px 24px rgba(255,107,157,.35) }
+
+  .its-a-match{ font-size:28px; font-weight:900; margin-bottom:8px }
+  .match-names{ color:var(--muted); margin-bottom:18px }
+
+  /* Animations */
+  .fade-in{ animation:fadeIn .25s both }
+  @keyframes fadeIn{ from{ opacity:0; transform:translateY(6px) } to{ opacity:1; transform:none } }
+
+  .slide-out-right{ animation:outR .28s ease both }
+  .slide-out-left{ animation:outL .28s ease both }
+  @keyframes outR{ to{ transform: translate(120%, -6%) rotate(18deg); opacity:.2 } }
+  @keyframes outL{ to{ transform: translate(-120%, -6%) rotate(-18deg); opacity:.2 } }
+
+  /* Desktop adjustments */
+  @media (width >= 700px){
+    .controls{ gap:26px }
+    .btn{ width:78px; height:78px; font-size:30px }
+    .stack{ width:min(40vw, 520px); height:min(80vh, 720px); }
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <div class="logo"><div class="heart"></div><div class="brand">Matsunder</div></div>
+  </header>
+  <main>
+    <div class="stack" id="stack"></div>
+
+    <!-- Start Screen -->
+    <div class="screen" id="start">
+      <div class="panel fade-in">
+        <h1>ようこそ Matsunder へ</h1>
+        <p>右へ❤️でいいね、左へ❌でスキップ。</p>
+        <button class="cta" id="btnStart">マッチングをはじめる</button>
+      </div>
+    </div>
+
+    <!-- Match Screen -->
+    <div class="screen" id="matched" style="display:none">
+      <div class="panel fade-in">
+        <div class="its-a-match">松村さんとマッチしました！</div>
+        <div class="match-names">Matsumura desu 💘</div>
+        <button class="cta" id="btnRestart">最初に戻る</button>
+      </div>
+    </div>
+  </main>
+
+  <div class="controls">
+    <button class="btn nope" id="btnNope" aria-label="Nope">❌</button>
+    <button class="btn like" id="btnLike" aria-label="Like">❤️</button>
+  </div>
+</div>
+
+<script type="module">
+  // ======== Helpers ========
+  const asset = (p) => {
+    try { return new URL(p, document.baseURI).toString(); }
+    catch(e){ try { return new URL(p, import.meta.url).toString(); } catch { return p } }
+  };
+
+  // ======== Domain data ========
+  const NAME = '松村広則（42）';
+  const COMMENTS = ['松村です'];
+  const JOBS = ['松村', 'サックス', 'カイゼル髭', 'ヒゲ']; // 2択
+  const MATCH_RATE = 0.05; // ❤️時にマッチする確率
+
+  // 画像（ベース名＋拡張子候補を順に試す）
+  const imageFiles = ['m1.jpg','m2.jpg','m3.jpg','m4.jpg','m5.jpg','m6.jpg','m7.jpg'];
+  const images = imageFiles.map(f => asset(`./assets/${f}`));
+  console.log('[Matsunder] image sources:', images);
+
+  // ======== Elements ========
+  const stack = document.getElementById('stack');
+  const start = document.getElementById('start');
+  const matched = document.getElementById('matched');
+  const btnStart = document.getElementById('btnStart');
+  const btnRestart = document.getElementById('btnRestart');
+  const btnLike = document.getElementById('btnLike');
+  const btnNope = document.getElementById('btnNope');
+
+  let seMatch; try{ seMatch = new Audio(asset('./assets/matsumura_desu.m4a')); }catch(e){ seMatch = null }
+
+  function newCardData(){
+    const img = images[(Math.random()*images.length)|0];
+    const job = JOBS[(Math.random()*JOBS.length)|0];
+    const comment = COMMENTS[0];
+    return { img, job, comment };
+  }
+
+  function buildCard(data){
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.innerHTML = `
+      <div class="photo">
+        <img alt="松村">
+        <div class="fallback">松</div>
+        <div class="badge">職業：${data.job}</div>
+        <div class="stamp like">LIKE</div>
+        <div class="stamp nope">NOPE</div>
+      </div>
+      <div class="meta">
+        <h2 class="name">${NAME}</h2>
+        <div class="row">
+          <div class="pill">${data.job}</div>
+          <div class="pill">お見合いの日</div>
+        </div>
+        <div class="comment">${data.comment}</div>
+      </div>`;
+
+    const img = el.querySelector('img');
+    const fb = el.querySelector('.fallback');
+    fb.style.display = 'none'; // 初期状態でfallbackを非表示
+    img.src = data.img;
+    img.addEventListener('load', ()=>{ 
+      console.log('[Matsunder] loaded:', img.src);
+      fb.style.display = 'none'; // 画像が読み込まれたらfallbackを非表示
+    });
+    img.addEventListener('error', ()=>{ 
+      console.warn('[Matsunder] failed:', img.src); 
+      img.hidden = true; 
+      fb.style.display = 'grid'; // エラー時はfallbackを表示
+    });
+
+    let startX = 0, startY = 0, dx = 0, dy = 0, dragging = false;
+    const likeStamp = el.querySelector('.stamp.like');
+    const nopeStamp = el.querySelector('.stamp.nope');
+
+    const onStart = (x,y)=>{ dragging = true; startX = x; startY = y; dx = dy = 0; el.style.transition = 'none'; };
+    const onMove = (x,y)=>{
+      if(!dragging) return;
+      dx = x - startX; dy = y - startY;
+      const rot = dx/14; el.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+      const p = Math.min(1, Math.abs(dx)/120);
+      likeStamp.style.opacity = dx>0 ? p : 0; nopeStamp.style.opacity = dx<0 ? p : 0;
+    };
+    const onEnd = ()=>{
+      if(!dragging) return; dragging = false; el.style.transition = '';
+      const threshold = 100;
+      if(dx > threshold){ like(el); }
+      else if(dx < -threshold){ nope(el); }
+      else{ el.style.transform = ''; likeStamp.style.opacity = nopeStamp.style.opacity = 0; }
+    };
+
+    el.addEventListener('pointerdown', e=>{ el.setPointerCapture?.(e.pointerId); onStart(e.clientX,e.clientY) });
+    el.addEventListener('pointermove', e=>onMove(e.clientX,e.clientY));
+    el.addEventListener('pointerup', onEnd);
+    el.addEventListener('pointercancel', onEnd);
+
+    return el;
+  }
+
+  function mountDeck(count=3){
+    stack.innerHTML = '';
+    for(let i=0;i<count;i++){
+      const card = buildCard(newCardData());
+      card.style.zIndex = 100 + i;
+      card.style.transform = `translate(0, ${i*2}px)`;
+      stack.appendChild(card);
+    }
+  }
+
+  const topCard = () => stack.lastElementChild;
+
+  function nextCard(){
+    const el = topCard(); if(!el) return;
+    el.remove();
+    const c = buildCard(newCardData()); c.style.zIndex = 100; c.style.transform = 'translate(0,0)';
+    stack.prepend(c);
+  }
+
+  function showMatched(){
+    matched.style.display='grid';
+    console.log('[Matsunder] showMatched');
+  }
+
+  function like(el){
+    el.classList.add('slide-out-right');
+    setTimeout(()=>{
+      nextCard();
+      if(Math.random() < MATCH_RATE){
+        showMatched();
+        try{ seMatch && seMatch.play(); }catch(e){}
+      }
+    }, 260);
+  }
+
+  function nope(el){
+    el.classList.add('slide-out-left');
+    setTimeout(()=>{ nextCard(); }, 240);
+  }
+
+  btnLike.addEventListener('click', ()=>{ const el = topCard(); if(el) like(el); });
+  btnNope.addEventListener('click', ()=>{ const el = topCard(); if(el) nope(el); });
+  btnStart.addEventListener('click', ()=>{ start.style.display='none'; mountDeck(); });
+  btnRestart.addEventListener('click', ()=>{ matched.style.display='none'; start.style.display='grid'; });
+
+  let lastTouchEnd = 0; document.addEventListener('touchend', (e)=>{
+    const now = Date.now(); if(now - lastTouchEnd <= 350){ e.preventDefault(); }
+    lastTouchEnd = now;
+  }, {passive:false});
+
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'ArrowRight'){ const el = topCard(); if(el) like(el); }
+    if(e.key === 'ArrowLeft'){ const el = topCard(); if(el) nope(el); }
+  });
+</script>
+</body>
+</html>
