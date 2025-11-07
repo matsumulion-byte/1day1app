@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>松村合成マシーン</title>
+<style>
+  :root{
+    --bg:#0b1014; --ink:#e9f1f7; --muted:#9fb0c0; --acc:#ffd36e; --rail:#14202e;
+    --panel:#0f1621; --danger:#ff6b7a; --shadow:0 12px 30px rgba(0,0,0,.35);
+    --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px);
+    /* プレイエリアの内側余白（SPとPCで自動調整） */
+    --pad: clamp(16px, 6vmin, 56px);
+  }
+  @media (min-width: 860px){
+    :root{ --pad: clamp(24px, 5vmin, 72px); }
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none }
+  html,body{ height:100%; margin:0; background:var(--bg); color:var(--ink);
+    font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif }
+  body{ display:grid; grid-template-rows:auto 1fr auto; }
+
+  header{
+    padding: calc(10px + var(--safe-top)) 14px 10px;
+    display:flex; align-items:center; gap:10px;
+    background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0));
+    border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  header h1{ font-size:16px; margin:0 }
+  header .sub{ font-size:12px; color:var(--muted) }
+
+  main{ overflow:auto; max-width:960px; margin:0 auto; padding:16px 12px 100px; }
+  .card{ background:var(--panel); border:1px solid rgba(255,255,255,.06);
+    border-radius:16px; box-shadow:var(--shadow); margin-bottom:16px; overflow:hidden }
+  .card h2{ margin:0; padding:12px 16px; font-size:14px; color:var(--muted);
+    border-bottom:1px solid rgba(255,255,255,.06) }
+  .area{ position:relative; aspect-ratio:1/2; }
+  #stage{ padding:16px; display:flex; flex-direction:column; gap:12px; height:100%; }
+
+  /* 上下分割レイアウト（SP） */
+  #base{ position:relative; flex:1; width:100%; display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.02); border-radius:12px; overflow:hidden; min-height:0; }
+  #baseImg{
+    width:100%; height:100%; object-fit:contain; pointer-events:none;
+    filter:drop-shadow(0 8px 24px rgba(0,0,0,.45));
+  }
+
+  #play{ position:relative; flex:1; width:100%; display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.02); border-radius:12px; overflow:hidden; min-height:0; }
+  #play.empty{ border:2px dashed rgba(255,255,255,.15); }
+  #play.empty::after{ content:'パーツを選択'; color:var(--muted); font-size:14px; }
+
+  /* PCは左右に並ぶ */
+  @media (min-width: 860px){
+    .area{ aspect-ratio:2/1; }
+    #stage{ flex-direction:row; }
+    #base{ width:auto; height:100%; }
+    #play{ width:auto; height:100%; }
+  }
+
+  .part{
+    width:80%; height:80%; object-fit:contain; filter:drop-shadow(0 8px 24px rgba(0,0,0,.55));
+    animation:fade-in 0.3s ease-out;
+  }
+  @keyframes fade-in { from{opacity:0; transform:scale(0.9)} to{opacity:1; transform:scale(1)} }
+
+  .meta{ padding:12px 16px; font-size:13px; color:var(--muted); display:flex; gap:8px; flex-wrap:wrap }
+  .badge{ display:inline-block; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1);
+          padding:6px 12px; border-radius:999px; font-size:12px }
+
+  /* モーダル */
+  .modal{ position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.85); backdrop-filter:blur(8px); padding:20px; }
+  .modal.active{ display:flex; }
+  .modal-content{ background:var(--panel); border:1px solid rgba(255,255,255,.1);
+    border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,.6); max-width:90vw; max-height:90vh;
+    display:flex; flex-direction:column; overflow:hidden; }
+  .modal-header{ padding:16px 20px; border-bottom:1px solid rgba(255,255,255,.06);
+    display:flex; align-items:center; justify-content:space-between; }
+  .modal-header h3{ margin:0; font-size:16px; color:var(--ink); }
+  .modal-close{ width:32px; height:32px; border:none; background:transparent; color:var(--muted);
+    font-size:24px; cursor:pointer; display:grid; place-items:center; border-radius:8px;
+    transition:background .2s, color .2s; }
+  .modal-close:hover{ background:rgba(255,255,255,.1); color:var(--ink); }
+  .modal-body{ padding:20px; overflow:auto; flex:1; display:flex; flex-direction:column; gap:16px; }
+  .modal-image{ width:100%; max-width:600px; margin:0 auto; border-radius:12px; overflow:hidden;
+    background:#000; }
+  .modal-image canvas{ width:100%; height:auto; display:block; }
+  .modal-meta{ display:flex; flex-direction:column; gap:12px; }
+  .modal-actions{ display:flex; gap:10px; padding-top:8px; }
+  .modal-actions .btn{ flex:1; }
+
+  .dock{
+    position:sticky; bottom:0; z-index:50;
+    padding:10px 10px calc(10px + var(--safe-bottom));
+    background:linear-gradient(0deg, rgba(10,14,20,.95), rgba(10,14,20,.7) 50%, rgba(10,14,20,0));
+    backdrop-filter:saturate(1.2) blur(6px);
+    border-top:1px solid rgba(255,255,255,.08);
+  }
+  .tray{
+    display:flex; gap:10px; overflow:auto; padding:6px 2px 10px;
+    scroll-snap-type:x mandatory;
+  }
+  .tray::-webkit-scrollbar{ display:none }
+  .chip{
+    flex:0 0 auto; width:72px; scroll-snap-align:center;
+    background:var(--rail); border:1px solid rgba(255,255,255,.08);
+    border-radius:14px; padding:8px 6px; display:grid; place-items:center; gap:4px;
+    color:var(--ink); font-size:11px; line-height:1.1;
+  }
+  .chip img{ width:100%; aspect-ratio:1/1; object-fit:contain }
+  .dock-actions{ display:flex; gap:10px; margin-top:8px }
+  .btn{
+    flex:1; appearance:none; border:none; border-radius:14px; padding:14px 16px; font-weight:800; font-size:15px;
+    background:var(--acc); color:#1b1300; box-shadow:0 8px 18px rgba(0,0,0,.35);
+  }
+  .btn.secondary{ flex:0 0 auto; min-width:44px; padding:12px 14px; background:#223045; color:var(--ink) }
+
+  footer{ padding:10px 14px; color:var(--muted); font-size:12px; }
+
+  .fx{ position:absolute; inset:0; border-radius:12px; pointer-events:none; opacity:0 }
+  .flash{ background:radial-gradient(60% 60% at 50% 50%, rgba(255,220,120,.65), rgba(255,220,120,0) 60%) }
+  .smoke{ background:radial-gradient(70% 70% at 50% 50%, rgba(180,180,180,.35), rgba(180,180,180,0) 60%); filter:blur(2px) }
+  @keyframes fx-pop { 0%{opacity:0} 12%{opacity:1} 70%{opacity:.85} 100%{opacity:0} }
+  .play{ animation: fx-pop 750ms ease-out forwards }
+  @keyframes modal-fade-in { from{opacity:0; transform:scale(0.95)} to{opacity:1; transform:scale(1)} }
+  .modal.active .modal-content{ animation:modal-fade-in 0.3s ease-out; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>松村合成マシーン</h1>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>ベース松村にパーツを選択</h2>
+      <div id="stage" class="area">
+        <div id="base">
+          <img id="baseImg" alt="松村" />
+        </div>
+        <div id="play" class="empty">
+          <!-- 選択されたパーツがここに表示される -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- モーダル -->
+  <div id="resultModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>合成結果</h3>
+        <button class="modal-close" id="modalClose" aria-label="閉じる">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-image">
+          <canvas id="resultCanvas" width="1024" height="1024"></canvas>
+          <div id="fxFlash" class="fx flash"></div>
+          <div id="fxSmoke" class="fx smoke"></div>
+        </div>
+        <div class="modal-meta">
+          <div class="meta">
+            <span class="badge" id="resultName">名前：—</span>
+            <span class="badge" id="resultType">系統：—</span>
+            <span class="badge" id="resultAttr">属性：—</span>
+          </div>
+          <div class="modal-actions">
+            <a id="dl" class="btn" download="matsumix.png">⬇︎ 画像を保存</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dock">
+    <div class="tray" id="tray" aria-label="素材トレイ（横にスクロール）"></div>
+    <div class="dock-actions">
+      <button class="btn secondary" id="undoOne" title="ひとつ戻す">↶</button>
+      <button class="btn secondary" id="clearParts" title="全部消す">全部消す</button>
+      <button class="btn" id="synthesizeBtn">🔥 合成する</button>
+    </div>
+  </div>
+
+  <footer>ヒント：下のトレイからパーツをタップして選択してください。</footer>
+
+<script type="module">
+  // Vercel用のパス解決
+  const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+  const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : '/';
+  const asset = (p) => {
+    const clean = String(p || '').replace(/^\.?\//, '');
+    return `${DATE_BASE}${clean}`;
+  };
+
+  const PARTS = [
+    { id:'lion',  label:'ライオン', src:asset('assets/lion.png'),  baseName:'ライオン', attr:'獣' },
+    { id:'horse', label:'馬',       src:asset('assets/horse.png'), baseName:'ホース',   attr:'俊足' },
+    { id:'stone', label:'石',       src:asset('assets/stone.png'), baseName:'ストーン', attr:'硬質' },
+    { id:'fire',  label:'炎',       src:asset('assets/fire.png'),  baseName:'ファイア', attr:'炎' },
+  ];
+  const BASE_IMG = asset('assets/matsumura.png');
+
+  const RESULT_IMAGES = {
+    lion:  { cool: asset('assets/results/lion_cool.png'),  weird: asset('assets/results/lion_weird.png') },
+    horse: { cool: asset('assets/results/horse_cool.png'), weird: asset('assets/results/horse_weird.png') },
+    stone: { cool: asset('assets/results/stone_cool.png'), weird: asset('assets/results/stone_weird.png') },
+    fire:  { cool: asset('assets/results/fire_cool.png'),  weird: asset('assets/results/fire_weird.png') },
+  };
+
+  const RESULTS = {
+    lion:  { cool:{name:'マツムライオン',desc:'百獣の王と化した松村。首周りがあったかい',attr:'獣 / 炎'},
+             weird:{name:'ライオン顔はめマツムラ',desc:'ライオンに顔はめした松村',attr:'おじさん'} },
+    horse: { cool:{name:'ケンタウロスマツムラ',desc:'ちょっとバランス悪いけどケンタウロス。足が4本。',attr:'俊足 / 勢い'},
+             weird:{name:'ホボウマ',desc:'サックスがぶら下がってる馬”。',attr:'サックス'} },
+    stone: { cool:{name:'マツムラロック',desc:'動かざる松村。意志が岩より固い。',attr:'防御 / 安定'},
+             weird:{name:'松村岩',desc:'観光名所になりつつある。',attr:'岩'} },
+    fire:  { cool:{name:'マツムラファイア',desc:'情熱で企画を燃やし尽くす。',attr:'炎 / 攻撃'},
+             weird:{name:'コゲマツムラ',desc:'ちょっとコゲちゃった',attr:'暴走'} },
+  };
+
+  // DOM
+  const tray = document.getElementById('tray');
+  const base = document.getElementById('base');
+  const play = document.getElementById('play');        // ★内側プレイエリア
+  const baseImg = document.getElementById('baseImg');
+  const synthBtn = document.getElementById('synthesizeBtn');
+  const clearBtn = document.getElementById('clearParts');
+  const undoBtn = document.getElementById('undoOne');
+  const resultCanvas = document.getElementById('resultCanvas');
+  const resultName = document.getElementById('resultName');
+  const resultType = document.getElementById('resultType');
+  const resultAttr = document.getElementById('resultAttr');
+  const fxFlash = document.getElementById('fxFlash');
+  const fxSmoke = document.getElementById('fxSmoke');
+  const dl = document.getElementById('dl');
+  const resultModal = document.getElementById('resultModal');
+  const modalClose = document.getElementById('modalClose');
+
+  baseImg.src = BASE_IMG;
+
+  // ダブルタップ拡大抑制
+  let lastTouch = 0;
+  document.addEventListener('touchend', e=>{
+    const now = Date.now();
+    if(now - lastTouch < 400) e.preventDefault();
+    lastTouch = now;
+  }, {passive:false});
+
+  // トレイ
+  PARTS.forEach(p=>{
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.innerHTML = `<img alt="${p.label}" src="${p.src}"><div>${p.label}</div>`;
+    b.addEventListener('click', ()=>spawnPart(p));
+    tray.appendChild(b);
+  });
+
+  // 選択されたパーツ
+  const placed = []; // {el, part}
+  let currentPart = null; // 現在選択中のパーツ
+
+  function spawnPart(part){
+    // 既存のパーツを削除
+    if(currentPart){
+      const existing = play.querySelector('.part');
+      if(existing) existing.remove();
+    }
+
+    // 新しいパーツ画像を作成
+    const img = document.createElement('img');
+    img.className = 'part';
+    img.src = part.src;
+    img.alt = part.label;
+
+    // プレイエリアに追加
+    play.innerHTML = '';
+    play.appendChild(img);
+    play.classList.remove('empty');
+
+    // 現在のパーツを更新
+    currentPart = { el: img, part };
+    placed.length = 0; // 配列をリセット
+    placed.push(currentPart);
+
+    navigator.vibrate?.(10);
+  }
+
+  clearBtn.addEventListener('click', ()=>{
+    play.innerHTML = '';
+    play.classList.add('empty');
+    currentPart = null;
+    placed.length = 0;
+    navigator.vibrate?.(10);
+  });
+  
+  undoBtn.addEventListener('click', ()=>{
+    if(currentPart){
+      play.innerHTML = '';
+      play.classList.add('empty');
+      currentPart = null;
+      placed.length = 0;
+      navigator.vibrate?.(10);
+    }
+  });
+
+  const audioMatsumura = new Audio(asset('assets/matsumura_desu.m4a'));
+  audioMatsumura.volume = 0.9;
+  const safePlay = (a)=>{ try{ a.currentTime=0; a.play(); }catch{} };
+
+  // モーダル制御
+  modalClose.addEventListener('click', ()=> resultModal.classList.remove('active'));
+  resultModal.addEventListener('click', (e)=> {
+    if(e.target === resultModal) resultModal.classList.remove('active');
+  });
+  document.addEventListener('keydown', (e)=> {
+    if(e.key === 'Escape' && resultModal.classList.contains('active')) {
+      resultModal.classList.remove('active');
+    }
+  });
+
+  document.getElementById('synthesizeBtn').addEventListener('click', synthesize);
+
+  async function synthesize(){
+    const ctx = resultCanvas.getContext('2d');
+    const W = resultCanvas.width, H = resultCanvas.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
+
+    const main = placed.length ? placed[0].part.id : null;
+    let type = Math.random()<0.5 ? 'cool' : 'weird';
+
+    // 完成画像（あれば）優先
+    let drew=false;
+    if(main && RESULT_IMAGES[main] && RESULT_IMAGES[main][type]){
+      const img = await tryLoad(RESULT_IMAGES[main][type]);
+      if(img){ drawContain(ctx, img, W, H); drew=true; }
+    }
+    // 無ければフォールバック合成（左右に並べて描画）
+    if(!drew){
+      const baseImage = await loadImg(BASE_IMG);
+      const partImage = placed.length ? await loadImg(placed[0].part.src) : null;
+      
+      // 左半分にベース画像
+      const leftW = W / 2;
+      drawContain(ctx, baseImage, leftW, H, 0, 0);
+      
+      // 右半分にパーツ画像
+      if(partImage){
+        drawContain(ctx, partImage, leftW, H, leftW, 0);
+      }
+    }
+
+    safePlay(audioMatsumura);
+    if(type==='cool'){ triggerFX(fxFlash); } else { triggerFX(fxSmoke); }
+
+    let name='松村（プレーン）', attr='—', kind='—';
+    if(main && RESULTS[main]){
+      const r = RESULTS[main][type];
+      name = r.name; attr = r.attr; kind = (type==='cool'?'COOL':'WEIRD');
+    }
+    resultName.textContent = `名前：${name}`;
+    resultType.textContent = `系統：${kind}`;
+    resultAttr.textContent = `属性：${attr}`;
+
+    dl.href = resultCanvas.toDataURL('image/png');
+    navigator.vibrate?.([15,40,10]);
+    
+    // モーダルを表示
+    resultModal.classList.add('active');
+  }
+
+  function triggerFX(node){ node.classList.remove('play'); void node.offsetWidth; node.classList.add('play'); }
+
+  function loadImg(src){
+    return new Promise((res,rej)=>{
+      const i = new Image(); i.crossOrigin='anonymous';
+      i.onload = ()=>res(i); i.onerror = rej; i.src = src;
+    });
+  }
+  function tryLoad(src){
+    return new Promise((res)=>{
+      const i = new Image(); i.crossOrigin='anonymous';
+      i.onload = ()=>res(i); i.onerror = ()=>res(null); i.src = src;
+    });
+  }
+  function drawContain(ctx, img, W, H, offsetX=0, offsetY=0){
+    if(!img || !img.width) return;
+    const ir = img.width/img.height, cr = W/H;
+    let dw, dh; if(ir>cr){ dw=W; dh=W/ir } else { dh=H; dw=H*ir }
+    const dx=offsetX + (W-dw)/2, dy=offsetY + (H-dh)/2;
+    ctx.drawImage(img, dx, dy, dw, dh);
+  }
+</script>
+</body>
+</html>
