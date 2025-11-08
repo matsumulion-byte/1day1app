@@ -178,10 +178,13 @@
   const asset = (fileName) => {
     try{
       const p = location.pathname;
+      console.log('[DEBUG] location.pathname:', p);
       // /YYYY-MM-DD または /YYYY-MM-DD/... の先頭ディレクトリを抽出
       const m = p.match(/^\/(\d{4}-\d{2}-\d{2})(?:\/.*)?$/);
       const base = m ? `/${m[1]}` : '';
-      return `${base}/assets/${fileName.replace(/^\/+/, '').replace(/^\.\/assets\//, '')}`;
+      const result = `${base}/assets/${fileName.replace(/^\/+/, '').replace(/^\.\/assets\//, '')}`;
+      console.log('[DEBUG] asset path:', result);
+      return result;
     }catch(e){
       // フォールバック（相対）
       return `assets/${fileName.replace(/^\/+/, '').replace(/^\.\/assets\//, '')}`;
@@ -193,6 +196,7 @@
   p: asset('pa.png'),
   j: asset('janken.png'), // ← 待機用
 };
+  console.log('[DEBUG] IMG paths:', IMG);
   const $ = (s) => document.querySelector(s);
   const stage = $('#stage');
   const fx = $('#fx');
