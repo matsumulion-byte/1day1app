@@ -13,10 +13,10 @@
     --shadow:0 14px 34px rgba(0,0,0,.35);
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent }
-  html,body{ margin:0; background:radial-gradient(1200px 800px at 20% 10%, #172133 0%, #0c121d 40%, #05080d 100%);
+  html,body{ margin:0; height:100%; background:radial-gradient(1200px 800px at 20% 10%, #172133 0%, #0c121d 40%, #05080d 100%);
     color:var(--ink);
     font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
-    min-height:100dvh; overflow:auto }
+    overflow:hidden }
   /* スマホ既定：長押し/選択/ダブルタップ無効 */
   html,body,#app{ touch-action: manipulation; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none }
 
@@ -32,7 +32,7 @@
   }
   @keyframes spin{ to{ transform: rotate(360deg) } }
 
-  #app{ min-height:100dvh; display:flex; flex-direction:column }
+  #app{ height:100%; display:flex; flex-direction:column; overflow:hidden }
 
   header{
     padding: calc(10px + var(--safe-top)) 16px 8px;
@@ -44,9 +44,10 @@
   header h1{ font-size:18px; margin:0; line-height:1.2 }
   header .meta{ margin-left:auto; font-size:12px; color:var(--muted) }
 
-  main{ flex:1; display:flex; justify-content:center; padding:14px }
+  main{ flex:1; display:flex; justify-content:center; align-items:center; padding:14px; min-height:0; overflow:hidden }
   .stage{
     width:min(100%,520px);
+    max-height:100%;
     aspect-ratio:9/16; /* モバイルは縦固定 */
     background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
     border-radius:24px; border:1px solid rgba(255,255,255,.10);
@@ -178,13 +179,10 @@
   const asset = (fileName) => {
     try{
       const p = location.pathname;
-      console.log('[DEBUG] location.pathname:', p);
       // /YYYY-MM-DD または /YYYY-MM-DD/... の先頭ディレクトリを抽出
       const m = p.match(/^\/(\d{4}-\d{2}-\d{2})(?:\/.*)?$/);
       const base = m ? `/${m[1]}` : '';
-      const result = `${base}/assets/${fileName.replace(/^\/+/, '').replace(/^\.\/assets\//, '')}`;
-      console.log('[DEBUG] asset path:', result);
-      return result;
+      return `${base}/assets/${fileName.replace(/^\/+/, '').replace(/^\.\/assets\//, '')}`;
     }catch(e){
       // フォールバック（相対）
       return `assets/${fileName.replace(/^\/+/, '').replace(/^\.\/assets\//, '')}`;
@@ -196,7 +194,6 @@
   p: asset('pa.png'),
   j: asset('janken.png'), // ← 待機用
 };
-  console.log('[DEBUG] IMG paths:', IMG);
   const $ = (s) => document.querySelector(s);
   const stage = $('#stage');
   const fx = $('#fx');
