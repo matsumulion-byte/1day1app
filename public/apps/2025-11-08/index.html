@@ -174,18 +174,24 @@
 </div>
 
 <script type="module">
-  // Vercel用のパス解決
-  const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
-  const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : '/';
-  const asset = (p) => {
-    const clean = String(p || '').replace(/^\.?\//, '');
-    return `${DATE_BASE}${clean}`;
+  // 動的アセット解決（Vercel/ローカル両対応）
+  const asset = (fileName) => {
+    try{
+      const p = location.pathname;
+      // /YYYY-MM-DD または /YYYY-MM-DD/... の先頭ディレクトリを抽出
+      const m = p.match(/^\/(\d{4}-\d{2}-\d{2})(?:\/.*)?$/);
+      const base = m ? `/${m[1]}` : '';
+      return `${base}/assets/${fileName.replace(/^\/+/, '').replace(/^\.\/assets\//, '')}`;
+    }catch(e){
+      // フォールバック（相対）
+      return `assets/${fileName.replace(/^\/+/, '').replace(/^\.\/assets\//, '')}`;
+    }
   };
   const IMG = {
-  g: asset('assets/gu.png'),
-  c: asset('assets/choki.png'),
-  p: asset('assets/pa.png'),
-  j: asset('assets/janken.png'), // ← 待機用
+  g: asset('gu.png'),
+  c: asset('choki.png'),
+  p: asset('pa.png'),
+  j: asset('janken.png'), // ← 待機用
 };
   const $ = (s) => document.querySelector(s);
   const stage = $('#stage');
