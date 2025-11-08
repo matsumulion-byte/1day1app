@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>松村とじゃんけん</title>
+<style>
+  :root{
+    --bg0:#0b0f14; --bg1:#101826; --panel:#121820; --ink:#ecf2f8; --muted:#9fb2c6;
+    --win:#4ade80; --lose:#ff6b6b; --draw:#ffd166;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --shadow:0 14px 34px rgba(0,0,0,.35);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent }
+  html,body{ margin:0; background:radial-gradient(1200px 800px at 20% 10%, #172133 0%, #0c121d 40%, #05080d 100%);
+    color:var(--ink);
+    font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+    min-height:100dvh; overflow:auto }
+  /* スマホ既定：長押し/選択/ダブルタップ無効 */
+  html,body,#app{ touch-action: manipulation; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none }
+
+  /* ゆるい背景アニメ（ケレン味） */
+  @property --glow {
+    syntax: "<number>"; inherits: false; initial-value: 0;
+  }
+  body::before{
+    content:""; position:fixed; inset:-25vmax; z-index:-1;
+    background: conic-gradient(from calc(var(--glow)*1deg), rgba(86,204,242,.08), rgba(0,0,0,0), rgba(250,112,154,.08), rgba(0,0,0,0));
+    filter: blur(40px);
+    animation: spin 30s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg) } }
+
+  #app{ min-height:100dvh; display:flex; flex-direction:column }
+
+  header{
+    padding: calc(10px + var(--safe-top)) 16px 8px;
+    display:flex; align-items:center; gap:10px;
+    border-bottom:1px solid rgba(255,255,255,.06);
+    background:linear-gradient(180deg, rgba(255,255,255,.04), transparent);
+    position:relative; z-index:5;
+  }
+  header h1{ font-size:18px; margin:0; line-height:1.2 }
+  header .meta{ margin-left:auto; font-size:12px; color:var(--muted) }
+
+  main{ flex:1; display:flex; justify-content:center; padding:14px }
+  .stage{
+    width:min(100%,520px);
+    aspect-ratio:9/16; /* モバイルは縦固定 */
+    background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+    border-radius:24px; border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 30px 80px rgba(0,0,0,.5), inset 0 0 40px rgba(255,255,255,.03);
+    display:grid; grid-template-rows: 1fr auto auto; align-items:end; padding:16px; gap:12px; position:relative; overflow:hidden;
+    transition: box-shadow .25s ease, border-color .25s ease;
+    isolation:isolate; /* canvasを重ねるため */
+  }
+  /* 連勝で枠と後光が豪華に */
+  .stage.a1{ border-color: rgba(86,204,242,.35); box-shadow: var(--shadow), 0 0 40px rgba(86,204,242,.15) }
+  .stage.a2{ border-image: conic-gradient(#56ccf2, #7ff0a3, #56ccf2) 1; border-width:2px }
+  .stage.a3{ box-shadow: 0 30px 80px rgba(0,0,0,.5), 0 0 70px rgba(127,240,163,.25) }
+  .stage::after{
+    content:""; position:absolute; inset:-30% -30%; z-index:0; opacity:0; pointer-events:none;
+    background: conic-gradient(from 0deg, rgba(86,204,242,.18), rgba(255,255,255,0) 30%, rgba(127,240,163,.18), rgba(255,255,255,0) 60%, rgba(86,204,242,.18));
+    filter: blur(30px);
+    transition: opacity .3s ease;
+  }
+  .stage.a2::after{ opacity:.5 }
+  .stage.a3::after{ opacity:.9; animation: spin 12s linear infinite }
+
+  /* デスクトップでは高さ可変でスクロール余地 */
+  @media (min-width: 768px){
+    .stage{ aspect-ratio:auto; height:auto; min-height:560px }
+  }
+
+  /* エフェクト用キャンバス */
+  canvas.fx{
+    position:absolute; inset:0; z-index:2; pointer-events:none;
+  }
+
+  .matsu{
+    min-height: 50vh; display:grid; place-items:center; position:relative; z-index:1;
+    background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.09); border-radius:20px; overflow:hidden;
+  }
+  .matsu img{ width:min(76%,320px); max-height:100%; object-fit:contain; transition:transform .15s ease }
+  .pop{ animation:pop .22s ease }
+  @keyframes pop{ 0%{transform:scale(1)} 50%{transform:scale(1.06)} 100%{transform:scale(1)} }
+
+  /* 波紋（あいこ） */
+  .ripple{
+    position:absolute; width:20vmin; height:20vmin; border-radius:50%;
+    border:2px solid rgba(255,255,255,.4); left:50%; top:50%; transform:translate(-50%,-50%) scale(.3);
+    opacity:.9; pointer-events:none; z-index:2; filter: blur(.5px);
+    animation: ripple .6s ease-out forwards;
+  }
+  @keyframes ripple{
+    to{ transform:translate(-50%,-50%) scale(1.3); opacity:0 }
+  }
+
+  /* 結果バッジ */
+  .result{ text-align:center; z-index:1; position:relative }
+  .badge{
+    display:inline-block; font-weight:800; letter-spacing:.04em;
+    font-size: clamp(18px, 5.2vw, 34px);
+    padding:6px 12px; border-radius:12px; backdrop-filter:blur(4px)
+  }
+  .badge.win{ color:#052e14; background:linear-gradient(180deg, var(--win), #7ff0a3) }
+  .badge.lose{ color:#2b0a0a; background:linear-gradient(180deg, var(--lose), #ff8f8f) }
+  .badge.draw{ color:#3a2a00; background:linear-gradient(180deg, var(--draw), #ffe39a) }
+
+  .streak{ text-align:center; color:var(--muted); font-weight:700; display:none; z-index:1; position:relative }
+  .streak.active{ display:block }
+  .streak .num{ color:var(--ink) }
+
+  /* 画面シェイク（負け） */
+  .shake{ animation: shake .45s cubic-bezier(.36,.07,.19,.97) both }
+  @keyframes shake{
+    10%, 90% { transform: translate3d(-1px, 0, 0) }
+    20%, 80% { transform: translate3d(2px, 0, 0) }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0) }
+    40%, 60% { transform: translate3d(4px, 0, 0) }
+  }
+
+  /* フッターは sticky で押しやすく */
+  footer{
+    position:sticky; bottom:0; z-index:10;
+    padding: 12px 12px calc(12px + var(--safe-bottom));
+    background:linear-gradient(0deg, rgba(0,0,0,.65), rgba(0,0,0,.35) 60%, transparent);
+    backdrop-filter: blur(6px);
+    border-top:1px solid rgba(255,255,255,.06);
+  }
+  .buttons{
+    width:min(100%,520px); margin:0 auto; display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+  }
+  button.choice{
+    appearance:none; border:none; border-radius:16px; padding:14px 8px;
+    background:#0f1720; color:var(--ink); font-weight:800; font-size:16px;
+    border:1px solid rgba(255,255,255,.08); box-shadow:var(--shadow);
+    transition: transform .06s ease, box-shadow .2s ease
+  }
+  button.choice:active{ transform: translateY(1px) scale(.99) }
+  button.choice:hover{ box-shadow:0 10px 26px rgba(0,0,0,.45) }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>松村とじゃんけん</h1>
+  </header>
+
+  <main>
+    <div id="stage" class="stage">
+      <canvas id="fx" class="fx"></canvas>
+
+      <div class="matsu">
+        <img id="matsuImg" alt="松村の手" />
+      </div>
+
+      <div class="result">
+        <span id="result" class="badge draw">ジャンケン…</span>
+      </div>
+
+      <div id="streakWrap" class="streak">連勝 <span id="streakNum" class="num">0</span></div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="buttons">
+      <button class="choice" data-hand="g">グー</button>
+      <button class="choice" data-hand="c">チョキ</button>
+      <button class="choice" data-hand="p">パー</button>
+    </div>
+  </footer>
+</div>
+
+<script type="module">
+  // Vercel用のパス解決
+  const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+  const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : '/';
+  const asset = (p) => {
+    const clean = String(p || '').replace(/^\.?\//, '');
+    return `${DATE_BASE}${clean}`;
+  };
+  const IMG = {
+  g: asset('assets/gu.png'),
+  c: asset('assets/choki.png'),
+  p: asset('assets/pa.png'),
+  j: asset('assets/janken.png'), // ← 待機用
+};
+  const $ = (s) => document.querySelector(s);
+  const stage = $('#stage');
+  const fx = $('#fx');
+  const matsuImg = $('#matsuImg');
+  const resultEl = $('#result');
+  const streakWrap = $('#streakWrap');
+  const streakNum = $('#streakNum');
+  const buttons = [...document.querySelectorAll('button.choice')];
+
+  const BEST_KEY = 'janken_best_streak_v1';
+  let streak = 0;
+  let best = Number(localStorage.getItem(BEST_KEY) || 0);
+
+  /* =============================
+     判定 & 表示
+  ============================= */
+  const toImg = (h) => ({ g: IMG.g, c: IMG.c, p: IMG.p }[h]);
+  const judge = (you, cpu) => you===cpu ? 'draw'
+    : (you==='g'&&cpu==='c')||(you==='c'&&cpu==='p')||(you==='p'&&cpu==='g') ? 'win' : 'lose';
+
+    const setResult = (mode) => {
+  resultEl.classList.remove('win','lose','draw');
+  resultEl.classList.add(mode);
+
+  if (mode === 'win') resultEl.textContent = '勝ち！';
+  else if (mode === 'lose') resultEl.textContent = '負け…';
+  else resultEl.textContent = 'あいこで…';
+
+  // 1秒後に「じゃんけん…」と待機画像に戻す
+  clearTimeout(setResult._t);
+  setResult._t = setTimeout(() => {
+    resultEl.classList.remove('win','lose','draw');
+    resultEl.classList.add('draw');
+    resultEl.textContent = 'じゃんけん…';
+    matsuImg.src = IMG.j; // ← janken画像に戻す
+  }, 1000);
+};
+
+  const setStreak = (n) => {
+    streakNum.textContent = String(n);
+    streakWrap.classList.toggle('active', n > 0);
+
+    // 連勝に応じてステージ強化
+    stage.classList.remove('a1','a2','a3');
+    if (n >= 3 && n < 6) stage.classList.add('a1');
+    else if (n >= 6 && n < 10) stage.classList.add('a2');
+    else if (n >= 10) stage.classList.add('a3');
+  };
+
+  /* =============================
+     演出：紙吹雪 / 揺れ / 波紋
+  ============================= */
+  // 軽量パーティクル
+  const ctx = fx.getContext('2d');
+  let W=0,H=0, particles=[];
+  const resize = () => {
+    const r = stage.getBoundingClientRect();
+    fx.width = W = Math.floor(r.width);
+    fx.height = H = Math.floor(r.height);
+  };
+  const rnd = (a,b)=> a + Math.random()*(b-a);
+  const burstConfetti = (count=32) => {
+    const originY = H*0.35;
+    for(let i=0;i<count;i++){
+      particles.push({
+        x: W*0.5 + rnd(-40,40),
+        y: originY + rnd(-20,20),
+        vx: rnd(-2.2,2.2),
+        vy: rnd(-5.5,-3.0),
+        g: rnd(0.08,0.16),
+        s: rnd(3,6),
+        life: rnd(40,70),
+        hue: Math.random() < .5 ? 150+rnd(-20,20) : 190+rnd(-15,15),
+        a: 1
+      });
+    }
+  };
+  const tick = ()=>{
+    ctx.clearRect(0,0,W,H);
+    for(let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.vy += p.g;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= 1;
+      p.a = Math.max(0, p.life/70);
+      ctx.save();
+      ctx.globalAlpha = p.a;
+      ctx.fillStyle = `hsl(${p.hue} 80% 60%)`;
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.x*0.02);
+      ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s);
+      ctx.restore();
+      if (p.life<=0 || p.y>H+20) particles.splice(i,1);
+    }
+    requestAnimationFrame(tick);
+  };
+
+  const shake = ()=>{
+    stage.classList.add('shake');
+    setTimeout(()=> stage.classList.remove('shake'), 480);
+  };
+
+  const ripple = ()=>{
+    const r = document.createElement('div');
+    r.className = 'ripple';
+    stage.querySelector('.matsu').appendChild(r);
+    setTimeout(()=> r.remove(), 620);
+  };
+
+  /* =============================
+     ゲーム進行
+  ============================= */
+  const play = (you) => {
+    const pool = ['g','c','p'];
+    const cpu = pool[Math.floor(Math.random()*3)];
+
+    matsuImg.src = toImg(cpu);
+    matsuImg.classList.add('pop');
+    setTimeout(()=> matsuImg.classList.remove('pop'), 200);
+
+    const r = judge(you,cpu);
+    setResult(r);
+
+    if (r==='win'){
+      streak++;
+      if (streak>best){ best=streak; localStorage.setItem(BEST_KEY,String(best)); }
+      // 勝ち演出：紙吹雪（連勝に応じて増量）
+      burstConfetti(Math.min(24 + streak*2, 90));
+    } else if (r==='lose'){
+      streak = 0;
+      // 負け演出：シェイク
+      shake();
+    } else {
+      // あいこ：波紋
+      ripple();
+    }
+    setStreak(streak);
+  };
+
+  // 初期
+  const init = ()=>{
+    matsuImg.src = IMG.j;
+    resize();
+    tick();
+  };
+
+  // 画面サイズ変化
+  const ro = new ResizeObserver(()=> resize());
+  ro.observe(stage);
+
+  // ボタン
+  buttons.forEach(b => b.addEventListener('click', () => play(b.dataset.hand)));
+
+  // キーボード（G/C/P）
+  window.addEventListener('keydown', (e)=>{
+    const k = e.key.toLowerCase();
+    if (k==='g') play('g');
+    if (k==='c') play('c');
+    if (k==='p') play('p');
+  });
+
+  // iOSダブルタップズーム抑止
+  let lastTouch=0;
+  document.addEventListener('touchend', (e)=>{
+    const now = Date.now();
+    if (now-lastTouch<350) e.preventDefault();
+    lastTouch = now;
+  }, {passive:false});
+
+  init();
+</script>
+</body>
+</html>
