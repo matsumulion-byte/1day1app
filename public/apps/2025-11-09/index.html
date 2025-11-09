@@ -14,8 +14,12 @@
   html,body{ height:100%; margin:0; background:var(--bg); color:var(--ink);
     font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif }
   #wrap{ position:fixed; inset:0; display:grid; place-items:center;
-    padding:max(8px, var(--safe-top)) 8px max(12px,var(--safe-bottom)) 8px }
-  #game{ width:min(100vw, 56.25vh); aspect-ratio:9/16; position:relative; border-radius:20px; overflow:hidden;
+    padding:max(8px, var(--safe-top)) 8px max(12px,var(--safe-bottom)) 8px;
+    height:100dvh; height:100vh; /* dvh優先、フォールバックでvh */
+    min-height:-webkit-fill-available; /* iOS Safari対応 */ }
+  #game{ width:min(calc(100vw - 16px), calc(100dvh * 9 / 16));
+    max-width:calc(100vh * 9 / 16);
+    aspect-ratio:9/16; position:relative; border-radius:20px; overflow:hidden;
     background:linear-gradient(#0c111a 25%, #121a24 75%); box-shadow:0 20px 60px rgba(0,0,0,.45) }
   canvas{ position:absolute; inset:0; width:100%; height:100%; display:block }
   .hud{ position:absolute; inset:10px 10px auto 10px; display:flex; gap:8px; align-items:center; pointer-events:none }
@@ -133,15 +137,24 @@ const STATE={playing:false,tLeft:CFG.roundSec,saved:0,missed:0,windows:[],target
 /* === Layout === */
 let W=0,H=0,DPR=Math.min(2,devicePixelRatio||1);
 function fit(){
-  const r=cvs.parentElement.getBoundingClientRect();W=Math.floor(r.width*DPR);H=Math.floor(r.height*DPR);
-  cvs.width=W;cvs.height=H;cvs.style.width=r.width+'px';cvs.style.height=r.height+'px';
+  const r=cvs.parentElement.getBoundingClientRect();
+  // 実際の利用可能な高さを取得（ブラウザのツールバーを考慮）
+  const availH=window.visualViewport?.height || window.innerHeight;
+  const availW=window.visualViewport?.width || window.innerWidth;
+  // ゲームエリアの実際のサイズを取得
+  const gameW=Math.min(r.width, availW - 16);
+  const gameH=Math.min(r.height, availH - parseFloat(getComputedStyle(document.getElementById('wrap')).paddingTop || '0') - parseFloat(getComputedStyle(document.getElementById('wrap')).paddingBottom || '0'));
+  W=Math.floor(gameW*DPR);H=Math.floor(gameH*DPR);
+  cvs.width=W;cvs.height=H;cvs.style.width=gameW+'px';cvs.style.height=gameH+'px';
   const bw=W*0.82,bh=H*0.66,bx=(W-bw)/2,by=H*0.08;
   STATE.building={x:bx,y:by,w:bw,h:bh};
   const px=bw/(CFG.cols+1),py=bh/(CFG.rows+1),ww=Math.min(60*DPR,px*0.75),wh=Math.min(38*DPR,py*0.55);
   STATE.windows=[];for(let r=0;r<CFG.rows;r++)for(let c=0;c<CFG.cols;c++){const x=bx+px*(c+1)-ww/2,y=by+py*(r+1)-wh/2;STATE.windows.push({x,y,w:ww,h:wh});}
   STATE.b.x=W/2;STATE.b.y=H-110*DPR;STATE.smokesWeak=STATE.windows.map(()=>[]);STATE.smokesStrong=STATE.windows.map(()=>[]);
 }
-fit();addEventListener('resize',fit);
+fit();
+addEventListener('resize',fit);
+if(window.visualViewport)window.visualViewport.addEventListener('resize',fit);
 
 /* === Modal === */
 function openModal(t,m){if(t)document.getElementById('title').textContent=t;if(m)document.getElementById('msg').innerHTML=m;modal.style.display='grid';}
