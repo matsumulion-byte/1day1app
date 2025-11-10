@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>Elevator-ish Action – Easy + Ride Fix</title>
+<style>
+  :root{
+    --bg:#0c0f14; --ink:#e9f1f7; --safe-top:env(safe-area-inset-top,0px); --safe-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{ height:100%; margin:0; background:var(--bg); color:var(--ink);
+    font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; }
+  #wrap{ position:fixed; inset:0; display:grid; grid-template-rows:auto 1fr auto; }
+  header,footer{ padding:10px 12px; display:flex; gap:12px; align-items:center; justify-content:space-between; }
+  header h1{ margin:0; font-size:14px; font-weight:700; opacity:.85 }
+  #game{ position:relative; width:100%; height:100%; display:grid; place-items:center; }
+  canvas{ width:100%; height:100%; background:#101620; touch-action:none; object-fit:contain; }
+  .pill{ padding:.35rem .6rem; border:1px solid #2a3447; border-radius:999px; font-size:12px; opacity:.9; background:#141b27 }
+  /* SP操作ボタン */
+  .hud{ position:absolute; inset:auto 0 8px 0; padding-bottom:var(--safe-bottom); display:flex; justify-content:space-between; gap:10px; pointer-events:none; width:100%; padding-inline:10px; }
+  .pad{ display:flex; gap:8px; pointer-events:auto; }
+  .btn{ min-width:58px; min-height:58px; border-radius:14px; background:#1b2330; border:1px solid #2a3447; display:grid; place-items:center; font-weight:700; user-select:none; }
+  .btn:active{ transform:translateY(1px); background:#202c3f; }
+  .btn.small{ min-width:46px; min-height:46px; }
+  .toolbar{ position:absolute; top:8px; right:8px; display:flex; gap:8px; }
+  .goal-banner{
+    position:absolute; inset:0;
+    display:grid; place-items:center;
+    pointer-events:none;
+    font-size:clamp(3rem,12vw,6rem);
+    font-weight:800;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:#2dd4bf;
+    text-shadow:0 0 18px rgba(45,212,191,.35);
+    opacity:0;
+    transform:scale(.85);
+    transition:opacity .35s ease, transform .35s ease;
+  }
+  .goal-banner.show{ opacity:1; transform:scale(1); }
+  @media (min-width:900px){ 
+    .hud{ transform:scale(.85); transform-origin:bottom center; }
+    canvas{ 
+      width:auto !important; 
+      height:auto !important; 
+      max-width:400px; 
+      max-height:711px; 
+      aspect-ratio:540/960;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <h1>エレベーターアクション風</h1>
+    <div class="pill">目的：赤いドアで機密3つ → 緑の出口</div>
+  </header>
+  <div id="game">
+    <canvas id="c" width="540" height="960" aria-label="Game canvas"></canvas>
+    <div id="goalBanner" class="goal-banner" aria-hidden="true">GOAL!</div>
+
+    <!-- ツールバー：難易度/リスタート -->
+    <div class="toolbar">
+      <button id="diffBtn" class="pill" aria-label="difficulty">EASY</button>
+      <button id="restartBtn" class="pill" aria-label="restart">RESTART</button>
+    </div>
+
+    <!-- ソフトボタン（スマホ） -->
+    <div class="hud" id="hud">
+      <div class="pad">
+        <div class="btn" data-key="ArrowLeft">←</div>
+        <div class="btn" data-key="ArrowRight">→</div>
+        <div class="btn small" data-key="Space">●</div>
+      </div>
+      <div class="pad">
+        <div class="btn" data-key="ArrowUp">↑</div>
+        <div class="btn" data-key="ArrowDown">↓</div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <div class="pill">←/→ 移動　↑/↓ エレベーター　Space 射撃　R リスタート</div>
+    <div id="status" class="pill">HP 5 / Intel 0</div>
+  </footer>
+</div>
+
+<script>
+/* 非module対応 assetヘルパー（1日1アプリルール） */
+const __assetBase = (() => { try { const s = document.currentScript?.src || location.href; return new URL('.', s); } catch { return new URL('.', location.href);} })();
+const asset = (p) => new URL(p, __assetBase).toString();
+
+/* スマホの長押し/ダブルタップ無効（既定） */
+(() => {
+  const stop = (e)=>{ e.preventDefault(); };
+  document.addEventListener('gesturestart', stop, {passive:false});
+  document.addEventListener('dblclick', stop, {passive:false});
+  document.addEventListener('contextmenu', stop);
+  ['touchstart','touchmove','touchend'].forEach(ev=>{
+    document.addEventListener(ev, e=>{
+      if(e.touches && e.touches.length>1) e.preventDefault();
+    }, {passive:false});
+  });
+})();
+
+/* 定数・共通 */
+const W = 540, H = 960;
+const FLOOR_COUNT = 4;
+const FLOOR_Y = (i)=> H - 120 - i*200;
+const ELEVATOR_SPEED = 1.8;
+const BULLET_SIZE = 4;
+const GUARD_RESPAWN_FRAMES = 360;
+
+const DIFFS = {
+  'EASY'  : { playerHP:5, playerInv:60, startGrace:180, playerSpeed:2.3, bulletSpeed:4, guardSpeed:1,   guardRange:220, guardTrackNeed:45, guardCd:70, guardJitter:0.25 },
+  'NORMAL': { playerHP:3, playerInv:40, startGrace:60,  playerSpeed:2.2, bulletSpeed:6, guardSpeed:1.2, guardRange:260, guardTrackNeed:30, guardCd:50, guardJitter:0.15 },
+  'HARD'  : { playerHP:2, playerInv:30, startGrace:0,   playerSpeed:2.2, bulletSpeed:7, guardSpeed:1.3, guardRange:300, guardTrackNeed:20, guardCd:40, guardJitter:0.1 }
+};
+let DIFF_KEY = 'EASY';
+const diff = () => DIFFS[DIFF_KEY];
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const statusEl = document.getElementById('status');
+const diffBtn = document.getElementById('diffBtn');
+const restartBtn = document.getElementById('restartBtn');
+const goalBanner = document.getElementById('goalBanner');
+const playerImg = new Image();
+let playerImgReady = false;
+playerImg.src = asset('./matsumura.png');
+playerImg.addEventListener('load', ()=>{ playerImgReady = true; });
+
+function setGoalVisible(show){
+  if(!goalBanner) return;
+  goalBanner.classList.toggle('show', !!show);
+  goalBanner.setAttribute('aria-hidden', show ? 'false' : 'true');
+}
+
+const keys = new Set();
+document.addEventListener('keydown', (e)=>{
+  keys.add(e.key);
+  if(e.key===' ') e.preventDefault();
+  if(e.key==='r' || e.key==='R') restart();
+});
+document.addEventListener('keyup', (e)=> keys.delete(e.key));
+document.querySelectorAll('.btn').forEach(b=>{
+  const k = b.dataset.key;
+  const on = ()=>keys.add(k);
+  const off= ()=>keys.delete(k);
+  b.addEventListener('touchstart', on); b.addEventListener('mousedown', on);
+  ['touchend','touchcancel','mouseup','mouseleave'].forEach(ev=>b.addEventListener(ev, off));
+});
+
+diffBtn.addEventListener('click', ()=>{
+  DIFF_KEY = DIFF_KEY==='EASY' ? 'NORMAL' : DIFF_KEY==='NORMAL' ? 'HARD' : 'EASY';
+  diffBtn.textContent = DIFF_KEY;
+  restart();
+});
+restartBtn.addEventListener('click', ()=>restart());
+
+/* ステージ変数 */
+let platforms, doors, elevatorShaft, elevator, player, bullets, guards;
+let t=0, gameOver=false, win=false, startGrace=0;
+
+function init(){
+  const d = diff();
+  t=0; gameOver=false; win=false; startGrace = d.startGrace|0;
+
+  platforms = [];
+  for(let i=0;i<FLOOR_COUNT;i++){
+    platforms.push({x:40, y:FLOOR_Y(i), w:W-80, h:8});
+  }
+
+  doors = [
+    {x: 90,  y: FLOOR_Y(0)-60, w:36, h:60, red:true,  taken:false},
+    {x: 420, y: FLOOR_Y(1)-60, w:36, h:60, red:true,  taken:false},
+    {x: 120, y: FLOOR_Y(2)-60, w:36, h:60, red:true,  taken:false},
+    {x: 450, y: FLOOR_Y(3)-60, w:36, h:60, red:false, exit:true},
+  ];
+
+  elevatorShaft = {x: W/2-28, w:56, yTop:FLOOR_Y(FLOOR_COUNT-1)-120, yBottom:FLOOR_Y(0)+8};
+  elevator = { x:elevatorShaft.x+6, y:FLOOR_Y(0)-4-80, w:elevatorShaft.w-12, h:80, vy:0, targetY:null };
+
+  player = {
+    x: 80, y: FLOOR_Y(0)-58, w:34, h:58, vx:0, facing:1,
+    hp:d.playerHP, intel:0, inv:0, speed:d.playerSpeed,
+    ridingLock: 0 // ★追加：乗車ロック
+  };
+
+  bullets = [];
+  guards = [
+    { x: 350, y: FLOOR_Y(0)-48, w:28, h:48, dir:-1, patrol:[300, platforms[0].x+platforms[0].w-60], shootCd:0, alert:0, track:0, alive:true, respawnTimer:0 },
+    { x: 160, y: FLOOR_Y(2)-48, w:28, h:48, dir: 1, patrol:[platforms[2].x+20, 320],                   shootCd:0, alert:0, track:0, alive:true, respawnTimer:0 },
+  ];
+  // 床に吸着
+  for(const g of guards){
+    let nd=1e9, ny=g.y;
+    for(const pf of platforms){
+      const d = Math.abs((g.y+g.h) - pf.y);
+      if(d<nd){ nd=d; ny = pf.y - g.h; }
+    }
+    g.y = ny;
+    g.spawnX = g.x;
+    g.spawnY = g.y;
+    g.spawnDir = g.dir;
+  }
+}
+
+/* 補助：今の階 */
+function playerFloorIndex(){
+  const foot = player.y + player.h;
+  let bestI = 0, bestD = Infinity;
+  for(let i=0;i<FLOOR_COUNT;i++){
+    const d = Math.abs(foot - FLOOR_Y(i));
+    if(d < bestD){ bestD = d; bestI = i; }
+  }
+  return bestI;
+}
+
+/* 上下呼び：確実に「次の階」へ */
+function callElevatorUp(){
+  const cur = playerFloorIndex();
+  const next = Math.min(FLOOR_COUNT - 1, cur + 1);
+  elevator.targetY = FLOOR_Y(next) - 4 - 80;
+}
+function callElevatorDown(){
+  const cur = playerFloorIndex();
+  const next = Math.max(0, cur - 1);
+  elevator.targetY = FLOOR_Y(next) - 4 - 80;
+}
+
+/* ドア前に立っているか（自動乗車用） */
+function playerAtElevatorDoor(){
+  const doorPad = 10;
+  const pxMid = player.x + player.w/2;
+  const doorLeft  = elevatorShaft.x - doorPad;
+  const doorRight = elevatorShaft.x + elevatorShaft.w + doorPad;
+
+  const footY = player.y + player.h;
+  let sameFloor = false;
+  for(let i=0;i<FLOOR_COUNT;i++){
+    if (Math.abs(footY - FLOOR_Y(i)) < 6) { sameFloor = true; break; }
+  }
+  const atFront = (pxMid >= doorLeft && pxMid <= doorRight);
+  return sameFloor && atFront;
+}
+// 追加：カゴがフロアに停車しているか（床Yとほぼ一致）
+function elevatorAtFloor(){
+  const carFloorY = elevator.y + elevator.h;
+  for(let i=0;i<FLOOR_COUNT;i++){
+    if(Math.abs(carFloorY - FLOOR_Y(i)) < 6) return true;
+  }
+  return false;
+}
+
+function shoot(from, dir, x, y){
+  const spd = diff().bulletSpeed;
+  bullets.push({x, y, vx:dir*spd, vy:0, from, life:180});
+}
+
+function rectsOverlap(a,b){ return !(a.x+a.w < b.x || b.x+b.w < a.x || a.y+a.h < b.y || b.y+b.h < a.y); }
+
+function restart(){
+  setGoalVisible(false);
+  init();
+  step();
+}
+
+/* ループ */
+function step(){
+  t++;
+
+  const dset = diff();
+
+  // 入力
+  player.vx = 0;
+  if(keys.has('ArrowLeft')) { player.vx = -player.speed; player.facing=-1; }
+  if(keys.has('ArrowRight')){ player.vx =  player.speed; player.facing= 1; }
+  if(keys.has('ArrowUp'))   { callElevatorUp(); }
+  if(keys.has('ArrowDown')) { callElevatorDown(); }
+  if(keys.has(' ') || keys.has('Space')){
+    if(!(t%12)) shoot('player', player.facing, player.x+player.w/2, player.y+player.h/2);
+  }
+
+  // 水平移動・壁
+  player.x = Math.max(20, Math.min(W-20-player.w, player.x + player.vx));
+
+  // エレベーター更新
+  if(elevator.targetY!=null){
+    const dy = elevator.targetY - elevator.y;
+    const s = Math.sign(dy)*ELEVATOR_SPEED;
+    if(Math.abs(dy) <= Math.abs(s)) { elevator.y = elevator.targetY; elevator.targetY=null; }
+    else elevator.y += s;
+  }
+
+  // ★ 停止中かつドア前なら自動乗車＋ロック
+  if (elevator.targetY == null && playerAtElevatorDoor()) {
+    const carFloorY = elevator.y + elevator.h;
+    const footY = player.y + player.h;
+    if (Math.abs(carFloorY - footY) < 8) {
+      const margin = 4;
+      player.y = elevator.y + elevator.h - player.h - 2;
+      player.x = Math.min(
+        Math.max(player.x, elevator.x + margin),
+        elevator.x + elevator.w - player.w - margin
+      );
+      player.ridingLock = 20; // 最低20フレームは乗り続ける
+    }
+  }
+// 乗ってるか判定（先にやる：床スナップより優先）
+const carRect = {x:elevator.x, y:elevator.y, w:elevator.w, h:elevator.h};
+const feet = {x:player.x, y:player.y+player.h-1, w:player.w, h:2};
+let onCar = rectsOverlap(feet, carRect);
+if (player.ridingLock > 0) onCar = true; // ロック中は強制乗車
+
+if (onCar){
+  // Yは常にカゴに追従
+  player.y = elevator.y + elevator.h - player.h - 2;
+
+  const atFloor = (elevator.targetY == null) && elevatorAtFloor();
+
+  if (atFloor){
+    // ★停車中：Xをクランプしない＝左右に押せば出られる
+    const leftEdge  = elevator.x + 4;
+    const rightEdge = elevator.x + elevator.w - player.w - 4;
+
+    // カゴの“外”まで押し出したら降車扱いにする
+    if (player.x <= leftEdge - 1 || player.x >= rightEdge + 1){
+      onCar = false;
+      player.ridingLock = 0; // ロック解除
+    }
+    // まだ内側なら何もしない（自由に左右へ移動できる）
+  }else{
+    // ★走行中：安全のためXはカゴ内にクランプ
+    player.x = Math.max(elevator.x+4, Math.min(elevator.x+elevator.w-player.w-4, player.x));
+  }
+
+  if (player.ridingLock > 0) player.ridingLock--;
+
+} else {
+  // 通常の床スナップ（カゴに乗ってないときだけ）
+  let nearest = 0, nd=1e9;
+  for(const pf of platforms){
+    const dd = Math.abs( (player.y+player.h) - pf.y );
+    if(dd<nd){ nd=dd; nearest=pf.y; }
+  }
+  player.y = nearest - player.h;
+}
+
+  // ドア：取得/脱出
+  for(const dr of doors){
+    const R = {x:dr.x, y:dr.y, w:dr.w, h:dr.h};
+    const P = {x:player.x, y:player.y, w:player.w, h:player.h};
+    if(rectsOverlap(R,P)){
+      if(dr.red && !dr.taken){ dr.taken=true; player.intel++; }
+      if(dr.exit && player.intel>=3 && !win){
+        win=true; gameOver=true;
+        setGoalVisible(true);
+      }
+    }
+  }
+
+  // ガードAI（優しめ）
+  for(const g of guards){
+    if(!g.alive){
+      if(g.respawnTimer>0){
+        g.respawnTimer--;
+        if(g.respawnTimer<=0){
+          g.alive = true;
+          g.x = g.spawnX;
+          g.y = g.spawnY;
+          g.dir = g.spawnDir;
+          g.shootCd = 0;
+          g.alert = 0;
+          g.track = 0;
+        }
+      }
+      continue;
+    }
+    // 巡回
+    g.x += g.dir*dset.guardSpeed;
+    if(g.x < g.patrol[0]){ g.x=g.patrol[0]; g.dir=1; }
+    if(g.x > g.patrol[1]){ g.x=g.patrol[1]; g.dir=-1; }
+
+    // 視認判定
+    const sameFloor = Math.abs((g.y+g.h) - (player.y+player.h)) < 6;
+    const dist = Math.abs(player.x - g.x);
+    const inFront = (g.dir===1 && player.x>g.x) || (g.dir===-1 && player.x<g.x);
+    const canSee = sameFloor && inFront && dist < dset.guardRange && startGrace<=0;
+
+    if(canSee){ g.alert = 30; g.track = Math.min(g.track+1, dset.guardTrackNeed); }
+    else { g.track = Math.max(0, g.track-2); if(g.alert>0) g.alert--; }
+
+    // 一定時間トラッキングできたら発砲（CD）
+    if(g.track >= dset.guardTrackNeed && g.shootCd<=0){
+      const dir = player.x>g.x ? 1 : -1;
+      const jitter = (Math.random()*2-1) * dset.guardJitter * dist/100;
+      bullets.push({ x:g.x+g.w/2, y:g.y+g.h/2 + jitter*10, vx:dir*dset.bulletSpeed, vy:jitter, from:'guard', life:200 });
+      g.shootCd = dset.guardCd;
+      g.track = Math.floor(dset.guardTrackNeed/2);
+    }
+    if(g.shootCd>0) g.shootCd--;
+  }
+
+  // 弾
+  for(let i=bullets.length-1;i>=0;i--){
+    const b = bullets[i];
+    b.x += b.vx; b.y += b.vy; b.life--;
+    if(b.x<-20 || b.x>W+20 || b.y<-20 || b.y>H+20 || b.life<=0){ bullets.splice(i,1); continue; }
+
+    const br = {x:b.x-BULLET_SIZE/2, y:b.y-BULLET_SIZE/2, w:BULLET_SIZE, h:BULLET_SIZE};
+    if(b.from==='guard'){
+      const pr = {x:player.x, y:player.y, w:player.w, h:player.h};
+      if(rectsOverlap(br, pr) && player.inv<=0){
+        if(startGrace<=0){
+          player.hp--; player.inv = dset.playerInv;
+          if(player.hp<=0) gameOver=true;
+        }
+        bullets.splice(i,1);
+        continue;
+      }
+    }else{
+      let hit=false;
+      for(const g of guards){
+        if(!g.alive) continue;
+        const gr = {x:g.x, y:g.y, w:g.w, h:g.h};
+        if(rectsOverlap(br, gr)){
+          g.alive = false;
+          g.respawnTimer = GUARD_RESPAWN_FRAMES;
+          hit=true; break;
+        }
+      }
+      if(hit){ bullets.splice(i,1); continue; }
+    }
+  }
+
+  if(player.inv>0) player.inv--;
+  if(startGrace>0) startGrace--;
+
+  draw();
+
+  statusEl.textContent = `HP ${player.hp} / Intel ${player.intel}` +
+    (startGrace>0? `  (GRACE ${Math.ceil(startGrace/60)}s)`:'') +
+    (win?'  ✅脱出成功！':'' ) + (gameOver && !win?'  ☠ やられた':'');
+
+  if(!gameOver) requestAnimationFrame(step);
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  // 背景
+  ctx.fillStyle = '#0e1420'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle = '#1c2840'; ctx.lineWidth = 2;
+  for(let i=0;i<FLOOR_COUNT;i++){
+    const y = FLOOR_Y(i)+4; ctx.beginPath(); ctx.moveTo(20,y); ctx.lineTo(W-20,y); ctx.stroke();
+  }
+  // シャフト
+  ctx.fillStyle = '#152033';
+  ctx.fillRect(elevatorShaft.x, elevatorShaft.yTop, elevatorShaft.w, elevatorShaft.yBottom - elevatorShaft.yTop);
+  // ドア
+  for(const d of doors){
+    ctx.fillStyle = d.exit ? '#2dd4bf' : (d.red ? (d.taken?'#914040':'#e11d48') : '#334155');
+    ctx.fillRect(d.x, d.y, d.w, d.h);
+    if(d.red && !d.taken){ ctx.fillStyle='#fff'; ctx.fillRect(d.x+6, d.y+22, d.w-12, 6); }
+    if(d.exit){ ctx.fillStyle='#062b26'; ctx.fillRect(d.x+4, d.y+4, d.w-8, d.h-8); }
+  }
+  // プラットフォーム
+  ctx.fillStyle = '#273348';
+  for(const pf of platforms){ ctx.fillRect(pf.x, pf.y, pf.w, pf.h); }
+  // エレベーター
+  ctx.fillStyle = '#8aa0c9'; ctx.fillRect(elevator.x, elevator.y, elevator.w, elevator.h);
+  ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.beginPath(); ctx.moveTo(elevator.x+8, elevator.y+10); ctx.lineTo(elevator.x+elevator.w-8, elevator.y+10); ctx.stroke();
+
+  // ガード
+  for(const g of guards){
+    if(!g.alive) continue;
+    ctx.fillStyle = '#b45309'; ctx.fillRect(g.x, g.y, g.w, g.h);
+    // 顔
+    ctx.fillStyle = '#000'; const eyeX = g.dir===1 ? g.x+g.w-8 : g.x+4; ctx.fillRect(eyeX, g.y+12, 4, 4);
+    if(g.alert>0){ ctx.fillStyle='#fbbf24'; ctx.fillRect(g.x+g.w/2-3, g.y-10, 6, 6); }
+    // トラッキングゲージ（NORMALまでは表示）
+    if(DIFF_KEY!=='HARD'){
+      const need = diff().guardTrackNeed, w=24, h=4, pct = Math.min(1, g.track/need);
+      ctx.fillStyle = '#0b1220'; ctx.fillRect(g.x+2, g.y-6, w, h);
+      ctx.fillStyle = '#60a5fa'; ctx.fillRect(g.x+2, g.y-6, w*pct, h);
+    }
+  }
+
+  // プレイヤー
+  ctx.globalAlpha = (player.inv>0 || startGrace>0) ? 0.6 : 1;
+  if(playerImgReady){
+    const flip = player.facing===-1;
+    const drawX = player.x + (flip ? player.w : 0);
+    ctx.save();
+    if(flip){
+      ctx.translate(drawX, player.y);
+      ctx.scale(-1, 1);
+      ctx.drawImage(playerImg, 0, 0, player.w, player.h);
+    }else{
+      ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
+    }
+    ctx.restore();
+  }else{
+    ctx.fillStyle = '#38bdf8'; ctx.fillRect(player.x, player.y, player.w, player.h);
+  }
+  ctx.globalAlpha = 1;
+
+  // 弾
+  ctx.fillStyle = '#e5e7eb';
+  for(const b of bullets){ ctx.fillRect(b.x-BULLET_SIZE/2, b.y-BULLET_SIZE/2, BULLET_SIZE, BULLET_SIZE); }
+
+  // ヒント
+  if(t<240){
+    ctx.fillStyle='rgba(255,255,255,.35)';
+    ctx.font='12px ui-sans-serif,system-ui';
+    ctx.fillText('赤ドアで機密を回収（3つ）→ 緑ドアへ', 20, 26);
+    ctx.fillText('EASY/NORMAL/HARD は右上で切替・RESTARTでやり直し', 20, 44);
+    ctx.fillText('シャフト前で ↑/↓ を押すと到着時に自動で乗車します', 20, 62);
+  }
+}
+
+/* 起動 */
+init();
+requestAnimationFrame(step);
+</script>
+</body>
+</html>
