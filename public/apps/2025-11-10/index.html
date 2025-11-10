@@ -88,7 +88,14 @@
 
 <script>
 /* 非module対応 assetヘルパー（1日1アプリルール） */
-const __assetBase = (() => { try { const s = document.currentScript?.src || location.href; return new URL('.', s); } catch { return new URL('.', location.href);} })();
+const __assetBase = (() => {
+  try {
+    const s = document.currentScript?.src || location.href;
+    return new URL('./', s);
+  } catch {
+    return new URL('./', location.href);
+  }
+})();
 const asset = (p) => new URL(p, __assetBase).toString();
 
 /* スマホの長押し/ダブルタップ無効（既定） */
