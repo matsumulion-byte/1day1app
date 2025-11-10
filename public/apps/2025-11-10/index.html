@@ -91,15 +91,15 @@
 
 <script>
 /* 非module対応 assetヘルパー（1日1アプリルール） */
-const __assetBase = (() => {
+const asset = (p) => {
   try {
-    const s = document.currentScript?.src || location.href;
-    return new URL('./', s);
+    const path = location.pathname;
+    const dir = path.substring(0, path.lastIndexOf('/') + 1);
+    return dir + p.replace(/^\/+/, '');
   } catch {
-    return new URL('./', location.href);
+    return p;
   }
-})();
-const asset = (p) => new URL(p, __assetBase).toString();
+};
 
 /* スマホの長押し/ダブルタップ無効（既定） */
 (() => {
