@@ -14,11 +14,11 @@
   #wrap{ position:fixed; inset:0; display:grid; grid-template-rows:auto 1fr auto; }
   header,footer{ padding:10px 12px; display:flex; gap:12px; align-items:center; justify-content:space-between; }
   header h1{ margin:0; font-size:14px; font-weight:700; opacity:.85 }
-  #game{ position:relative; width:100%; height:100%; display:grid; place-items:center; }
+  #game{ position:relative; width:100%; height:100%; display:grid; place-items:center; overflow:hidden; }
   canvas{ width:100%; height:100%; background:#101620; touch-action:none; object-fit:contain; }
   .pill{ padding:.35rem .6rem; border:1px solid #2a3447; border-radius:999px; font-size:12px; opacity:.9; background:#141b27 }
   /* SP操作ボタン */
-  .hud{ position:absolute; inset:auto 0 8px 0; padding-bottom:var(--safe-bottom); display:flex; justify-content:space-between; gap:10px; pointer-events:none; width:100%; padding-inline:10px; }
+  .hud{ position:absolute; inset:auto 0 60px 0; padding-bottom:var(--safe-bottom); display:flex; justify-content:space-between; gap:10px; pointer-events:none; width:100%; padding-inline:10px; z-index:10; }
   .pad{ display:flex; gap:8px; pointer-events:auto; }
   .btn{ min-width:58px; min-height:58px; border-radius:14px; background:#1b2330; border:1px solid #2a3447; display:grid; place-items:center; font-weight:700; user-select:none; }
   .btn:active{ transform:translateY(1px); background:#202c3f; }
