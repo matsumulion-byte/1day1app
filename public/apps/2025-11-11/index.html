@@ -16,7 +16,7 @@
 
   /* 顔サイズと位置（SPメイン） */
   --face-size: clamp(220px, 40dvh, 520px);
-  --face-left: -140px; /* 口が画面外から覗く感じ。-120〜-180pxで微調整 */
+  --face-left: -60px; /* 口が画面外から覗く感じ。実機で見えるように調整 */
 }
 html,body{
   height:100%;
@@ -250,8 +250,16 @@ let hasMogu = false;
 (async () => {
   const f1 = asset('./assets/matsu_side_1.png'); // 口閉じ
   const f2 = asset('./assets/matsu_side_2.png'); // 口開き
-  async function headOK(url){ try{ const r = await fetch(url, {method:'HEAD'}); return r.ok; }catch{ return false; } }
-  const ok1 = await headOK(f1), ok2 = await headOK(f2);
+  async function checkImage(url){ 
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = url;
+    });
+  }
+  const ok1 = await checkImage(f1);
+  const ok2 = await checkImage(f2);
   if(ok1 && ok2){
     moguFrames = [f1, f2];
     hasMogu = true;
@@ -259,8 +267,14 @@ let hasMogu = false;
     matsuImg.src = f1;
     emojiEl.style.display = 'none';
   }else{
-    matsuImg.style.display = 'none';
-    emojiEl.style.display = 'block';
+    // 画像が読み込めない場合でも、とりあえず表示を試みる
+    matsuImg.style.display = 'block';
+    matsuImg.src = f1;
+    matsuImg.onerror = () => {
+      matsuImg.style.display = 'none';
+      emojiEl.style.display = 'block';
+    };
+    emojiEl.style.display = 'none';
   }
 })();
 
