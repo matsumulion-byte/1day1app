@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   async rewrites() {
     return [
       // /YYYY-MM-DD → public/apps/YYYY-MM-DD/index.html
