@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>ポッキーゲーム</title>
+<style>
+:root{
+  --bg:#0b0b0f; --ink:#eef2f7; --muted:#a7b0be; --acc:#ffb703; --ok:#22c55e; --ng:#ef4444;
+  --card:#121217; --shadow:0 10px 30px rgba(0,0,0,.35);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* ステージ最大幅（SPを基準にPCでも共通） */
+  --stage-max: clamp(320px, 92vw, 480px);
+
+  /* 顔サイズと位置（SPメイン） */
+  --face-size: clamp(220px, 40dvh, 520px);
+  --face-left: -140px; /* 口が画面外から覗く感じ。-120〜-180pxで微調整 */
+}
+html,body{
+  height:100%;
+  margin:0;
+  background:radial-gradient(1200px 700px at 60% -10%, #18212b 0%, #0b0b0f 55%);
+  color:var(--ink);
+  font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+}
+#wrap{
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:12px;
+  padding:calc(var(--safe-top) + 10px) 12px calc(var(--safe-bottom) + 12px);
+}
+header{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.title{ font-weight:700; letter-spacing:.02em; display:flex; align-items:center; gap:8px; }
+.pill{ font-size:12px; color:#0b0b0f; background:linear-gradient(135deg,#ffd86b,#ffac3a); padding:4px 8px; border-radius:999px; }
+.panel{ background:linear-gradient(180deg,#141822,#0f1218); border:1px solid rgba(255,255,255,.06); border-radius:16px; box-shadow:var(--shadow); }
+.hud{ display:flex; gap:10px; padding:10px 12px; align-items:center; flex-wrap:wrap; }
+.kpi{ display:flex; flex-direction:column; min-width:90px; padding:8px 10px; border-radius:12px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06); text-align:center; }
+.kpi .v{ font-size:20px; font-weight:800; }
+.kpi .l{ font-size:11px; color:var(--muted); letter-spacing:.02em; }
+.modeCtrl{ display:flex; align-items:center; gap:8px; margin-left:auto; padding:8px 10px; border-radius:12px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06); }
+.modeLabel{ font-size:11px; color:var(--muted); letter-spacing:.02em; }
+
+main{ display:grid; place-items:center; }
+.stage{ width:min(var(--stage-max), 100%); padding:16px; padding-bottom:100px; }
+.play{
+  position:relative; overflow:hidden;
+  padding:12px; border-radius:18px;
+  border:1px solid rgba(255,255,255,.07);
+  background:linear-gradient(180deg,#0e1117,#0b0d12 40%, #0a0c11);
+}
+@media (min-width: 960px){
+  main{ align-items:start; }
+  .cta{
+    position: static;
+    transform: none;
+    left: auto;
+    margin-top: 16px;
+    width: 100%;
+  }
+}
+/* トラック（ゲームフィールド） */
+.track{
+  position:relative;
+  height: clamp(200px, 40dvh, 420px);
+  margin:10px 6px 16px;
+  border-radius:999px;
+  background:linear-gradient(180deg,#1a2430,#121820);
+  border:1px solid rgba(255,255,255,.08);
+  overflow:hidden;
+}
+
+/* ポッキー（一定長。左へスライド） */
+.pocky{
+  position:absolute;
+  left:12px;
+  top:70%;
+  transform:translateY(-50%);
+  height:16px; /* ← 高さ調整はここ */
+  border-radius:999px;
+  display:flex;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.35);
+}
+.choco{ height:100%; background:linear-gradient(180deg,#5a2b10,#34170b); }
+.bisc { height:100%; background:linear-gradient(180deg,#d8b36a,#a98236); }
+
+/* 顔（横顔写真） */
+.mouth{
+  position:absolute; z-index:2;
+  width:var(--face-size); height:var(--face-size);
+  left:var(--face-left); top:50%; transform:translateY(-50%);
+  border:none; background:transparent; box-shadow:none; overflow:visible;
+}
+#matsuImg{ display:block; width:100%; height:100%; object-fit:cover; }
+.mouth .teeth, .matsu-face{ display:none; } /* 旧パーツ非表示 */
+.emoji{ font-size:40px; display:none; }
+
+/* メーター */
+.meter{ position:relative; height:8px; border-radius:999px; background:#1a2532; margin:12px 8px 0; overflow:hidden; }
+.meter > .bar{ position:absolute; inset:0; transform-origin:left;
+  background:linear-gradient(90deg,#22c55e 0 40%,#eab308 40% 70%,#ef4444 70%); opacity:.85; }
+.targetBand{ position:absolute; top:-6px; height:20px; border:2px dashed rgba(34,197,94,.9); border-radius:10px; }
+
+/* CTA（常に見える） */
+.cta{
+  position: fixed !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  bottom: max(8px, var(--safe-bottom)) !important;
+  z-index: 1000 !important;
+  display: flex !important;
+  gap: 8px;
+  padding: 12px 8px;
+  width: calc(100% - 32px);
+  max-width: var(--stage-max);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(14,17,23,.95), rgba(10,12,17,.95)) !important;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 -4px 20px rgba(0,0,0,.3);
+}
+.btn{ flex:1; display:flex; align-items:center; justify-content:center;
+  padding:14px 16px; border-radius:14px; border:1px solid rgba(255,255,255,.08);
+  font-weight:800; letter-spacing:.02em; text-align:center; cursor:pointer; user-select:none; }
+.start{ background:linear-gradient(180deg,#1b2533,#121923); }
+.stop { background:linear-gradient(180deg,#ff5a36,#e9492a); border-color:#ff977f; }
+.ghost{ background:transparent; }
+
+.result{ text-align:center; padding:12px 10px; }
+.judge{ font-size:28px; font-weight:900; letter-spacing:.02em; }
+.judge.ok{ color:var(--ok) } .judge.ng{ color:var(--ng) }
+.sub{ color:var(--muted); font-size:12px; }
+
+footer{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+select, option{ background:#0f1420; color:var(--ink); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:10px 12px; }
+.note{ color:var(--muted); font-size:12px; }
+.confetti{ position:absolute; inset:0; pointer-events:none; }
+.flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; }
+
+@keyframes shake {
+  0%,100%{ transform:translate(0,0) }
+  20%{ transform:translate(-4px,2px) }
+  40%{ transform:translate(4px,-2px) }
+  60%{ transform:translate(-3px,1px) }
+  80%{ transform:translate(3px,-1px) }
+}
+.play.shake{ animation:shake 380ms ease both; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <div class="title">
+      <span class="pill">11/11</span>
+      <div>ポッキーゲーム</div>
+    </div>
+    <div class="note">画面タップで <b>STOP</b> </div>
+  </header>
+
+  <section class="panel hud">
+    <div class="kpi"><div class="v" id="remainV">100%</div><div class="l">残り</div></div>
+    <div class="kpi"><div class="v" id="zoneV">5–12%</div><div class="l">ターゲット</div></div>
+    <div class="modeCtrl">
+      <label for="mode" class="modeLabel">難易度</label>
+      <select id="mode">
+        <option value="easy">EASY（10–20%）</option>
+        <option value="normal" selected>NORMAL（5–12%）</option>
+        <option value="hard">HARD（3–8%）</option>
+      </select>
+    </div>
+  </section>
+
+  <main>
+    <div class="stage">
+      <div class="play" id="play">
+        <div class="track" id="track">
+          <div class="mouth" id="mouth">
+            <img id="matsuImg" alt="matsumura" />
+            <div class="emoji" id="emoji" aria-hidden>😋</div>
+            <div class="teeth"></div>
+            <div class="matsu-face" id="matsuFace"></div>
+          </div>
+
+          <!-- ポッキー本体（一定長。左へスライド） -->
+          <div class="pocky" id="pocky" aria-label="pocky">
+            <div class="choco" id="choco"></div>
+            <div class="bisc"  id="bisc"></div>
+          </div>
+        </div>
+
+        <!-- ターゲット帯（見えている残り％の可視化） -->
+        <div class="meter"><div class="bar" id="bar"></div><div class="targetBand" id="band"></div></div>
+
+        <canvas class="confetti" id="fx"></canvas>
+        <div id="flash" aria-hidden class="flash"></div>
+
+        <div class="result">
+          <div class="judge" id="judge">タップでスタート → ギリ残しでSTOP！</div>
+          <div class="sub" id="sub">NORMAL：残り5〜12%が成功</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="note">© 松村</div>
+  </footer>
+
+  <div class="cta">
+    <div class="btn start" id="btnStart">START</div>
+    <div class="btn stop"  id="btnStop" style="display:none;">STOP</div>
+  </div>
+</div>
+
+<script type="module">
+/* 1日1アプリのアセット参照ヘルパー */
+const asset = (p) => {
+  if(p.startsWith('./')) {
+    return '/apps/2025-11-11' + p.substring(1);
+  }
+  return '/apps/2025-11-11/' + p;
+};
+
+/* ===== DOM ===== */
+const track   = document.getElementById('track');
+const pocky   = document.getElementById('pocky');
+const choco   = document.getElementById('choco');
+const bisc    = document.getElementById('bisc');
+const judge   = document.getElementById('judge');
+const sub     = document.getElementById('sub');
+const remainV = document.getElementById('remainV');
+const zoneV   = document.getElementById('zoneV');
+const bar     = document.getElementById('bar');
+const band    = document.getElementById('band');
+const btnStart= document.getElementById('btnStart');
+const btnStop = document.getElementById('btnStop');
+const play    = document.getElementById('play');
+const fx      = document.getElementById('fx');
+const modeSel = document.getElementById('mode');
+const matsuImg= document.getElementById('matsuImg');
+const emojiEl = document.getElementById('emoji');
+const mouth   = document.getElementById('mouth');
+
+/* ===== 顔画像（横顔2コマ） ===== */
+let moguFrames = [];
+let hasMogu = false;
+(async () => {
+  const f1 = asset('./assets/matsu_side_1.png'); // 口閉じ
+  const f2 = asset('./assets/matsu_side_2.png'); // 口開き
+  async function headOK(url){ try{ const r = await fetch(url, {method:'HEAD'}); return r.ok; }catch{ return false; } }
+  const ok1 = await headOK(f1), ok2 = await headOK(f2);
+  if(ok1 && ok2){
+    moguFrames = [f1, f2];
+    hasMogu = true;
+    matsuImg.style.display = 'block';
+    matsuImg.src = f1;
+    emojiEl.style.display = 'none';
+  }else{
+    matsuImg.style.display = 'none';
+    emojiEl.style.display = 'block';
+  }
+})();
+
+/* ===== Game State ===== */
+let totalLenPx = 0;        // ポッキー全長（px）
+let chocoRatio = .65;      // チョコ部分の比率
+let remainRatio = 1;       // 残り比率 1..0（論理上）
+let speed = 0;             // 減少スピード（/s）
+let phase = 'idle';        // idle | run | judge
+let rafId = 0;
+let target = {min:.05, max:.12}; // デフォ NORMAL
+let lastT = 0;
+
+/* 口に隠れるぶん（顔サイズに応じて動的補正） */
+let judgeShiftPx = 0;
+
+const rng = (a,b)=> a + Math.random()*(b-a);
+const clampNumber = (v, min, max)=> Math.min(max, Math.max(min, v));
+
+/* 難易度 */
+function applyMode(m){
+  if(m==='easy') target={min:.10,max:.20};
+  else if(m==='hard') target={min:.03,max:.08};
+  else target={min:.05,max:.12};
+  zoneV.textContent = `${Math.round(target.min*100)}–${Math.round(target.max*100)}%`;
+  sub.textContent = `${m.toUpperCase()}：残り${zoneV.textContent}が成功`;
+  layout();
+  resetGame(true);
+}
+modeSel.addEventListener('change', e=> applyMode(e.target.value));
+applyMode(modeSel.value);
+
+/* ===== Layout ===== */
+function layout(){
+  const pad = 24;
+  const root = getComputedStyle(document.documentElement);
+  const maxW = parseInt(root.getPropertyValue('--stage-max')) || 720;
+  const W = Math.min(track.clientWidth, maxW) - pad*2;
+  totalLenPx = Math.max(280, Math.min(Math.floor(W*0.88), 720));
+
+  pocky.style.width = totalLenPx + 'px';
+
+  // チョコ／ビスは固定比（棒は一定長）
+  const ch = Math.round(totalLenPx*chocoRatio);
+  choco.style.width = ch + 'px';
+  bisc .style.width = Math.round(totalLenPx - ch) + 'px';
+
+  judgeShiftPx = computeJudgeShift(totalLenPx, root);
+  const usable = Math.max(1, totalLenPx - judgeShiftPx);
+  const bandRange = Math.max(0, target.max - target.min);
+  const bandW = Math.max(20, Math.round(usable * bandRange));
+  const rightFrom = Math.round(usable * target.min);
+  band.style.right = (8 + rightFrom) + 'px';
+  band.style.width = bandW + 'px';
+}
+window.addEventListener('resize', layout, {passive:true});
+
+function computeJudgeShift(totalLen, root){
+  if(!totalLen) return 0;
+  const manualVar = parseFloat(root.getPropertyValue('--bite-shift'));
+  if(!Number.isNaN(manualVar)) return clampNumber(manualVar, 0, totalLen * 0.95);
+  if(mouth && mouth.dataset.shift){
+    const custom = parseFloat(mouth.dataset.shift);
+    if(!Number.isNaN(custom)) return clampNumber(custom, 0, totalLen * 0.95);
+  }
+  const faceSize = parseFloat(root.getPropertyValue('--face-size')) || 260;
+  const faceLeft = parseFloat(root.getPropertyValue('--face-left')) || -140;
+  const faceInside = clampNumber(faceSize + faceLeft, 0, faceSize);
+  const approx = faceInside > 0 ? faceInside * 0.68 : totalLen * 0.18;
+  return clampNumber(approx, totalLen * 0.08, Math.min(totalLen * 0.32, 160));
+}
+
+/* “見えている”残量（顔で隠れたぶん補正） */
+function visibleRemainRatio(){
+  if(!totalLenPx) return remainRatio;
+  const shift = clampNumber(judgeShiftPx, 0, totalLenPx * 0.95);
+  const usable = Math.max(1, totalLenPx - shift);
+  const visLen = Math.max(0, totalLenPx * remainRatio - shift);
+  const ratio = visLen / usable;
+  return clampNumber(ratio, 0, 1);
+}
+
+/* ===== Render ===== */
+function renderPocky(){
+  // 食べたぶんだけ左へスライド（棒の長さは一定）
+  const eatenPx = Math.max(0, Math.round(totalLenPx * (1 - remainRatio)));
+  pocky.style.transform = `translate(${ -eatenPx }px, -50%)`;
+}
+function updateBar(){
+  const p = 1 - visibleRemainRatio(); // 食べた割合（見えている基準）
+  bar.style.transform = `scaleX(${p.toFixed(4)})`;
+}
+function updateRemainLabel(){
+  const r = visibleRemainRatio();
+  remainV.textContent = Math.max(0, Math.round(r*100)) + '%';
+}
+
+/* ===== Controls ===== */
+play.addEventListener('click', (e)=>{
+  if (e.target.closest('.btn')) return; // ボタンは除外
+  if(phase==='run') stop();
+  // judge でタップしても何もしない（RESTARTを押させる）
+  else if(phase==='idle') start();
+});
+btnStart.addEventListener('click', (e)=>{ e.stopPropagation(); start(); });
+btnStop .addEventListener('click', (e)=>{ e.stopPropagation(); stop();  });
+
+// OSの長押し/ピンチ無効
+document.addEventListener('gesturestart', e=>e.preventDefault());
+document.addEventListener('contextmenu', e=>e.preventDefault());
+
+/* ===== Game Flow ===== */
+function start(){
+  if(phase!=='idle' && phase!=='judge') return;
+  remainRatio = 1;
+  renderPocky(); // ポッキーの位置をリセット
+  updateRemainLabel();
+  updateBar();
+  judge.textContent = 'ギリ残しでSTOP！';
+  judge.className = 'judge';
+  btnStart.style.display='none';
+  btnStop.style.display='flex';
+  phase='run';
+  speed = rng(.25,.42);
+  lastT = performance.now();
+  rafId = requestAnimationFrame(loop);
+}
+function loop(tNow){
+  rafId = requestAnimationFrame(loop);
+  if(!tNow) tNow = performance.now();
+  const dt = (tNow - lastT)/1000 || 0.016;
+  lastT = tNow;
+
+  const chew = (Math.sin(tNow/120)+1)/2 * 0.06; // もぐもぐ微変動
+  speed += dt*0.02;
+  remainRatio = Math.max(0, remainRatio - (speed+chew)*dt);
+
+  updateRemainLabel();
+  updateBar();
+  renderPocky();
+
+  // 横顔2コマ切替＋上下微揺れ
+  if(hasMogu){
+    const idx = ((tNow/120)|0) % 2;
+    if(matsuImg.dataset.f !== String(idx)){
+      matsuImg.src = moguFrames[idx];
+      matsuImg.dataset.f = String(idx);
+    }
+    const y = Math.sin(tNow/100)*2.5; // ±2.5px
+    matsuImg.style.transform = `translateY(${y}px)`;
+  }
+
+  if(remainRatio<=0) stop();
+}
+function stop(){
+  if(phase!=='run') return;
+  phase='stop';
+  btnStop.style.display='none';
+  cancelAnimationFrame(rafId);
+  evaluate();
+}
+function evaluate(){
+  const r = visibleRemainRatio(); // 0..1（見えている残り）
+  const ok = (r>=target.min && r<=target.max);
+
+  remainV.textContent = Math.max(0, Math.round(r*100)) + '%';
+
+  if(ok){
+    judge.textContent = 'ギリ残し！うまい！';
+    judge.className = 'judge ok';
+    fxSuccess();
+  }else{
+    judge.textContent = (r<target.min)?'食べすぎ！惜しい！':'残しすぎ！もう一口！';
+    judge.className = 'judge ng';
+  }
+
+  // リプレイは START ボタンで
+  btnStart.textContent='RESTART';
+  btnStart.style.display='flex';
+  phase='judge';
+}
+
+/* ===== FX ===== */
+function fxSuccess(){ confetti(); ring(); flash(); shake(); }
+function confetti(){
+  const c = fx, ctx = c.getContext('2d');
+  const rect = play.getBoundingClientRect();
+  c.width = rect.width; c.height = rect.height;
+  const parts = Array.from({length: 120}, ()=>({
+    x: Math.random()*c.width, y: -10 - Math.random()*40,
+    vx: rng(-40,40), vy: rng(60,140), r: rng(2,4), a: 1, w: rng(6,14),
+    hue: [30,45,160,200,320][(Math.random()*5)|0]
+  }));
+  const t0 = performance.now();
+  let lastT = t0;
+  (function tick(t){
+    const dt = Math.min(0.033,(t-lastT)/1000);
+    lastT = t;
+    ctx.clearRect(0,0,c.width,c.height);
+    parts.forEach(p=>{
+      p.x += p.vx*dt; p.y += p.vy*dt; p.a -= dt*0.6;
+      ctx.globalAlpha = Math.max(0,p.a);
+      ctx.fillStyle = `hsl(${p.hue} 90% 60%)`;
+      ctx.fillRect(p.x,p.y,p.w,p.r);
+    });
+    if(performance.now()-t0 < 1400){
+      requestAnimationFrame(tick);
+    }else{
+      ctx.clearRect(0,0,c.width,c.height);
+    }
+  })();
+}
+function ring(){
+  const c = fx, ctx = c.getContext('2d');
+  const rect = play.getBoundingClientRect();
+  c.width = rect.width; c.height = rect.height;
+  const cx = rect.width*0.5, cy = rect.height*0.42;
+  const start = performance.now();
+  (function anim(t){
+    const dt = (t-start)/1000;
+    ctx.save();
+    ctx.clearRect(0,0,c.width,c.height);
+    const R = 40 + dt*220;
+    const a = Math.max(0, 1 - dt*1.2);
+    ctx.globalAlpha = a;
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = 3 + Math.max(0, 12 - dt*10);
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+    if(a>0) requestAnimationFrame(anim);
+  })(start);
+}
+function flash(){
+  const el = document.getElementById('flash');
+  el.style.transition = 'none';
+  el.style.opacity = '0.9';
+  requestAnimationFrame(()=>{
+    el.style.transition = 'opacity 320ms ease';
+    el.style.opacity = '0';
+  });
+}
+function shake(){
+  play.classList.remove('shake');
+  void play.offsetWidth; // reflow
+  play.classList.add('shake');
+}
+
+/* ===== init ===== */
+resetGame();
+function resetGame(soft=false){
+  cancelAnimationFrame(rafId);
+  phase='idle';
+  remainRatio=1;
+  layout();
+  renderPocky(); // ポッキーの位置をリセット
+  updateBar();
+  updateRemainLabel();
+  judge.textContent = soft ? '設定変更。タップでスタート' : 'タップでスタート → ギリ残しでSTOP！';
+  judge.className='judge';
+  btnStop.style.display='none';
+  btnStart.textContent='START';
+  btnStart.style.display='flex';
+}
+
+/* 任意：SE/BGM */
+// const seStop = new Audio(asset('./assets/se_stop.mp3'));
+// const seWin  = new Audio(asset('./assets/se_win.mp3'));
+// const bgm    = new Audio(asset('./assets/bgm_loop.mp3')); bgm.loop = true;
+</script>
+</body>
+</html>
