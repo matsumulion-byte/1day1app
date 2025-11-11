@@ -148,7 +148,8 @@ if (require.main === module) {
     main();
   } catch (e) {
     console.error('OGP generation failed:', e);
-    process.exit(1);
+    console.error('Continuing build...');
+    process.exit(0); // エラーでもビルドを続行
   }
 }
 

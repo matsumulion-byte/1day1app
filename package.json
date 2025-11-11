@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "postbuild": "echo 'Skipping OGP generation' || SITE_BASE_URL=$SITE_BASE_URL node scripts/generate-ogp.js",
+    "postbuild": "SITE_BASE_URL=$SITE_BASE_URL node scripts/generate-ogp.js || echo 'OGP generation failed, continuing...'",
     "ogp": "SITE_BASE_URL=$SITE_BASE_URL node scripts/generate-ogp.js",
     "start": "next start",
     "vercel-build": "npm run build"
