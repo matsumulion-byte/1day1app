@@ -11,10 +11,14 @@
     --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent }
-  html,body{ height:100%; margin:0; background:var(--bg); color:var(--ink);
-    font-family:"MS Gothic","Osaka-mono","DotGothic16",ui-monospace,monospace }
-  #root{ min-height:100%; display:grid; place-items:center; padding:calc(8px + var(--safe-top)) 12px calc(12px + var(--safe-bottom)) }
-  .stage{ width:420px; max-width:100%; background:var(--card); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; padding:12px }
+  html,body{ height:100%; margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family:"MS Gothic","Osaka-mono","DotGothic16",ui-monospace,monospace;
+    overflow-x:hidden; width:100% }
+  #root{ min-height:100%; display:grid; place-items:center; 
+    padding:calc(8px + var(--safe-top)) 0 calc(12px + var(--safe-bottom)) 0;
+    width:100%; max-width:100vw }
+  .stage{ width:420px; max-width:100%; background:var(--card); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; padding:12px;
+    margin:0 auto }
   .battle{
     background:#000 center/cover no-repeat;
     width:100%; height:300px; border-radius:10px; position:relative; overflow:hidden;
@@ -50,6 +54,14 @@
   .menu button.sel{ outline:2px solid var(--acc); background:#1e293b; color:#fffbeb }
   .log{ min-height:64px; line-height:1.6 }
   .taphint{ text-align:center; color:var(--muted); font-size:12px; margin-top:6px }
+  @media (max-width: 480px) {
+    #root{ padding:calc(4px + var(--safe-top)) 0 calc(8px + var(--safe-bottom)) 0 }
+    .stage{ padding:8px; border-radius:12px }
+    .battle{ height:250px; border-radius:8px }
+    .dqbox{ padding:8px; margin-top:8px }
+    .menu{ gap:4px }
+    .menu button{ padding:8px; font-size:14px }
+  }
 </style>
 </head>
 <body>
