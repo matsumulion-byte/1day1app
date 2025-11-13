@@ -82,7 +82,8 @@
     );
     const { FaceLandmarker, FilesetResolver } = vision;
 
-    const assetBase = new URL('./', location.href);
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [''])[0];
+    const assetBase = DATE_SEGMENT ? `${location.origin}/${DATE_SEGMENT}/` : `${location.origin}/`;
     const asset = (p) => {
       const clean = String(p ?? '').replace(/^\.?\//, '');
       return new URL(clean, assetBase).toString();
