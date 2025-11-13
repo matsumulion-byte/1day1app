@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>誰でも空也AR - 口から松村6連発</title>
+
+  <!-- ★★ ここから MediaPipe の script タグは削除しました ★★ -->
+
+  <style>
+    :root{ --ink:#fdf6e3; }
+    *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html,body{
+      margin:0; padding:0; height:100%;
+      font-family: system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+      background:#000; color:var(--ink);
+    }
+    body{ display:flex; align-items:center; justify-content:center; }
+    #wrap{
+      position:relative;
+      width:100%; max-width:480px;
+      aspect-ratio:9/16;
+      overflow:hidden;
+      background:#000;
+    }
+    video,canvas{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      object-fit:cover;
+    }
+    video{
+      transform:scaleX(-1); /* インカメっぽくミラー */
+    }
+    .ui{
+      position:absolute; inset:0;
+      pointer-events:none;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      padding:10px;
+    }
+    .title{
+      font-size:14px;
+      text-align:center;
+      letter-spacing:.12em;
+      text-shadow:0 0 8px rgba(0,0,0,.7);
+    }
+    .hint{
+      font-size:12px;
+      text-align:center;
+      margin-bottom:4px;
+      text-shadow:0 0 8px rgba(0,0,0,.8);
+    }
+    .debug{
+      font-size:10px;
+      text-align:left;
+      text-shadow:0 0 6px rgba(0,0,0,.9);
+      opacity:0.7;
+    }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <video id="cam" playsinline autoplay muted></video>
+    <canvas id="overlay"></canvas>
+    <div class="ui">
+      <div class="title">誰でも空也AR：口から松村6連発</div>
+      <div>
+        <div class="hint">
+          口を大きく開けると松村が出ます<br>
+          （デバッグ用にタップでも出る）
+        </div>
+        <div class="debug" id="debug"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // ★ MediaPipe Tasks を CDN から ES Module として読み込む
+    const vision = await import(
+      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.15/vision_bundle.mjs'
+    );
+    const { FaceLandmarker, FilesetResolver } = vision;
+
+    const assetBase = new URL('./', location.href);
+    const asset = (p) => {
+      const clean = String(p ?? '').replace(/^\.?\//, '');
+      return new URL(clean, assetBase).toString();
+    };
+
+    const video  = document.getElementById('cam');
+    const canvas = document.getElementById('overlay');
+    const ctx    = canvas.getContext('2d');
+    const wrap   = document.getElementById('wrap');
+    const debugEl = document.getElementById('debug');
+
+    const matsu = new Image();
+    matsu.src = asset('./assets/matsu.png'); // 小さい松村スプライト
+
+    // ---------- カメラ ----------
+
+    async function initCamera(){
+      try{
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video:{ facingMode:'user' },
+          audio:false
+        });
+        video.srcObject = stream;
+      }catch(e){
+        console.error(e);
+        alert('カメラが使えませんでした…（権限 or HTTPS を確認）');
+      }
+    }
+
+    function resize(){
+      const rect = canvas.getBoundingClientRect();
+      const dpr  = window.devicePixelRatio || 1;
+      canvas.width  = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    window.addEventListener('resize', resize);
+
+    // ---------- 松村パーティクル ----------
+
+    const particles = [];
+    let lastMouthScreenPos = null; // 直近の口の画面座標
+    let flowDir = 1;
+
+
+    function spawnOneMatsumura(x,y){
+      particles.push({
+        x,
+        y,
+        vx: 0.05 * flowDir,       // 右へゆっくり
+        vy: -0.005,     // ちょっとだけ上に
+        life: 0,
+        maxLife: 8000   // ms
+      });
+    }
+
+    function spawnMatsumuraSequence(x,y){
+      const total = 6;
+      const interval = 400; // msごとに1体
+
+      for(let i=0;i<total;i++){
+        setTimeout(()=>{
+          spawnOneMatsumura(x,y);
+        }, i*interval);
+      }
+    }
+
+    // 口の位置（ランドマークが取れてないときは中央ちょい下）
+    function getMouthPosition(){
+      const rect = canvas.getBoundingClientRect();
+      if(lastMouthScreenPos){
+        return lastMouthScreenPos;
+      }
+      return {
+        x: rect.width * 0.48,
+        y: rect.height * 0.55
+      };
+    }
+
+    function onMouthOpen(){
+      const {x,y} = getMouthPosition();
+      spawnMatsumuraSequence(x,y);
+    }
+
+    // デバッグ用：タップでも発火
+    wrap.addEventListener('click', () => {
+      onMouthOpen();
+    }, {passive:true});
+
+    // ---------- MediaPipe FaceLandmarker（ランドマーク方式） ----------
+    const OPEN_THRESHOLD = 0.09;  // これ以上で「開いた判定」スタート
+    const CLOSE_THRESHOLD = 0.06; // これより小さくなったら「閉じた」に戻す
+let lastMouthTriggerTime = 0; // 最後に松村を出した時間
+
+
+    let faceLandmarker = null;
+    let mouthOpen = false;
+    let prevMouthOpen = false;
+    let lastVideoTime = -1;
+
+    async function initFaceLandmarker(){
+      try{
+        const filesetResolver = await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.15/wasm"
+        );
+
+        faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
+          baseOptions: {
+            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+            delegate: "GPU"
+          },
+          runningMode: "VIDEO",
+          numFaces: 1,
+          outputFaceBlendshapes: false,
+          outputFacialTransformationMatrixes: false
+        });
+
+        console.log('FaceLandmarker ready');
+        debugEl.textContent = 'FaceLandmarker ready';
+      }catch(e){
+        console.error(e);
+        debugEl.textContent = 'FaceLandmarker の初期化に失敗しました';
+      }
+    }
+
+    // ランドマークから「口の開き」と「画面座標の口位置」を計算
+    function updateMouthState(result){
+  if(!result || !result.faceLandmarks || !result.faceLandmarks.length){
+    debugEl.textContent = '顔が検出されていません';
+    mouthOpen = false;
+    return;
+  }
+
+  const landmarks = result.faceLandmarks[0]; // 1人だけ
+
+  // 顔の上(10)と下(152)、上唇(13)、下唇(14) を使う
+  const top    = landmarks[10];
+  const bottom = landmarks[152];
+  const upLip  = landmarks[13];
+  const lowLip = landmarks[14];
+
+  if(!top || !bottom || !upLip || !lowLip){
+    debugEl.textContent = 'ランドマークが足りません';
+    mouthOpen = false;
+    return;
+  }
+
+  const faceHeight = Math.abs(top.y - bottom.y);
+  const mouthGap   = Math.abs(upLip.y - lowLip.y);
+
+  if(faceHeight <= 0){
+    mouthOpen = false;
+    return;
+  }
+
+  const ratio = mouthGap / faceHeight; // 顔の縦サイズに対する口の開き割合
+
+  // ★ ヒステリシス付きの判定
+  //   - 閉じている状態から開くときは OPEN_THRESHOLD を超えたら
+  //   - 一度開いたら、CLOSE_THRESHOLD を下回るまで「開いたまま扱い」
+  prevMouthOpen = mouthOpen;
+  if(mouthOpen){
+    // すでに「開いている」状態 → ちょっと閉じても、かなり閉じるまで維持
+    mouthOpen = ratio > CLOSE_THRESHOLD;
+  }else{
+    // 「閉じている」状態 → しっかり開いたときだけ true
+    mouthOpen = ratio > OPEN_THRESHOLD;
+  }
+
+  // 口の座標（正規化 → キャンバス座標）
+  const rect = canvas.getBoundingClientRect();
+  // video はミラー表示しているので x を左右反転させる
+  const normX = 1 - ((upLip.x + lowLip.x) / 2);
+  const normY = (upLip.y + lowLip.y) / 2;
+
+  lastMouthScreenPos = {
+    x: normX * rect.width,
+    y: normY * rect.height
+  };
+// ★ 画面上の口の位置によって流れる向きを決める（ここ！）
+if (normX < 0.45) {
+  flowDir = 1;   // 左側 → 右へ
+} else if (normX > 0.55) {
+  flowDir = -1;  // 右側 → 左へ
+}
+  debugEl.textContent =
+    `mouth ratio: ${ratio.toFixed(3)}  ` +
+    `${mouthOpen ? 'OPEN' : 'closed'}`;
+
+  // ★ クールタイム付きで発火
+  const nowTs = performance.now();
+  const COOLDOWN = 3000; // ms（3秒間は再発火させない）
+
+  // 口が「開いている」 かつ 一定時間クールタイムを過ぎていたら発火
+  if (mouthOpen && ratio > OPEN_THRESHOLD && (nowTs - lastMouthTriggerTime) > COOLDOWN) {
+    lastMouthTriggerTime = nowTs;
+    onMouthOpen();
+  }
+}
+
+    // ---------- メインループ ----------
+
+    let last = performance.now();
+
+    async function loop(now){
+      const dt = now - last;
+      last = now;
+
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0,0,rect.width,rect.height);
+
+      // MediaPipeで口の状態を更新
+      if(faceLandmarker && video.readyState >= 2){
+        if(video.currentTime !== lastVideoTime){
+          lastVideoTime = video.currentTime;
+          try{
+            const result = faceLandmarker.detectForVideo(
+              video,
+              Math.round(video.currentTime * 1000)
+            );
+            updateMouthState(result);
+          }catch(e){
+            console.error(e);
+          }
+        }
+      }
+
+      // 松村パーティクル更新
+      for(const p of particles){
+        p.life += dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt + Math.sin(p.life / 260) * 0.01 * dt;
+      }
+
+      // 描画
+      for(const p of particles){
+        if(!matsu.complete) continue;
+        const t = p.life / p.maxLife;
+        if(t>1) continue;
+
+        const alpha = 1 - t;
+        const size  = 42;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.drawImage(matsu, p.x - size/2, p.y - size/2, size, size);
+        ctx.restore();
+      }
+
+      // 終了したやつ削除
+      for(let i=particles.length-1;i>=0;i--){
+        if(particles[i].life >= particles[i].maxLife){
+          particles.splice(i,1);
+        }
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    // ---------- 起動 ----------
+
+    resize();
+    await initCamera();
+    await initFaceLandmarker();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
