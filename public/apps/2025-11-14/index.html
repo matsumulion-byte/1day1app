@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>松村パチンコ - パチンコの日（2025-11-14）</title>
+  <style>
+    :root{
+      --bg:#050510;
+      --ink:#f5f5ff;
+      --accent:#ffd447;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    *{
+      box-sizing:border-box;
+      -webkit-tap-highlight-color:transparent;
+    }
+    html,body{
+      margin:0;
+      padding:0;
+      height:100%;
+      background:var(--bg);
+      color:var(--ink);
+      font-family: system-ui,-apple-system,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+      overflow:hidden;
+      touch-action:none;
+    }
+    #wrap{
+      position:fixed;
+      inset:0;
+      padding-top:var(--safe-top);
+      padding-bottom:var(--safe-bottom);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    canvas{
+  display:block;
+  width:100vw;
+  height:100vh;
+  max-width:600px;
+  max-height:100vh;
+  touch-action:none;
+
+  /* ★ ここを追加 */
+  background: url('/2025-11-14/assets/bg_pachi.png') center/cover no-repeat;
+}
+
+    .hud{
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      padding:4px 10px;
+      padding-top:calc(var(--safe-top) + 2px);
+      display:flex;
+      align-items:center;
+      justify-content:space-between; /* ← 左：説明 / 右：スコア */
+      gap:8px;
+      font-size:11px;
+      pointer-events:none;
+      text-shadow:0 0 4px rgba(0,0,0,.9);
+    }
+    .hud span{
+      background:rgba(0,0,0,.45);
+      padding:3px 8px;
+      border-radius:999px;
+      backdrop-filter:blur(6px);
+      -webkit-backdrop-filter:blur(6px);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:48vw;
+    }
+    .bgm-btn{
+      position:fixed;
+      right:10px;
+      bottom:10px;
+      padding:6px 12px;
+      font-size:11px;
+      border-radius:999px;
+      border:none;
+      background:rgba(0,0,0,0.6);
+      color:var(--ink);
+      cursor:pointer;
+      z-index:10;
+      box-shadow:0 4px 10px rgba(0,0,0,.4);
+      -webkit-tap-highlight-color:transparent;
+    }
+    .bgm-btn.on{
+      background:rgba(255,212,71,0.95);
+      color:#201000;
+    }
+  </style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game"></canvas>
+
+  <!-- 上：左に説明 / 右にスコア -->
+  <div class="hud">
+    <span class="hud-left">画面タップで玉発射（1玉ずつ）</span>
+    <span class="hud-right" id="scoreHud">PLAY 0 / 当0 松0 ハ0 ｜ 連0（MAX0）</span>
+  </div>
+
+  <button id="bgmToggle" class="bgm-btn">BGM OFF</button>
+</div>
+
+<script type="module">
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const bgmToggleBtn = document.getElementById('bgmToggle');
+  const scoreHudEl = document.getElementById('scoreHud');
+
+  // BGM
+  const bgm = new Audio('/2025-11-14/assets/bgm_pachi.mp3');
+  bgm.loop = true;
+  bgm.volume = 0.4;
+
+  let bgmWanted = false;
+  let bgmStarted = false;
+
+  const matsuVoice = new Audio('/2025-11-14/assets/matsumura_desu.m4a');
+  matsuVoice.volume = 1.0; // 音量調整
+
+
+  const state = {
+    w: 0,
+    h: 0,
+    lastTime: 0,
+    pins: [],
+    slots: [],
+    ball: {
+      x: 0,
+      y: 0,
+      r: 8,
+      vx: 0,
+      vy: 0,
+      active: false,
+      finished: false
+    },
+    gravity: 900,
+    resultText: '',
+    resultType: '',
+    resultAlpha: 0,
+    bgFlash: 0,
+    stats: {
+      plays: 0,
+      hit: 0,
+      matsu: 0,
+      miss: 0,
+      ren: 0,
+      maxRen: 0
+    }
+  };
+
+  function fitCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    state.w = rect.width;
+    state.h = rect.height;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    setupBoard();
+    updateScoreHud();
+  }
+
+  // スコアHUD（右上テキスト）更新
+  function updateScoreHud() {
+    const s = state.stats;
+    scoreHudEl.textContent =
+      `PLAY ${s.plays} / 当${s.hit} 松${s.matsu} ハ${s.miss} ｜ 連${s.ren}（MAX${s.maxRen}）`;
+  }
+
+  // 釘の配列：漏斗 → 密集 → ポケット誘導
+  function setupBoard() {
+    const { w, h } = state;
+    state.pins.length = 0;
+    state.slots.length = 0;
+
+    const pinR = 5;
+
+    // 上部：漏斗
+    const funnelRows = 4;
+    const funnelTopY = h * 0.13;
+    const funnelGapY = h * 0.04;
+    const funnelSpan = w * 0.8;
+    for (let row = 0; row < funnelRows; row++) {
+      const y = funnelTopY + row * funnelGapY;
+      const count = 3 + row;
+      const startX = w * 0.5 - funnelSpan / 2;
+      const gapX = funnelSpan / (count - 1);
+      for (let i = 0; i < count; i++) {
+        const x = startX + gapX * i;
+        state.pins.push({ x, y, r: pinR });
+      }
+    }
+
+    // 中央：密集ジグザグ
+    const midRows = 6;
+    const midTopY = funnelTopY + funnelRows * funnelGapY + h * 0.035;
+    const midGapY = h * 0.055;
+    const cols = 9;
+    const horizGap = w / (cols + 1);
+
+    for (let row = 0; row < midRows; row++) {
+      const y = midTopY + row * midGapY;
+      for (let col = 0; col < cols; col++) {
+        let x = horizGap * (col + 1);
+        if (row % 2 === 1) x += horizGap * 0.5;
+        if (x < w * 0.1 || x > w * 0.9) continue;
+        state.pins.push({ x, y, r: pinR });
+      }
+    }
+
+    // ポケット（少し上に＆低め）
+    const slotY = h * 0.8;
+    const slotHeight = h * 0.065;
+    const slotWidth = w * 0.24;
+    const gap = w * 0.06;
+    const total = slotWidth * 3 + gap * 2;
+    const startX = (w - total) / 2;
+
+    const types = [
+      { type: 'hit', label: '当たり' },
+      { type: 'miss', label: 'ハズレ' },
+      { type: 'matsu', label: '松村' }
+    ];
+
+    for (let i = 0; i < 3; i++) {
+      state.slots.push({
+        x: startX + i * (slotWidth + gap),
+        y: slotY,
+        w: slotWidth,
+        h: slotHeight,
+        type: types[i].type,
+        label: types[i].label
+      });
+    }
+
+    // ポケット誘導釘
+    const guideOffsetY = h * 0.055;
+    const guideOffsetX = 0.26;
+    for (const slot of state.slots) {
+      const cx = slot.x + slot.w / 2;
+      const baseY = slot.y - guideOffsetY;
+
+      state.pins.push({ x: cx, y: baseY, r: pinR + 1 });
+
+      const leftX  = slot.x + slot.w * (0.5 - guideOffsetX);
+      const rightX = slot.x + slot.w * (0.5 + guideOffsetX);
+      const upperY = baseY - h * 0.03;
+
+      state.pins.push({ x: leftX,  y: upperY, r: pinR });
+      state.pins.push({ x: rightX, y: upperY, r: pinR });
+    }
+
+    resetBall(true);
+  }
+
+  function resetBall(initial = false) {
+    const { w, h } = state;
+    state.ball.x = w * 0.5;
+    state.ball.y = h * 0.06;
+    state.ball.vx = (initial ? 0 : (Math.random() * 160 - 80));
+    state.ball.vy = 0;
+    state.ball.active = false;
+    state.ball.finished = false;
+
+    if (initial) {
+      state.resultText = '';
+      state.resultType = '';
+      state.resultAlpha = 0;
+      state.bgFlash = 0;
+    }
+  }
+
+  function tryStartBgm() {
+    if (!bgmWanted || bgmStarted) return;
+    bgm.play().then(() => {
+      bgmStarted = true;
+      bgmToggleBtn.classList.add('on');
+      bgmToggleBtn.textContent = 'BGM ON';
+    }).catch(() => {});
+  }
+
+  function fireBall() {
+    const ball = state.ball;
+    if (ball.active || (!ball.finished && ball.y > state.h * 0.1)) return;
+
+    ball.x = state.w * 0.5;
+    ball.y = state.h * 0.09;
+    ball.vx = (Math.random() * 180 - 90);
+    ball.vy = 50;
+    ball.active = true;
+    ball.finished = false;
+
+    state.resultText = '';
+    state.resultType = '';
+    state.resultAlpha = 0;
+    state.bgFlash = 0;
+
+    tryStartBgm();
+  }
+
+  canvas.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (!state.ball.active && state.ball.finished) {
+      resetBall();
+    }
+    fireBall();
+  }, { passive: false });
+
+  bgmToggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    bgmWanted = !bgmWanted;
+
+    if (bgmWanted) {
+      tryStartBgm();
+    } else {
+      bgm.pause();
+      bgmStarted = false;
+      bgmToggleBtn.classList.remove('on');
+      bgmToggleBtn.textContent = 'BGM OFF';
+    }
+  });
+
+  window.addEventListener('resize', fitCanvas);
+  fitCanvas();
+
+  function loop(timestamp) {
+    if (!state.lastTime) state.lastTime = timestamp;
+    const dt = Math.min((timestamp - state.lastTime) / 1000, 0.033);
+    state.lastTime = timestamp;
+
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function update(dt) {
+    const { ball, gravity, pins, slots, h } = state;
+
+    if (state.resultAlpha > 0) {
+      state.resultAlpha = Math.max(0, state.resultAlpha - dt * 0.5);
+    }
+    if (state.bgFlash > 0) {
+      state.bgFlash = Math.max(0, state.bgFlash - dt * 2.0);
+    }
+
+    if (!ball.active) return;
+
+    ball.vy += gravity * dt;
+
+    const maxSpeed = 900;
+    const speed = Math.hypot(ball.vx, ball.vy);
+    if (speed > maxSpeed) {
+      const k = maxSpeed / speed;
+      ball.vx *= k;
+      ball.vy *= k;
+    }
+
+    ball.x += ball.vx * dt;
+    ball.y += ball.vy * dt;
+
+    const margin = ball.r + 4;
+    if (ball.x < margin) {
+      ball.x = margin;
+      ball.vx = Math.abs(ball.vx) * 0.8;
+    }
+    if (ball.x > state.w - margin) {
+      ball.x = state.w - margin;
+      ball.vx = -Math.abs(ball.vx) * 0.8;
+    }
+
+    // 釘との当たり判定
+    for (const pin of pins) {
+      const dx = ball.x - pin.x;
+      const dy = ball.y - pin.y;
+      const dist = Math.hypot(dx, dy);
+      const minDist = ball.r + pin.r * 0.9;
+      if (dist > 0 && dist < minDist) {
+        const nx = dx / dist;
+        const ny = dy / dist;
+        const overlap = (minDist - dist) + 0.5;
+        ball.x += nx * overlap;
+        ball.y += ny * overlap;
+
+        const dir = (Math.random() < 0.5 ? -1 : 1);
+        ball.vx = (80 + Math.random() * 140) * dir;
+        ball.vy *= 0.3;
+      }
+    }
+
+    // ポケット判定（ポケット位置変えたのでこっちも）
+    if (ball.y > h * 0.78) {
+      ball.active = false;
+      ball.finished = true;
+
+      let matched = null;
+      for (const slot of slots) {
+        if (ball.x >= slot.x && ball.x <= slot.x + slot.w) {
+          matched = slot;
+          break;
+        }
+      }
+
+      if (!matched) {
+        setResult('ハズレ', 'miss');
+      } else {
+        setResult(matched.label, matched.type);
+      }
+    }
+  }
+
+  function setResult(text, type) {
+    state.resultText = text;
+    state.resultType = type;
+    state.resultAlpha = 1;
+
+    const s = state.stats;
+    s.plays += 1;
+
+    if (type === 'hit') {
+      s.hit += 1;
+      s.ren += 1;
+    } else if (type === 'matsu') {
+      s.matsu += 1;
+      s.ren += 1; // 松村も連チャン扱い（好みで変えてOK）
+          // ★ 追加：松村ボイスを鳴らす
+    matsuVoice.currentTime = 0;
+    matsuVoice.play().catch(()=>{});
+    } else {
+      s.miss += 1;
+      s.ren = 0;
+    }
+
+    if (s.ren > s.maxRen) s.maxRen = s.ren;
+
+    if (type === 'hit' || type === 'matsu') {
+      state.bgFlash = 1;
+    }
+
+    updateScoreHud();
+  }
+
+  function drawBackground() {
+  const { w, h } = state;
+
+  // ベースの塗りつぶしはやめて、前回のフレームだけ消す
+  ctx.clearRect(0, 0, w, h);
+
+  // 盤面のガラスっぽい薄いオーバーレイ
+  ctx.fillStyle = 'rgba(0,0,0,0.25)'; // うっすら暗くする
+  ctx.fillRect(w * 0.05, h * 0.08, w * 0.9, h * 0.84);
+
+  // 枠線だけ残す
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(w * 0.06, h * 0.09, w * 0.88, h * 0.82);
+}
+
+  function drawPins() {
+    ctx.save();
+    for (const pin of state.pins) {
+      const grad = ctx.createRadialGradient(pin.x - 1, pin.y - 1, 0, pin.x, pin.y, pin.r + 3);
+      grad.addColorStop(0, '#fefefe');
+      grad.addColorStop(0.4, '#d7e2ff');
+      grad.addColorStop(1, '#727aa0');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(pin.x, pin.y, pin.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawSlots() {
+    const { slots } = state;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 14px system-ui,-apple-system';
+
+    for (const slot of slots) {
+      let base = '#15151f';
+      if (slot.type === 'hit') base = '#342000';
+      if (slot.type === 'matsu') base = '#001b33';
+
+      ctx.fillStyle = base;
+      const radius = 10;
+      roundRect(ctx, slot.x, slot.y, slot.w, slot.h, radius);
+      ctx.fill();
+
+      ctx.save();
+      ctx.clip();
+      const innerGrad = ctx.createLinearGradient(slot.x, slot.y, slot.x, slot.y + slot.h);
+      if (slot.type === 'hit') {
+        innerGrad.addColorStop(0, '#ffec99');
+        innerGrad.addColorStop(1, '#ffb84f');
+      } else if (slot.type === 'matsu') {
+        innerGrad.addColorStop(0, '#7ac5ff');
+        innerGrad.addColorStop(1, '#2050ff');
+      } else {
+        innerGrad.addColorStop(0, '#55596a');
+        innerGrad.addColorStop(1, '#303341');
+      }
+      ctx.fillStyle = innerGrad;
+      ctx.fillRect(slot.x + 3, slot.y + 3, slot.w - 6, slot.h - 6);
+      ctx.restore();
+
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+      let labelColor = '#fff';
+      if (slot.type === 'hit') labelColor = '#3b2200';
+      if (slot.type === 'matsu') labelColor = '#001230';
+      ctx.fillStyle = labelColor;
+      ctx.strokeText(slot.label, slot.x + slot.w / 2, slot.y + slot.h / 2);
+      ctx.fillText(slot.label, slot.x + slot.w / 2, slot.y + slot.h / 2);
+    }
+
+    ctx.restore();
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    const radius = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + w - radius, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+    ctx.lineTo(x + w, y + h - radius);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+    ctx.lineTo(x + radius, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+  }
+
+  function drawBall() {
+    const { ball } = state;
+    if (!ball) return;
+
+    ctx.save();
+    const grad = ctx.createRadialGradient(ball.x - 3, ball.y - 4, 0, ball.x, ball.y, ball.r + 4);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.4, '#f5f7ff');
+    grad.addColorStop(1, '#9aa1c0');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawResultOverlay() {
+    if (!state.resultText || state.resultAlpha <= 0) return;
+
+    const { w, h, resultType, resultAlpha } = state;
+    ctx.save();
+
+    if (resultType === 'hit' || resultType === 'matsu') {
+      ctx.globalAlpha = state.bgFlash * 0.45;
+      const grad = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, Math.max(w,h));
+      if (resultType === 'hit') {
+        grad.addColorStop(0, 'rgba(255,244,204,1)');
+        grad.addColorStop(1, 'rgba(255,200,0,0)');
+      } else {
+        grad.addColorStop(0, 'rgba(204,230,255,1)');
+        grad.addColorStop(1, 'rgba(0,100,255,0)');
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0,0,w,h);
+    }
+
+    ctx.globalAlpha = resultAlpha;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    let mainColor = '#ffffff';
+    if (resultType === 'hit') mainColor = '#ffe000';
+    if (resultType === 'matsu') mainColor = '#a7d0ff';
+
+    ctx.font = 'bold 32px system-ui,-apple-system';
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+    ctx.strokeText(state.resultText, w/2, h*0.35);
+    ctx.fillStyle = mainColor;
+    ctx.fillText(state.resultText, w/2, h*0.35);
+
+    ctx.font = '14px system-ui,-apple-system';
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    let sub = '画面タップで次の玉';
+    if (resultType === 'hit') sub = '大当たり！もう1発いっときましょう';
+    if (resultType === 'matsu') sub = '松村です！';
+    ctx.fillText(sub, w/2, h*0.42);
+
+    ctx.restore();
+  }
+
+  function draw() {
+    drawBackground();
+    drawPins();
+    drawSlots();
+    drawBall();
+    drawResultOverlay();
+  }
+
+  requestAnimationFrame(loop);
+</script>
+</body>
+</html>
