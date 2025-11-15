@@ -290,7 +290,7 @@
 
     // ★ 実際に回った角度から「回転数」を計算
     const totalAngle = Math.abs(state.angle - state.spinStartAngle);
-    const turns = totalAngle / (Math.PI * 2); // 2π rad = 1回転
+    const turns = totalAngle / Math.PI;
 
     state.lastTurns = turns;
     if (turns > state.bestTurns) {
