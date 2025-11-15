@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>松村きものスピン - 帯スワイプ回転チャレンジ（2025-11-15）</title>
+  <style>
+    :root{
+      --ink:#f5f5ff;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    *{
+      box-sizing:border-box;
+      -webkit-tap-highlight-color:transparent;
+    }
+    html,body{
+      margin:0;
+      padding:0;
+      height:100%;
+      background:#000; /* 余白は黒 */
+      color:var(--ink);
+      font-family: system-ui,-apple-system,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+      overflow:hidden;
+      touch-action:none;
+    }
+    #wrap{
+      position:fixed;
+      inset:0;
+      padding-top:var(--safe-top);
+      padding-bottom:var(--safe-bottom);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    /* canvasは完全透明。サイズはJSで9:16にする */
+    canvas{
+      display:block;
+      background:transparent;
+      touch-action:none;
+      cursor:grab;
+    }
+    canvas:active{
+      cursor:grabbing;
+    }
+
+    .hud{
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      padding:4px 10px;
+      padding-top:calc(var(--safe-top) + 2px);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      font-size:11px;
+      pointer-events:none;
+      text-shadow:0 0 4px rgba(0,0,0,.9);
+    }
+    .hud span{
+      background:rgba(0,0,0,.45);
+      padding:3px 8px;
+      border-radius:999px;
+      backdrop-filter:blur(6px);
+      -webkit-backdrop-filter:blur(6px);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:48vw;
+    }
+  </style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game"></canvas>
+
+  <div class="hud">
+    <span class="hud-left">松村を横にスワイプして回そう</span>
+    <span class="hud-right" id="scoreHud">今回 0.00回 ／ ベスト 0.00回</span>
+  </div>
+</div>
+
+<script type="module">
+  // Vercel用のパス解決
+  const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+  const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : '/';
+  const asset = (p) => {
+    const clean = String(p || '').replace(/^\.?\//, '');
+    return `${DATE_BASE}${clean}`;
+  };
+
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const scoreHudEl = document.getElementById('scoreHud');
+  const hudLeftEl = document.querySelector('.hud-left');
+
+  // PCかどうかざっくり判定
+  const isPC = !/iPhone|iPad|Android.+Mobile/.test(navigator.userAgent);
+  hudLeftEl.textContent = isPC
+    ? '松村を横にドラッグして回そう'
+    : '松村を横にスワイプして回そう';
+
+  // 和室背景
+  const bgImg = new Image();
+  bgImg.src = asset('./assets/washitsu_bg.png');
+  let bgReady = false;
+  bgImg.onload = () => { bgReady = true; };
+
+  // 3段階松村
+  const matsuStart = new Image(); // 帯あり（スタート）
+  const matsuSpin  = new Image(); // バンザイ（回転中）
+  const matsuEnd   = new Image(); // 恥じらい（停止後）
+
+  matsuStart.src = asset('./assets/matsu_kimono_start.png');
+  matsuSpin.src  = asset('./assets/matsu_kimono_spin.png');
+  matsuEnd.src   = asset('./assets/matsu_kimono_end.png');
+
+  let loadedCount = 0;
+  function handleLoaded(){ loadedCount++; }
+  ;[matsuStart, matsuSpin, matsuEnd].forEach(img=>{
+    if(img.complete) handleLoaded();
+    else img.onload = handleLoaded;
+  });
+
+  let currentMatsu = matsuStart;
+
+  // 効果音（あーーれーー）
+  const spinSE = new Audio(asset('./assets/spin_voice.m4a'));
+  spinSE.preload = 'auto';
+  spinSE.volume = 1.0;
+
+  const state = {
+    w:0, h:0,
+    lastTime:0,
+    angle:0,
+    angVel:0,
+    spinning:false,
+    spinAccum:0,
+    lastTurns:0,
+    bestTurns:0,
+    dragging:false,
+    dragStartX:0,
+    dragLastX:0,
+    dragStartTime:0,
+  };
+
+  // スマホ縦横比(9:16)でcanvasをセンターに配置
+  function fitCanvas(){
+    const dpr = window.devicePixelRatio || 1;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const ratio = 9/16; // 横:縦
+
+    let w, h;
+    if (vw / vh > ratio) {
+      // 横が余る → 高さ優先
+      h = vh;
+      w = vh * ratio;
+    } else {
+      // 縦が余る → 幅優先
+      w = vw;
+      h = vw / ratio;
+    }
+
+    canvas.style.width  = `${w}px`;
+    canvas.style.height = `${h}px`;
+
+    state.w = w;
+    state.h = h;
+
+    canvas.width  = w * dpr;
+    canvas.height = h * dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', fitCanvas);
+  fitCanvas();
+
+  function updateHUD(){
+    scoreHudEl.textContent =
+      `今回 ${state.lastTurns.toFixed(2)}回 ／ ベスト ${state.bestTurns.toFixed(2)}回`;
+  }
+
+  // 入力（canvas内ならどこを横ドラッグしてもOK）
+  canvas.addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    if(state.spinning) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+    const x = clientX - rect.left;
+
+    state.dragging = true;
+    state.dragStartX = x;
+    state.dragLastX  = x;
+    state.dragStartTime = performance.now();
+
+    // 新しいチャレンジ開始 → 帯あり
+    currentMatsu = matsuStart;
+  });
+
+  canvas.addEventListener('pointermove', e=>{
+    if(!state.dragging) return;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+    const x = clientX - rect.left;
+    state.dragLastX = x;
+  });
+
+  canvas.addEventListener('pointerup', ()=> endDrag());
+  canvas.addEventListener('pointercancel', ()=> endDrag(true));
+
+  function endDrag(cancel=false){
+    if(!state.dragging) return;
+    state.dragging = false;
+    if(cancel) return;
+
+    const dx = state.dragLastX - state.dragStartX;
+    const dt = Math.max((performance.now() - state.dragStartTime)/1000, 0.01);
+    const vx = dx / dt; // px/sec
+
+    // PCはマウス移動量が少なめなので少しブースト
+    const velocityBoost = isPC ? 1.3 : 1.0;
+
+    let angVel = vx * 0.006 * velocityBoost;
+    if(Math.abs(angVel) < 0.8) return; // 弱いスワイプは無視
+
+    angVel = Math.max(-16, Math.min(16, angVel)); // 上限
+
+    state.angVel = angVel;
+    state.spinning = true;
+    state.spinAccum = 0;
+
+    // 回転中はバンザイ松村
+    currentMatsu = matsuSpin;
+
+    // 効果音再生（あーーれーー）
+    try{
+      spinSE.currentTime = 0;
+      spinSE.play();
+    }catch(e){
+      // ユーザー操作直後なので基本OK。失敗しても無視。
+    }
+  }
+
+  // メインループ
+  requestAnimationFrame(function loop(t){
+    if(!state.lastTime) state.lastTime = t;
+    const dt = Math.min((t - state.lastTime)/1000, 0.033);
+    state.lastTime = t;
+
+    update(dt);
+    draw();
+
+    requestAnimationFrame(loop);
+  });
+
+  function update(dt){
+    if(!state.spinning) return;
+
+    state.angle += state.angVel * dt;
+    state.spinAccum += Math.abs(state.angVel * dt);
+    state.angVel *= 0.985; // 摩擦
+
+    if(Math.abs(state.angVel) < 0.15){
+      state.spinning = false;
+      state.angVel = 0;
+
+      const turns = state.spinAccum / (Math.PI*2);
+      state.lastTurns = turns;
+      if(turns > state.bestTurns) state.bestTurns = turns;
+      updateHUD();
+
+      // 止まったら恥じらい松村
+      currentMatsu = matsuEnd;
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,state.w,state.h);
+    drawBackground();
+    drawMatsumura();
+    drawResult();
+  }
+
+  // 和室背景（canvas内に描画）
+  function drawBackground(){
+    const {w,h} = state;
+    if(bgReady){
+      const iw = bgImg.width;
+      const ih = bgImg.height;
+      const scale = Math.max(w/iw, h/ih);
+      const dw = iw * scale;
+      const dh = ih * scale;
+      const dx = (w - dw)/2;
+      const dy = (h - dh)/2;
+      ctx.drawImage(bgImg, dx, dy, dw, dh);
+    }else{
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0,0,w,h);
+    }
+  }
+
+  // 松村を「横回転」しているように見せる（scaleXで表現）
+  function drawMatsumura(){
+    if(loadedCount < 1) return;
+    const img = currentMatsu;
+    if(!img.width) return;
+
+    const {w,h} = state;
+    const cx = w/2;
+    const cy = h*0.42;
+
+    const maxH = h*0.55;
+    const ratio = img.width / img.height;
+    const ih = maxH;
+    const iw = ih * ratio;
+
+    const phase = state.angle;
+    const c = Math.cos(phase);
+    const scaleX = Math.max(0.15, Math.abs(c)); // 0.15〜1
+
+    ctx.save();
+    ctx.translate(cx,cy);
+    if(c >= 0) ctx.scale(scaleX,1);
+    else       ctx.scale(-scaleX,1);
+
+    ctx.drawImage(img, -iw/2, -ih/2, iw, ih);
+    ctx.restore();
+  }
+
+  function drawResult(){
+    if(state.spinning) return;
+    if(!state.lastTurns) return;
+
+    const {w,h} = state;
+    const t = state.lastTurns.toFixed(2);
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(w*0.1, h*0.12, w*0.8, h*0.1);
+
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.font='bold 22px system-ui';
+    ctx.fillStyle='#ffe27a';
+    ctx.strokeStyle='rgba(0,0,0,0.7)';
+    ctx.lineWidth=4;
+    ctx.strokeText(`${t}回転！`, w/2, h*0.17);
+    ctx.fillText(`${t}回転！`,   w/2, h*0.17);
+
+    ctx.restore();
+  }
+</script>
+</body>
+</html>
