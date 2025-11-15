@@ -132,19 +132,27 @@
   spinSE.volume = 1.0;
 
   const state = {
-    w:0, h:0,
-    lastTime:0,
-    angle:0,
-    angVel:0,
-    spinning:false,
-    spinAccum:0,
-    lastTurns:0,
-    bestTurns:0,
-    dragging:false,
-    dragStartX:0,
-    dragLastX:0,
-    dragStartTime:0,
-  };
+  w: 0,
+  h: 0,
+  lastTime: 0,
+
+  // 回転
+  angle: 0,            // 現在の角度（見た目に直結）
+  angVel: 0,           // 角速度（rad/sec）
+  spinning: false,
+  spinStartAngle: 0,   // 回し始めた時点の角度を記録
+
+  // スコア
+  lastTurns: 0,
+  bestTurns: 0,
+
+  // スワイプ
+  dragging: false,
+  dragStartX: 0,
+  dragStartTime: 0,
+  dragLastX: 0
+};
+
 
   // スマホ縦横比(9:16)でcanvasをセンターに配置
   function fitCanvas(){
@@ -210,39 +218,48 @@
 
   canvas.addEventListener('pointerup', ()=> endDrag());
   canvas.addEventListener('pointercancel', ()=> endDrag(true));
+  function endDrag(cancel = false){
+  if (!state.dragging) return;
+  state.dragging = false;
+  if (cancel) return;
 
-  function endDrag(cancel=false){
-    if(!state.dragging) return;
-    state.dragging = false;
-    if(cancel) return;
+  const dx = state.dragLastX - state.dragStartX;
+  const dt = Math.max((performance.now() - state.dragStartTime) / 1000, 0.01);
+  const vx = dx / dt; // px/sec
 
-    const dx = state.dragLastX - state.dragStartX;
-    const dt = Math.max((performance.now() - state.dragStartTime)/1000, 0.01);
-    const vx = dx / dt; // px/sec
+  // PCはマウス移動量が少なめなので少しブースト
+  const velocityBoost = isPC ? 1.5 : 1.2;
 
-    // PCはマウス移動量が少なめなので少しブースト
-    const velocityBoost = isPC ? 1.3 : 1.0;
+  // ★ スワイプ→回転の変換を強めに
+  let angVel = vx * 0.015 * velocityBoost;
 
-    let angVel = vx * 0.006 * velocityBoost;
-    if(Math.abs(angVel) < 0.8) return; // 弱いスワイプは無視
+  // 弱すぎるスワイプは無視（前よりゆるく）
+  if (Math.abs(angVel) < 0.4) return;
 
-    angVel = Math.max(-16, Math.min(16, angVel)); // 上限
+  // 上限（回しすぎ対策）
+  const maxAngVel = 24; // rad/sec
+  if (angVel >  maxAngVel) angVel =  maxAngVel;
+  if (angVel < -maxAngVel) angVel = -maxAngVel;
 
-    state.angVel = angVel;
-    state.spinning = true;
-    state.spinAccum = 0;
+  // ★ 回し始めるときに角度リセット＆開始角を記録
+  state.angle = 0;
+  state.spinStartAngle = 0;
 
-    // 回転中はバンザイ松村
-    currentMatsu = matsuSpin;
+  state.angVel = angVel;
+  state.spinning = true;
 
-    // 効果音再生（あーーれーー）
-    try{
-      spinSE.currentTime = 0;
-      spinSE.play();
-    }catch(e){
-      // ユーザー操作直後なので基本OK。失敗しても無視。
-    }
+  // 回転中はバンザイ松村
+  currentMatsu = matsuSpin;
+
+  // 効果音（あーーれーー）
+  try {
+    spinSE.currentTime = 0;
+    spinSE.play();
+  } catch(e) {
+    // iOSの制限とかで失敗しても無視
   }
+}
+
 
   // メインループ
   requestAnimationFrame(function loop(t){
@@ -257,25 +274,35 @@
   });
 
   function update(dt){
-    if(!state.spinning) return;
+  if (!state.spinning) return;
 
-    state.angle += state.angVel * dt;
-    state.spinAccum += Math.abs(state.angVel * dt);
-    state.angVel *= 0.985; // 摩擦
+  // 角度を更新
+  state.angle += state.angVel * dt;
 
-    if(Math.abs(state.angVel) < 0.15){
-      state.spinning = false;
-      state.angVel = 0;
+  // 摩擦（減速）。値を大きくして「回りやすく」
+  const friction = 0.99; // もともと 0.985 だった
+  state.angVel *= friction;
 
-      const turns = state.spinAccum / (Math.PI*2);
-      state.lastTurns = turns;
-      if(turns > state.bestTurns) state.bestTurns = turns;
-      updateHUD();
+  // 一定以下の速度になったら停止
+  if (Math.abs(state.angVel) < 0.08) { // 0.15 → 0.08 にしてもう少し回す
+    state.spinning = false;
+    state.angVel = 0;
 
-      // 止まったら恥じらい松村
-      currentMatsu = matsuEnd;
+    // ★ 実際に回った角度から「回転数」を計算
+    const totalAngle = Math.abs(state.angle - state.spinStartAngle);
+    const turns = totalAngle / (Math.PI * 2); // 2π rad = 1回転
+
+    state.lastTurns = turns;
+    if (turns > state.bestTurns) {
+      state.bestTurns = turns;
     }
+    updateHUD();
+
+    // 止まったら恥じらい松村
+    currentMatsu = matsuEnd;
   }
+}
+
 
   function draw(){
     ctx.clearRect(0,0,state.w,state.h);
