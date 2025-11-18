@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>お絵描きサウンド - 1日1アプリ</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <style>
+    :root {
+      --bg: #050612;
+      --panel: #0d1420;
+      --accent: #c08cff;
+      --accent-soft: rgba(192, 140, 255, 0.3);
+      --ink: #f5f7ff;
+      --ink-muted: #97a0c0;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      user-select: none;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at top, #1b2340 0, #050612 55%, #000 100%);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      overscroll-behavior: none;
+      touch-action: none;
+    }
+    #wrap {
+      position: fixed;
+      inset: 0;
+      padding-top: calc(8px + var(--safe-top));
+      padding-bottom: calc(8px + var(--safe-bottom));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .app {
+      width: min(480px, 100vw);
+      height: min(100vh - calc(var(--safe-top) + var(--safe-bottom) + 16px), 960px);
+      aspect-ratio: 9 / 16;
+      margin: 0 auto;
+      border-radius: 20px;
+      box-shadow: 0 18px 45px rgba(0,0,0,.6);
+      background: radial-gradient(circle at top, #151a30 0, #050712 55%, #000 100%);
+      padding: 12px 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 4px 4px 0;
+    }
+    header .title-main {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: .04em;
+    }
+    header .title-sub {
+      font-size: 11px;
+      color: var(--ink-muted);
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 0;
+    }
+    .canvas-wrap {
+      flex: 1;
+      min-height: 0;
+      background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(0,0,0,0.65));
+      border-radius: 18px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .canvas-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--ink-muted);
+      padding-inline: 2px;
+    }
+    .canvas-inner {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      border-radius: 14px;
+      overflow: hidden;
+      background: radial-gradient(circle at 20% 0, rgba(192,140,255,0.3) 0, transparent 45%),
+                  radial-gradient(circle at 80% 100%, rgba(78,182,255,0.25) 0, transparent 50%),
+                  #050611;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .hint {
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.45);
+      color: var(--ink-muted);
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+      white-space: nowrap;
+    }
+    .controls {
+      padding: 6px 6px 2px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(0,0,0,0.8));
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .controls-row {
+      display: flex;
+      gap: 6px;
+    }
+    button {
+      flex: 1;
+      border-radius: 999px;
+      border: none;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform .05s ease, box-shadow .05s ease, background .15s ease, opacity .15s ease;
+    }
+    button:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: none;
+    }
+    #playBtn {
+      background: radial-gradient(circle at 0 0, rgba(255,255,255,0.25) 0, transparent 55%),
+                  linear-gradient(135deg, #c08cff, #7d4cff);
+      color: #12081e;
+      box-shadow: 0 8px 18px rgba(156, 124, 255, 0.65);
+    }
+    #playBtn.playing {
+      background: linear-gradient(135deg, #ffda8c, #ff9e4c);
+      box-shadow: 0 8px 22px rgba(255, 192, 120, 0.75);
+    }
+    #clearBtn {
+      flex: 0 0 90px;
+      background: rgba(12, 15, 30, 0.9);
+      color: var(--ink-muted);
+      border: 1px solid rgba(151, 160, 192, 0.4);
+    }
+    #clearBtn:active {
+      background: rgba(4, 6, 16, 0.95);
+    }
+    .loop-row {
+      justify-content: flex-end;
+    }
+    #loopBtn {
+      flex: 0 0 auto;
+      min-width: 130px;
+      background: rgba(8, 10, 22, 0.85);
+      color: var(--ink-muted);
+      border: 1px solid rgba(151,160,192,0.35);
+      font-weight: 500;
+      font-size: 12px;
+    }
+    #loopBtn.active {
+      background: radial-gradient(circle at 0 0, rgba(255,255,255,0.2) 0, transparent 55%),
+                  linear-gradient(135deg, #4cffb9, #23a8ff);
+      color: #041018;
+      border-color: rgba(255,255,255,0.6);
+      box-shadow: 0 6px 16px rgba(60, 220, 255, 0.4);
+    }
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--ink-muted);
+      padding-inline: 2px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(151,160,192,0.5);
+      font-size: 9px;
+      background: rgba(0,0,0,0.5);
+    }
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 6px rgba(192,140,255,0.9);
+    }
+  </style>
+</head>
+<body>
+<div id="wrap">
+  <div class="app">
+    <header>
+      <div>
+        <div class="title-main">お絵描きサウンド</div>
+        <div class="title-sub">線を描くと音が鳴るよ</div>
+      </div>
+      <div class="badge">
+        <span class="dot"></span><span>1日1アプリ / 2025-11-18</span>
+      </div>
+    </header>
+    <main>
+      <div class="canvas-wrap">
+        <div class="canvas-label-row">
+          <span>✏️ 指 or マウスでキャンバスに線を描く</span>
+          <span>上＝高い音 / 下＝低い音</span>
+        </div>
+        <div class="canvas-inner">
+          <canvas id="drawCanvas"></canvas>
+          <div class="hint">描いたあと「▶ 再生」で音が鳴るよ</div>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="controls-row">
+          <button id="playBtn" type="button">
+            <span id="playIcon">▶</span><span id="playLabel">再生</span>
+          </button>
+          <button id="clearBtn" type="button">✕ クリア</button>
+        </div>
+        <div class="controls-row loop-row">
+          <button id="loopBtn" type="button">🔁 ループOFF</button>
+        </div>
+        <div class="status-row">
+          <span id="stepInfo">ステップ: 0 / 16</span>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script type="module">
+  // 1day1app ルールのアセットヘルパー（今回は未使用だけど同じ型にしておく）
+  const asset = (p) => new URL(p, import.meta.url).toString();
+
+  const canvas = document.getElementById('drawCanvas');
+  const ctx = canvas.getContext('2d');
+  const playBtn = document.getElementById('playBtn');
+  const playIcon = document.getElementById('playIcon');
+  const playLabel = document.getElementById('playLabel');
+  const clearBtn = document.getElementById('clearBtn');
+  const loopBtn = document.getElementById('loopBtn');
+  const stepInfo = document.getElementById('stepInfo');
+
+  let dpr = window.devicePixelRatio || 1;
+  let strokes = []; // 各ストローク: [{x,y}, ...]
+  let currentStroke = null;
+
+  const STEP_COUNT = 16;
+  let steps = []; // { voices: [{ voiceId, freq, sustain }], vizYs: Array<{y, voiceId}> }
+  let voiceVizMap = []; // per voice per step y座標
+  let currentStepIndex = -1;
+  let isPlaying = false;
+  let playTimer = null;
+  let isLoopEnabled = false;
+
+  // Web Audio
+  let audioCtx = null;
+
+  function ensureAudioContext() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  }
+
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawAll();
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('orientationchange', () => {
+    setTimeout(resizeCanvas, 200);
+  });
+
+  // タッチスクロール抑止
+  document.addEventListener('touchmove', (e) => {
+    if (e.target === canvas || canvas.contains(e.target)) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  // 座標取得（pointer対応）
+  function getPos(evt) {
+    const rect = canvas.getBoundingClientRect();
+    let clientX, clientY;
+    if (evt.touches && evt.touches.length > 0) {
+      clientX = evt.touches[0].clientX;
+      clientY = evt.touches[0].clientY;
+    } else {
+      clientX = evt.clientX;
+      clientY = evt.clientY;
+    }
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    };
+  }
+
+  function startStroke(evt) {
+    ensureAudioContext(); // ユーザー操作で起動
+    const pos = getPos(evt);
+    currentStroke = [{ x: pos.x, y: pos.y }];
+    strokes.push(currentStroke);
+    drawAll();
+  }
+
+  function moveStroke(evt) {
+    if (!currentStroke) return;
+    const pos = getPos(evt);
+    const last = currentStroke[currentStroke.length - 1];
+    // 移動が小さすぎると無駄に点が増えるのでフィルタ
+    const dx = pos.x - last.x;
+    const dy = pos.y - last.y;
+    if (dx * dx + dy * dy < 2) return;
+
+    currentStroke.push({ x: pos.x, y: pos.y });
+    drawAll();
+  }
+
+  function endStroke() {
+    currentStroke = null;
+    computeSteps();
+    drawAll();
+  }
+
+  // pointerイベント
+  canvas.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    canvas.setPointerCapture(e.pointerId);
+    startStroke(e);
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (e.buttons === 0) return;
+    moveStroke(e);
+  });
+  canvas.addEventListener('pointerup', (e) => {
+    endStroke();
+    canvas.releasePointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointercancel', () => {
+    endStroke();
+  });
+
+  // ステップ変換
+  function computeSteps() {
+    const allPoints = strokes.flat();
+    if (allPoints.length === 0) {
+      steps = new Array(STEP_COUNT).fill(null).map(() => ({ voices: [], vizYs: [] }));
+      voiceVizMap = [];
+      currentStepIndex = -1;
+      stepInfo.textContent = `ステップ: 0 / ${STEP_COUNT}`;
+      return;
+    }
+
+    const w = canvas.width / dpr;
+    const h = canvas.height / dpr;
+
+    // ストロークごとのステップ集計
+    const strokeAccum = strokes.map(() =>
+      new Array(STEP_COUNT).fill(null).map(() => ({ sumY: 0, count: 0 }))
+    );
+
+    for (let sIdx = 0; sIdx < strokes.length; sIdx++) {
+      const stroke = strokes[sIdx];
+      for (const p of stroke) {
+        let idx = Math.floor((p.x / w) * STEP_COUNT);
+        if (idx < 0) idx = 0;
+        if (idx >= STEP_COUNT) idx = STEP_COUNT - 1;
+        const bucket = strokeAccum[sIdx][idx];
+        bucket.sumY += p.y;
+        bucket.count += 1;
+      }
+    }
+
+    // Cマイナーペンタトニック: C, Eb, F, G, Bb
+    const baseMidi = 60; // C4
+    const scaleOffsets = [0, 3, 5, 7, 10, 12]; // 6段階くらいにする
+    const scaleFromNorm = (norm) => {
+      let scaleIndex = Math.floor(norm * scaleOffsets.length);
+      if (scaleIndex < 0) scaleIndex = 0;
+      if (scaleIndex >= scaleOffsets.length) scaleIndex = scaleOffsets.length - 1;
+      const midi = baseMidi + scaleOffsets[scaleIndex];
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    };
+    const stepArr = new Array(STEP_COUNT).fill(null).map(() => ({ voices: [], vizYs: [] }));
+    voiceVizMap = strokes.map(() => new Array(STEP_COUNT).fill(null));
+    const voiceFreqs = strokes.map(() => new Array(STEP_COUNT).fill(null));
+
+    for (let sIdx = 0; sIdx < strokes.length; sIdx++) {
+      for (let stepIdx = 0; stepIdx < STEP_COUNT; stepIdx++) {
+        const bucket = strokeAccum[sIdx][stepIdx];
+        if (!bucket || bucket.count === 0) continue;
+        const avgY = bucket.sumY / bucket.count;
+        const norm = 1 - (avgY / h);
+        const freq = scaleFromNorm(norm);
+        stepArr[stepIdx].vizYs.push({ y: avgY, voiceId: sIdx });
+        voiceFreqs[sIdx][stepIdx] = freq;
+        voiceVizMap[sIdx][stepIdx] = avgY;
+      }
+    }
+
+    const EPS = 0.05;
+    let activeStepCount = 0;
+
+    for (let sIdx = 0; sIdx < strokes.length; sIdx++) {
+      let stepIdx = 0;
+      while (stepIdx < STEP_COUNT) {
+        const freq = voiceFreqs[sIdx][stepIdx];
+        if (!freq) {
+          stepIdx++;
+          continue;
+        }
+        let span = 1;
+        while (
+          stepIdx + span < STEP_COUNT &&
+          voiceFreqs[sIdx][stepIdx + span] &&
+          Math.abs(voiceFreqs[sIdx][stepIdx + span] - freq) < EPS
+        ) {
+          span++;
+        }
+        stepArr[stepIdx].voices.push({ voiceId: sIdx, freq, sustain: span });
+        stepIdx += span;
+      }
+    }
+
+    for (let i = 0; i < STEP_COUNT; i++) {
+      if (stepArr[i].voices.length > 0) activeStepCount++;
+    }
+
+    steps = stepArr;
+    currentStepIndex = -1;
+    stepInfo.textContent = `ステップ: ${activeStepCount} / ${STEP_COUNT}`;
+  }
+
+  // 描画
+  function drawAll() {
+    const w = canvas.width / dpr;
+    const h = canvas.height / dpr;
+    ctx.clearRect(0, 0, w, h);
+
+    // グリッド（ステップ線）
+    const stepWidth = w / STEP_COUNT;
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.beginPath();
+    for (let i = 1; i < STEP_COUNT; i++) {
+      const x = i * stepWidth;
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // 再生中のステップハイライト
+    if (isPlaying && currentStepIndex >= 0) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(192,140,255,0.18)';
+      const x = currentStepIndex * stepWidth;
+      ctx.fillRect(x, 0, stepWidth, h);
+      ctx.restore();
+    }
+
+    // 横ライン（ざっくり音程ガイド）
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.beginPath();
+    for (let i = 1; i < 6; i++) {
+      const y = (h / 6) * i;
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // ストローク描画
+    ctx.save();
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 3;
+    const grad = ctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, '#ffda9a');
+    grad.addColorStop(0.4, '#f9a6ff');
+    grad.addColorStop(1, '#7ddcff');
+    ctx.strokeStyle = grad;
+
+    for (const stroke of strokes) {
+      if (stroke.length < 2) continue;
+      ctx.beginPath();
+      ctx.moveTo(stroke[0].x, stroke[0].y);
+      for (let i = 1; i < stroke.length; i++) {
+        ctx.lineTo(stroke[i].x, stroke[i].y);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // ステップがあるところに小さい丸（noteの位置）
+    if (steps.length === STEP_COUNT) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      for (let i = 0; i < STEP_COUNT; i++) {
+        if (!steps[i].vizYs || steps[i].vizYs.length === 0) continue;
+        const wStep = w / STEP_COUNT;
+        const xCenter = i * wStep + wStep / 2;
+        for (const note of steps[i].vizYs) {
+          ctx.beginPath();
+          ctx.arc(xCenter, note.y, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+
+      // 同じ音のガイドライン
+      if (voiceVizMap.length > 0) {
+        ctx.save();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+        const wStep = w / STEP_COUNT;
+        for (let v = 0; v < voiceVizMap.length; v++) {
+          let drawing = false;
+          ctx.beginPath();
+          for (let i = 0; i < STEP_COUNT; i++) {
+            const y = voiceVizMap[v][i];
+            if (y == null) {
+              if (drawing) {
+                ctx.stroke();
+                ctx.beginPath();
+                drawing = false;
+              }
+              continue;
+            }
+            const xCenter = i * wStep + wStep / 2;
+            if (!drawing) {
+              ctx.moveTo(xCenter, y);
+              drawing = true;
+            } else {
+              ctx.lineTo(xCenter, y);
+            }
+          }
+          if (drawing) ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
+  }
+
+  // サウンド再生
+  function playSteps() {
+    if (isPlaying) {
+      stopPlayback();
+      return;
+    }
+    if (!steps || steps.length === 0) {
+      computeSteps();
+    }
+    if (!steps.some(s => s && s.voices && s.voices.length > 0)) {
+      // 何も描いてない／全部休符
+      return;
+    }
+    ensureAudioContext();
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+
+    isPlaying = true;
+    playBtn.classList.add('playing');
+    playIcon.textContent = '⏹';
+    playLabel.textContent = '停止';
+
+    const bpm = 100;
+    const noteDurMs = 60000 / (bpm * 2); // 8分音符くらい
+
+    let idx = 0;
+    currentStepIndex = -1;
+
+    const runStep = () => {
+      if (!isPlaying || idx >= steps.length) {
+        stopPlayback();
+        return;
+      }
+      currentStepIndex = idx;
+      drawAll();
+
+      const step = steps[idx];
+      if (step && step.voices && step.voices.length > 0) {
+        const now = audioCtx.currentTime;
+        step.voices.forEach((voiceEntry, n) => {
+          const { freq, sustain } = voiceEntry;
+          const durationSec = (noteDurMs * sustain * 0.75) / 1000;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          const detune = (n - (step.voices.length - 1) / 2) * 4;
+          osc.detune.value = detune;
+          gain.gain.setValueAtTime(0, now);
+          gain.gain.linearRampToValueAtTime(0.25, now + 0.01);
+          gain.gain.linearRampToValueAtTime(0.0, now + durationSec);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + durationSec + 0.02);
+        });
+      }
+
+      idx++;
+      if (idx >= steps.length) {
+        if (isLoopEnabled) {
+          idx = 0;
+        } else {
+          stopPlayback(true);
+          return;
+        }
+      }
+      playTimer = setTimeout(runStep, noteDurMs);
+    };
+
+    runStep();
+  }
+
+  function stopPlayback(skipDraw = false) {
+    isPlaying = false;
+    if (playTimer) {
+      clearTimeout(playTimer);
+      playTimer = null;
+    }
+    currentStepIndex = -1;
+    playBtn.classList.remove('playing');
+    playIcon.textContent = '▶';
+    playLabel.textContent = '再生';
+    if (!skipDraw) {
+      drawAll();
+    }
+  }
+
+  function clearAll() {
+    strokes = [];
+    currentStroke = null;
+    steps = [];
+    voiceVizMap = [];
+    currentStepIndex = -1;
+    stepInfo.textContent = `ステップ: 0 / ${STEP_COUNT}`;
+    stopPlayback();
+    drawAll();
+  }
+
+  playBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    playSteps();
+  });
+
+  clearBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    clearAll();
+  });
+
+  loopBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    isLoopEnabled = !isLoopEnabled;
+    loopBtn.classList.toggle('active', isLoopEnabled);
+    loopBtn.textContent = isLoopEnabled ? '🔁 ループON' : '🔁 ループOFF';
+  });
+
+  // 初期化
+  resizeCanvas();
+  computeSteps();
+  drawAll();
+</script>
+</body>
+</html>
