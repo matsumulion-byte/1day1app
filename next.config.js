@@ -1,15 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async redirects() {
-    return [
-      // /YYYY-MM-DD → /YYYY-MM-DD/ にリダイレクトして相対パスを安定
-      {
-        source: '/:date(\\d{4}-\\d{2}-\\d{2})',
-        destination: '/:date/',
-        permanent: false,
-      },
-    ];
-  },
   async rewrites() {
     return [
       // /YYYY-MM-DD → public/apps/YYYY-MM-DD/index.html

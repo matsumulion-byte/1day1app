@@ -23,7 +23,7 @@ let bgmStarted = false; // BGM再生済みフラグ
 
 // 松村画像
 const matsuImg = new Image();
-matsuImg.src = asset("./assets/matsu.png");
+matsuImg.src = asset("assets/matsu.png");
 
 // ゲーム状態
 let gameStarted = false;
