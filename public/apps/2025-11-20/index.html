@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>松村 × カジ ユニットサブタイトルルーレット</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <style>
+    :root{
+      --bg:#050814;
+      --ink:#f5f7ff;
+      --accent:#ffdd3b;
+      --accent2:#ff4d6a;
+      --panel:#101529;
+    }
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+      -webkit-tap-highlight-color:transparent;
+    }
+    html,body{
+      height:100%;
+      overflow:hidden;
+      background:var(--bg);
+      color:var(--ink);
+      font-family: system-ui,-apple-system,BlinkMacSystemFont,
+        "Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+      -webkit-touch-callout:none;
+    }
+    #wrap{
+      position:fixed;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      padding:env(safe-area-inset-top,16px) 16px env(safe-area-inset-bottom,16px);
+      gap:12px;
+    }
+    #title{
+      text-align:center;
+      font-size:14px;
+      line-height:1.4;
+    }
+    #title-main{
+      font-weight:800;
+      letter-spacing:.1em;
+      font-size:15px;
+      margin-bottom:4px;
+    }
+    #title-sub{
+      opacity:.8;
+      font-size:11px;
+    }
+    #roulette{
+      flex:1;
+      border-radius:24px;
+      padding:16px 12px;
+      background:radial-gradient(circle at 50% -10%, #3440ff 0, #050814 55%);
+      box-shadow:0 18px 40px rgba(0,0,0,.7);
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    #slots{
+      flex:1;
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:10px;
+      align-items:center;
+      justify-items:stretch;
+    }
+    .slot{
+      position:relative;
+      border-radius:18px;
+      background:rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.12);
+      padding:6px;
+      overflow:hidden;
+    }
+    .slot-inner{
+      position:relative;
+      height:72px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:0 6px;
+      font-size:11px;
+      line-height:1.4;
+    }
+    .slot-label{
+      position:absolute;
+      top:4px;
+      left:8px;
+      font-size:9px;
+      opacity:.6;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .slot-center-line{
+      position:absolute;
+      inset:50% 4px auto 4px;
+      height:0;
+      border-top:1px dashed rgba(255,255,255,.18);
+      pointer-events:none;
+    }
+    #result-wrap{
+      margin-top:4px;
+      padding:10px 12px;
+      border-radius:16px;
+      background:rgba(0,0,0,.45);
+      border:1px solid rgba(255,255,255,.12);
+      text-align:center;
+    }
+    #result-label{
+      font-size:10px;
+      opacity:.7;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      margin-bottom:4px;
+    }
+    #result-text{
+      font-size:14px;
+      font-weight:700;
+      line-height:1.5;
+      min-height:1.5em;
+    }
+    #btn-area{
+      margin-top:6px;
+      text-align:center;
+    }
+    #btn-roll{
+      padding:10px 28px;
+      border-radius:999px;
+      border:none;
+      font-size:14px;
+      font-weight:700;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      background:linear-gradient(135deg,var(--accent),#ff9f3b);
+      color:#000;
+      box-shadow:0 12px 30px rgba(0,0,0,.7);
+      cursor:pointer;
+      min-width:180px;
+    }
+    #btn-roll:active{
+      transform:translateY(1px) scale(.98);
+      box-shadow:0 4px 14px rgba(0,0,0,.7);
+    }
+    #btn-roll.disabled{
+      opacity:.5;
+      pointer-events:none;
+    }
+    #live-info{
+      font-size:11px;
+      text-align:center;
+      opacity:.9;
+      line-height:1.5;
+    }
+    #live-info span.date{
+      color:var(--accent);
+      font-weight:700;
+      letter-spacing:.08em;
+    }
+    #live-info span.names{
+      font-weight:700;
+    }
+    #footer{
+      font-size:9px;
+      opacity:.6;
+      text-align:right;
+    }
+  </style>
+</head>
+<body>
+<div id="wrap">
+  <header id="title">
+    <div id="title-main">松村 × カジ ユニットサブタイトルルーレット</div>
+    <div id="title-sub">今日の2マンにぴったりなサブタイトルをランダム生成</div>
+  </header>
+
+  <main id="roulette">
+    <section id="slots">
+      <div class="slot">
+        <div class="slot-label">MOOD</div>
+        <div class="slot-center-line"></div>
+        <div class="slot-inner" id="slot1">夜更けの</div>
+      </div>
+      <div class="slot">
+        <div class="slot-label">DUO</div>
+        <div class="slot-center-line"></div>
+        <div class="slot-inner" id="slot2">ギターとサックス</div>
+      </div>
+      <div class="slot">
+        <div class="slot-label">SCENE</div>
+        <div class="slot-center-line"></div>
+        <div class="slot-inner" id="slot3">セッション</div>
+      </div>
+    </section>
+
+    <section id="result-wrap">
+      <div id="result-label">UNIT SUBTITLE</div>
+      <div id="result-text">夜更けの ギターとサックス セッション</div>
+    </section>
+
+    <section id="btn-area">
+      <button id="btn-roll">まわす</button>
+    </section>
+  </main>
+
+  <section id="live-info">
+    <div><span class="date">11/20</span> 2マンライブ</div>
+    <div><span class="names">カジ（ギター弾き語り） × 松村（サックス）</span></div>
+  </section>
+
+  <footer id="footer">
+    タップで2人のサブタイトルをルーレット生成
+  </footer>
+</div>
+
+<script type="module">
+  // ★ 1日1アプリ用 asset ヘルパー（今回は未使用）
+  const asset = (p) => new URL(p, import.meta.url).toString();
+
+  const slot1El = document.getElementById("slot1");
+  const slot2El = document.getElementById("slot2");
+  const slot3El = document.getElementById("slot3");
+  const resultEl = document.getElementById("result-text");
+  const rollBtn = document.getElementById("btn-roll");
+
+  // 語彙リスト（必要に応じて増やしてOK）
+  const words1 = [
+    "夜更けの",
+    "路地裏の",
+    "終電後の",
+    "雨上がりの",
+    "ほろ酔いの",
+    "深夜の",
+    "週末の",
+    "灯り消えない"
+  ];
+  const words2 = [
+    "ギターとサックス",
+    "歌と言葉",
+    "フォークとジャズ",
+    "カジと松村",
+    "弾き語りとブレス",
+    "二人の音",
+    "コードとメロディ",
+    "声と管楽器"
+  ];
+  const words3 = [
+    "セッション",
+    "ツーマンショー",
+    "二人旅",
+    "小さな夜",
+    "ワンナイトライブ",
+    "音楽会",
+    "秘密の夜会",
+    "路地裏ラプソディ"
+  ];
+
+  let rolling = false;
+
+  function randomPick(arr){
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function spinSlot(el, arr, duration, doneCallback){
+    const startTime = performance.now();
+    let lastUpdate = startTime;
+
+    function tick(now){
+      if (!rolling) return;
+      const elapsed = now - startTime;
+
+      if (now - lastUpdate > 60){ // だいたい60msごとに更新
+        el.textContent = randomPick(arr);
+        lastUpdate = now;
+      }
+
+      if (elapsed >= duration){
+        // 最終結果
+        const finalWord = randomPick(arr);
+        el.textContent = finalWord;
+        doneCallback(finalWord);
+        return;
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  rollBtn.addEventListener("click", () => {
+    if (rolling) return;
+    rolling = true;
+    rollBtn.classList.add("disabled");
+    resultEl.textContent = "まわし中…";
+
+    let final1 = "";
+    let final2 = "";
+    let final3 = "";
+    let finishedCount = 0;
+
+    const onDone = () => {
+      finishedCount++;
+      if (finishedCount >= 3){
+        rolling = false;
+        rollBtn.classList.remove("disabled");
+        const text = `${final1} ${final2} ${final3}`;
+        resultEl.textContent = text;
+      }
+    };
+
+    spinSlot(slot1El, words1, 900 + Math.random()*300, (w)=>{
+      final1 = w;
+      onDone();
+    });
+    spinSlot(slot2El, words2, 1200 + Math.random()*300, (w)=>{
+      final2 = w;
+      onDone();
+    });
+    spinSlot(slot3El, words3, 1500 + Math.random()*300, (w)=>{
+      final3 = w;
+      onDone();
+    });
+  });
+
+  // 初期表示ちょっとだけランダムに
+  const init1 = randomPick(words1);
+  const init2 = randomPick(words2);
+  const init3 = randomPick(words3);
+  slot1El.textContent = init1;
+  slot2El.textContent = init2;
+  slot3El.textContent = init3;
+  resultEl.textContent = `${init1} ${init2} ${init3}`;
+</script>
+</body>
+</html>
