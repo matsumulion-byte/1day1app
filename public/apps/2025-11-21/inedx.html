@@ -1,0 +1,950 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+  />
+  <title>1日1フレーズメーカー</title>
+  <style>
+    :root {
+      --bg: #050814;
+      --bg-soft: #0c1022;
+      --accent: #ffcc33;
+      --accent-soft: rgba(255, 204, 51, 0.16);
+      --ink: #f5f7ff;
+      --muted: #9aa0c2;
+      --danger: #ff4b6a;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --radius-lg: 24px;
+      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.5);
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body {
+      height: 100%;
+      background: #000;
+      color: var(--ink);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont,
+        "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: manipulation;
+    }
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    /* 9:16 縦のフレーム */
+    .app-frame {
+      position: relative;
+      width: min(100vw, 480px);
+      height: 100vh;
+      max-height: 100vh;
+      background: radial-gradient(circle at top, #141a3c 0, #020313 60%);
+      overflow: hidden;
+    }
+
+    .app-inner {
+      position: absolute;
+      inset: var(--safe-top) 0 var(--safe-bottom);
+      padding: 12px 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(3, 7, 30, 0.9);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(18px);
+      font-size: 11px;
+    }
+
+    .header-main {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+    .header-sub {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .chip {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 10px;
+      color: var(--accent);
+      background: rgba(10, 15, 36, 0.9);
+      text-align: center;
+      min-width: 88px;
+    }
+    .chip span {
+      opacity: 0.7;
+    }
+
+    .main-card {
+      flex: 1;
+      margin-top: 4px;
+      padding: 12px 12px 16px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(145deg, #11172f 0%, #050817 55%, #02020a 100%);
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .main-card::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.09) 0, transparent 60%),
+        radial-gradient(circle at 80% 120%, rgba(255, 204, 51, 0.12) 0, transparent 55%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .top-row {
+      position: relative;
+      z-index: 1;
+    }
+
+    .title-line {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .title-line span {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+
+    .today-tag {
+      margin-top: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .today-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(255, 204, 51, 0.2);
+    }
+
+    .controls {
+      position: relative;
+      z-index: 1;
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .control-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .key-buttons {
+      display: inline-flex;
+      gap: 6px;
+      padding: 3px;
+      border-radius: 999px;
+      background: rgba(2, 4, 18, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .key-btn {
+      min-width: 40px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: none;
+      font-size: 11px;
+      color: var(--ink);
+      background: transparent;
+      cursor: pointer;
+      transition:
+        background 0.12s ease-out,
+        color 0.12s ease-out,
+        transform 0.08s ease-out;
+    }
+
+    .key-btn.active {
+      background: linear-gradient(120deg, #ffcc33, #ff8a3c);
+      color: #241400;
+      font-weight: 700;
+      transform: translateY(-1px);
+    }
+
+    .key-btn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .select-wrap {
+      position: relative;
+      flex: 1;
+    }
+
+    select {
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      padding: 6px 26px 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(2, 4, 18, 0.9);
+      color: var(--ink);
+      font-size: 11px;
+      outline: none;
+    }
+
+    .select-wrap::after {
+      content: "▼";
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 9px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .phrase-card {
+      position: relative;
+      z-index: 1;
+      margin-top: 4px;
+      flex: 1;
+      min-height: 0;
+      padding: 10px 10px 12px;
+      border-radius: 18px;
+      background: radial-gradient(circle at 50% 0, #1b2343 0, #050817 60%);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    .phrase-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .phrase-meta strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .phrase-meta-key {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .phrase-grid-wrap {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 0;
+    }
+
+    .phrase-grid {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
+      gap: 6px;
+      width: 100%;
+    }
+
+    .note-card {
+      padding: 7px 6px 6px;
+      border-radius: 14px;
+      background: rgba(3, 6, 26, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: center;
+      box-shadow: 0 12px 26px rgba(0, 0, 0, 0.55);
+      font-variant-numeric: tabular-nums;
+      transition: border-color 0.12s ease-out, background 0.12s ease-out;
+    }
+
+    .note-card.playing {
+      border-color: var(--accent);
+      background: radial-gradient(
+        circle at top,
+        rgba(255, 204, 51, 0.22) 0,
+        rgba(3, 6, 26, 0.95) 60%
+      );
+    }
+
+    .note-name {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .note-degree {
+      margin-top: 2px;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .note-rhythm {
+      margin-top: 1px;
+      font-size: 9px;
+      color: var(--muted);
+    }
+
+    .pattern-label {
+      margin-top: 2px;
+      text-align: right;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .bottom-row {
+      position: relative;
+      z-index: 1;
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: transform 0.08s ease-out, box-shadow 0.08s ease-out,
+        background 0.08s ease-out, border-color 0.08s ease-out;
+    }
+
+    .btn-primary {
+      background: linear-gradient(120deg, #ffcc33, #ff8a3c);
+      color: #241400;
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.6);
+    }
+
+    .btn-primary:active {
+      transform: translateY(2px);
+      box-shadow: 0 5px 14px rgba(0, 0, 0, 0.6);
+    }
+
+    .btn-secondary {
+      background: rgba(3, 6, 26, 0.9);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.6);
+    }
+
+    .btn-secondary:active {
+      transform: translateY(2px);
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.6);
+    }
+
+    .hint-text {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    @media (min-width: 768px) {
+      .app-frame {
+        border-radius: 32px;
+        margin: 10px 0;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.75);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-frame">
+    <div class="app-inner">
+      <header>
+        <div>
+          <div class="header-main">1日1フレーズメーカー</div>
+          <div class="header-sub">サックス用ランダム練習ライン</div>
+        </div>
+        <div class="chip">
+          MATSUMURA
+          <span> practice</span>
+        </div>
+      </header>
+
+      <main class="main-card">
+        <section class="top-row">
+          <div class="title-line">
+            今日のフレーズ
+            <span>音名＋度数＋音価で表示されます</span>
+          </div>
+          <div class="today-tag">
+            <span class="today-dot"></span>
+            <span id="today-label"></span>
+          </div>
+        </section>
+
+        <section class="controls">
+          <div class="control-row">
+            <div class="control-label">キー</div>
+            <div class="key-buttons" id="key-buttons">
+              <button type="button" class="key-btn active" data-key="C">C</button>
+              <button type="button" class="key-btn" data-key="F">F</button>
+              <button type="button" class="key-btn" data-key="Bb">Bb</button>
+              <button type="button" class="key-btn" data-key="Eb">Eb</button>
+            </div>
+          </div>
+          <div class="control-row">
+            <div class="control-label">フレーズの傾向</div>
+            <div class="select-wrap">
+              <select id="mode-select">
+                <option value="any">おまかせ</option>
+                <option value="scale">スケール寄り</option>
+                <option value="chord">コードトーン寄り</option>
+                <option value="chromatic">クロマチック含む</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="phrase-card">
+          <div class="phrase-meta">
+            <span class="phrase-meta-key" id="meta-key"></span>
+            <span id="meta-info"></span>
+          </div>
+          <div class="phrase-grid-wrap">
+            <div class="phrase-grid" id="phrase-grid">
+              <!-- JSで生成 -->
+            </div>
+          </div>
+          <div class="pattern-label" id="pattern-label"></div>
+        </section>
+
+        <section class="bottom-row">
+          <div class="button-row">
+            <button class="btn-secondary" id="play-btn" type="button">
+              再生
+            </button>
+            <button class="btn-primary" id="next-btn" type="button">
+              次のフレーズ
+            </button>
+          </div>
+          <div class="hint-text">
+            ・上段：実際の音名（アルトなら移調して読んでください）<br />
+            ・中央：度数（1, 2, 3, b3, b7 など）<br />
+            ・下段：音価（♩4分・♪8分 など）／再生ボタンで音が鳴ります。<br />
+            ・気に入ったフレーズはスクショして保存しておくと便利です。
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script type="module">
+    // プロジェクトルールのアセットヘルパー（今回は未使用）
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    // キー定義（トニックの半音位置と # / b のどちらで表示するか / 再生用の基準MIDI）
+    const NOTE_NAMES_SHARP = [
+      "C","C#","D","D#","E","F","F#","G","G#","A","A#","B"
+    ];
+    const NOTE_NAMES_FLAT = [
+      "C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"
+    ];
+
+    const KEYS = [
+      { id: "C",  label: "Cメジャー（実音）",       tonicIndex: 0,  naming: "sharp", baseMidi: 60 },
+      { id: "F",  label: "Fメジャー（♭1つ）",      tonicIndex: 5,  naming: "flat",  baseMidi: 65 },
+      { id: "Bb", label: "Bbメジャー（♭2つ）",     tonicIndex: 10, naming: "flat",  baseMidi: 70 },
+      { id: "Eb", label: "Ebメジャー（♭3つ）",     tonicIndex: 3,  naming: "flat",  baseMidi: 63 },
+    ];
+
+    // 度数 → トニックからの半音数
+    const DEGREE_SEMITONES = {
+      "1": 0,
+      "2": 2,
+      "3": 4,
+      "4": 5,
+      "5": 7,
+      "6": 9,
+      "7": 11,
+      "b3": 3,
+      "b5": 6,
+      "b7": 10,
+      "9": 14,
+      "b9": 13,
+      "#9": 15,
+      "11": 17,
+      "#11": 18,
+      "13": 21,
+      "b13": 20,
+    };
+
+    function degreeToNoteName(key, degreeSymbol) {
+      const semi = DEGREE_SEMITONES[degreeSymbol];
+      if (semi == null) {
+        return key.id;
+      }
+      const idx = (key.tonicIndex + semi) % 12;
+      const names =
+        key.naming === "sharp" ? NOTE_NAMES_SHARP : NOTE_NAMES_FLAT;
+      return names[idx];
+    }
+
+    function degreeToMidi(key, degreeSymbol) {
+      const semi = DEGREE_SEMITONES[degreeSymbol] ?? 0;
+      return key.baseMidi + semi;
+    }
+
+    function midiToFreq(midi) {
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    }
+
+    // 音価表示
+    function durationToLabel(d) {
+      if (d === 0.25) return "♬ 16分";
+      if (d === 0.5)  return "♪ 8分";
+      if (d === 1)    return "♩ 4分";
+      if (d === 2)    return "𝅝 2分";
+      return "♪";
+    }
+
+    function durationToSymbol(d) {
+      return durationToLabel(d).split(" ")[0];
+    }
+
+    // フレーズパターン（4〜8音）＋音価（拍数：1=4分,0.5=8分,0.25=16分,2=2分）
+    const PATTERNS = [
+      // --- SCALE 系 ---
+      {
+        id: "scale_up4",
+        label: "メジャースケール 4音上昇",
+        degrees: ["1", "2", "3", "4"],
+        durations: [0.5, 0.5, 0.5, 0.5], // ♪♪♪♪
+        tags: ["scale", "any"],
+      },
+      {
+        id: "scale_up8",
+        label: "メジャースケール 8音",
+        degrees: ["1", "2", "3", "4", "5", "6", "7", "1"],
+        durations: [0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5],
+        tags: ["scale", "any"],
+      },
+      {
+        id: "scale_down4",
+        label: "メジャースケール 4音下降",
+        degrees: ["5", "4", "3", "2"],
+        durations: [0.5, 0.5, 0.5, 0.5],
+        tags: ["scale", "any"],
+      },
+      {
+        id: "scale_wave",
+        label: "波打つスケールライン",
+        degrees: ["1", "2", "3", "2", "4", "3"],
+        durations: [0.5,0.5,0.5,0.5,0.5,0.5],
+        tags: ["scale", "any"],
+      },
+      {
+        id: "scale_skip",
+        label: "3度跳躍を含むスケール",
+        degrees: ["1", "3", "2", "4", "3", "5"],
+        durations: [0.5,0.5,0.5,0.5,0.5,0.5],
+        tags: ["scale", "any"],
+      },
+      {
+        id: "scale_desc_long",
+        label: "スケール長めの下降",
+        degrees: ["6", "5", "4", "3", "2", "1"],
+        durations: [0.5,0.5,0.5,0.5,0.5,0.5],
+        tags: ["scale", "any"],
+      },
+
+      // --- CHORD 系 ---
+      {
+        id: "triad_basic",
+        label: "トライアド（上昇）",
+        degrees: ["1", "3", "5", "3"],
+        durations: [0.5, 0.5, 1, 1], // ♪♪♩♩
+        tags: ["chord", "any"],
+      },
+      {
+        id: "triad_desc",
+        label: "トライアド（下降）",
+        degrees: ["5", "3", "1", "3"],
+        durations: [0.5, 0.5, 1, 1],
+        tags: ["chord", "any"],
+      },
+      {
+        id: "seventh_up",
+        label: "セブンスコード上昇",
+        degrees: ["1", "3", "5", "b7"],
+        durations: [0.5, 0.5, 0.5, 0.5],
+        tags: ["chord", "any"],
+      },
+      {
+        id: "seventh_down",
+        label: "セブンスコード下降",
+        degrees: ["b7", "5", "3", "1"],
+        durations: [0.5, 0.5, 0.5, 0.5],
+        tags: ["chord", "any"],
+      },
+      {
+        id: "triad_up_long",
+        label: "トライアドくり返し",
+        degrees: ["1", "3", "5", "1", "3", "5"],
+        durations: [0.5,0.5,0.5,0.5,1,1],
+        tags: ["chord", "any"],
+      },
+      {
+        id: "arpeggio_jump",
+        label: "ジャンプするアルペジオ",
+        degrees: ["1", "5", "3", "7", "5"],
+        durations: [0.5,0.5,0.5,0.5,1],
+        tags: ["chord", "any"],
+      },
+
+      // --- CHROMATIC 系 ---
+      {
+        id: "enclosure_3",
+        label: "3度エンクロージャ",
+        degrees: ["2", "b3", "3", "1"],
+        durations: [0.25,0.25,0.5,1], // 16・16・8・4
+        tags: ["chromatic", "any"],
+      },
+      {
+        id: "enclosure_5",
+        label: "5度エンクロージャ",
+        degrees: ["4", "b5", "5", "3"],
+        durations: [0.25,0.25,0.5,1],
+        tags: ["chromatic", "any"],
+      },
+      {
+        id: "bebop_line1",
+        label: "ビバップ風ライン①",
+        degrees: ["1", "2", "3", "5", "b7", "6", "5", "3"],
+        durations: [0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5],
+        tags: ["chromatic", "any"],
+      },
+      {
+        id: "approach_5",
+        label: "5度アプローチ",
+        degrees: ["6", "b7", "7", "1", "5"],
+        durations: [0.5,0.5,0.5,0.5,1],
+        tags: ["chromatic", "any"],
+      },
+      {
+        id: "chrom_turn_3",
+        label: "3度周りのターン",
+        degrees: ["3", "2", "b3", "3", "1"],
+        durations: [0.5,0.25,0.25,0.5,1],
+        tags: ["chromatic", "any"],
+      },
+      {
+        id: "chrom_turn_5",
+        label: "5度周りのターン",
+        degrees: ["5", "4", "b5", "5", "3"],
+        durations: [0.5,0.25,0.25,0.5,1],
+        tags: ["chromatic", "any"],
+      },
+    ];
+
+
+    // DOM
+    const todayLabel = document.getElementById("today-label");
+    const keyButtonsWrap = document.getElementById("key-buttons");
+    const keyButtons = keyButtonsWrap.querySelectorAll(".key-btn");
+    const modeSelect = document.getElementById("mode-select");
+    const phraseGrid = document.getElementById("phrase-grid");
+    const patternLabelEl = document.getElementById("pattern-label");
+    const metaKeyEl = document.getElementById("meta-key");
+    const metaInfoEl = document.getElementById("meta-info");
+    const nextBtn = document.getElementById("next-btn");
+    const playBtn = document.getElementById("play-btn");
+
+    // 状態
+    let currentKey = KEYS[0];
+    let currentMode = "any";
+    let currentPattern = PATTERNS[0];
+    let currentDegrees = PATTERNS[0].degrees;
+
+    // オーディオ
+    let audioCtx = null;
+    let isPlaying = false;
+
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (Ctx) {
+          audioCtx = new Ctx();
+        }
+      }
+      return audioCtx;
+    }
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+    // 直前に使ったパターンを覚えておいて、同じのを連続で出さない
+    const lastPatternByMode = {
+      any: null,
+      scale: null,
+      chord: null,
+      chromatic: null,
+    };
+
+    function pickPattern(mode) {
+      let pool;
+      if (mode === "any") {
+        pool = PATTERNS;
+      } else {
+        pool = PATTERNS.filter((p) => p.tags.includes(mode));
+        if (pool.length === 0) pool = PATTERNS;
+      }
+
+      const lastId = lastPatternByMode[mode] ?? null;
+
+      // 「前回使ったやつ」を除外（候補が2つ以上あるときだけ）
+      let candidates = pool;
+      if (lastId && pool.length > 1) {
+        candidates = pool.filter((p) => p.id !== lastId);
+        if (candidates.length === 0) {
+          candidates = pool; // 全部同じ場合の保険
+        }
+      }
+
+      const s = shuffle(candidates);
+      const picked = s[0];
+
+      // 記憶しておく
+      lastPatternByMode[mode] = picked.id;
+      return picked;
+    }
+
+
+    function renderPhrase() {
+      const pattern = pickPattern(currentMode);
+      currentPattern = pattern;
+      currentDegrees = pattern.degrees;
+
+      const degrees = pattern.degrees;
+      const durations = pattern.durations || [];
+      const notes = degrees.map((deg) =>
+        degreeToNoteName(currentKey, deg)
+      );
+
+      phraseGrid.innerHTML = "";
+      degrees.forEach((deg, idx) => {
+        const card = document.createElement("div");
+        card.className = "note-card";
+
+        const noteEl = document.createElement("div");
+        noteEl.className = "note-name";
+        noteEl.textContent = notes[idx];
+
+        const degreeEl = document.createElement("div");
+        degreeEl.className = "note-degree";
+        degreeEl.textContent = deg;
+
+        const dur = durations[idx] ?? 0.5;
+        const rhythmEl = document.createElement("div");
+        rhythmEl.className = "note-rhythm";
+        rhythmEl.textContent = durationToLabel(dur);
+
+        card.appendChild(noteEl);
+        card.appendChild(degreeEl);
+        card.appendChild(rhythmEl);
+        phraseGrid.appendChild(card);
+      });
+
+      const rhythmSymbols = (pattern.durations || []).map(durationToSymbol).join(" ");
+      patternLabelEl.textContent =
+        `パターン：${pattern.label}` +
+        (rhythmSymbols ? ` ／ リズム：${rhythmSymbols}` : "");
+
+      metaKeyEl.textContent = `キー：${currentKey.label}`;
+      metaInfoEl.textContent =
+        currentMode === "any"
+          ? "傾向：おまかせ"
+          : `傾向：${modeSelect.options[modeSelect.selectedIndex].text}`;
+    }
+
+    function playPhrase() {
+      if (isPlaying) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+
+      if (ctx.state === "suspended") {
+        ctx.resume();
+      }
+
+      const degrees = currentDegrees;
+      const durations = currentPattern.durations || [];
+      const cards = phraseGrid.querySelectorAll(".note-card");
+
+      const bpm = 100;
+      const beatSec = 60 / bpm;
+
+      let now = ctx.currentTime;
+      let t = now + 0.05;
+
+      isPlaying = true;
+
+      // 全カードのハイライトリセット
+      cards.forEach((c) => c.classList.remove("playing"));
+
+      degrees.forEach((deg, idx) => {
+        const durBeats = durations[idx] ?? 0.5;
+        const durSec = beatSec * durBeats;
+
+        // ノートON
+        const midi = degreeToMidi(currentKey, deg);
+        const freq = midiToFreq(midi);
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine"; // シンプルな音（必要なら square / triangle 等に変更）
+        osc.frequency.value = freq;
+
+        const attack = 0.01;
+        const release = durSec * 0.2;
+
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.7, t + attack);
+        gain.gain.setValueAtTime(0.7, t + durSec - release);
+        gain.gain.linearRampToValueAtTime(0, t + durSec);
+
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + durSec + 0.05);
+
+        // ハイライト
+        const highlightDelay = (t - now) * 1000;
+        setTimeout(() => {
+          cards.forEach((c) => c.classList.remove("playing"));
+          const card = cards[idx];
+          if (card) card.classList.add("playing");
+        }, highlightDelay);
+
+        t += durSec;
+      });
+
+      // 再生終了後にフラグとハイライト解除
+      const totalDurMs = (t - now) * 1000 + 100;
+      setTimeout(() => {
+        isPlaying = false;
+        cards.forEach((c) => c.classList.remove("playing"));
+      }, totalDurMs);
+    }
+
+    // キー切り替え
+    keyButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        keyButtons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        const id = btn.dataset.key;
+        const key = KEYS.find((k) => k.id === id);
+        if (key) {
+          currentKey = key;
+          renderPhrase();
+        }
+      });
+    });
+
+    // モード切り替え
+    modeSelect.addEventListener("change", () => {
+      currentMode = modeSelect.value;
+      renderPhrase();
+    });
+
+    // 次のフレーズ
+    nextBtn.addEventListener("click", () => {
+      renderPhrase();
+    });
+
+    // 再生
+    playBtn.addEventListener("click", () => {
+      playPhrase();
+    });
+
+    // 今日の日付表示
+    (function setTodayLabel() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      const day = d.getDate();
+      const w = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
+      todayLabel.textContent = `${y}/${m}/${day}（${w}）`;
+    })();
+
+    // 長押しメニュー無効（デフォルール）
+    document.addEventListener(
+      "contextmenu",
+      (e) => {
+        e.preventDefault();
+      },
+      { passive: false }
+    );
+
+    // 初期表示
+    renderPhrase();
+  </script>
+</body>
+</html>
