@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+  />
+  <title>松村です 5音フレーズメーカー</title>
+
+  <!-- VexFlow（譜面描画ライブラリ）-->
+  <script src="https://unpkg.com/vexflow@1.2.93/releases/vexflow-min.js"></script>
+
+  <style>
+    :root {
+      --bg: #050814;
+      --bg-soft: #0c1022;
+      --accent: #ffcc33;
+      --accent-soft: rgba(255, 204, 51, 0.16);
+      --ink: #f5f7ff;
+      --muted: #9aa0c2;
+      --danger: #ff4b6a;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --radius-lg: 24px;
+      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.5);
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body {
+      height: 100%;
+      background: #000;
+      color: var(--ink);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont,
+        "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: manipulation;
+    }
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    /* 9:16 縦のフレーム */
+    .app-frame {
+      position: relative;
+      width: min(100vw, 480px);
+      height: 100vh;
+      max-height: 100vh;
+      background: radial-gradient(circle at top, #141a3c 0, #020313 60%);
+      overflow: hidden;
+    }
+
+    .app-inner {
+      position: absolute;
+      inset: var(--safe-top) 0 var(--safe-bottom);
+      padding: 12px 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(3, 7, 30, 0.9);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(18px);
+      font-size: 11px;
+    }
+
+    .header-main {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+    .header-sub {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .chip {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 10px;
+      color: var(--accent);
+      background: rgba(10, 15, 36, 0.9);
+      text-align: center;
+      min-width: 88px;
+    }
+    .chip span {
+      opacity: 0.7;
+    }
+
+    .main-card {
+      flex: 1;
+      margin-top: 4px;
+      padding: 12px 12px 16px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(145deg, #11172f 0%, #050817 55%, #02020a 100%);
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .main-card::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.09) 0, transparent 60%),
+        radial-gradient(circle at 80% 120%, rgba(255, 204, 51, 0.12) 0, transparent 55%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .top-row {
+      position: relative;
+      z-index: 1;
+    }
+
+    .title-line {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .title-line span {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+
+    .today-tag {
+      margin-top: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .today-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(255, 204, 51, 0.2);
+    }
+
+    .phrase-card {
+      position: relative;
+      z-index: 1;
+      margin-top: 8px;
+      flex: 1;
+      min-height: 0;
+      padding: 10px 10px 12px;
+      border-radius: 18px;
+      background: radial-gradient(circle at 50% 0, #1b2343 0, #050817 60%);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .phrase-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .phrase-meta strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .phrase-meta-key {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 譜面エリア */
+    .score-wrap {
+      width: 100%;
+      height: 150px;
+      border-radius: 12px;
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, .12);
+      padding: 10px 12px;
+      overflow: hidden;
+    }
+
+    #score svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .pattern-label {
+      margin-top: 2px;
+      text-align: right;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .bottom-row {
+      position: relative;
+      z-index: 1;
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: transform 0.08s ease-out, box-shadow 0.08s ease-out,
+        background 0.08s ease-out, border-color 0.08s ease-out;
+    }
+
+    .btn-primary {
+      background: linear-gradient(120deg, #ffcc33, #ff8a3c);
+      color: #241400;
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.6);
+    }
+
+    .btn-primary:active {
+      transform: translateY(2px);
+      box-shadow: 0 5px 14px rgba(0, 0, 0, 0.6);
+    }
+
+    .btn-secondary {
+      background: rgba(3, 6, 26, 0.9);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.6);
+    }
+
+    .btn-secondary:active {
+      transform: translateY(2px);
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.6);
+    }
+
+    .hint-text {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    @media (min-width: 768px) {
+      .app-frame {
+        border-radius: 32px;
+        margin: 10px 0;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.75);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-frame">
+    <div class="app-inner">
+      <header>
+        <div>
+          <div class="header-main">松村です 5音フレーズメーカー</div>
+          <div class="header-sub">ランダム譜面を松村ボイスで再生</div>
+        </div>
+        <div class="chip">
+          MATSUMURA
+          <span> voice</span>
+        </div>
+      </header>
+
+      <main class="main-card">
+        <section class="top-row">
+          <div class="title-line">
+            今日の5音フレーズ
+            <span>譜面＋松村ボイス</span>
+          </div>
+          <div class="today-tag">
+            <span class="today-dot"></span>
+            <span id="today-label"></span>
+          </div>
+        </section>
+
+        <section class="phrase-card">
+          <div class="phrase-meta">
+            <span class="phrase-meta-key" id="meta-key"></span>
+            <span id="meta-info"></span>
+          </div>
+
+          <!-- 譜面 -->
+          <div class="score-wrap">
+            <div id="score"></div>
+          </div>
+
+          <div class="pattern-label" id="pattern-label"></div>
+        </section>
+
+        <section class="bottom-row">
+          <div class="button-row">
+            <button class="btn-secondary" id="play-btn" type="button">
+              松村ですで再生
+            </button>
+            <button class="btn-primary" id="next-btn" type="button">
+              別のフレーズ
+            </button>
+          </div>
+          <div class="hint-text">
+            ・譜面はト音記号・4/4、Cメジャー固定です。<br />
+            ・5音フレーズをランダム生成します。<br />
+            ・「松村ですで再生」で譜面どおりのピッチで「松村です」ボイスが鳴ります。<br />
+            ・気に入ったフレーズはスクショで保存してください。
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script type="module">
+    // Vercel用のパス解決
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : '/';
+    const asset = (p) => {
+      const clean = String(p || '').replace(/^\.?\//, '');
+      return `${DATE_BASE}${clean}`;
+    };
+  
+    // --- 音名・キー周り -------------------------
+    const NOTE_NAMES_SHARP = [
+      "C","C#","D","D#","E","F","F#","G","G#","A","A#","B"
+    ];
+    const NOTE_NAMES_FLAT = [
+      "C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"
+    ];
+  
+    const KEYS = [
+      { id: "C",  label: "Cメジャー（固定）", tonicIndex: 0, naming: "sharp", baseMidi: 60 },
+    ];
+  
+    // 度数 → トニックからの半音数
+    const DEGREE_SEMITONES = {
+      "1": 0,
+      "2": 2,
+      "3": 4,
+      "4": 5,
+      "5": 7,
+      "6": 9,
+      "7": 11,
+      "b3": 3,
+      "b5": 6,
+      "b7": 10,
+      "9": 14,
+      "b9": 13,
+      "#9": 15,
+      "11": 17,
+      "#11": 18,
+      "13": 21,
+      "b13": 20,
+    };
+  
+    function degreeToNoteName(key, degreeSymbol) {
+      const semi = DEGREE_SEMITONES[degreeSymbol];
+      if (semi == null) return key.id;
+      const idx = (key.tonicIndex + semi) % 12;
+      const names = key.naming === "sharp" ? NOTE_NAMES_SHARP : NOTE_NAMES_FLAT;
+      return names[idx];
+    }
+  
+    function degreeToMidi(key, degreeSymbol) {
+      const semi = DEGREE_SEMITONES[degreeSymbol] ?? 0;
+      return key.baseMidi + semi;
+    }
+  
+    function midiToFreq(midi) {
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    }
+  
+    // VexFlow 用： MIDI → "c#/4" 形式
+    function midiToVexKey(midi, naming = "sharp") {
+      const noteIndex = ((midi % 12) + 12) % 12;
+      const names = naming === "sharp" ? NOTE_NAMES_SHARP : NOTE_NAMES_FLAT;
+      const name = names[noteIndex];
+      const octave = Math.floor(midi / 12) - 1;
+  
+      const letter = name[0].toLowerCase();
+      let accidental = "";
+      if (name.length > 1) {
+        const rest = name.slice(1);
+        if (rest.includes("#")) accidental = "#";
+        if (rest.includes("b")) accidental = "b";
+      }
+      return `${letter}${accidental}/${octave}`;
+    }
+  
+    // 音価表示
+    function durationToLabel(d) {
+      const EPS = 0.01;
+      if (Math.abs(d - 0.25) < EPS) return "♬ 16分";
+      if (Math.abs(d - 1/3) < EPS)  return "♪3連";
+      if (Math.abs(d - 0.5)  < EPS) return "♪ 8分";
+      if (Math.abs(d - 1)    < EPS) return "♩ 4分";
+      if (Math.abs(d - 2)    < EPS) return "𝅝 2分";
+      return "♪";
+    }
+    function durationToSymbol(d) {
+      return durationToLabel(d).split(" ")[0];
+    }
+  
+    // 音価 → VexFlowのduration文字列
+    function durationToVF(d) {
+      const EPS = 0.01;
+      if (Math.abs(d - 2)   < EPS) return "h";   // half
+      if (Math.abs(d - 1)   < EPS) return "q";   // quarter
+      if (Math.abs(d - 0.5) < EPS) return "8";   // eighth
+      if (Math.abs(d - 0.25)< EPS) return "16";  // sixteenth
+      if (Math.abs(d - 1/3) < EPS) return "8";   // triplet uses 8th notes
+      return "8";
+    }
+  
+    // --- フレーズパターン（全部5音） -----------------------
+    const PATTERNS = [
+  // ＝＝＝＝＝＝＝＝＝＝
+  // SCALE 系
+  // ＝＝＝＝＝＝＝＝＝＝
+  {
+    id: "scale_up5",
+    label: "スケール 5 音上昇",
+    degrees: ["1","2","3","4","5"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["scale","any"],
+  },
+  {
+    id: "scale_down5",
+    label: "スケール 5 音下降",
+    degrees: ["5","4","3","2","1"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["scale","any"],
+  },
+  {
+    id: "scale_16th_run5",
+    label: "16 分スケールラン",
+    degrees: ["1","2","3","4","5"],
+    durations: [0.25,0.25,0.25,0.25,0.25],
+    tags: ["scale","any"],
+  },
+  {
+    id: "scale_up_jump",
+    label: "上昇→ジャンプ",
+    degrees: ["1","2","3","4","6"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["scale","any"],
+  },
+  {
+    id: "scale_down_jump",
+    label: "下降→ジャンプ",
+    degrees: ["5","4","3","2","6"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["scale","any"],
+  },
+
+  // ＝＝＝＝＝＝＝＝＝＝
+  // CHORD 系
+  // ＝＝＝＝＝＝＝＝＝＝
+  {
+    id: "triad_basic5",
+    label: "トライアド往復",
+    degrees: ["1","3","5","3","1"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["chord","any"],
+  },
+  {
+    id: "seventh_resolve5",
+    label: "7th → 1度解決",
+    degrees: ["1","3","5","b7","1"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["chord","any"],
+  },
+  {
+    id: "arpeggio_jump5",
+    label: "アルペジオ＋ジャンプ",
+    degrees: ["1","5","3","7","5"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["chord","any"],
+  },
+  {
+    id: "reverse_arpeggio",
+    label: "逆アルペジオ",
+    degrees: ["1","7","6","5","3"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["chord","any"],
+  },
+  {
+    id: "lift_up",
+    label: "リフトアップ風",
+    degrees: ["3","5","7","1","9"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["chord","any"],
+  },
+
+  // ＝＝＝＝＝＝＝＝＝＝
+  // CHROMATIC（半音）系
+  // ＝＝＝＝＝＝＝＝＝＝
+  {
+    id: "chrom_approach5",
+    label: "5度 クロアプローチ",
+    degrees: ["5","b5","4","3","1"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["chromatic","any"],
+  },
+  {
+    id: "chrom_down1",
+    label: "クロマチック下降 →1",
+    degrees: ["3","b3","2","b2","1"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["chromatic","any"],
+  },
+  {
+    id: "chrom_up",
+    label: "クロマチック上昇",
+    degrees: ["1","b2","2","b3","3"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["chromatic","any"],
+  },
+  {
+    id: "blue_note_desc",
+    label: "ブルーノート風下降",
+    degrees: ["5","#5","6","b6","5"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["chromatic","any"],
+  },
+  {
+    id: "blue_note_pull",
+    label: "b3 → 3 引っ張り",
+    degrees: ["2","b3","3","b3","2"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["chromatic","any"],
+  },
+
+  // ＝＝＝＝＝＝＝＝＝＝
+  // ENCLOSURE 系
+  // ＝＝＝＝＝＝＝＝＝＝
+  {
+    id: "enclosure3",
+    label: "3度エンクロージャ",
+    degrees: ["2","b3","3","2","1"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["chromatic","any"],
+  },
+  {
+    id: "enclosure5",
+    label: "5度エンクロージャ",
+    degrees: ["6","#5","5","b5","5"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["chromatic","any"],
+  },
+  {
+    id: "enclosure_alt",
+    label: "オルタード風エンクロージャ",
+    degrees: ["b9","1","#9","1","5"],
+    durations: [0.5,0.5,0.5,0.5,0.5],
+    tags: ["chromatic","any"],
+  },
+
+  // ＝＝＝＝＝＝＝＝＝＝
+  // 3連符（Tuplet）系
+  // ＝＝＝＝＝＝＝＝＝＝
+  {
+    id: "triplet_up5",
+    label: "上昇三連 + 8分2つ",
+    degrees: ["1","2","3","5","6"],
+    durations: [1/3,1/3,1/3,0.5,0.5],
+    tags: ["chromatic","scale","any"],
+    tuplets: [{ from:0, to:2, num_notes:3, notes_occupied:2 }],
+  },
+  {
+    id: "triplet_enclosure5",
+    label: "三連エンクロージャ",
+    degrees: ["3","b3","2","1","5"],
+    durations: [1/3,1/3,1/3,0.5,0.5],
+    tags: ["chromatic","any"],
+    tuplets: [{ from:0, to:2, num_notes:3, notes_occupied:2 }],
+  },
+  {
+    id: "triplet_reverse",
+    label: "逆三連 + resolve",
+    degrees: ["5","4","3","2","1"],
+    durations: [1/3,1/3,1/3,0.5,0.5],
+    tags: ["scale","any"],
+    tuplets: [{ from:0, to:2, num_notes:3, notes_occupied:2 }],
+  },
+
+  // ＝＝＝＝＝＝＝＝＝＝
+  // RHYTHM（リズム）系
+  // ＝＝＝＝＝＝＝＝＝＝
+  {
+    id: "rhythm_mix1",
+    label: "♪♪♬♬♪",
+    degrees: ["1","2","3","4","5"],
+    durations: [0.5,0.5,0.25,0.25,0.5],
+    tags: ["any"],
+  },
+  {
+    id: "rhythm_mix2",
+    label: "♬♬♪♪♪",
+    degrees: ["5","3","4","2","1"],
+    durations: [0.25,0.25,0.5,0.5,0.5],
+    tags: ["any"],
+  },
+  {
+    id: "rhythm_sync",
+    label: "シンコペ風",
+    degrees: ["1","3","2","5","4"],
+    durations: [0.5,0.5,0.75,0.25,0.5],
+    tags: ["any"],
+  },
+  {
+    id: "rhythm_skip",
+    label: "跳ねるリズム",
+    degrees: ["1","5","4","2","3"],
+    durations: [0.5,0.25,0.25,0.5,0.5],
+    tags: ["any"],
+  },
+  {
+    id: "rhythm_push",
+    label: "前ノリ PUSH",
+    degrees: ["3","4","5","6","5"],
+    durations: [0.25,0.25,0.5,0.5,0.5],
+    tags: ["any"],
+  },
+];
+
+    // --- DOM ------------------------------
+    const todayLabel = document.getElementById("today-label");
+    const patternLabelEl = document.getElementById("pattern-label");
+    const metaKeyEl = document.getElementById("meta-key");
+    const metaInfoEl = document.getElementById("meta-info");
+    const nextBtn = document.getElementById("next-btn");
+    const playBtn = document.getElementById("play-btn");
+    const scoreContainer = document.getElementById("score");
+  
+    // --- 状態 ------------------------------
+    let currentKey = KEYS[0];          // C固定
+    let currentPattern = PATTERNS[0];
+    let currentDegrees = PATTERNS[0].degrees;
+    let currentDurations = PATTERNS[0].durations;
+    let lastPatternId = null;
+  
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+  
+    function pickPattern() {
+      let pool = PATTERNS;
+      if (lastPatternId && pool.length > 1) {
+        const filtered = pool.filter(p => p.id !== lastPatternId);
+        if (filtered.length > 0) pool = filtered;
+      }
+      const picked = shuffle(pool)[0];
+      lastPatternId = picked.id;
+      return picked;
+    }
+  
+    // --- 譜面描画（VexFlow標準の流れ） -----------------
+    function renderScore() {
+      const VF = Vex.Flow;
+      scoreContainer.innerHTML = "";
+  
+      const width = scoreContainer.clientWidth || 260;
+      const height = 150;
+  
+      const renderer = new VF.Renderer(
+        scoreContainer,
+        VF.Renderer.Backends.SVG
+      );
+      renderer.resize(width, height);
+  
+      const context = renderer.getContext();
+      context
+        .setFont("Arial", 10, "")
+        .setBackgroundFillStyle("rgba(0,0,0,0)");
+  
+      // 五線
+      const stave = new VF.Stave(10, 20, width - 20);
+      stave
+        .addClef("treble")
+        .addTimeSignature("4/4")
+        .addKeySignature(currentKey.id);
+      stave.setContext(context).draw();
+  
+      const degrees = currentDegrees;
+      const durations = currentDurations;
+  
+      // ノート
+      const notes = degrees.map((deg, idx) => {
+        const midi = degreeToMidi(currentKey, deg);
+        const vexKey = midiToVexKey(midi, currentKey.naming);
+        const durVal = durations[idx] ?? 0.5;
+        const durStr = durationToVF(durVal);
+  
+        const note = new VF.StaveNote({
+          clef: "treble",
+          keys: [vexKey],
+          duration: durStr,
+        });
+  
+        const head = vexKey.split("/")[0];
+        if (head.length > 1) {
+          const accChar = head[1] === "#" ? "#" : "b";
+          note.addAccidental(0, new VF.Accidental(accChar));
+        }
+  
+        return note;
+      });
+  
+      // 三連符
+      let tuplets = [];
+      if (currentPattern.tuplets) {
+        tuplets = currentPattern.tuplets.map(t => {
+          return new VF.Tuplet(notes.slice(t.from, t.to + 1), {
+            num_notes: t.num_notes,
+            notes_occupied: t.notes_occupied,
+          });
+        });
+      }
+  
+      // Voice / Formatter / Beam を一気に
+      VF.Formatter.FormatAndDraw(context, stave, notes, { autobeam: true });
+  
+      tuplets.forEach(tp => tp.setContext(context).draw());
+    }
+  
+    // --- フレーズ更新 ------------------------------
+    function renderPhrase() {
+      const pattern = pickPattern();
+      currentPattern = pattern;
+      currentDegrees = pattern.degrees;
+      currentDurations = pattern.durations;
+  
+      const rhythmSymbols = (pattern.durations || [])
+        .map(durationToSymbol)
+        .join(" ");
+      patternLabelEl.textContent =
+        `パターン：${pattern.label}` +
+        (rhythmSymbols ? ` ／ リズム：${rhythmSymbols}` : "");
+  
+      metaKeyEl.textContent = `キー：${currentKey.label}`;
+      metaInfoEl.textContent = `5音フレーズをランダム生成中`;
+  
+      renderScore();
+    }
+  
+    // --- イベント ------------------------------
+    nextBtn.addEventListener("click", () => {
+      renderPhrase();
+    });
+  
+    // 今日の日付
+    (function setTodayLabel() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      const day = d.getDate();
+      const w = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
+      todayLabel.textContent = `${y}/${m}/${day}（${w}）`;
+    })();
+  
+    // 長押しメニュー無効
+    document.addEventListener(
+      "contextmenu",
+      (e) => {
+        e.preventDefault();
+      },
+      { passive: false }
+    );
+  
+    // 初期表示
+    renderPhrase();
+  
+    // ==========================================================
+    // ここから 松村ですボイス再生パート
+    // ==========================================================
+  
+    // WebAudio
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (Ctx) audioCtx = new Ctx();
+      }
+      return audioCtx;
+    }
+  
+    // 音声バッファ格納先
+    const phonemeBuffers = {};
+  
+    // 松村ですの音節
+    const MATSUMURA_PHONEMES = ["ma", "tsu", "mu", "ra", "desu"];
+  
+    // 録音時の基準ピッチ（E4 ≒ MIDI 64）
+    const BASE_MIDI = 64;
+    const BASE_FREQ = 440 * Math.pow(2, (BASE_MIDI - 69) / 12);
+  
+    // m4a ロード
+    async function loadAudioBuffer(url) {
+      const ctx = getAudioCtx();
+      const res = await fetch(url);
+      const arr = await res.arrayBuffer();
+      return await ctx.decodeAudioData(arr);
+    }
+  
+    async function initMatsumuraBuffers() {
+      const files = {
+        ma: asset("./assets/ma.m4a"),
+        tsu: asset("./assets/tsu.m4a"),
+        mu: asset("./assets/mu.m4a"),
+        ra: asset("./assets/ra.m4a"),
+        desu: asset("./assets/desu.m4a"),
+      };
+      for (const [key, url] of Object.entries(files)) {
+        phonemeBuffers[key] = await loadAudioBuffer(url);
+      }
+    }
+  
+    // 1音ぶんをピッチ変換して再生
+    function schedulePhonemeNote(ctx, buffer, targetFreq, durSec, startTime) {
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+  
+      const rate = targetFreq / BASE_FREQ;
+      src.playbackRate.value = rate;
+  
+      const gain = ctx.createGain();
+      const attack = Math.min(0.03, durSec * 0.3);
+      const release = Math.min(0.08, durSec * 0.3);
+  
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(1, startTime + attack);
+      gain.gain.setValueAtTime(1, startTime + durSec - release);
+      gain.gain.linearRampToValueAtTime(0, startTime + durSec);
+  
+      src.connect(gain).connect(ctx.destination);
+  
+      src.start(startTime);
+      src.stop(startTime + durSec + 0.05);
+    }
+  
+    // 譜面通りの松村ですを歌わせる本体
+    let isPlayingMatsu = false;
+  
+    async function playMatsumuraWithScore() {
+      if (isPlayingMatsu) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+  
+      if (ctx.state === "suspended") await ctx.resume();
+  
+      if (!phonemeBuffers.ma) {
+        await initMatsumuraBuffers();
+      }
+  
+      const degrees = currentDegrees;
+      const durations = currentDurations;
+      if (!degrees || !durations) return;
+  
+      const bpm = 100;
+      const beatSec = 60 / bpm;
+  
+      let t = ctx.currentTime + 0.1;
+      isPlayingMatsu = true;
+  
+      for (let i = 0; i < degrees.length; i++) {
+        const deg = degrees[i];
+        const durBeats = durations[i] ?? 0.5;
+        const durSec = durBeats * beatSec;
+  
+        const midi = degreeToMidi(currentKey, deg);
+        const freq = midiToFreq(midi);
+  
+        let phKey = "desu";
+        if (i < 4) phKey = MATSUMURA_PHONEMES[i];
+  
+        const buffer = phonemeBuffers[phKey];
+        if (buffer) {
+          schedulePhonemeNote(ctx, buffer, freq, durSec, t);
+        }
+  
+        t += durSec;
+      }
+  
+      const totalMs = (t - ctx.currentTime) * 1000 + 200;
+      setTimeout(() => {
+        isPlayingMatsu = false;
+      }, totalMs);
+    }
+  
+    // 再生ボタンと接続
+    playBtn.addEventListener("click", () => {
+      playMatsumuraWithScore();
+    });
+  </script>
+</body>
+</html>
