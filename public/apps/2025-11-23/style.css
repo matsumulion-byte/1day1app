@@ -271,12 +271,15 @@
 }
 
 .item.fly-left {
-  transform: translate(-220%, 40%) rotate(-18deg);  /* しっかり左へ */
-}
-
-.item.fly-right {
-  transform: translate(120%, 40%) rotate(14deg);    /* しっかり右へ */
-}
+    opacity: 1;
+    transform: translate(-200%, 20%) rotate(-14deg);
+  }
+  
+  .item.fly-right {
+    opacity: 1;
+    transform: translate(140%, 20%) rotate(14deg);
+  }
+  
   
   /* ミスった時の赤X */
   
