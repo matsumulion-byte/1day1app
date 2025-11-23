@@ -262,20 +262,21 @@
   
   /* スワイプ時の飛びアニメ */
   
-  .item.fly-left,
-  .item.fly-right {
-    animation: none;
-    transition: transform 0.22s ease-out, opacity 0.22s ease-out;
-    opacity: 0;
-  }
-  
-  .item.fly-left {
-    transform: translate(-140%, 10%) rotate(-15deg);
-  }
-  
-  .item.fly-right {
-    transform: translate(40%, 10%) rotate(12deg);
-  }
+/* スワイプ時の飛びアニメ（方向が分かるように） */
+.item.fly-left,
+.item.fly-right {
+  animation: none;
+  transition: transform 0.35s ease-out;
+  opacity: 1; /* フェードアウトさせないで見せ切る */
+}
+
+.item.fly-left {
+  transform: translate(-220%, 40%) rotate(-18deg);  /* しっかり左へ */
+}
+
+.item.fly-right {
+  transform: translate(120%, 40%) rotate(14deg);    /* しっかり右へ */
+}
   
   /* ミスった時の赤X */
   

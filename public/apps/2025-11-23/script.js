@@ -9,7 +9,7 @@ const asset = (p) => {
 const ASSETS = {
     good: asset("./assets/normal.png"),
     bad: asset("./assets/defect.png"),
-    bgm: asset("./assets/bgm.mp3"),
+    bgm: asset("./assets/bgm.m4a"),
   };
   
   // BGM
