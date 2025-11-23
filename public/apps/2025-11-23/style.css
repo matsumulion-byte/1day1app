@@ -1,0 +1,328 @@
+:root {
+    --bg: #050710;
+    --panel-bg: #141727;
+    --accent: #f9d648;
+    --accent-soft: #fbe58b;
+    --good: #58e08f;
+    --bad: #ff6b81;
+    --ink: #f5f7ff;
+    --muted: #9aa0c2;
+    --shadow: 0 18px 40px rgba(0, 0, 0, 0.65);
+    --radius-xl: 24px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: radial-gradient(circle at top, #232647 0, #050710 60%);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  }
+  
+  body {
+    touch-action: none;
+  }
+  
+  .app {
+    position: fixed;
+    inset: 0;
+    padding: calc(8px + var(--safe-top)) 12px calc(12px + var(--safe-bottom));
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+  }
+  
+  .screen {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    margin: auto;
+    height: 100%;
+    max-height: 900px;
+    display: none;
+  }
+  
+  .screen.active {
+    display: block;
+  }
+  
+  .panel {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    max-width: 420px;
+    max-height: 620px;
+    background: linear-gradient(145deg, #191c33, #090a13);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    padding: 24px 20px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 16px;
+  }
+  
+  .panel h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    letter-spacing: 0.08em;
+  }
+  
+  .lead {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  
+  .howto {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 4px;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  
+  .howto li + li {
+    margin-top: 4px;
+  }
+  
+  .good {
+    color: var(--good);
+    font-weight: 600;
+  }
+  
+  .bad {
+    color: var(--bad);
+    font-weight: 600;
+  }
+  
+  .btn-primary {
+    margin-top: auto;
+    width: 100%;
+    border: none;
+    border-radius: 999px;
+    padding: 14px 18px;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: radial-gradient(circle at top left, #ffe27a, #f7b733);
+    color: #3a2501;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+    cursor: pointer;
+    transform: translateY(0);
+    transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.2s ease;
+  }
+  
+  .btn-primary:active {
+    transform: translateY(2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
+  }
+  
+  /* HUD */
+  
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 10px 8px;
+    margin: 0 auto 6px;
+    max-width: 420px;
+    gap: 8px;
+  }
+  
+  .hud-block {
+    flex: 1;
+    background: rgba(9, 10, 20, 0.9);
+    border-radius: 999px;
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  
+  .hud-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  
+  .hud-value {
+    font-size: 1.1rem;
+    font-variant-numeric: tabular-nums;
+  }
+  
+  /* ゲームエリア */
+  
+  .game-area {
+    position: relative;
+    margin: 0 auto;
+    max-width: 420px;
+    background: radial-gradient(circle at top, #202447, #050711 60%);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    padding: 12px 10px 14px;
+    overflow: hidden;
+    height: calc(100% - 60px);
+    min-height: 480px;
+  }
+  
+
+  /* ラベルを床より手前に */
+  .lanes {
+    position: absolute;
+    inset-inline: 10px;
+    bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 2;
+  }
+  
+/* 松村レーン：下の方まで伸ばす */
+.conveyor {
+    position: absolute;
+    inset-inline: 8px;
+    top: 8px;
+    bottom: 90px;  /* このままでOK（あんまり気にしなくていい） */
+    overflow: hidden;
+    z-index: 3;
+  }
+  
+  
+  /* コンベアっぽい床はその少し下 */
+  .floor-belt {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 65px;      /* ベルトが松村のちょい下に来るように */
+    height: 40px;
+    pointer-events: none;
+    z-index: 1;
+  
+    background:
+      linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.9) 0,
+        rgba(0, 0, 0, 0.9) 12px,
+        rgba(0, 0, 0, 0.6) 12px,
+        rgba(0, 0, 0, 0.6) 100%
+      ),
+      repeating-linear-gradient(
+        90deg,
+        #262a42 0,
+        #262a42 14px,
+        #20243a 14px,
+        #20243a 28px
+      );
+    box-shadow:
+      0 -4px 10px rgba(0, 0, 0, 0.7),
+      inset 0 6px 10px rgba(0, 0, 0, 0.8);
+  }
+  
+  /* 落ちアニメ：top を動かす方式に変更 */
+.item {
+    position: absolute;
+    left: 50%;
+    top: -30%;                 /* 画面のちょい上からスタート */
+    transform: translateX(-50%);
+    width: 96px;
+    aspect-ratio: 3 / 4;
+    border-radius: 18px;
+    background-color: #22263b;
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.65);
+    animation: item-drop 4s linear forwards;
+  }
+  
+  @keyframes item-drop {
+    from {
+      top: -30%;   /* コンベアの上の方（見切れた状態） */
+    }
+    to {
+      top: 110%;   /* 下に抜けきるまで移動 */
+    }
+  }
+  
+  
+  /* スワイプ時の飛びアニメ */
+  
+  .item.fly-left,
+  .item.fly-right {
+    animation: none;
+    transition: transform 0.22s ease-out, opacity 0.22s ease-out;
+    opacity: 0;
+  }
+  
+  .item.fly-left {
+    transform: translate(-140%, 10%) rotate(-15deg);
+  }
+  
+  .item.fly-right {
+    transform: translate(40%, 10%) rotate(12deg);
+  }
+  
+  /* ミスった時の赤X */
+  
+  .item.missed::before {
+    content: "×";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: rgba(255, 79, 105, 0.96);
+    text-shadow: 0 0 18px rgba(0, 0, 0, 0.9);
+  }
+  
+  /* 結果 */
+  
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.98rem;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  }
+  
+  .result-row span:last-child {
+    font-variant-numeric: tabular-nums;
+  }
+  
+  .comment {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  
+  /* 小さめ画面調整 */
+  
+  @media (max-height: 640px) {
+    .game-area {
+      min-height: 420px;
+    }
+
+    .conveyor {
+      bottom: 90px;
+    }
+  }
+  

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+  />
+  <title>松村ライン検品 - 1日1アプリ 2025-11-23</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- タイトル画面 -->
+    <div id="screen-start" class="screen active">
+      <div class="panel">
+        <h1>松村ライン検品</h1>
+        <p class="lead">
+          ベルトコンベアで流れてくる松村を<br />
+          スワイプで検品するお仕事ゲームです。
+        </p>
+        <ul class="howto">
+          <li>👉 右スワイプ：<span class="good">良品</span>レーンへ</li>
+          <li>👉 左スワイプ：<span class="bad">不良品</span>レーンへ</li>
+          <li>⏰ 制限時間は 30 秒</li>
+        </ul>
+        <button id="btn-start" class="btn-primary">検品開始</button>
+      </div>
+    </div>
+
+    <!-- ゲーム画面 -->
+    <div id="screen-game" class="screen">
+      <header class="hud">
+        <div class="hud-block">
+          <div class="hud-label">TIME</div>
+          <div id="time-remaining" class="hud-value">30.0</div>
+        </div>
+        <div class="hud-block">
+          <div class="hud-label">OK</div>
+          <div id="count-correct" class="hud-value good">0</div>
+        </div>
+        <div class="hud-block">
+          <div class="hud-label">NG</div>
+          <div id="count-wrong" class="hud-value bad">0</div>
+        </div>
+      </header>
+
+      <main class="game-area">
+        <!-- 松村が流れるレーン -->
+        <div id="conveyor" class="conveyor"></div>
+      
+        <!-- 一番下にコンベアっぽい床 -->
+        <div class="floor-belt"></div>
+      
+        <!-- 検品ゾーンラベル -->
+        <div class="lanes">
+          <div class="lane lane-left">
+            <span>不良品</span>
+          </div>
+          <div class="lane lane-right">
+            <span>良品</span>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- 結果画面 -->
+    <div id="screen-result" class="screen">
+      <div class="panel">
+        <h1>本日の検品 結果</h1>
+        <div class="result-row">
+          <span>検品数</span>
+          <span id="result-total">0</span>
+        </div>
+        <div class="result-row">
+          <span>OK（良品）</span>
+          <span id="result-ok">0</span>
+        </div>
+        <div class="result-row">
+          <span>NG（不良）</span>
+          <span id="result-ng">0</span>
+        </div>
+        <div class="result-row">
+          <span>正解率</span>
+          <span id="result-accuracy">0%</span>
+        </div>
+
+        <p class="comment" id="result-comment"></p>
+
+        <button id="btn-retry" class="btn-primary">もう一日働く</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./script.js"></script>
+</body>
+</html>
