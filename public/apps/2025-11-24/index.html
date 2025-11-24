@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>松村っち - 進化の日バージョン</title>
+  <style>
+  :root{
+  --ink:#111827;
+  --bg:#e7e7e7;           /* 画面全体のグレー */
+  --panel:#e5e7eb;
+  --accent:#f97316;
+  --good:#22c55e;
+  --bad:#ef4444;
+  --shadow:0 14px 40px rgba(15,23,42,.35);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+  margin:0;
+  padding:0;
+  height:100%;
+  font-family: system-ui,-apple-system,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+}
+
+body{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* 端末フレーム */
+#wrap{
+  position:relative;
+  width:100%;
+  max-width:480px;
+  aspect-ratio:9/16;
+  background:radial-gradient(circle at 15% 0%,#0f172a 0,#020617 45%,#000 100%);
+  border-radius:24px;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+}
+
+.frame{
+  position:absolute;
+  inset:0;
+  padding:calc(10px + var(--safe-top)) 14px calc(12px + var(--safe-bottom));
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+/* ヘッダー */
+
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-size:12px;
+  color:#e5e7eb;
+}
+
+header .badge{
+  padding:2px 8px;
+  border-radius:999px;
+  background:rgba(15,23,42,.85);
+  color:#f9fafb;
+  font-size:11px;
+}
+
+/* タイトル */
+
+.title-area{
+  text-align:center;
+  margin-top:2px;
+  color:#f9fafb;
+}
+
+.title-area h1{
+  font-size:18px;
+  margin:0;
+  letter-spacing:.08em;
+}
+
+.title-area small{
+  font-size:11px;
+  opacity:.75;
+}
+
+.screen{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+/* ペット画面 */
+
+.pet-area{
+  flex:1;
+  background:rgba(15,23,42,.96);
+  border-radius:18px;
+  padding:4px 6px !important;
+  gap:4px !important;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:space-between;
+  border:1px solid rgba(15,23,42,.9);
+  position:relative;
+  overflow:hidden;
+}
+
+.pet-stage-label{
+  font-size:11px;
+  color:#e5e7eb;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:2px !important;
+}
+
+.pet-stage-label span strong{
+  font-weight:700;
+}
+
+.evo-badge{
+  padding:1px 6px;
+  border-radius:999px;
+  background:#fee2e2;
+  font-size:10px;
+  color:#b91c1c;
+}
+
+/* 松村表示部分（液晶） */
+
+.pet-visual-wrap{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 !important;
+  margin:0 !important;
+  flex:0 0 auto !important; 
+}
+
+.pet-visual-inner{
+  width:70%;
+  max-width:240px;
+  aspect-ratio:1/1;
+  border-radius:10px;
+  background:#e7e7e7;                /* 画像と同じグレー */
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 0 0 3px rgba(15,23,42,.9); /* 液晶のフチ */
+}
+
+/* ハイライトは消す（フラットに） */
+.pet-visual-inner::before{
+  content:none;
+}
+
+#pet-img{
+  max-width:80%;
+  max-height:80%;
+  image-rendering:pixelated;
+  animation:float 2.2s ease-in-out infinite;
+}
+
+.pet-dead #pet-img{
+  animation:none;
+  filter:grayscale(1);
+  opacity:.85;
+}
+
+/* 表情バッジは非表示にする */
+.pet-face-overlay{
+  display:none !important;
+}
+
+/* もし後で使うかもなので定義だけ残す */
+.pet-face{
+  padding:2px 8px;
+  border-radius:999px;
+  background:rgba(0,0,0,0.18);
+  color:#111827;
+  font-size:11px;
+  min-width:80px;
+  text-align:center;
+  box-shadow:0 3px 6px rgba(0,0,0,.25);
+}
+
+.pet-dead .pet-face{
+  background:rgba(0,0,0,0.12);
+}
+
+/* ステータス */
+
+.status-area{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  margin-top:2px;
+}
+
+.status-row{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  font-size:11px;
+  color:#e5e7eb;
+}
+
+.status-label{
+  width:3em;
+}
+
+.status-bar-wrap{
+  flex:1;
+  height:8px;
+  border-radius:999px;
+  background:rgba(15,23,42,.7);
+  overflow:hidden;
+  position:relative;
+}
+
+.status-bar{
+  position:absolute;
+  inset:0;
+  width:50%;
+  background:linear-gradient(90deg,#22c55e,#facc15,#f97316,#ef4444);
+  transform-origin:left center;
+  transform:scaleX(.5);
+  transition:transform .25s ease-out;
+}
+
+.status-value{
+  width:32px;
+  text-align:right;
+  color:#e5e7eb;
+}
+
+/* ボタン */
+
+.controls{
+  margin-top:4px;
+  display:flex;
+  gap:4px;
+}
+
+.btn{
+  flex:1;
+  border:none;
+  border-radius:999px;
+  padding:6px 4px;
+  font-size:11px;
+  font-weight:600;
+  background:rgba(248,250,252,.96);
+  color:#020617;
+  box-shadow:0 4px 12px rgba(15,23,42,.45);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+}
+
+.btn:active{
+  transform:translateY(1px) scale(.99);
+  box-shadow:0 2px 6px rgba(15,23,42,.4);
+}
+
+.btn span.emoji{
+  font-size:14px;
+}
+
+.btn.disabled{
+  opacity:.35;
+  pointer-events:none;
+  box-shadow:none;
+}
+
+/* リスタートボタン（小さめセンター） */
+#btn-restart{
+  display:none;
+  margin-top:4px;
+  align-self:center;
+  flex:0 0 auto;
+  padding:6px 12px;
+  font-size:11px;
+  max-width:260px;
+}
+
+/* ログ */
+
+.log-area{
+  margin-top:4px;
+  padding:4px 6px;
+  border-radius:12px;
+  background:rgba(15,23,42,.9);
+  color:#e5e7eb;
+  font-size:10px;
+  min-height:28px;
+  max-height:45px;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  overflow:hidden;
+}
+
+.log-line{
+  opacity:.9;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  overflow:hidden;
+}
+
+.log-line:first-child{
+  opacity:1;
+}
+
+/* フッター */
+
+footer{
+  margin-top:4px;
+  font-size:9px;
+  color:#cbd5f5;
+  text-align:center;
+}
+
+footer strong{
+  color:#f97316;
+}
+
+/* ふわっと浮くアニメ */
+
+@keyframes float {
+  0%{ transform:translateY(2px); }
+  50%{ transform:translateY(-4px); }
+  100%{ transform:translateY(2px); }
+}
+
+/* 小さい端末用 */
+
+@media (max-width:360px){
+  .title-area h1{ font-size:16px; }
+  .pet-visual-inner{ width:76%; }
+}
+
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div class="frame">
+      <header>
+        <div>11/24<span style="margin-left:4px;">進化の日</span></div>
+        <div class="badge">松村っち v1.0</div>
+      </header>
+
+      <div class="title-area">
+        <h1>松村っち</h1>
+        <small>お世話して進化させよう（放置すると退化します）</small>
+      </div>
+
+      <main class="screen">
+        <section class="pet-area" id="pet-area">
+          <div class="pet-stage-label">
+            <span>ステージ：<strong id="stage-label">タマゴ松村</strong></span>
+            <span class="evo-badge" id="evo-badge">進化ポイント 0</span>
+          </div>
+
+          <div class="pet-visual-wrap">
+            <div class="pet-visual-inner" id="pet-visual">
+              <img id="pet-img" src="" alt="松村っち" />
+              <div class="pet-face-overlay">
+                <div class="pet-face" id="pet-face">(`・ω・´)</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="status-area">
+            <div class="status-row">
+              <div class="status-label">おなか</div>
+              <div class="status-bar-wrap">
+                <div class="status-bar" id="bar-hunger"></div>
+              </div>
+              <div class="status-value" id="val-hunger">80</div>
+            </div>
+            <div class="status-row">
+              <div class="status-label">きげん</div>
+              <div class="status-bar-wrap">
+                <div class="status-bar" id="bar-happy"></div>
+              </div>
+              <div class="status-value" id="val-happy">80</div>
+            </div>
+            <div class="status-row">
+              <div class="status-label">元気</div>
+              <div class="status-bar-wrap">
+                <div class="status-bar" id="bar-energy"></div>
+              </div>
+              <div class="status-value" id="val-energy">80</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="controls">
+          <button class="btn" id="btn-feed">
+            <span class="emoji">🍙</span><span>ごはん</span>
+          </button>
+          <button class="btn" id="btn-talk">
+            <span class="emoji">💬</span><span>はなす</span>
+          </button>
+          <button class="btn" id="btn-rest">
+            <span class="emoji">💤</span><span>ねる</span>
+          </button>
+        </section>
+        <button class="btn" id="btn-restart" style="display:none; margin-top:8px;">
+            🔄 もう一度育てる
+          </button>
+        <section class="log-area" id="log-area">
+          <!-- 最新が上 -->
+        </section>
+      </main>
+
+      <footer>
+        お世話すると <strong>進化ポイント</strong> が貯まって、3段階まで進化します。
+      </footer>
+    </div>
+  </div>
+
+  <script>
+// ==========================
+// パスヘルパー（ローカル & Vercel両対応）
+// ==========================
+const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+
+const asset = (p) => {
+  // 先頭の "./" または "/" を削る
+  const clean = String(p || '').replace(/^\.?\//, '');
+  return DATE_BASE + clean;
+};
+
+  
+    // 進化パターン別アセット
+    const ASSETS = {
+      stage1: asset('./assets/matsu_stage1.png'),          // タマゴ松村（共通）
+      stage2_food:   asset('./assets/matsu_stage2_food.png'),
+      stage2_happy:  asset('./assets/matsu_stage2_happy.png'),
+      stage2_energy: asset('./assets/matsu_stage2_energy.png'),
+      stage3_food:   asset('./assets/matsu_stage3_food.png'),
+      stage3_happy:  asset('./assets/matsu_stage3_happy.png'),
+      stage3_energy: asset('./assets/matsu_stage3_energy.png'),
+      dead:          asset('./assets/matsu_dead.png')
+    };
+  
+    const petImg   = document.getElementById('pet-img');
+    const petFace  = document.getElementById('pet-face');
+    const petArea  = document.getElementById('pet-area');
+    const evoBadge = document.getElementById('evo-badge');
+    const stageLabel = document.getElementById('stage-label');
+  
+    const barHunger = document.getElementById('bar-hunger');
+    const barHappy  = document.getElementById('bar-happy');
+    const barEnergy = document.getElementById('bar-energy');
+    const valHunger = document.getElementById('val-hunger');
+    const valHappy  = document.getElementById('val-happy');
+    const valEnergy = document.getElementById('val-energy');
+  
+    const btnFeed = document.getElementById('btn-feed');
+    const btnTalk = document.getElementById('btn-talk');
+    const btnRest = document.getElementById('btn-rest');
+  
+    const logArea = document.getElementById('log-area');
+  
+    const state = {
+      hunger: 80,
+      happy: 80,
+      energy: 80,
+      evoPoints: 0,
+      stage: 1,        // 1〜3
+      evoType: null,   // 'food' | 'happy' | 'energy'
+      alive: true
+    };
+  
+    const EVO_THRESHOLDS = {
+      1: 12,  // → stage2
+      2: 30   // → stage3
+    };
+  
+    function clamp(v,min,max){ return v < min ? min : v > max ? max : v; }
+  
+    function updateBars(){
+      const h = clamp(state.hunger,0,100);
+      const ha = clamp(state.happy,0,100);
+      const e = clamp(state.energy,0,100);
+  
+      valHunger.textContent = h;
+      valHappy.textContent  = ha;
+      valEnergy.textContent = e;
+  
+      barHunger.style.transform = `scaleX(${h/100})`;
+      barHappy.style.transform  = `scaleX(${ha/100})`;
+      barEnergy.style.transform = `scaleX(${e/100})`;
+  
+      // 顔
+      let face = '(`・ω・´)';
+      if(!state.alive){
+        face = '(×_×;)';
+      }else{
+        const avg = (h+ha+e)/3;
+        if(avg >= 75) face = '(｀・ω・´)✨';
+        else if(avg >= 45) face = '(`・ω・´)';
+        else if(avg >= 20) face = '(´・ω・`)';
+        else face = '(;´Д`)';
+      }
+      petFace.textContent = face;
+  
+      // 死亡判定
+      if(state.alive && (h <= 0 || ha <= 0 || e <= 0)){
+        diePet();
+      }
+    }
+  
+    // どのタイプに進化するか決定（ステージ1→2の瞬間で一度だけ）
+    function decideEvoType(){
+      // すでに決まってたら何もしない
+      if(state.evoType) return state.evoType;
+  
+      const h = state.hunger;
+      const ha = state.happy;
+      const e = state.energy;
+  
+      const maxVal = Math.max(h, ha, e);
+      const candidates = [];
+      if(h === maxVal)  candidates.push('food');
+      if(ha === maxVal) candidates.push('happy');
+      if(e === maxVal)  candidates.push('energy');
+  
+      // 同率ならランダムで
+      const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+      state.evoType = chosen;
+      return chosen;
+    }
+  
+    function updateStageVisual(){
+      let label = 'タマゴ松村';
+      let src = ASSETS.stage1;
+  
+      if(!state.alive){
+        label = '進化に失敗した松村っち';
+        src = ASSETS.dead;
+      }else if(state.stage === 1){
+        label = 'タマゴ松村';
+        src = ASSETS.stage1;
+      }else if(state.stage === 2){
+        const type = state.evoType || decideEvoType();
+        if(type === 'food'){
+          label = 'ごはん松村';
+          src = ASSETS.stage2_food;
+        }else if(type === 'happy'){
+          label = 'ごきげん松村';
+          src = ASSETS.stage2_happy;
+        }else{
+          label = 'スポーツ松村';
+          src = ASSETS.stage2_energy;
+        }
+      }else if(state.stage === 3){
+        const type = state.evoType || decideEvoType();
+        if(type === 'food'){
+          label = '最終形態 ごはん神松村';
+          src = ASSETS.stage3_food;
+        }else if(type === 'happy'){
+          label = '最終形態 パリピ松村';
+          src = ASSETS.stage3_happy;
+        }else{
+          label = '最終形態 フィジカル松村';
+          src = ASSETS.stage3_energy;
+        }
+      }
+  
+      stageLabel.textContent = label;
+      petImg.src = src;
+      evoBadge.textContent = `進化ポイント ${state.evoPoints}`;
+      petArea.classList.toggle('pet-dead', !state.alive);
+    }
+  
+    function addLog(text){
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.textContent = text;
+      logArea.prepend(line);
+      while(logArea.children.length > 3){
+        logArea.removeChild(logArea.lastChild);
+      }
+    }
+  
+    function checkEvolution(){
+      if(!state.alive) return;
+  
+      if(state.stage === 1 && state.evoPoints >= EVO_THRESHOLDS[1]){
+        state.stage = 2;
+        const t = decideEvoType();
+        if(t === 'food'){
+          addLog('ごはんを愛しすぎた結果、「ごはん松村」に進化した。');
+        }else if(t === 'happy'){
+          addLog('かまわれすぎて、「ごきげん松村」に進化した。');
+        }else{
+          addLog('動きすぎて、「スポーツ松村」に進化した。');
+        }
+      }else if(state.stage === 2 && state.evoPoints >= EVO_THRESHOLDS[2]){
+        state.stage = 3;
+        const t = state.evoType || decideEvoType();
+        if(t === 'food'){
+          addLog('炭水化物の神、「ごはん神松村」に到達した。');
+        }else if(t === 'happy'){
+          addLog('テンションの極み、「パリピ松村」に到達した。');
+        }else{
+          addLog('筋肉の向こう側、「フィジカル松村」に到達した。');
+        }
+      }
+      updateStageVisual();
+    }
+  
+    function diePet(){
+  state.alive = false;
+  addLog('お世話が足りず、松村っちは進化に失敗した…。');
+  updateStageVisual();
+  updateBars();
+  [btnFeed, btnTalk, btnRest].forEach(b => b.classList.add('disabled'));
+
+  btnRestart.style.display = 'block';   // ← ここ追加
+}
+  
+    function careAction(kind){
+      if(!state.alive) return;
+  
+      let log = '';
+      if(kind === 'feed'){
+        state.hunger = clamp(state.hunger + 22, 0, 100);
+        state.happy  = clamp(state.happy + 4, 0, 100);
+        log = 'おにぎりをあげた。もぐもぐしている。';
+      }else if(kind === 'talk'){
+        state.happy  = clamp(state.happy + 18, 0, 100);
+        state.energy = clamp(state.energy - 4, 0, 100);
+        log = '少しだけ真面目な話をした。きげんが上がった。';
+      }else if(kind === 'rest'){
+        state.energy = clamp(state.energy + 22, 0, 100);
+        state.hunger = clamp(state.hunger - 6, 0, 100);
+        log = 'しばし休憩。元気を取り戻した。';
+      }
+      state.evoPoints += 1;
+      addLog(log);
+      updateBars();
+      checkEvolution();
+    }
+  
+    // ステータス減少タイマー（約15秒ごと）
+    setInterval(() => {
+      if(!state.alive) return;
+      state.hunger = clamp(state.hunger - 4, 0, 100);
+      state.happy  = clamp(state.happy - 3, 0, 100);
+      state.energy = clamp(state.energy - 2, 0, 100);
+      updateBars();
+    }, 15000);
+  
+    btnFeed.addEventListener('click', () => careAction('feed'));
+    btnTalk.addEventListener('click', () => careAction('talk'));
+    btnRest.addEventListener('click', () => careAction('rest'));
+  
+    function init(){
+      addLog('11/24「進化の日」に、松村っちが生まれた。');
+      updateBars();
+      updateStageVisual();
+    }
+    init();
+    const btnRestart = document.getElementById('btn-restart');
+
+function restartGame() {
+  // 状態リセット
+  state.hunger = 80;
+  state.happy = 80;
+  state.energy = 80;
+  state.evoPoints = 0;
+  state.stage = 1;
+  state.evoType = null;
+  state.alive = true;
+
+  // UIリセット
+  logArea.innerHTML = '';
+  btnFeed.classList.remove('disabled');
+  btnTalk.classList.remove('disabled');
+  btnRest.classList.remove('disabled');
+  btnRestart.style.display = 'none';
+
+  addLog('新しい松村っちが生まれた！');
+  updateBars();
+  updateStageVisual();
+}
+
+btnRestart.addEventListener('click', restartGame);
+
+  </script>
+  
+</body>
+</html>
