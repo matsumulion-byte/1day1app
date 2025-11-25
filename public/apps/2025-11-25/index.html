@@ -161,15 +161,20 @@
     <p class="bottom-text">※ 端末によってはバイブが動かないことがあります。</p>
   </div>
 
-  <script type="module">
-    const asset = (p) => new URL(p, import.meta.url).toString();
+  <script>
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [''])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : '/';
+    const asset = (p) => {
+      const clean = String(p || '').replace(/^\.?\//, '');
+      return `${DATE_BASE}${clean}`;
+    };
 
     const matsuWrap = document.getElementById('matsu-wrap');
     const matsuImg  = document.getElementById('matsu');
     const laughEl   = document.getElementById('laugh');
 
     // 松村画像読み込み
-    matsuImg.src = asset('./assets/matsu.png'); // ここだけ好きなファイル名に合わせて
+    matsuImg.src = asset('assets/matsu.png'); // ここだけ好きなファイル名に合わせて
 
     // 変な長押しメニュー・ダブルタップ拡大を抑制
     window.addEventListener('contextmenu', e => e.preventDefault(), { passive:false });
