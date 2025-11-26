@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>30秒いい風呂キープ松村</title>
+  <style>
+    :root{
+      --bg:#050609;
+      --ink:#f9fbff;
+      --accent:#ffcc33;
+      --hot:#ff6b6b;
+      --cool:#4fc3f7;
+      --safe-top:env(safe-area-inset-top,0px);
+      --safe-bottom:env(safe-area-inset-bottom,0px);
+    }
+    *{
+      box-sizing:border-box;
+      -webkit-tap-highlight-color:transparent;
+    }
+    html,body{
+      margin:0; padding:0; height:100%;
+      background:#000; color:var(--ink);
+      font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+      overscroll-behavior:none;
+      touch-action:manipulation;
+    }
+    body{
+      display:flex;
+      justify-content:center;
+      align-items:stretch;
+    }
+    .wrap{
+      position:relative;
+      width:100%;
+      max-width:560px;
+      height:100vh;
+      padding:calc(6px + var(--safe-top)) 10px calc(8px + var(--safe-bottom));
+      background:radial-gradient(circle at top,#233048,#050609);
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:11px;
+      opacity:.9;
+      padding:0 2px;
+    }
+    .title{
+      font-weight:700;
+      letter-spacing:.06em;
+      font-size:12px;
+    }
+    .badge{
+      padding:2px 8px;
+      border-radius:999px;
+      background:rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.25);
+      font-size:10px;
+    }
+    main{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      gap:6px;
+      padding-top:2px;
+    }
+    .subtitle{
+      font-size:11px;
+      text-align:center;
+      opacity:.85;
+      line-height:1.4;
+    }
+    .subtitle span{
+      color:var(--accent);
+      font-weight:700;
+    }
+
+    .stage{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:space-between;
+      gap:6px;
+      width:100%;
+      max-width:420px;
+    }
+
+    .bath-area{
+      position:relative;
+      width:70%;
+      max-width:260px;
+      aspect-ratio:3/5;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      margin:0 auto;
+    }
+    .bath-img{
+      position:absolute;
+      inset:auto 0 0 0;
+      margin:auto;
+      height:100%;
+      width:auto;
+      max-width:100%;
+      object-fit:contain;
+      display:block;
+      filter:drop-shadow(0 8px 20px rgba(0,0,0,.8));
+      pointer-events:none;
+    }
+    .fire-glow{
+      position:absolute;
+      bottom:-2%;
+      left:50%;
+      transform:translateX(-50%);
+      width:80%;
+      height:35%;
+      background:radial-gradient(circle at 50% 100%, rgba(255,120,40,.85), rgba(255,120,40,0));
+      opacity:0.0;
+      pointer-events:none;
+      mix-blend-mode:screen;
+      transition:opacity .1s linear;
+    }
+
+    .gauge-box{
+      width:100%;
+      padding:8px 10px 8px;
+      border-radius:14px;
+      background:rgba(0,0,0,.6);
+      border:1px solid rgba(255,255,255,.15);
+      box-shadow:0 10px 22px rgba(0,0,0,.6);
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .top-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:10px;
+      opacity:.9;
+    }
+    .timer{
+      font-size:15px;
+      font-weight:700;
+    }
+    .timer span{
+      font-variant-numeric:tabular-nums;
+    }
+
+    .gauge-label-row{
+      display:flex;
+      justify-content:space-between;
+      font-size:10px;
+      opacity:.8;
+      margin-top:2px;
+    }
+    .gauge-bar{
+      position:relative;
+      width:100%;
+      height:14px;
+      border-radius:999px;
+      background:linear-gradient(90deg,var(--cool),#a5d6ff,var(--accent),var(--hot));
+      overflow:hidden;
+    }
+    .marker{
+      position:absolute;
+      top:-3px;
+      width:8px;
+      height:22px;
+      border-radius:999px;
+      background:#fff;
+      box-shadow:0 0 4px rgba(0,0,0,.7);
+      transform:translateX(-50%);
+    }
+    .ideal-zone{
+      position:absolute;
+      top:2px; bottom:2px;
+      left:48%; right:52%;
+      border-radius:999px;
+      box-shadow:0 0 0 1px rgba(0,0,0,.45),0 0 6px rgba(0,0,0,.7);
+      background:rgba(0,0,0,.15);
+    }
+    .ideal-label{
+      position:absolute;
+      top:-15px; left:50%;
+      transform:translateX(-50%);
+      font-size:9px;
+      color:var(--accent);
+      text-shadow:0 0 4px rgba(0,0,0,.8);
+    }
+
+    .temp-row{
+      display:flex;
+      justify-content:space-between;
+      font-size:11px;
+      align-items:baseline;
+      margin-top:2px;
+    }
+    .temp-now{
+      font-size:16px;
+      font-weight:800;
+    }
+    .temp-unit{
+      font-size:10px;
+      opacity:.8;
+    }
+    .status-text{
+      font-size:11px;
+      text-align:right;
+      opacity:.9;
+    }
+
+    .btn-row{
+      display:flex;
+      gap:6px;
+      margin-top:4px;
+    }
+    button{
+      flex:1;
+      border:none;
+      border-radius:999px;
+      padding:9px 10px;
+      font-size:12px;
+      font-weight:600;
+      letter-spacing:.03em;
+      cursor:pointer;
+    }
+    .btn-main{
+      background:var(--accent);
+      color:#2b2300;
+      box-shadow:0 8px 18px rgba(0,0,0,.7);
+    }
+    .btn-sub{
+      background:rgba(0,0,0,.6);
+      color:var(--ink);
+      border:1px solid rgba(255,255,255,.2);
+      font-size:11px;
+    }
+
+    .result{
+      font-size:11px;
+      text-align:center;
+      min-height:1.6em;
+    }
+    .result-good{ color:var(--accent); }
+    .result-hot{ color:var(--hot); }
+    .result-cool{ color:var(--cool); }
+
+    .badge-result{
+      font-size:10px;
+      text-align:center;
+      opacity:.85;
+      min-height:1.4em;
+    }
+
+    .footer{
+      font-size:10px;
+      opacity:.6;
+      text-align:center;
+      padding-top:2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">30秒いい風呂キープ松村</div>
+      <div class="badge">11/26 いい風呂の日</div>
+    </header>
+
+    <main>
+      <p class="subtitle">
+        BGMが流れている<span>30秒</span>のあいだ、<span>40〜42℃</span>くらいを目指して火加減を調整してください。<br>
+        風呂か「薪をくべる」をタップで火力アップ。熱くなりすぎると<strong>GAME OVER</strong>です。
+      </p>
+
+      <section class="stage">
+        <div class="bath-area" id="bath-area">
+          <img id="matsu-img" class="bath-img" alt="松村 in 風呂" />
+          <div class="fire-glow" id="fire-glow"></div>
+        </div>
+
+        <div class="gauge-box">
+          <div class="top-row">
+            <div>残り時間</div>
+            <div class="timer"><span id="time-left">30.0</span><span> sec</span></div>
+          </div>
+
+          <div class="gauge-label-row">
+            <span>ぬるい</span>
+            <span>あつい</span>
+          </div>
+          <div class="gauge-bar" id="gauge">
+            <div class="ideal-zone">
+              <div class="ideal-label">いい風呂ゾーン</div>
+            </div>
+            <div class="marker" id="marker"></div>
+          </div>
+
+          <div class="temp-row">
+            <div>
+              <span class="temp-now" id="temp">--</span><span class="temp-unit">℃</span>
+            </div>
+            <div class="status-text" id="status-text">スタートでBGMとともに始まります。</div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn-main" id="btn-start">スタート</button>
+            <button class="btn-sub" id="btn-stoke">薪をくべる</button>
+          </div>
+
+          <div class="result" id="result"></div>
+          <div class="badge-result" id="badge-result"></div>
+        </div>
+      </section>
+    </main>
+
+    <p class="footer">※ 40〜42℃くらいが「いい風呂」です。46℃を超えると熱湯風呂で強制終了。</p>
+  </div>
+
+  <script>
+    // Vercel / 静的ホスティング用のパス解決
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [''])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : '/';
+    const asset = (p) => {
+      const clean = String(p || '').replace(/^\.?\//, '');
+      return `${DATE_BASE}${clean}`;
+    };
+
+    // DOM
+    const gauge = document.getElementById('gauge');
+    const marker = document.getElementById('marker');
+    const fireGlow = document.getElementById('fire-glow');
+    const tempEl = document.getElementById('temp');
+    const timeEl = document.getElementById('time-left');
+    const statusEl = document.getElementById('status-text');
+    const resultEl = document.getElementById('result');
+    const badgeEl = document.getElementById('badge-result');
+    const btnStart = document.getElementById('btn-start');
+    const btnStoke = document.getElementById('btn-stoke');
+    const bathArea = document.getElementById('bath-area');
+    const matsuImg = document.getElementById('matsu-img');
+
+    // 画像
+    matsuImg.src = asset('assets/matsu_bath.png');
+    matsuImg.onerror = () => { matsuImg.style.display = 'none'; };
+
+    // BGM（スタートと同時に鳴らす）
+    const bgm = new Audio(asset('assets/bgm.mp3'));
+    bgm.loop = false;
+    bgm.volume = 0.6;
+
+    // ゲーム状態
+    const GAME_DURATION = 30_000; // 30秒
+    const IDEAL_MIN = 40;
+    const IDEAL_MAX = 42;
+    const OVERHEAT_TEMP = 46;     // ここを超えたら即ゲームオーバー
+
+    let running = false;
+    let gameOver = false;
+    let startTime = 0;
+    let lastTime = 0;
+    let animId = null;
+
+    let temp = 39;          // 現在温度
+    let heat = 0.4;         // 火力 0〜1
+    let idealTime = 0;      // いい風呂ゾーン滞在時間
+
+    function resetGame() {
+      running = false;
+      gameOver = false;
+      cancelAnimationFrame(animId);
+      animId = null;
+
+      temp = 39;
+      heat = 0.4;
+      idealTime = 0;
+      startTime = 0;
+      lastTime = 0;
+
+      timeEl.textContent = '30.0';
+      tempEl.textContent = '--';
+      resultEl.textContent = '';
+      badgeEl.textContent = '';
+      resultEl.className = 'result';
+      statusEl.textContent = 'スタートでBGMとともに始まります。';
+      btnStart.textContent = 'スタート';
+      updateGauge();
+      updateFireGlow(0);
+      bgm.pause();
+      bgm.currentTime = 0;
+    }
+
+    function posFromTemp(t) {
+      const min = 35;
+      const max = 47;
+      const clamped = Math.min(max, Math.max(min, t));
+      return (clamped - min) / (max - min);
+    }
+
+    function updateGauge() {
+      const pos = posFromTemp(temp);
+      marker.style.left = (pos * 100) + '%';
+      tempEl.textContent = Math.round(temp);
+    }
+
+    function updateFireGlow(level) {
+      fireGlow.style.opacity = 0.15 + level * 0.75;
+    }
+
+    function stoke() {
+      if (!running || gameOver) return;
+      heat = Math.min(1, heat + 0.2);
+      temp += 1.0;
+      updateFireGlow(heat);
+      updateGauge();
+    }
+
+    function overheatGame() {
+      running = false;
+      gameOver = true;
+      cancelAnimationFrame(animId);
+      animId = null;
+      bgm.pause();
+
+      resultEl.className = 'result result-hot';
+      resultEl.textContent = '松村「アチアチ！熱湯風呂になったのでゲームオーバーです。」';
+      badgeEl.textContent = '称号：リアル熱湯コマーシャル松村';
+      statusEl.textContent = 'もう一回やる場合はスタートを押してください。';
+      btnStart.textContent = 'もう一回';
+    }
+
+    function finishGame() {
+      running = false;
+      cancelAnimationFrame(animId);
+      animId = null;
+      bgm.pause();
+
+      const scoreRatio = idealTime / GAME_DURATION;
+      const scorePercent = Math.round(scoreRatio * 100);
+
+      resultEl.className = 'result';
+      if (scoreRatio > 0.7) {
+        resultEl.textContent = `松村「完璧！${scorePercent}% いい風呂キープしてましたわ。」`;
+        resultEl.classList.add('result-good');
+        badgeEl.textContent = '称号：風呂マイスター松村';
+      } else if (scoreRatio > 0.4) {
+        resultEl.textContent = `松村「悪くないけど、もうひと薪ほしかったな〜（${scorePercent}%）。」`;
+        resultEl.classList.add('result-cool');
+        badgeEl.textContent = '称号：そこそこ湯加減職人';
+      } else {
+        resultEl.textContent = `松村「これ修行やん。全然キープできてない（${scorePercent}%）。」`;
+        resultEl.classList.add('result-hot');
+        badgeEl.textContent = '称号：熱湯とぬる湯を行き来する松村';
+      }
+      statusEl.textContent = 'もう一回やる場合はスタートを押してください。';
+      btnStart.textContent = 'もう一回';
+    }
+
+    function loop(timestamp) {
+      if (!running || gameOver) {
+        animId = null;
+        return;
+      }
+      if (!startTime) {
+        startTime = timestamp;
+        lastTime = timestamp;
+      }
+
+      const dt = timestamp - lastTime;
+      lastTime = timestamp;
+
+      const elapsed = timestamp - startTime;
+      const remain = Math.max(0, GAME_DURATION - elapsed);
+      timeEl.textContent = (remain / 1000).toFixed(1);
+
+      // 温度変化：自然冷却 + 火力
+      const targetCool = 36;
+      const coolRate = 0.00045;
+      const heatRate = 0.0014;
+
+      const deltaCool = (targetCool - temp) * coolRate * dt;
+      const deltaHeat = heat * heatRate * dt * 60;
+      temp += deltaCool + deltaHeat;
+
+      // 火力減衰
+      heat = Math.max(0, heat - 0.0015 * dt);
+      updateFireGlow(heat);
+      updateGauge();
+
+      // いい風呂ゾーン滞在時間
+      if (temp >= IDEAL_MIN && temp <= IDEAL_MAX) {
+        idealTime += dt;
+      }
+
+      // 熱くなりすぎたら即ゲームオーバー
+      if (temp >= OVERHEAT_TEMP) {
+        overheatGame();
+        return;
+      }
+
+      if (remain <= 0) {
+        finishGame();
+        return;
+      }
+
+      animId = requestAnimationFrame(loop);
+    }
+
+    btnStart.addEventListener('click', () => {
+      resetGame();
+      running = true;
+      statusEl.textContent = '火が弱まってきたら「薪をくべる」で調整！';
+
+      bgm.currentTime = 0;
+      bgm.play().catch(()=>{});
+      animId = requestAnimationFrame(loop);
+    });
+
+    btnStoke.addEventListener('click', () => { stoke(); });
+    bathArea.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      stoke();
+    });
+
+    // ジェスチャー無効化
+    window.addEventListener('contextmenu', e => e.preventDefault(), { passive:false });
+    window.addEventListener('dblclick', e => e.preventDefault(), { passive:false });
+    window.addEventListener('gesturestart', e => e.preventDefault(), { passive:false });
+
+    resetGame();
+  </script>
+</body>
+</html>
