@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+  />
+  <title>スワイプであっちむいてホイ - 松村スワイプ</title>
+  <style>
+    :root {
+      --bg: #050816;
+      --panel: #101827;
+      --accent: #f97316;
+      --accent-soft: rgba(249, 115, 22, 0.18);
+      --ink: #f9fafb;
+      --muted: #9ca3af;
+      --danger: #f97373;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.55);
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", "Helvetica Neue", "Hiragino Kaku Gothic ProN",
+        "Yu Gothic", sans-serif;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%);
+      color: var(--ink);
+    }
+
+    body {
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    .wrap {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: calc(12px + var(--safe-top)) 12px
+        calc(18px + var(--safe-bottom));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 440px;
+      background: linear-gradient(145deg, #020617, #0b1220);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-soft);
+      padding: 16px 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    @media (min-width: 480px) {
+      .card {
+        padding: 18px 18px 20px;
+      }
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .title-pill {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.18);
+      color: #a5f3fc;
+      border: 1px solid rgba(34, 211, 238, 0.35);
+    }
+
+    .subtitle {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .score-block {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .score-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #facc15;
+    }
+
+    .best-value {
+      font-size: 12px;
+      font-weight: 600;
+      color: #a5b4fc;
+    }
+
+    .stage {
+      position: relative;
+      margin-top: 6px;
+      background: radial-gradient(circle at top, #111827 0, #020617 65%);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      padding: 12px 10px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+      touch-action: none; /* スワイプ用 */
+    }
+
+    .stage-label {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .round-label {
+      font-size: 11px;
+      color: #e5e7eb;
+      font-weight: 500;
+    }
+
+    .matsu-area {
+      position: relative;
+      flex: 1;
+      min-height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 0 2px;
+    }
+
+    .matsu-inner {
+      position: relative;
+      width: 100%;
+      max-width: 220px;
+      aspect-ratio: 3 / 4;
+      margin: 0 auto;
+      border-radius: 20px;
+      background: radial-gradient(circle at 50% 15%, #1f2937 0, #020617 70%);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8);
+    }
+
+    .matsu-img {
+      width: 70%;
+      max-height: 90%;
+      object-fit: contain;
+      transition: transform 0.12s ease-out;
+    }
+
+    .matsu-img.flash {
+      transform: scale(1.05);
+    }
+
+    .direction-arrow {
+      position: absolute;
+      inset: 6px;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .direction-arrow span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 999px;
+      border: 2px solid var(--accent);
+      background: rgba(15, 23, 42, 0.7);
+      box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7);
+      color: var(--accent);
+      font-size: 22px;
+      font-weight: 700;
+      transform: translateY(-70px);
+      animation: ping 0.7s ease-out infinite;
+    }
+
+    @keyframes ping {
+      0% {
+        box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7);
+      }
+      100% {
+        box-shadow: 0 0 0 18px rgba(249, 115, 22, 0);
+      }
+    }
+
+    .timer-bar-wrap {
+      position: relative;
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+    }
+
+    .timer-bar {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      background: linear-gradient(
+        90deg,
+        #22c55e,
+        #eab308,
+        #f97316,
+        #ef4444
+      );
+      transform-origin: left center;
+      transform: scaleX(1);
+      transition: transform 0.08s linear;
+    }
+
+    .info-row {
+      margin-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .hint {
+      flex: 1;
+      line-height: 1.4;
+    }
+
+    .state-message {
+      font-size: 12px;
+      color: #fef3c7;
+      text-align: right;
+    }
+
+    .state-message.danger {
+      color: var(--danger);
+    }
+
+    .btn-row {
+      margin-top: 8px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .btn-main {
+      appearance: none;
+      border: none;
+      border-radius: 999px;
+      padding: 9px 26px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      background: radial-gradient(circle at 30% 0, #f97316, #ea580c);
+      color: #111827;
+      box-shadow: 0 10px 25px rgba(248, 113, 22, 0.55);
+      cursor: pointer;
+      transition: transform 0.08s ease-out, box-shadow 0.08s ease-out,
+        opacity 0.12s ease-out;
+    }
+
+    .btn-main:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 4px 14px rgba(248, 113, 22, 0.4);
+    }
+
+    .btn-main.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+      box-shadow: none;
+    }
+
+    /* 小さい端末向け微調整 */
+    @media (max-height: 640px) {
+      .matsu-area {
+        min-height: 150px;
+      }
+      .matsu-inner {
+        max-width: 200px;
+      }
+      .title {
+        font-size: 17px;
+      }
+      .score-value {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <main class="card">
+      <header class="header-row">
+        <div class="title-block">
+          <div class="title">
+            スワイプであっちむいてホイ
+            <span class="title-pill">SWIPE MATCH</span>
+          </div>
+          <div class="subtitle">
+            松村が向いた方向と同じ方向へ、素早くスワイプし続けろ！
+          </div>
+        </div>
+        <div class="score-block">
+          <div>スコア</div>
+          <div class="score-value" id="score">0</div>
+          <div class="best-value">BEST <span id="bestScore">0</span></div>
+        </div>
+      </header>
+
+      <section
+        class="stage"
+        id="stage"
+        aria-label="スワイプで方向入力するエリア"
+      >
+        <div class="stage-label">
+          <span class="round-label" id="roundLabel">準備中</span>
+          <span>SWIPE / ARROWS</span>
+        </div>
+
+        <div class="matsu-area">
+          <div class="matsu-inner">
+            <img
+              alt="松村"
+              class="matsu-img"
+              id="matsuImg"
+            />
+            <div class="direction-arrow" id="directionArrow" hidden>
+              <span id="directionIcon">↑</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timer-bar-wrap">
+          <div class="timer-bar" id="timerBar"></div>
+        </div>
+
+        <div class="info-row">
+          <div class="hint">
+            松村が向いた<span style="color:#f97316;">方向と同じ方向</span>に
+            スワイプ / 矢印キー！<br />
+            100点でクリア。ミス or 時間切れで即終了。
+          </div>
+          <div class="state-message" id="stateMessage">
+            下のボタンでスタート
+          </div>
+        </div>
+      </section>
+
+      <div class="btn-row">
+        <button class="btn-main" id="startBtn">スタート</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- BGM（src は JS で asset() 経由でセット） -->
+  <audio id="bgm" preload="auto"></audio>
+
+  <script type="module">
+    // ============================
+    // アセットヘルパー
+    // ============================
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p = "") => {
+      const clean = String(p).replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    const matsuImg = document.getElementById("matsuImg");
+    const directionArrowEl = document.getElementById("directionArrow");
+    const directionIconEl = document.getElementById("directionIcon");
+    const stageEl = document.getElementById("stage");
+    const timerBarEl = document.getElementById("timerBar");
+    const scoreEl = document.getElementById("score");
+    const bestScoreEl = document.getElementById("bestScore");
+    const stateMessageEl = document.getElementById("stateMessage");
+    const roundLabelEl = document.getElementById("roundLabel");
+    const startBtn = document.getElementById("startBtn");
+    const bgm = document.getElementById("bgm");
+
+    // 画像パス
+    const matsuImages = {
+      front: asset("./assets/matsu_front.png"),
+      up: asset("./assets/matsu_up.png"),
+      down: asset("./assets/matsu_down.png"),
+      left: asset("./assets/matsu_left.png"),
+      right: asset("./assets/matsu_right.png"),
+    };
+
+    // 初期表示用
+    matsuImg.src = matsuImages.front;
+
+    // BGM設定（ファイル名は必要に応じて変更してね）
+    bgm.src = asset("./assets/bgm.mp3");
+    bgm.loop = true;
+    bgm.volume = 0.7;
+
+    const directions = ["up", "down", "left", "right"];
+    const directionIconMap = {
+      up: "↑",
+      down: "↓",
+      left: "←",
+      right: "→",
+    };
+    const directionLabelMap = {
+      up: "上",
+      down: "下",
+      left: "左",
+      right: "右",
+    };
+
+    let state = "idle"; // idle | playing | gameover | clear
+    let score = 0;
+    let bestScore = 0;
+    let currentDirection = null;
+    let roundCount = 0;
+
+    let touchStartX = null;
+    let touchStartY = null;
+    let isPointerDown = false;
+
+    let roundDeadline = 0;
+    let timerAnimId = null;
+    let roundId = 0;
+    let answeredThisRound = false;
+
+    // ローカルストレージからベストスコア
+    (function loadBest() {
+      try {
+        const stored = localStorage.getItem("matsu_swipe_best");
+        if (stored != null) {
+          bestScore = Number(stored) || 0;
+          bestScoreEl.textContent = bestScore;
+        }
+      } catch (e) {
+        // 何もしない
+      }
+    })();
+
+    // ============================
+    // ゲーム制御
+    // ============================
+    function setState(newState, message, opts = {}) {
+      state = newState;
+      if (message) {
+        stateMessageEl.textContent = message;
+      }
+      if (opts.danger) {
+        stateMessageEl.classList.add("danger");
+      } else {
+        stateMessageEl.classList.remove("danger");
+      }
+
+      if (state === "playing") {
+        startBtn.classList.add("disabled");
+      } else {
+        startBtn.classList.remove("disabled");
+        // gameover / clear のときは「もう一回」
+        if (state === "gameover" || state === "clear") {
+          startBtn.textContent = "もう一回";
+        } else {
+          startBtn.textContent = "スタート";
+        }
+      }
+
+      if (state !== "playing") {
+        clearTimer();
+      }
+    }
+
+    function startGame() {
+      try {
+        bgm.currentTime = 0;
+        bgm.play();
+      } catch (e) {}
+
+      score = 0;
+      roundCount = 0;
+      updateScore();
+      directionArrowEl.hidden = false;
+      matsuImg.src = matsuImages.front;
+      setState("playing", "スワイプ / 矢印キーで同じ方向へ！");
+      nextRound();
+    }
+
+    function updateScore() {
+      scoreEl.textContent = score;
+      if (score > bestScore) {
+        bestScore = score;
+        bestScoreEl.textContent = bestScore;
+        try {
+          localStorage.setItem("matsu_swipe_best", String(bestScore));
+        } catch (e) {}
+      }
+    }
+
+    // ★ 難易度ちょい甘め：1.6秒 → 徐々に短く、最低0.7秒
+    function getRoundTimeMs() {
+      const base = 1600; // 1問目 1.6秒
+      const step = 30;   // 1点ごとに30ms短く
+      const t = base - score * step;
+      return Math.max(700, t); // 最低0.7秒
+    }
+
+    function nextRound() {
+      roundId++;
+      answeredThisRound = false;
+      roundCount++;
+      roundLabelEl.textContent = `ラウンド ${roundCount}`;
+
+      // ランダム方向
+      const dir = directions[Math.floor(Math.random() * directions.length)];
+      currentDirection = dir;
+
+      matsuImg.src = matsuImages[dir] || matsuImages.front;
+      directionIconEl.textContent = directionIconMap[dir];
+      directionArrowEl.hidden = false;
+
+      const timeMs = getRoundTimeMs();
+      startRoundTimer(timeMs);
+    }
+
+    function startRoundTimer(durationMs) {
+      clearTimer();
+      const thisRoundId = roundId;
+      const start = performance.now();
+      roundDeadline = start + durationMs;
+      timerBarEl.style.transform = "scaleX(1)";
+
+      const tick = (now) => {
+        if (state !== "playing" || thisRoundId !== roundId) return;
+
+        const remaining = roundDeadline - now;
+        if (remaining <= 0) {
+          timerBarEl.style.transform = "scaleX(0)";
+          handleFail("時間切れ！");
+          return;
+        }
+        const ratio = remaining / durationMs;
+        timerBarEl.style.transform = `scaleX(${Math.max(ratio, 0)})`;
+        timerAnimId = requestAnimationFrame(tick);
+      };
+
+      timerAnimId = requestAnimationFrame(tick);
+    }
+
+    function clearTimer() {
+      if (timerAnimId != null) {
+        cancelAnimationFrame(timerAnimId);
+        timerAnimId = null;
+      }
+    }
+
+    function handleAnswer(dir) {
+      if (state !== "playing") return;
+      if (answeredThisRound) return;
+      if (!currentDirection) return;
+
+      answeredThisRound = true;
+
+      if (dir === currentDirection) {
+        // 正解
+        score++;
+        updateScore();
+        flashMatsu();
+
+        // ★ クリア条件：スコア100
+        if (score >= 100) {
+          handleClear();
+          return;
+        }
+
+        setState("playing", `ナイス！${directionLabelMap[dir]} 方向！`);
+        setTimeout(() => {
+          if (state === "playing") nextRound();
+        }, 160);
+      } else {
+        handleFail(`ミス！正解は ${directionLabelMap[currentDirection]} でした`);
+      }
+    }
+
+    function handleFail(reasonText) {
+      setState("gameover", reasonText, { danger: true });
+      matsuImg.src = matsuImages.front;
+      directionArrowEl.hidden = true;
+      try {
+        bgm.pause();
+      } catch (e) {}
+    }
+
+    function handleClear() {
+      setState("clear", "✨クリア！おめでとう✨");
+      directionArrowEl.hidden = true;
+      matsuImg.src = matsuImages.front;
+      try {
+        bgm.pause();
+      } catch (e) {}
+    }
+
+    function flashMatsu() {
+      matsuImg.classList.remove("flash");
+      void matsuImg.offsetWidth;
+      matsuImg.classList.add("flash");
+      setTimeout(() => matsuImg.classList.remove("flash"), 120);
+    }
+
+    // ============================
+    // スワイプ判定
+    // ============================
+    function onPointerDown(x, y) {
+      isPointerDown = true;
+      touchStartX = x;
+      touchStartY = y;
+    }
+
+    function onPointerUp(x, y) {
+      if (!isPointerDown) return;
+      isPointerDown = false;
+
+      if (touchStartX == null || touchStartY == null) return;
+
+      const dx = x - touchStartX;
+      const dy = y - touchStartY;
+      const distanceSq = dx * dx + dy * dy;
+      const threshold = 24; // px
+
+      if (distanceSq < threshold * threshold) {
+        // スワイプとしては短すぎる → 無視
+        return;
+      }
+
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+
+      let dir = null;
+      if (absDx > absDy) {
+        dir = dx > 0 ? "right" : "left";
+      } else {
+        dir = dy > 0 ? "down" : "up";
+      }
+
+      handleAnswer(dir);
+    }
+
+    // タッチ
+    stageEl.addEventListener(
+      "touchstart",
+      (e) => {
+        const t = e.changedTouches[0];
+        onPointerDown(t.clientX, t.clientY);
+      },
+      { passive: true }
+    );
+
+    stageEl.addEventListener(
+      "touchend",
+      (e) => {
+        const t = e.changedTouches[0];
+        onPointerUp(t.clientX, t.clientY);
+      },
+      { passive: true }
+    );
+
+    // マウス（PC用）
+    stageEl.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      onPointerDown(e.clientX, e.clientY);
+    });
+    stageEl.addEventListener("mouseup", (e) => {
+      onPointerUp(e.clientX, e.clientY);
+    });
+
+    // ============================
+    // キーボード操作（PC用）
+    // ============================
+    window.addEventListener("keydown", (e) => {
+      if (state !== "playing") return;
+
+      switch (e.key) {
+        case "ArrowUp":
+          handleAnswer("up");
+          break;
+        case "ArrowDown":
+          handleAnswer("down");
+          break;
+        case "ArrowLeft":
+          handleAnswer("left");
+          break;
+        case "ArrowRight":
+          handleAnswer("right");
+          break;
+      }
+    });
+
+    // ============================
+    // ボタン＆初期状態
+    // ============================
+    startBtn.addEventListener("click", () => {
+      if (state === "playing") return;
+      startGame();
+    });
+
+    // 初期メッセージ
+    setState("idle", "下のボタンでスタート");
+
+    // 長押しメニューなど無効化（デフォルール）
+    window.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+    });
+  </script>
+</body>
+</html>
