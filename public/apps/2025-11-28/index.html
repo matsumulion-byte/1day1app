@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>松村を探せ</title>
+  <style>
+    :root {
+      --bg: #050814;
+      --bg-soft: #0e1223;
+      --accent: #ffcc33;
+      --accent-soft: rgba(255, 204, 51, 0.15);
+      --ink: #f6f7ff;
+      --muted: #9ca3c7;
+      --danger: #ff4d6a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+        "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1e2238 0, #050814 55%, #02030a 100%);
+      color: var(--ink);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 16px 12px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card {
+      background: rgba(5, 8, 20, 0.9);
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+      padding: 16px 16px 18px;
+      backdrop-filter: blur(10px);
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .title-pill {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--muted);
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .status-item {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 19, 40, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-label {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .status-value {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+
+    .status-value.important {
+      color: var(--accent);
+    }
+
+    .status-value.bad {
+      color: var(--danger);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(255, 204, 51, 0.5);
+    }
+
+    .grid-shell {
+      margin-top: 6px;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      background: radial-gradient(circle at top, #1b2245, #050814);
+      position: relative;
+    }
+
+    .grid {
+      display: grid;
+      width: 100%;
+      gap: 4px;
+      padding: 8px;
+      transition: transform 120ms ease-out;
+    }
+
+    .grid.shake {
+      animation: shake 0.35s ease;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(5px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(3px); }
+      100% { transform: translateX(0); }
+    }
+
+    .cell {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      background: #111528;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02);
+      transition: transform 80ms ease-out, box-shadow 80ms ease-out;
+    }
+
+    .cell:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .cell img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: filter 140ms ease-out, transform 140ms ease-out;
+    }
+
+    .cell.fake-1 img { filter: grayscale(1) contrast(1.2); }
+    .cell.fake-2 img { filter: hue-rotate(40deg) saturate(1.8); }
+    .cell.fake-3 img { filter: hue-rotate(-40deg) saturate(1.8); }
+    .cell.fake-4 img { filter: brightness(0.9) contrast(1.4); }
+    .cell.fake-5 img { filter: invert(0.08) saturate(1.5); }
+    .cell.fake-6 img { filter: sepia(0.7) saturate(1.6); }
+    .cell.flip img  { transform: scaleX(-1); }
+
+    .cell.correct.found {
+      box-shadow: 0 0 0 2px var(--accent), 0 0 18px rgba(255, 204, 51, 0.7);
+    }
+
+    .cell.missed {
+      animation: missBlink 300ms ease;
+    }
+
+    @keyframes missBlink {
+      0%   { box-shadow: 0 0 0 0 rgba(255, 77, 106, 0.8); }
+      100% { box-shadow: 0 0 0 10px rgba(255, 77, 106, 0); }
+    }
+
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+    }
+
+    button.primary {
+      border: none;
+      outline: none;
+      border-radius: 999px;
+      padding: 10px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #ffcc33, #ff9b3c);
+      color: #2a1800;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.6);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 160px;
+      justify-content: center;
+      transition: transform 80ms ease-out, box-shadow 80ms ease-out;
+    }
+
+    button.primary span.icon {
+      font-size: 15px;
+    }
+
+    button.primary:active {
+      transform: translateY(1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+    }
+
+    .hint {
+      margin-top: 6px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .hint b {
+      color: var(--accent);
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .result-panel {
+      pointer-events: auto;
+      min-width: 70%;
+      max-width: 90%;
+      padding: 14px 14px 12px;
+      border-radius: 16px;
+      background: rgba(5, 8, 20, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.8);
+      text-align: center;
+      animation: popIn 220ms ease-out;
+    }
+
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.82); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .result-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .result-time {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .result-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .result-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(22, 30, 72, 0.9);
+      font-size: 11px;
+      margin-bottom: 8px;
+    }
+
+    .result-actions {
+      display: flex;
+      justify-content: center;
+      margin-top: 6px;
+    }
+
+    .result-actions button {
+      font-size: 13px;
+      padding: 7px 18px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: rgba(255, 204, 51, 0.08);
+      color: var(--accent);
+      border: 1px solid rgba(255, 204, 51, 0.5);
+    }
+
+    .result-actions button:active {
+      transform: translateY(1px);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .penalty-flash {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255, 77, 106, 0.12);
+      color: var(--danger);
+      border: 1px solid rgba(255, 77, 106, 0.6);
+      opacity: 0;
+      transform: translateY(-4px);
+      pointer-events: none;
+    }
+
+    .penalty-flash.show {
+      animation: penalty 420ms ease-out;
+    }
+
+    @keyframes penalty {
+      0%   { opacity: 0; transform: translateY(-4px); }
+      20%  { opacity: 1; transform: translateY(0); }
+      80%  { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-6px); }
+    }
+
+    @media (max-width: 360px) {
+      .wrapper {
+        padding-inline: 8px;
+      }
+      .card {
+        padding-inline: 12px;
+      }
+      .status-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .status-item {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .controls button.primary {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+        <div class="title">
+            松村を探せ
+            <span class="title-pill">#1日1アプリ 11/28</span>
+          </div>
+          <div class="subtitle">
+            グリッドの中に、1人だけ
+            <b>本物の松村</b>
+            が紛れ込んでいます。<br />
+            他は全部ニセモノ松村なので、本物をタップしてね。
+          </div>          
+
+      <div class="status-row">
+        <div class="status-item">
+          <span class="status-label">タイム</span>
+          <span class="status-value important" id="time-display">00.00s</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">ミス</span>
+          <span class="status-value bad" id="miss-display">0</span>
+        </div>
+        <div class="badge">
+            👀 ヒント：
+            <span>フィルターなし＆左右反転なしが本物</span>
+          </div>          
+      </div>
+
+      <div class="grid-shell">
+        <div id="grid" class="grid"></div>
+        <div id="result-overlay" class="overlay hidden">
+          <div class="result-panel">
+            <div class="result-title" id="result-title">松村発見！</div>
+            <div class="result-time" id="result-time">00.00s</div>
+            <div class="result-badge" id="result-badge">称号：新人松村ハンター</div>
+            <div class="result-sub">
+              もう一度遊ぶと、また別の松村が紛れ込みます。
+            </div>
+            <div class="result-actions">
+              <button id="retry-btn">もう一回探す</button>
+            </div>
+          </div>
+        </div>
+        <div id="penalty-flash" class="penalty-flash">+2.00s</div>
+      </div>
+
+      <div class="controls">
+        <button id="start-btn" class="primary">
+            
+          <span class="icon">▶</span><span class="label">ゲームスタート</span>
+        </button>
+      </div>
+      <div class="controls" style="margin-top:6px;">
+        <button id="bgm-toggle" class="primary" style="min-width:120px; padding:8px 18px; font-size:12px;">
+          🔊 BGM ON
+        </button>
+      </div>
+      <div class="hint">
+        一度スタートしたら、タイムは <b>自動計測</b> されます。<br />
+        間違えると <b>+2秒ペナルティ</b> がつくので、慎重にどうぞ。
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    console.log("松村を探せ init (easy)");
+  
+    // 1日1アプリ用 asset ヘルパー（Vercel用）
+    const basePath = window.location.pathname.replace(/\/$/, '') || '/2025-11-28';
+    const asset = (p) => {
+      // パスが既に / で始まっている場合はそのまま、そうでなければ basePath を追加
+      return p.startsWith('/') ? p : `${basePath}/${p}`;
+    };
+  
+    const ASSETS = {
+      matsu: asset("assets/matsu.png"),
+      bgm: asset("assets/bgm.mp3"), 
+    };
+    // 🎵 BGM セットアップ
+const bgm = new Audio(asset("assets/bgm.mp3"));
+bgm.loop = true;
+bgm.volume = 0.35; // お好みで調整（0〜1）
+let bgmEnabled = true; // 初期状態オン
+
+  
+    // ★ 7x7 → 5x5 にナーフ
+    const GRID_SIZE = 7;
+    const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
+  
+    const gridEl = document.getElementById("grid");
+    const resultOverlay = document.getElementById("result-overlay");
+    const resultTimeEl = document.getElementById("result-time");
+    const resultTitleEl = document.getElementById("result-title");
+    const resultBadgeEl = document.getElementById("result-badge");
+    const timeDisplay = document.getElementById("time-display");
+    const missDisplay = document.getElementById("miss-display");
+    const startBtn = document.getElementById("start-btn");
+    const retryBtn = document.getElementById("retry-btn");
+    const penaltyFlash = document.getElementById("penalty-flash");
+  
+    let gameRunning = false;
+    let startTime = 0;
+    let penaltySeconds = 0;
+    let missCount = 0;
+    let found = false;
+    let timerInterval = null;
+  
+    function formatTime(sec) {
+      return sec.toFixed(2).padStart(5, "0") + "s";
+    }
+  
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      startTime = performance.now();
+      timerInterval = setInterval(() => {
+        if (!gameRunning) return;
+        const now = performance.now();
+        const elapsed = (now - startTime) / 1000;
+        const total = elapsed + penaltySeconds;
+        timeDisplay.textContent = formatTime(total);
+      }, 50);
+    }
+  
+    function stopTimer() {
+      gameRunning = false;
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+  
+    function showPenaltyFlash() {
+      penaltyFlash.textContent = "+1.00s";
+      penaltyFlash.classList.remove("show");
+      void penaltyFlash.offsetWidth;
+      penaltyFlash.classList.add("show");
+    }
+  
+    function randomBadge(totalTime, misses) {
+      if (misses === 0 && totalTime < 6) return "伝説の松村ハンター";
+      if (totalTime < 8) return "一流松村ハンター";
+      if (misses >= 5) return "うっかり松村ウォッチャー";
+      if (totalTime > 18) return "のんびり松村散歩者";
+      return "新人松村ハンター";
+    }
+  
+    function buildGrid() {
+      gridEl.innerHTML = "";
+      gridEl.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
+  
+      const correctIndex = Math.floor(Math.random() * TOTAL_CELLS);
+  
+      // 偽物用のフィルター
+      const fakeClasses = ["fake-1", "fake-2", "fake-3", "fake-4", "fake-5", "fake-6"];
+  
+      for (let i = 0; i < TOTAL_CELLS; i++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+  
+        const img = document.createElement("img");
+        img.src = ASSETS.matsu;
+        img.alt = "松村";
+  
+        const isCorrect = i === correctIndex;
+        if (isCorrect) {
+          // 本物：フィルターなし・反転なし
+          cell.dataset.correct = "true";
+        } else {
+          // 偽物：必ずフィルター + 左右反転
+          const fakeClass = fakeClasses[Math.floor(Math.random() * fakeClasses.length)];
+          cell.classList.add(fakeClass);
+          cell.classList.add("flip");
+        }
+  
+        cell.appendChild(img);
+        gridEl.appendChild(cell);
+      }
+    }
+  
+    function resetGameState() {
+      stopTimer();
+      found = false;
+      penaltySeconds = 0;
+      missCount = 0;
+      timeDisplay.textContent = "00.00s";
+      missDisplay.textContent = "0";
+      resultOverlay.classList.add("hidden");
+      gridEl.classList.remove("shake");
+    }
+  
+    function playBGM() {
+  if (!bgmEnabled) return;
+  bgm.currentTime = 0;
+  bgm.play().catch(() => {
+    console.log("BGM 再生ブロック → 次の操作で再生します");
+  });
+}
+
+function stopBGM() {
+  bgm.pause();
+}
+
+    function startGame() {
+      console.log("game start (easy)");
+      playBGM(); 
+      resetGameState();
+      buildGrid();
+      gameRunning = true;
+      startTimer();
+    }
+  
+    function handleCellClick(e) {
+      const cell = e.target.closest(".cell");
+      if (!cell || !gameRunning || found) return;
+  
+      const isCorrect = cell.dataset.correct === "true";
+  
+      if (isCorrect) {
+        found = true;
+        cell.classList.add("correct", "found");
+        stopTimer();
+  
+        const now = performance.now();
+        const elapsed = (now - startTime) / 1000;
+        const total = elapsed + penaltySeconds;
+  
+        timeDisplay.textContent = formatTime(total);
+        resultTimeEl.textContent = formatTime(total);
+        resultTitleEl.textContent = "松村発見！";
+        resultBadgeEl.textContent = `称号：${randomBadge(total, missCount)}`;
+        resultOverlay.classList.remove("hidden");
+      } else {
+        missCount += 1;
+        missDisplay.textContent = String(missCount);
+  
+        // ペナルティ 1秒
+        penaltySeconds += 1;
+  
+        cell.classList.add("missed");
+        setTimeout(() => cell.classList.remove("missed"), 260);
+  
+        gridEl.classList.remove("shake");
+        void gridEl.offsetWidth;
+        gridEl.classList.add("shake");
+  
+        showPenaltyFlash();
+      }
+    }
+  
+    startBtn.addEventListener("click", () => {
+      startGame();
+      const label = startBtn.querySelector(".label");
+      if (label) label.textContent = "シャッフルしてやり直す";
+    });
+  
+    retryBtn.addEventListener("click", () => {
+      startGame();
+    });
+  
+    gridEl.addEventListener("click", handleCellClick);
+  
+    // 初期表示用グリッドだけ作っておく
+    buildGrid();
+    // 🎵 BGM オンオフ切り替え
+const bgmToggle = document.getElementById("bgm-toggle");
+
+bgmToggle.addEventListener("click", () => {
+  bgmEnabled = !bgmEnabled;
+
+  if (bgmEnabled) {
+    bgmToggle.textContent = "🔊 BGM ON";
+    playBGM();
+  } else {
+    bgmToggle.textContent = "🔇 BGM OFF";
+    stopBGM();
+  }
+});
+
+  </script>
+  
+</body>
+</html>
