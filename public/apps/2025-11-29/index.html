@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+  />
+  <title>いい肉の日 松村焼肉防衛戦</title>
+  <style>
+    :root {
+      --bg: #070814;
+      --bg-soft: #101326;
+      --accent: #ffcc33;
+      --accent-soft: rgba(255, 204, 51, 0.16);
+      --ink: #f7f8ff;
+      --muted: #9da3c8;
+      --danger: #ff5c7a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #1f2645 0, #050612 55%, #010108 100%);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Helvetica Neue", sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      background: radial-gradient(circle at top, #171a32 0, #050612 60%);
+      border-radius: 24px;
+      box-shadow:
+        0 18px 40px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(255, 255, 255, 0.05);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 12px 16px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .title-main {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .title-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    main {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .hud-item span.value {
+      font-size: 18px;
+      font-weight: 700;
+      margin-left: 4px;
+      color: var(--accent);
+    }
+
+    .hud-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .canvas-wrap {
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      background: radial-gradient(circle at top, #29263a 0, #05040b 55%, #000 100%);
+      box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(255, 255, 255, 0.06);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      touch-action: manipulation;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: radial-gradient(circle at top, rgba(15, 19, 37, 0.98), rgba(3, 4, 10, 0.98));
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 10;
+    }
+
+    .overlay.active {
+      display: flex;
+    }
+
+    .panel {
+      width: 100%;
+      max-width: 320px;
+      text-align: center;
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .panel-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 18px;
+      line-height: 1.6;
+    }
+
+    .panel-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(255, 204, 51, 0.45);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    button.btn {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: none;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ffcc33, #ff9b3d);
+      color: #221305;
+      box-shadow:
+        0 8px 18px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.3);
+      transition: transform 0.05s ease-out, box-shadow 0.05s ease-out,
+        filter 0.08s ease-out;
+    }
+
+    button.btn:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(255, 255, 255, 0.25);
+      filter: brightness(0.96);
+    }
+
+    .panel-meta {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .panel-meta strong {
+      color: var(--accent);
+    }
+
+    .panel-score {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 6px;
+      color: var(--accent);
+    }
+
+    .panel-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .panel-stats {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 16px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .panel-stats span strong {
+      display: block;
+      font-size: 15px;
+      color: var(--ink);
+    }
+
+    .panel-msg {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 480px) {
+      .app {
+        border-radius: 20px;
+      }
+      header {
+        padding-inline: 12px;
+      }
+      main {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <div class="title-main">11/29 GOOD MEAT DAY</div>
+        <div class="title-sub">松村 焼肉防衛戦 - 箸を叩き落とせ！</div>
+      </div>
+      <div class="badge">30 sec game</div>
+    </header>
+
+    <main>
+      <div class="hud">
+        <div class="hud-item">
+          TIME
+          <span class="value" id="time">30</span><span>s</span>
+        </div>
+        <div class="hud-right">
+          <div class="hud-item">
+            SCORE
+            <span class="value" id="score">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="game" width="360" height="560"></canvas>
+
+        <!-- スタート画面 -->
+        <div id="screen-start" class="overlay active">
+          <div class="panel">
+            <div class="panel-badge">Tap to start</div>
+            <div class="panel-title">いい肉は守れ。</div>
+            <div class="panel-sub">
+              網の上の<strong>肉</strong>を狙って<br />
+              四方から<strong>箸</strong>が伸びてきます。<br />
+              タップして<strong>叩き落とし</strong>てください。
+            </div>
+            <button id="btn-start" class="btn">30秒守り抜く</button>
+            <div class="panel-meta">
+              ・タップ／クリックで箸を撃退<br />
+              ・当てた本数がスコアです<br />
+              ・BGMが鳴ります（音量注意）
+            </div>
+          </div>
+        </div>
+
+        <!-- リザルト画面 -->
+        <div id="screen-result" class="overlay">
+          <div class="panel">
+            <div class="panel-badge">Result</div>
+            <div class="panel-score" id="final-score">0</div>
+            <div class="panel-label">叩き落とした箸の本数</div>
+            <div class="panel-stats">
+              <span>MISS<strong id="final-miss">0</strong></span>
+              <span>BEST?<strong id="final-comment">???</strong></span>
+            </div>
+            <div class="panel-msg" id="final-message">
+              いい肉の守護者。<br />今日の焼肉奉行はあなたです。
+            </div>
+            <button id="btn-retry" class="btn">もう一回守る</button>
+            <div class="panel-meta">
+              松村 vs 箸。<strong>30秒</strong>だけ真剣勝負。
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    // ============================
+    // アセットヘルパー（Vercel対応）
+    // ============================
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p = "") => {
+      const clean = String(p).replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+  
+    const ASSETS = {
+      grill: asset("./assets/grill.png"),          // 網＋炭
+      meat: asset("./assets/meat.png"),            // 肉
+      chopH: asset("./assets/chopstick_h.png"),    // 縦長の箸画像
+      chopV: asset("./assets/chopstick_v.png"),    // 横長の箸画像
+      bgm: asset("./assets/bgm.mp3"),
+    };
+  
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+  
+    const timeEl = document.getElementById("time");
+    const scoreEl = document.getElementById("score");
+  
+    const screenStart = document.getElementById("screen-start");
+    const screenResult = document.getElementById("screen-result");
+    const btnStart = document.getElementById("btn-start");
+    const btnRetry = document.getElementById("btn-retry");
+  
+    const finalScoreEl = document.getElementById("final-score");
+    const finalMissEl = document.getElementById("final-miss");
+    const finalCommentEl = document.getElementById("final-comment");
+    const finalMessageEl = document.getElementById("final-message");
+  
+    const GAME_DURATION = 30; // 秒
+  
+    // 画像読み込み
+    const imgGrill = new Image();
+    imgGrill.src = ASSETS.grill;
+  
+    const imgMeat = new Image();
+    imgMeat.src = ASSETS.meat;
+  
+    const imgChopH = new Image(); // 縦長
+    imgChopH.src = ASSETS.chopH;
+  
+    const imgChopV = new Image(); // 横長
+    imgChopV.src = ASSETS.chopV;
+  
+    // BGM
+    const bgm = new Audio(ASSETS.bgm);
+    bgm.loop = false;
+    bgm.preload = "auto";
+  
+    let state = "ready"; // ready | playing | result
+    let startTime = 0;
+    let lastFrameTime = 0;
+    let elapsed = 0;
+    let score = 0;
+    let misses = 0;
+    let chopsticks = [];
+    let nextSpawnAt = 0;
+    let effects = []; // 箸ヒット時のエフェクト
+
+    function resizeCanvas() {
+      const wrap = canvas.parentElement;
+      const w = wrap.clientWidth;
+      const h = Math.min(window.innerHeight * 0.75, w * 1.4);
+      const dpr = window.devicePixelRatio || 1;
+  
+      canvas.style.width = w + "px";
+      canvas.style.height = h + "px";
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+  
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+  
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+  
+    function resetGame() {
+      score = 0;
+      misses = 0;
+      elapsed = 0;
+      chopsticks = [];
+      timeEl.textContent = GAME_DURATION.toString();
+      scoreEl.textContent = "0";
+    }
+  
+    function startGame() {
+      resetGame();
+      state = "playing";
+      const now = performance.now();
+      startTime = now;
+      lastFrameTime = now;
+      nextSpawnAt = now + 700;
+  
+      try {
+        bgm.currentTime = 0;
+        bgm.play().catch(() => {});
+      } catch (e) {}
+  
+      requestAnimationFrame(loop);
+    }
+  
+    function endGame() {
+      state = "result";
+      try {
+        bgm.pause();
+      } catch (e) {}
+  
+      finalScoreEl.textContent = String(score);
+      finalMissEl.textContent = String(misses);
+  
+      let comment = "";
+      let message = "";
+      if (score >= 40) {
+        comment = "神奉行";
+        message = "肉も箸も、すべてあなたの掌の上。";
+      } else if (score >= 30) {
+        comment = "焼肉奉行";
+        message = "完璧な焼き加減。誰にも肉は渡さない。";
+      } else if (score >= 20) {
+        comment = "副奉行";
+        message = "だいぶ守れたけど、まだ箸の隙を許している…！";
+      } else if (score >= 10) {
+        comment = "見習い";
+        message = "いい肉の日にしては、まだ箸が暴れすぎかも。";
+      } else {
+        comment = "お客さん";
+        message = "気づいたら肉がなくなってました。あるある。";
+      }
+  
+      finalCommentEl.textContent = comment;
+      finalMessageEl.textContent = message;
+  
+      screenResult.classList.add("active");
+    }
+  
+    // 箸オブジェクト
+    function spawnChopsticks(elapsedSec, timestamp) {
+      const sides = ["top", "bottom", "left", "right"];
+  
+      function spawnOne() {
+        const side = sides[Math.floor(Math.random() * sides.length)];
+        chopsticks.push({
+          side,
+          progress: 0,
+          speed: 1.8 + Math.random() * 0.4,
+          hit: false,
+        });
+      }
+  
+      spawnOne();
+  
+      if (elapsedSec > 20 && Math.random() < 0.25) {
+        spawnOne();
+      }
+  
+      let interval;
+      if (elapsedSec < 10) {
+        interval = 900 + Math.random() * 300;
+      } else if (elapsedSec < 20) {
+        interval = 750 + Math.random() * 200;
+      } else {
+        interval = 550 + Math.random() * 150;
+      }
+      nextSpawnAt = timestamp + interval;
+    }
+  
+    function getChopstickRect(ch) {
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  const base = Math.min(w, h);
+
+  const cx = w / 2;
+  const cy = h / 2;
+  const meatR = base * 0.11;
+
+  const gap = 8;               // 肉とのスキマ
+  const margin = base * 0.18;  // 画面外に出る距離
+  const thickness = Math.max(10, base * 0.04); // 箸の太さ
+  const length = base * 0.45;                  // 箸の長さ
+
+  let x, y;
+
+  if (ch.side === "top") {
+    // 上から：下向きに入ってくる
+    // progress=0 → 画面外上
+    // progress=1 → 肉のちょい上
+    const startY = -margin - length;
+    const endY = cy - meatR - gap - length;
+    x = cx - thickness / 2;
+    y = lerp(startY, endY, ch.progress);
+    return { x, y, w: thickness, h: length };
+  }
+
+  if (ch.side === "bottom") {
+    // 下から：上向きに入ってくる
+    const startY = h + margin;
+    const endY = cy + meatR + gap;
+    x = cx - thickness / 2;
+    y = lerp(startY, endY, ch.progress);
+    return { x, y, w: thickness, h: length };
+  }
+
+  if (ch.side === "left") {
+    // 左から：右向き
+    const startX = -margin - length;
+    const endX = cx - meatR - gap - length;
+    x = lerp(startX, endX, ch.progress);
+    y = cy - thickness / 2;
+    return { x, y, w: length, h: thickness };
+  }
+
+  // right：右から左向き
+  const startX = w + margin;
+  const endX = cx + meatR + gap;
+  x = lerp(startX, endX, ch.progress);
+  y = cy - thickness / 2;
+  return { x, y, w: length, h: thickness };
+}
+
+  
+    function updateChopsticks(dt) {
+      chopsticks.forEach((ch) => {
+        ch.progress += ch.speed * dt;
+      });
+  
+      const before = chopsticks.length;
+      chopsticks = chopsticks.filter((ch) => {
+        if (ch.hit && ch.progress >= 1.2) return false;
+        if (!ch.hit && ch.progress >= 1) {
+          misses += 1;
+          return false;
+        }
+        return true;
+      });
+  
+      if (before !== chopsticks.length) {
+        if (window.navigator && window.navigator.vibrate) {
+          window.navigator.vibrate(15);
+        }
+      }
+    }
+  // 箸ヒット時のエフェクトを作成
+function createHitEffect(ch) {
+  const r = getChopstickRect(ch);
+  let x, y;
+
+  // 「肉側の先端」付近に出したい
+  if (ch.side === "top") {
+    // 上から来る → rect の下端が肉側
+    x = r.x + r.w / 2;
+    y = r.y + r.h;
+  } else if (ch.side === "bottom") {
+    // 下から来る → rect の上端が肉側
+    x = r.x + r.w / 2;
+    y = r.y;
+  } else if (ch.side === "left") {
+    // 左から → rect の右端
+    x = r.x + r.w;
+    y = r.y + r.h / 2;
+  } else {
+    // 右から → rect の左端
+    x = r.x;
+    y = r.y + r.h / 2;
+  }
+
+  effects.push({
+    x,
+    y,
+    age: 0,
+    duration: 0.25, // 秒（0.25秒で消える）
+  });
+}
+
+// エフェクトの更新
+function updateEffects(dt) {
+  effects.forEach((e) => {
+    e.age += dt;
+  });
+  effects = effects.filter((e) => e.age < e.duration);
+}
+
+// エフェクトの描画
+function drawEffects() {
+  effects.forEach((e) => {
+    const t = e.age / e.duration; // 0 → 1
+    const alpha = 1 - t;
+    const radius = 8 + t * 10; // だんだん大きく
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(255,255,255,0.95)";
+
+    // ✕ マーク的なスパーク
+    ctx.beginPath();
+    ctx.moveTo(e.x - radius, e.y - radius);
+    ctx.lineTo(e.x + radius, e.y + radius);
+    ctx.moveTo(e.x + radius, e.y - radius);
+    ctx.lineTo(e.x - radius, e.y + radius);
+    ctx.stroke();
+
+    ctx.restore();
+  });
+}
+
+    function drawBackground() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+  
+      ctx.clearRect(0, 0, w, h);
+  
+      // 読み込み前の保険でテーブル色
+      const grd = ctx.createRadialGradient(
+        w / 2,
+        h * 0.25,
+        Math.min(w, h) * 0.1,
+        w / 2,
+        h / 2,
+        Math.max(w, h)
+      );
+      grd.addColorStop(0, "#3b2a19");
+      grd.addColorStop(0.4, "#2a1a10");
+      grd.addColorStop(1, "#120b06");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, w, h);
+  
+      const cx = w / 2;
+      const cy = h / 2;
+  
+      // 網画像
+      if (imgGrill.complete) {
+        const size = Math.min(w, h) * 0.9;
+        ctx.drawImage(
+          imgGrill,
+          cx - size / 2,
+          cy - size / 2,
+          size,
+          size
+        );
+      }
+  
+      // 肉画像
+      if (imgMeat.complete) {
+        const grillSize = Math.min(w, h) * 0.9;
+        const meatSize = grillSize * 0.32;
+        ctx.drawImage(
+          imgMeat,
+          cx - meatSize / 2,
+          cy - meatSize / 2,
+          meatSize,
+          meatSize
+        );
+      }
+    }
+  
+    // ★ 箸描画：画像を「細長い棒」にして方向だけ変える
+    function drawChopsticks() {
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  const base = Math.min(w, h);
+  const thickness = Math.max(10, base * 0.04); // getChopstickRect と合わせる
+  const length = base * 0.45;
+
+  chopsticks.forEach((ch) => {
+    const r = getChopstickRect(ch);
+
+    const isVertical = ch.side === "top" || ch.side === "bottom";
+    // 箸画像：縦・横どっちを使うか（どちらか1枚しかなくてもOK）
+    let img = null;
+    if (isVertical) {
+      img = imgChopH && imgChopH.complete ? imgChopH : null;
+    } else {
+      img = imgChopV && imgChopV.complete ? imgChopV : null;
+    }
+
+    ctx.save();
+
+    if (img) {
+      // 画像をそのまま矩形にフィットさせる
+      ctx.drawImage(img, r.x, r.y, r.w, r.h);
+    } else {
+      // 読み込み前フォールバック：単色の棒
+      const grad = ctx.createLinearGradient(r.x, r.y, r.x, r.y + r.h);
+      grad.addColorStop(0, "#f6f2d4");
+      grad.addColorStop(0.3, "#e2c88f");
+      grad.addColorStop(1, "#a76c2c");
+      ctx.fillStyle = grad;
+      ctx.fillRect(r.x, r.y, r.w, r.h);
+    }
+
+    ctx.restore();
+  });
+} 
+  
+    function draw() {
+      drawBackground();
+      drawChopsticks();
+      drawEffects();
+    }
+  
+    function loop(timestamp) {
+      if (state !== "playing") {
+        draw();
+        return;
+      }
+  
+      const dt = (timestamp - lastFrameTime) / 1000;
+      lastFrameTime = timestamp;
+  
+      elapsed = (timestamp - startTime) / 1000;
+      const remaining = Math.max(0, GAME_DURATION - elapsed);
+      timeEl.textContent = String(Math.ceil(remaining));
+      scoreEl.textContent = String(score);
+  
+      if (timestamp >= nextSpawnAt && elapsed < GAME_DURATION) {
+        spawnChopsticks(elapsed, timestamp);
+      }
+  
+      updateChopsticks(dt);
+      updateEffects(dt);
+      draw();
+  
+      if (remaining <= 0) {
+        endGame();
+      } else {
+        requestAnimationFrame(loop);
+      }
+    }
+  
+    // タップ／クリックで箸を叩く
+    function handleTap(ev) {
+      if (state !== "playing") return;
+  
+      const rect = canvas.getBoundingClientRect();
+      const x =
+        ((ev.clientX || ev.touches?.[0]?.clientX) - rect.left) *
+        (canvas.clientWidth / rect.width);
+      const y =
+        ((ev.clientY || ev.touches?.[0]?.clientY) - rect.top) *
+        (canvas.clientHeight / rect.height);
+  
+      hitChopstickAtPoint(x, y);
+    }
+  
+    function hitChopstick(ch) {
+  if (ch.hit || ch.progress >= 1) return;
+
+  ch.hit = true;
+  ch.progress = Math.max(ch.progress, 0.6);
+  ch.speed += 1.2; // ちょっと勢いよく吹き飛ぶ
+
+  score += 1;
+  scoreEl.textContent = String(score);
+
+  if (window.navigator && window.navigator.vibrate) {
+    window.navigator.vibrate(25);
+  }
+
+  // ★ エフェクト発生
+  createHitEffect(ch);
+}
+
+  
+    // PC用：方向キーでその方向の一番近い箸を叩く
+    function hitChopstickBySide(side) {
+      let target = null;
+      let bestProgress = -1;
+      for (const ch of chopsticks) {
+        if (ch.side !== side || ch.hit || ch.progress >= 1) continue;
+        if (ch.progress > bestProgress) {
+          bestProgress = ch.progress;
+          target = ch;
+        }
+      }
+      if (target) {
+        hitChopstick(target);
+      }
+    }
+  
+    function hitChopstickAtPoint(x, y) {
+      let closest = null;
+      let minDist = Infinity;
+      
+      for (const ch of chopsticks) {
+        if (ch.hit || ch.progress >= 1) continue;
+        
+        const r = getChopstickRect(ch);
+        const cx = r.x + r.w / 2;
+        const cy = r.y + r.h / 2;
+        const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+        
+        if (dist < minDist && dist < Math.max(r.w, r.h) * 1.5) {
+          minDist = dist;
+          closest = ch;
+        }
+      }
+      
+      if (closest) {
+        hitChopstick(closest);
+      }
+    }
+  
+    canvas.addEventListener("pointerdown", handleTap);
+  
+    btnStart.addEventListener("click", () => {
+      screenStart.classList.remove("active");
+      screenResult.classList.remove("active");
+      startGame();
+    });
+  
+    btnRetry.addEventListener("click", () => {
+      screenResult.classList.remove("active");
+      startGame();
+    });
+  
+    // キーボード操作
+    window.addEventListener("keydown", (e) => {
+      if (state !== "playing") return;
+      switch (e.key) {
+        case "ArrowUp":
+          hitChopstickBySide("top");
+          break;
+        case "ArrowDown":
+          hitChopstickBySide("bottom");
+          break;
+        case "ArrowLeft":
+          hitChopstickBySide("left");
+          break;
+        case "ArrowRight":
+          hitChopstickBySide("right");
+          break;
+        default:
+          return;
+      }
+      e.preventDefault();
+    });
+  
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+  
+    function roundRect(ctx, x, y, w, h, r) {
+      const min = Math.min(w, h) / 2;
+      const radius = Math.min(r, min);
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + w - radius, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+      ctx.lineTo(x + w, y + h - radius);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+      ctx.lineTo(x + radius, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+  
+    // 初回描画
+    draw();
+  </script>
+  
+    
+</body>
+</html>
