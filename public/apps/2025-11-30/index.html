@@ -1,0 +1,922 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+  />
+  <title>妖怪レーダー松村</title>
+
+  <style>
+    :root {
+      --bg: #020816;
+      --bg-soft: #050b1c;
+      --accent: #4ade80;
+      --accent-soft: rgba(74, 222, 128, 0.18);
+      --danger: #fb7185;
+      --ink: #f9fafb;
+      --muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #0b1120 0, #020617 55%);
+      color: var(--ink);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 12px 10px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #020617, #020617, #0f172a);
+      box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.25);
+      font-size: 13px;
+    }
+
+    header .title-main {
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    header .title-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    header .led {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #bbf7d0, #22c55e);
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .camera-wrapper {
+      position: relative;
+      flex: 1;
+      min-height: 320px;
+      border-radius: 22px;
+      background: radial-gradient(circle at top, #020617 0, #020617 40%, #000 100%);
+      box-shadow:
+        0 20px 50px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(148, 163, 184, 0.25);
+      overflow: hidden;
+      padding: 12px 10px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .hud-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .hud-top span strong {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .radar {
+      width: 72px;
+      height: 72px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background:
+        radial-gradient(circle at center, rgba(148, 163, 184, 0.25) 0 2px, transparent 2px 100%),
+        radial-gradient(circle at center, rgba(148, 163, 184, 0.15) 0 36px, transparent 36px 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .radar-line {
+      position: absolute;
+      inset: -20%;
+      background: conic-gradient(
+        from 0deg,
+        rgba(74, 222, 128, 0.65),
+        transparent 40%
+      );
+      animation: spin 2.4s linear infinite;
+      transform-origin: center;
+    }
+
+    .radar-dot {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(74, 222, 128, 0.9);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .radar-dot.active {
+      opacity: 1;
+    }
+
+    .hud-labels {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .hud-labels .status {
+      font-size: 11px;
+    }
+
+    .hud-labels .status span {
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+    }
+
+    .hud-labels .status span.ready {
+      border-color: rgba(74, 222, 128, 0.7);
+      background: rgba(22, 101, 52, 0.35);
+      color: #bbf7d0;
+    }
+
+    .hud-labels .status span.alert {
+      border-color: rgba(248, 250, 252, 0.85);
+      background: rgba(30, 64, 175, 0.8);
+      color: #e0f2fe;
+    }
+
+    .hud-labels .hint {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .frame {
+      position: relative;
+      flex: 1;
+      margin-top: 4px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: radial-gradient(circle at top, #020617 0, #020617 40%, #020617 100%);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+    }
+
+    .frame-inner {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* ▼ カメラ映像 ▼ */
+    #camera {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      /* ちょっと暗く＆コントラスト強めでホラー感 */
+      filter: brightness(0.95) contrast(1.05) saturate(1.05);
+      background: radial-gradient(circle at top, #020617, #000);
+    }
+
+    .bg-gradient {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at top, rgba(148, 163, 184, 0.22), transparent 55%),
+        radial-gradient(circle at bottom, rgba(15, 23, 42, 1), #000);
+      opacity: 0.45; /* カメラの上に薄くかぶせる */
+    }
+
+    .frame-border {
+      position: absolute;
+      inset: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.7) inset;
+      pointer-events: none;
+    }
+
+    .scan-lines {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(
+        to bottom,
+        rgba(15, 23, 42, 0.2) 1px,
+        transparent 1px
+      );
+      background-size: 100% 3px;
+      mix-blend-mode: soft-light;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .yokai {
+      position: absolute;
+      max-width: 80%;
+      max-height: 80%;
+      left: 50%;
+      top: 58%;
+      transform: translate(-50%, -50%);
+      filter: drop-shadow(0 32px 40px rgba(15, 23, 42, 0.9))
+              drop-shadow(0 0 18px rgba(148, 163, 184, 0.4));
+      opacity: 0;
+      transition: opacity 0.1s ease-out, transform 0.12s ease-out;
+      pointer-events: none;
+    }
+
+    .yokai.visible {
+      opacity: 0.96;
+      transform: translate(-50%, -50%) scale(1.02);
+    }
+
+    .flash {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, #f9fafb, #e5e7eb);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .flash.active {
+      animation: flash 0.18s ease-out;
+    }
+
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: 12px;
+      transform: translateX(-50%) translateY(120%);
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--ink);
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+      max-width: 90%;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0%);
+    }
+
+    .toast .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(74, 222, 128, 0.9);
+      flex-shrink: 0;
+    }
+
+    .toast.fail .dot {
+      background: var(--danger);
+      box-shadow: 0 0 10px rgba(248, 113, 113, 0.9);
+    }
+
+    footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .btn {
+      border: none;
+      outline: none;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--ink);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+    }
+
+    .btn span.icon {
+      font-size: 14px;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: none;
+      opacity: 0.9;
+    }
+
+    .btn-secondary {
+      flex: 0 0 auto;
+      padding-inline: 11px;
+      font-size: 11px;
+      background: rgba(15, 23, 42, 0.85);
+    }
+
+    .btn-primary {
+      flex: 1;
+      justify-content: center;
+      background: radial-gradient(circle at top, #22c55e, #16a34a);
+      border-color: rgba(190, 242, 100, 0.9);
+      color: #022c22;
+      box-shadow:
+        0 12px 38px rgba(21, 128, 61, 0.7),
+        0 0 0 1px rgba(34, 197, 94, 0.85);
+    }
+
+    .btn-primary:active {
+      box-shadow: 0 4px 16px rgba(21, 128, 61, 0.7);
+    }
+
+    /* 図鑑モーダル */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(10px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 420px;
+      max-height: 80vh;
+      border-radius: 18px;
+      background: radial-gradient(circle at top, #020617, #020617 45%, #020617);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      box-shadow: 0 24px 80px rgba(15, 23, 42, 1);
+      padding: 10px 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .modal-header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .modal-title {
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .modal-sub {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .badge-count {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.65);
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 2px;
+      overflow-y: auto;
+      padding-right: 3px;
+    }
+
+    .dex-item {
+      position: relative;
+      border-radius: 13px;
+      overflow: hidden;
+      background: radial-gradient(circle at top, #020617, #020617 60%, #020617);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      aspect-ratio: 3 / 4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+    }
+
+    .dex-item img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 16px 26px rgba(15, 23, 42, 0.95));
+    }
+
+    .dex-item.locked {
+      background: radial-gradient(circle at center, #020617, #020617);
+      border-style: dashed;
+      border-color: rgba(75, 85, 99, 0.9);
+    }
+
+    .dex-item.locked::before {
+      content: "???";
+      font-size: 11px;
+      color: rgba(148, 163, 184, 0.9);
+      letter-spacing: 0.14em;
+    }
+
+    .dex-label {
+      position: absolute;
+      left: 6px;
+      bottom: 4px;
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.8);
+      color: var(--ink);
+    }
+
+    .dex-item.locked .dex-label {
+      display: none;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 4px;
+    }
+
+    .btn-close {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.65);
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--ink);
+      padding: 5px 10px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .btn-close:active {
+      transform: translateY(1px);
+      opacity: 0.9;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes flash {
+      0% {
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
+
+    @media (max-height: 640px) {
+      .camera-wrapper {
+        min-height: 260px;
+      }
+      .frame-border {
+        inset: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <div class="title-main">YOKAI RADAR</div>
+        <div class="title-sub">松村レベル：<span id="level-label">人間っぽい</span></div>
+      </div>
+      <div class="led" aria-hidden="true"></div>
+    </header>
+
+    <main>
+      <section class="camera-wrapper" aria-label="妖怪カメラ">
+        <div class="hud-top">
+          <div class="radar">
+            <div class="radar-line"></div>
+            <div class="radar-dot" id="radar-dot"></div>
+          </div>
+          <div class="hud-labels">
+            <div class="status">
+              <span id="status-pill" class="ready">待機中…</span>
+            </div>
+            <div class="hint">
+              妖気がMAXのときに<span style="color: var(--accent);">シャッター</span>を切れ！
+            </div>
+          </div>
+        </div>
+
+        <div class="frame">
+          <div class="frame-inner">
+            <!-- ▼ カメラ映像 ▼ -->
+            <video id="camera" autoplay playsinline muted></video>
+
+            <div class="bg-gradient"></div>
+            <div class="scan-lines"></div>
+            <!-- 妖怪 -->
+            <img id="yokai-img" class="yokai" alt="妖怪" />
+            <!-- フラッシュ -->
+            <div id="flash" class="flash"></div>
+            <!-- トースト -->
+            <div id="toast" class="toast">
+              <div class="dot"></div>
+              <span id="toast-text"></span>
+            </div>
+          </div>
+          <div class="frame-border"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <button id="btn-dex" class="btn btn-secondary" type="button">
+        <span class="icon">📘</span>
+        図鑑
+      </button>
+      <button id="btn-shutter" class="btn btn-primary" type="button">
+        <span class="icon">🔻</span>
+        シャッター
+      </button>
+    </footer>
+  </div>
+
+  <!-- 図鑑モーダル -->
+  <div id="modal-backdrop" class="modal-backdrop" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <div class="modal-title">YOKAI DEX</div>
+          <div class="modal-sub">撮影した妖怪がここに記録されます。</div>
+        </div>
+        <div class="badge-count">
+          発見数 <span id="dex-count">0</span> / <span id="dex-total">0</span>
+        </div>
+      </div>
+      <div id="dex-grid" class="modal-grid"></div>
+      <div class="modal-footer">
+        <button id="btn-close-modal" class="btn-close" type="button">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // ============================
+    // アセットヘルパー（Vercel対応）
+    // ============================
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p = "") => {
+      const clean = String(p).replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    // 妖怪データ ----------------------------------------------------
+    const YOKAI_LIST = [
+      {
+        id: "yokai_01",
+        name: "ノッペラ松",
+        img: asset("./assets/yokai_01.png"),
+      },
+      {
+        id: "yokai_02",
+        name: "ろくろっ松",
+        img: asset("./assets/yokai_02.png"),
+      },
+      {
+        id: "yokai_03",
+        name: "一反松村",
+        img: asset("./assets/yokai_03.png"),
+      },
+      {
+        id: "yokai_04",
+        name: "一つ目松",
+        img: asset("./assets/yokai_04.png"),
+      },
+      {
+        id: "yokai_05",
+        name: "ヌリカベ松村",
+        img: asset("./assets/yokai_05.png"),
+      },
+    ];
+
+    // DOM取得 ------------------------------------------------------
+    const yokaiImg   = document.getElementById("yokai-img");
+    const flashEl    = document.getElementById("flash");
+    const toastEl    = document.getElementById("toast");
+    const toastText  = document.getElementById("toast-text");
+    const radarDot   = document.getElementById("radar-dot");
+    const statusPill = document.getElementById("status-pill");
+    const btnShutter = document.getElementById("btn-shutter");
+    const btnDex     = document.getElementById("btn-dex");
+    const modalBackdrop = document.getElementById("modal-backdrop");
+    const btnCloseModal = document.getElementById("btn-close-modal");
+    const dexGrid    = document.getElementById("dex-grid");
+    const dexCountEl = document.getElementById("dex-count");
+    const dexTotalEl = document.getElementById("dex-total");
+    const videoEl    = document.getElementById("camera");
+
+    // 状態 ----------------------------------------------------------
+    const STORAGE_KEY = "yokaiRadarDex_v1";
+
+    let found = loadFound();
+    let currentYokai = null;
+    let yokaiVisible = false;
+    let spawnTimer = null;
+    let hideTimer  = null;
+
+    dexTotalEl.textContent = YOKAI_LIST.length.toString();
+
+    updateDexCount();
+    buildDexGrid();
+    scheduleNextSpawn();
+    initCamera();   // カメラ起動（失敗したらそのままフェイク背景）
+
+    // カメラ --------------------------------------------------------
+    async function initCamera() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.warn("カメラ非対応");
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "environment", // 背面カメラ優先
+          },
+          audio: false,
+        });
+        videoEl.srcObject = stream;
+        statusPill.textContent = "カメラONLINE";
+      } catch (e) {
+        console.warn("カメラ起動エラー", e);
+        // 権限拒否など → 何もしない（グラデ背景のまま）
+      }
+    }
+
+    // ローカルストレージ読み込み -----------------------------------
+    function loadFound() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveFound() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(found));
+      } catch (e) {
+        console.warn("cannot save dex", e);
+      }
+    }
+
+    function updateDexCount() {
+      const count = YOKAI_LIST.filter((y) => found[y.id]).length;
+      dexCountEl.textContent = count.toString();
+    }
+
+    // 妖怪出現 ------------------------------------------------------
+    function scheduleNextSpawn() {
+      clearTimeout(spawnTimer);
+      // 1.5〜4秒のどこかで出現
+      const delay = randomRange(1500, 4000);
+      spawnTimer = setTimeout(spawnYokai, delay);
+      // レーダーの点も点滅させる
+      radarDot.classList.remove("active");
+      statusPill.classList.remove("alert");
+      statusPill.classList.add("ready");
+      if (!videoEl.srcObject) {
+        statusPill.textContent = "待機中…";
+      }
+    }
+
+    function spawnYokai() {
+      const yokai = randomChoice(YOKAI_LIST);
+      currentYokai = yokai;
+
+      yokaiImg.src = yokai.img;
+
+      // 出現位置をちょっとランダムに（中央付近）
+      const offsetX = randomRange(-16, 16); // %
+      const offsetY = randomRange(-10, 18); // %
+      yokaiImg.style.left = 50 + offsetX + "%";
+      yokaiImg.style.top  = 58 + offsetY + "%";
+
+      yokaiVisible = true;
+      yokaiImg.classList.add("visible");
+
+      // レーダー & ステータスをアラート状態に
+      radarDot.classList.add("active");
+      statusPill.textContent = "妖気反応！今だ！";
+      statusPill.classList.remove("ready");
+      statusPill.classList.add("alert");
+
+      // 0.45〜0.65秒だけ表示
+      clearTimeout(hideTimer);
+      const visibleMs = randomRange(450, 650);
+      hideTimer = setTimeout(hideYokai, visibleMs);
+    }
+
+    function hideYokai() {
+      yokaiVisible = false;
+      yokaiImg.classList.remove("visible");
+      radarDot.classList.remove("active");
+      statusPill.textContent = videoEl.srcObject ? "カメラONLINE" : "待機中…";
+      statusPill.classList.remove("alert");
+      statusPill.classList.add("ready");
+      scheduleNextSpawn();
+    }
+
+    // シャッター ---------------------------------------------------
+    btnShutter.addEventListener("click", () => {
+      triggerFlash();
+
+      if (yokaiVisible && currentYokai) {
+        // 撮影成功
+        yokaiVisible = false;
+        yokaiImg.classList.remove("visible");
+        radarDot.classList.remove("active");
+
+        const firstTime = !found[currentYokai.id];
+        found[currentYokai.id] = true;
+        saveFound();
+        if (firstTime) {
+          updateDexCount();
+          updateDexGridItem(currentYokai.id);
+          showToast(`「${currentYokai.name}」を撮影した！`);
+        } else {
+          showToast(`また「${currentYokai.name}」が写り込んだ…`);
+        }
+
+        // すぐ次が出ると忙しいのでちょっとだけ間をあける
+        clearTimeout(spawnTimer);
+        setTimeout(scheduleNextSpawn, 700);
+      } else {
+        // 撮影失敗
+        showToast("なにも写っていない…", true);
+      }
+    });
+
+    function triggerFlash() {
+      flashEl.classList.remove("active");
+      // 強制リフローでアニメ再スタート
+      void flashEl.offsetWidth;
+      flashEl.classList.add("active");
+    }
+
+    function showToast(message, isFail = false) {
+      toastText.textContent = message;
+      toastEl.classList.add("show");
+      toastEl.classList.toggle("fail", !!isFail);
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => {
+        toastEl.classList.remove("show");
+      }, 1500);
+    }
+
+    // 図鑑 ----------------------------------------------------------
+    function buildDexGrid() {
+      dexGrid.innerHTML = "";
+
+      for (const yokai of YOKAI_LIST) {
+        const item = document.createElement("div");
+        const isFound = !!found[yokai.id];
+        item.className = "dex-item" + (isFound ? "" : " locked");
+        item.dataset.id = yokai.id;
+
+        if (isFound) {
+          const img = document.createElement("img");
+          img.src = yokai.img;
+          img.alt = yokai.name;
+          item.appendChild(img);
+
+          const label = document.createElement("div");
+          label.className = "dex-label";
+          label.textContent = yokai.name;
+          item.appendChild(label);
+        }
+
+        dexGrid.appendChild(item);
+      }
+    }
+
+    function updateDexGridItem(id) {
+      const idx = YOKAI_LIST.findIndex((y) => y.id === id);
+      if (idx === -1) return;
+
+      const gridItems = Array.from(dexGrid.children);
+      const el = gridItems[idx];
+      if (!el) return;
+
+      const yokai = YOKAI_LIST[idx];
+
+      el.classList.remove("locked");
+      el.innerHTML = "";
+
+      const img = document.createElement("img");
+      img.src = yokai.img;
+      img.alt = yokai.name;
+      el.appendChild(img);
+
+      const label = document.createElement("div");
+      label.className = "dex-label";
+      label.textContent = yokai.name;
+      el.appendChild(label);
+    }
+
+    btnDex.addEventListener("click", () => {
+      modalBackdrop.classList.add("open");
+      modalBackdrop.setAttribute("aria-hidden", "false");
+    });
+
+    btnCloseModal.addEventListener("click", closeModal);
+    modalBackdrop.addEventListener("click", (e) => {
+      if (e.target === modalBackdrop) closeModal();
+    });
+
+    function closeModal() {
+      modalBackdrop.classList.remove("open");
+      modalBackdrop.setAttribute("aria-hidden", "true");
+    }
+
+    // ユーティリティ -----------------------------------------------
+    function randomRange(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function randomChoice(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+  </script>
+</body>
+</html>
