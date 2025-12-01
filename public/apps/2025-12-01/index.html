@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+  />
+  <title>師走ダッシュ松村</title>
+
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-soft: #0b1120;
+      --accent: #f97316;
+      --ink: #f9fafb;
+      --muted: #9ca3af;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #0b1120 0, #020617 60%);
+      color: var(--ink);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    .app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      max-width: 480px;
+      margin: 0 auto;
+      overflow: hidden;
+      background: radial-gradient(circle at top, #020617 0, #000 70%);
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      background:
+        linear-gradient(to top, #020617 0%, #020617 35%, #020617 40%, #020617 100%);
+    }
+
+    .ui-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .hud {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--ink);
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    }
+
+    .hud-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.7);
+      border: 1px solid rgba(148,163,184,0.7);
+      pointer-events: auto;
+    }
+
+    .center-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      text-align: center;
+      pointer-events: auto;
+      background: radial-gradient(circle at top, rgba(15,23,42,0.9) 0, rgba(15,23,42,0.9) 40%, rgba(15,23,42,0.8) 60%, rgba(15,23,42,0.6) 100%);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    h1 {
+      font-size: 20px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .btn {
+      appearance: none;
+      border: none;
+      outline: none;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #111827;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.5);
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .result-score {
+      font-size: 32px;
+      font-weight: 800;
+    }
+
+    .result-label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <canvas id="game"></canvas>
+
+    <div class="ui-layer">
+      <div class="hud">
+        <div class="hud-pill">SCORE <span id="hud-score">0</span></div>
+        <div class="hud-pill">BEST <span id="hud-best">0</span></div>
+      </div>
+
+      <!-- スタート画面 -->
+      <div id="overlay-start" class="center-overlay">
+        <h1>師走ダッシュ松村</h1>
+        <p class="subtitle">
+          ジャンプで障害物を避け続ける、<br />
+          無限ランゲーム。<br />
+          どれだけ走り切れるか、<br />
+          師走の街を駆け抜けろ。
+        </p>
+        <button id="btn-start" class="btn">スタート</button>
+        <p class="hint">
+          スマホ：画面タップでジャンプ<br />
+          PC：スペースキー / ↑キーでジャンプ
+        </p>
+      </div>
+
+      <!-- リザルト画面 -->
+      <div id="overlay-result" class="center-overlay hidden">
+        <div class="result-label">今回のスコア</div>
+        <div id="result-score" class="result-score">0</div>
+        <div class="result-label">ベストスコア：<span id="result-best">0</span></div>
+        <p id="result-comment" class="subtitle"></p>
+        <button id="btn-retry" class="btn">もう一度</button>
+        <p class="hint">
+          師走はまだ終わらない。<br />
+          何回でも走れます。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // ============================
+    // アセットヘルパー（Vercel対応）
+    // ============================
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p = "") => {
+      const clean = String(p).replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    // ====== DOM ======
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const hudScore = document.getElementById("hud-score");
+    const hudBest  = document.getElementById("hud-best");
+
+    const overlayStart  = document.getElementById("overlay-start");
+    const overlayResult = document.getElementById("overlay-result");
+    const btnStart = document.getElementById("btn-start");
+    const btnRetry = document.getElementById("btn-retry");
+
+    const resultScore   = document.getElementById("result-score");
+    const resultBest    = document.getElementById("result-best");
+    const resultComment = document.getElementById("result-comment");
+
+    // ====== BGM設定（3:17の曲） ======
+    const bgm = new Audio(asset("./assets/bgm.mp3"));
+    bgm.loop = false;       // 曲が終わったら止める
+    bgm.volume = 0.8;
+    let bgmStarted = false;
+
+    bgm.onended = () => {
+      // 曲を完走したらゴール
+      if (running) {
+        gameClear();
+      }
+    };
+
+    function playBgm() {
+      bgm.currentTime = 0;
+      bgmStarted = true;
+      bgm.play().catch(() => {
+        // 自動再生ブロックされたら無視
+      });
+    }
+
+    // ====== スプライト設定 ======
+    const spriteImage = new Image();
+    spriteImage.src = asset("./assets/matsu_run.png"); // 横5×縦6のスプライト
+    let spriteLoaded = false;
+    spriteImage.onload = () => { spriteLoaded = true; };
+
+    const SPRITE_COLS = 5;         // 横5コマ
+    const SPRITE_ROWS = 6;         // 縦6コマ
+    const SPRITE_FRAME_COUNT = SPRITE_COLS * SPRITE_ROWS; // = 30
+
+    function getFrameSize() {
+      const fw = spriteImage.width / SPRITE_COLS;
+      const fh = spriteImage.height / SPRITE_ROWS;
+      return { fw, fh };
+    }
+
+    // ====== 背景画像（新宿イルミ） ======
+    const bgImage = new Image();
+    bgImage.src = asset("./assets/bg.png");
+    let bgReady = false;
+    bgImage.onload = () => { bgReady = true; };
+
+    let bgScrollX = 0;
+
+    // ====== ゲームパラメータ ======
+    let dpr = window.devicePixelRatio || 1;
+    let viewWidth = 0;
+    let viewHeight = 0;
+
+    function resize() {
+      dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      viewWidth  = rect.width;
+      viewHeight = rect.height;
+
+      canvas.width  = viewWidth * dpr;
+      canvas.height = viewHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    // 物理・レーン
+    let groundY = 0;
+    function updateGroundY() {
+      groundY = viewHeight * 0.78; // 画面下の方に地面
+    }
+    updateGroundY();
+
+    // プレイヤー
+    const player = {
+      x: 0,
+      y: 0,
+      vy: 0,
+      width: 80,
+      height: 120,
+      onGround: false,
+      frameIndex: 0,
+      frameTime: 0
+    };
+
+    // 障害物
+    const obstacles = [];
+    let obstacleTimer = 0;
+
+    // スコア
+    let score = 0;
+    let bestScore = Number(localStorage.getItem("shiwase_best") || "0");
+
+    // 状態
+    let running = false;
+    let lastTime = 0;
+
+    // ====== ゲーム初期化 ======
+    function resetGame() {
+      resize();
+      updateGroundY();
+
+      player.x = viewWidth * 0.22;
+      player.y = groundY;
+      player.vy = 0;
+      player.onGround = true;
+      player.frameIndex = 0;
+      player.frameTime = 0;
+
+      obstacles.length = 0;
+      obstacleTimer = 0;
+      score = 0;
+      hudScore.textContent = "0";
+      hudBest.textContent = String(bestScore);
+
+      bgScrollX = 0;
+    }
+
+    // ====== ジャンプ処理 ======
+    const GRAVITY = 0.7;
+    const JUMP_VELOCITY = -14;
+
+    function jump() {
+      if (!running) return;
+      if (!player.onGround) return;
+      player.vy = JUMP_VELOCITY;
+      player.onGround = false;
+    }
+
+    // ====== 入力 ======
+    canvas.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      jump();
+    }, { passive: false });
+
+    canvas.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      jump();
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space" || e.code === "ArrowUp") {
+        e.preventDefault();
+        jump();
+      }
+    });
+
+    // ====== 障害物生成 ======
+    function spawnObstacle() {
+      const width = 40 + Math.random() * 40;
+      const height = 30 + Math.random() * 40;
+
+      obstacles.push({
+        x: viewWidth + width,
+        y: groundY,
+        width,
+        height
+      });
+    }
+
+    // ====== 衝突判定（ざっくり矩形） ======
+    function checkCollision(a, b) {
+      return !(
+        a.x + a.width * 0.6 < b.x ||
+        a.x + a.width * 0.4 > b.x + b.width ||
+        a.y < b.y - b.height ||
+        a.y - a.height > b.y
+      );
+    }
+
+    // ====== 描画 ======
+    function drawBackground(dt) {
+      const w = viewWidth;
+      const h = viewHeight;
+
+      // 背景スクロール
+      if (bgReady) {
+        const imgW = bgImage.width;
+        const imgH = bgImage.height;
+        const scale = h / imgH;
+        const drawW = imgW * scale;
+        const speed = 0.8; // スクロール速度
+
+        bgScrollX -= speed * (dt / 16.67);
+        const x1 = (bgScrollX % drawW);
+        const x2 = x1 + drawW;
+
+        ctx.drawImage(bgImage, x1, 0, drawW, h);
+        ctx.drawImage(bgImage, x2, 0, drawW, h);
+      } else {
+        // ロード前はグラデ
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, "#020617");
+        grad.addColorStop(0.5, "#020617");
+        grad.addColorStop(1, "#020617");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+      }
+
+      // 地面
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, groundY, w, h - groundY);
+
+      // ライン
+      ctx.strokeStyle = "#1f2937";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, groundY + 0.5);
+      ctx.lineTo(w, groundY + 0.5);
+      ctx.stroke();
+    }
+
+    function drawPlayer(dt) {
+      // アニメーション更新
+      player.frameTime += dt;
+      const frameDuration = 1000 / 10; // 10fpsくらい
+      if (player.frameTime >= frameDuration) {
+        player.frameTime -= frameDuration;
+        player.frameIndex = (player.frameIndex + 1) % SPRITE_FRAME_COUNT;
+      }
+
+      const { fw, fh } = getFrameSize();
+      const col = player.frameIndex % SPRITE_COLS;
+      const row = Math.floor(player.frameIndex / SPRITE_COLS);
+      const sx = col * fw;
+      const sy = row * fh;
+
+      const drawW = player.width;
+      const drawH = player.height;
+
+      const dx = player.x - drawW / 2;
+      const dy = player.y - drawH;
+
+      if (spriteLoaded) {
+        ctx.drawImage(spriteImage, sx, sy, fw, fh, dx, dy, drawW, drawH);
+      } else {
+        // ロード前の代替（簡単な四角）
+        ctx.fillStyle = "#f97316";
+        ctx.fillRect(dx, dy, drawW, drawH);
+      }
+    }
+
+    function drawObstacles() {
+      ctx.fillStyle = "#facc15";
+      obstacles.forEach((ob) => {
+        ctx.fillRect(ob.x - ob.width, ob.y - ob.height, ob.width, ob.height);
+      });
+    }
+
+    // ====== メインループ ======
+    function loop(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const dt = timestamp - lastTime;
+      lastTime = timestamp;
+
+      if (running) {
+        update(dt);
+        render(dt);
+      } else {
+        // 停止中も背景だけ描画しておく
+        render(0);
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    function update(dt) {
+      const t = dt / 16.67; // 60fps基準の係数
+
+      // プレイヤー物理
+      player.vy += GRAVITY * t;
+      player.y += player.vy * t;
+
+      if (player.y >= groundY) {
+        player.y = groundY;
+        player.vy = 0;
+        player.onGround = true;
+      }
+
+      // 障害物
+      obstacleTimer -= dt;
+      if (obstacleTimer <= 0) {
+        spawnObstacle();
+        const baseInterval = 1300;
+        const accel = Math.max(200, baseInterval - score * 10);
+        obstacleTimer = baseInterval + Math.random() * accel;
+      }
+
+      const speed = 5 + Math.min(score / 10, 8); // 徐々に加速
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        const ob = obstacles[i];
+        ob.x -= speed * t;
+        if (ob.x + ob.width < 0) {
+          // 画面外 → スコア加算
+          obstacles.splice(i, 1);
+          score++;
+          hudScore.textContent = String(score);
+        }
+      }
+
+      // 衝突判定
+      const playerBox = {
+        x: player.x,
+        y: player.y,
+        width: player.width,
+        height: player.height
+      };
+      for (const ob of obstacles) {
+        const obBox = {
+          x: ob.x - ob.width / 2,
+          y: ob.y,
+          width: ob.width,
+          height: ob.height
+        };
+        if (checkCollision(playerBox, obBox)) {
+          gameOver();
+          break;
+        }
+      }
+    }
+
+    function render(dt) {
+      drawBackground(dt);
+      drawObstacles();
+      drawPlayer(dt);
+    }
+
+    // ====== ゲーム開始 / 終了 ======
+    function startGame() {
+      resetGame();
+      running = true;
+      overlayStart.classList.add("hidden");
+      overlayResult.classList.add("hidden");
+      playBgm();
+    }
+
+    function finishCommon(comment) {
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem("shiwase_best", String(bestScore));
+      }
+
+      resultScore.textContent = String(score);
+      resultBest.textContent  = String(bestScore);
+      resultComment.textContent = comment;
+
+      overlayResult.classList.remove("hidden");
+    }
+
+    // 障害物に当たったとき
+    function gameOver() {
+      running = false;
+      bgm.pause();
+
+      let comment = "";
+      if (score >= 40) {
+        comment = "師走の街を完全に制した松村。おつかれさまでした。";
+      } else if (score >= 20) {
+        comment = "かなりのダッシュ力。年内にもう一伸びありそう。";
+      } else if (score >= 10) {
+        comment = "いいウォーミングアップ。もう一走りいきますか。";
+      } else {
+        comment = "まだ始まったばかり。師走はここからです。";
+      }
+
+      finishCommon(comment);
+    }
+
+    // 曲を完走したとき（ゴール）
+    function gameClear() {
+      running = false;
+      bgm.pause();
+
+      const comment = "🎉 完走おめでとう！3分17秒、師走を走りきりました。";
+      finishCommon(comment);
+    }
+
+    // ====== ボタンイベント ======
+    btnStart.addEventListener("click", () => {
+      startGame();
+    });
+
+    btnRetry.addEventListener("click", () => {
+      startGame();
+    });
+
+    // 初期描画
+    resetGame();
+    render(0);
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
