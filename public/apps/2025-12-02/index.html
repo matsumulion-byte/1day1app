@@ -1,0 +1,920 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+  />
+  <title>スペースデブリ回避 松村</title>
+
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-soft: #020817;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.16);
+      --danger: #fb7185;
+      --ink: #e5e7eb;
+      --muted: #9ca3af;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 20% 0%, #0f172a 0, transparent 55%),
+        radial-gradient(circle at 80% 100%, #020617 0, #000 65%);
+      color: var(--ink);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 8px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      margin: auto;
+      background: linear-gradient(180deg, #020617, #020617 40%, #020617);
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      box-shadow:
+        0 18px 45px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(15, 23, 42, 0.9);
+        padding: 12px 12px 14px;
+        position: relative;
+      overflow: hidden;
+    }
+
+    .starfield {
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 10% 20%, rgba(248, 250, 252, 0.7), transparent),
+        radial-gradient(1px 1px at 80% 10%, rgba(248, 250, 252, 0.4), transparent),
+        radial-gradient(1px 1px at 30% 70%, rgba(248, 250, 252, 0.6), transparent),
+        radial-gradient(1.5px 1.5px at 60% 40%, rgba(248, 250, 252, 0.5), transparent),
+        radial-gradient(1px 1px at 90% 80%, rgba(248, 250, 252, 0.5), transparent);
+      opacity: 0.45;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .chrome {
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .title-main {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .title-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .badge {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.3), transparent);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.9);
+    }
+
+    .panel {
+      background: radial-gradient(circle at 50% 0%, #0b1120 0, #020617 60%);
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      padding: 8px 8px 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .panel-header span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .panel-header strong {
+      font-size: 12px;
+      color: var(--ink);
+    }
+
+    .game-shell {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: transparent;
+    }
+
+    .hud {
+      position: absolute;
+      inset: 8px 10px auto 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .hud-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(10px);
+    }
+
+    .hud-item strong {
+      color: var(--ink);
+      font-size: 11px;
+    }
+
+    .hud-separator {
+      flex: 1;
+    }
+
+    .message {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      pointer-events: none;
+    }
+
+    .message-inner {
+      pointer-events: auto;
+      max-width: 85%;
+      margin: 0 auto;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.96));
+      border: 1px solid rgba(148, 163, 184, 0.8);
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.9);
+    }
+
+    .message-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .message-text {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .message-text strong {
+      color: var(--ink);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: 999px;
+      border: 0;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      background: radial-gradient(circle at 0 0, #38bdf8, #0369a1);
+      color: #0b1120;
+      box-shadow:
+        0 0 0 1px rgba(8, 47, 73, 0.8),
+        0 10px 18px rgba(15, 23, 42, 0.9);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+    }
+
+    .btn span.icon {
+      font-size: 13px;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow:
+        0 0 0 1px rgba(8, 47, 73, 0.8),
+        0 5px 10px rgba(15, 23, 42, 0.8);
+      filter: brightness(0.96);
+    }
+
+    .btn-subtle {
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--muted);
+      box-shadow:
+        0 0 0 1px rgba(148, 163, 184, 0.6),
+        0 10px 18px rgba(15, 23, 42, 0.9);
+    }
+
+    .btn-subtle:active {
+      filter: brightness(1.1);
+    }
+
+    .controls {
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .controls-kb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .keycap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      padding: 2px 4px;
+      border-radius: 6px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.9));
+      font-size: 10px;
+      color: var(--ink);
+    }
+
+    .controls-touch-label {
+      font-size: 11px;
+    }
+
+    .thrust-controls {
+      position: absolute;
+      inset: auto 0 8px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 26px;
+      pointer-events: none;
+    }
+
+    .thrust-btn {
+      pointer-events: auto;
+      width: 72px;
+      height: 72px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.8);
+      background:
+        radial-gradient(circle at 30% 0%, rgba(56, 189, 248, 0.45), transparent 55%),
+        radial-gradient(circle at 50% 80%, rgba(15, 23, 42, 1), #020617);
+      box-shadow:
+        0 0 0 1px rgba(15, 23, 42, 1),
+        0 14px 30px rgba(15, 23, 42, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ink);
+      font-size: 22px;
+      opacity: 0.9;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.08s ease;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    .thrust-btn span {
+      transform: translateY(1px);
+    }
+
+    .thrust-btn.active {
+      transform: translateY(2px);
+      opacity: 1;
+      box-shadow:
+        0 0 0 1px rgba(56, 189, 248, 0.9),
+        0 8px 18px rgba(15, 23, 42, 0.9),
+        0 0 18px rgba(56, 189, 248, 0.7);
+    }
+
+    .thrust-label {
+      pointer-events: none;
+      font-size: 10px;
+      color: var(--muted);
+      text-align: center;
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin-bottom: 4px;
+    }
+
+    @media (min-width: 640px) {
+      .app {
+        padding: 20px;
+      }
+      .panel {
+        padding: 12px 12px 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="starfield"></div>
+
+    <div class="chrome">
+      <header>
+        <div class="title-block">
+          <div class="title-main">SPACE DEBRIS AVOIDANCE</div>
+          <div class="title-sub">12/2 日本人宇宙飛行記念日スペシャル</div>
+        </div>
+        <div class="badge">
+          <span class="badge-dot"></span>
+          EVA MODE
+        </div>
+      </header>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span>訓練任務：<strong>スペースデブリを回避せよ</strong></span>
+          <span>ARRIVAL IN <strong id="hud-time">27.0</strong>s</span>
+        </div>
+
+        <div class="game-shell">
+          <div class="hud">
+            <div class="hud-item">
+              DEBRIS
+              <strong id="hud-debris">0</strong>
+            </div>
+            <div class="hud-separator"></div>
+            <div class="hud-item">
+              STATUS
+              <strong id="hud-status">OK</strong>
+            </div>
+          </div>
+
+          <canvas id="game" width="360" height="560"></canvas>
+
+          <div class="message" id="message-layer">
+            <div class="message-inner" id="message-inner">
+              <div class="message-title" id="message-title">スペースデブリ回避訓練</div>
+              <div class="message-text" id="message-text">
+                松村宇宙飛行士は船外活動（EVA）中。<br />
+                上から降ってくる<strong>スペースデブリ</strong>を避けながら、<br />
+                <strong>到着まで生き残れ</strong>。<br /><br />
+                一度でもぶつかるとアウトだ。
+              </div>
+              <button class="btn" id="btn-start">
+                <span class="icon">🚀</span>
+                START
+              </button>
+            </div>
+          </div>
+
+          <div class="thrust-controls">
+            <button class="thrust-btn" id="btn-left">
+              <span>⟵</span>
+            </button>
+            <button class="thrust-btn" id="btn-right">
+              <span>⟶</span>
+            </button>
+            <div class="thrust-label">
+              左右に回避（タップ） / PCは ← → キー
+            </div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="controls-kb">
+            <span>PC：</span>
+            <span class="keycap">←</span>
+            <span>・</span>
+            <span class="keycap">→</span>
+            <span>で左右に回避</span>
+          </div>
+          <div class="controls-touch-label">
+            スマホ：画面下の左右ボタンを押しっぱなしで移動
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // ============================
+    // アセットヘルパー（Vercel対応）
+    // ============================
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p = "") => {
+      const clean = String(p).replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    // 画像・音声を足す場合はここに
+    const ASSETS = {
+      astronaut: asset("./assets/astronaut.png"), // 作った宇宙飛行士画像
+      bgm: asset("./assets/bgm.mp3"), 
+      space: asset("./assets/space_bg.png"),
+    };
+    // BGM
+const bgm = new Audio(ASSETS.bgm);
+bgm.loop = true;
+bgm.volume = 0.4; // 好みで調整（0〜1）
+
+
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    // 背景画像を動的に設定
+    const gameShell = document.querySelector(".game-shell");
+    if (gameShell) {
+      gameShell.style.backgroundImage = `url("${ASSETS.space}")`;
+    }
+
+    const hudTime = document.getElementById("hud-time");
+    const hudDebris = document.getElementById("hud-debris");
+    const hudStatus = document.getElementById("hud-status");
+
+    const messageLayer = document.getElementById("message-layer");
+    const messageInner = document.getElementById("message-inner");
+    const messageTitle = document.getElementById("message-title");
+    const messageText = document.getElementById("message-text");
+    const btnStart = document.getElementById("btn-start");
+
+    const btnLeft = document.getElementById("btn-left");
+    const btnRight = document.getElementById("btn-right");
+
+    const WIDTH = canvas.width;
+    const HEIGHT = canvas.height;
+
+    // ゲーム設定
+    const GAME_DURATION = 27;      // 生き残る秒数
+    const ASTRO_RADIUS = 22;       // 当たり判定
+    const MOVE_ACCEL = 140;        // 横加速
+    const MAX_VX = 180;            // 最大横速度
+    const FRICTION = 0.9;          // 減速
+    const SPAWN_INTERVAL = 0.85;   // デブリ出現間隔（秒）
+
+    let state = "ready";           // "ready" | "playing" | "success" | "fail"
+    let astro;
+    let timeLeft = GAME_DURATION;
+    let debrisList = [];
+    let spawnTimer = 0;
+
+    const keys = {
+      left: false,
+      right: false,
+    };
+
+    const pointerState = {
+      left: false,
+      right: false,
+    };
+
+    const astronautImg = new Image();
+    astronautImg.src = ASSETS.astronaut;
+
+    function resetGame() {
+      astro = {
+        x: WIDTH / 2,
+        y: HEIGHT - 110,
+        vx: 0,
+      };
+      timeLeft = GAME_DURATION;
+      debrisList = [];
+      spawnTimer = 0;
+      hudTime.textContent = GAME_DURATION.toFixed(1);
+      hudDebris.textContent = "0";
+      hudStatus.textContent = "OK";
+    }
+
+    function setState(next, options = {}) {
+      state = next;
+
+      if (next === "ready") {
+        messageLayer.style.display = "flex";
+        messageInner.style.opacity = "1";
+        messageTitle.textContent = "スペースデブリ回避訓練";
+        messageText.innerHTML =
+          "松村宇宙飛行士は船外活動（EVA）中。<br>" +
+          "上から降ってくる<strong>スペースデブリ</strong>を避けながら、<br>" +
+          "<strong>到着まで生き残れ</strong>。<br><br>" +
+          "一度でもぶつかるとアウトだ。";
+        btnStart.textContent = "START";
+        hudStatus.textContent = "OK";
+      } else if (next === "playing") {
+        messageLayer.style.display = "none";
+        hudStatus.textContent = "OK";
+      } else if (next === "success") {
+        bgm.pause();
+        messageLayer.style.display = "flex";
+        messageTitle.textContent = "到着！";
+        messageText.innerHTML =
+          "スペースデブリを華麗に回避して、<br>" +
+          "無事にステーションへ到着した。<br><br>" +
+          "日本人宇宙飛行士たちも<br>にっこりの操縦テク。";
+        btnStart.textContent = "もう一回";
+        hudStatus.textContent = "CLEAR";
+      } else if (next === "fail") {
+        bgm.pause();
+        messageLayer.style.display = "flex";
+        const reason = options.reason || "hit";
+        if (reason === "hit") {
+          messageTitle.textContent = "被弾…";
+          messageText.innerHTML =
+            "スペースデブリに<strong>直撃</strong>してしまった。<br>" +
+            "次は少し早めに動き出して、<br>" +
+            "軌道を読んで回避してみよう。";
+        } else if (reason === "out_of_bounds") {
+          messageTitle.textContent = "見失った…";
+          messageText.innerHTML =
+            "松村が視界の外に流されてしまった。<br>" +
+            "慣性を意識して、画面内にキープしよう。";
+        } else if (reason === "timeout") {
+          messageTitle.textContent = "時間切れ";
+          messageText.innerHTML =
+            "到着予定時間を過ぎてしまった。<br>" +
+            "デブリに気を取られすぎないように、<br>" +
+            "少しだけ攻めの回避も大事だ。";
+        }
+        btnStart.textContent = "もう一回";
+        hudStatus.textContent = "FAIL";
+      }
+    }
+
+    function spawnDebris() {
+      const count = Math.random() < 0.6 ? 1 : 2; // たまに2個
+      for (let i = 0; i < count; i++) {
+        const radius = 10 + Math.random() * 14;
+        const margin = 20;
+        const x = margin + Math.random() * (WIDTH - margin * 2);
+        const y = -radius - Math.random() * 40;
+        const vy = 80 + Math.random() * 120;
+        debrisList.push({
+          x,
+          y,
+          vy,
+          radius,
+        });
+      }
+    }
+
+    function update(dt) {
+      if (state !== "playing") return;
+
+      // 残り時間
+      timeLeft -= dt;
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        hudTime.textContent = "0.0";
+        setState("success");
+        return;
+      }
+      hudTime.textContent = timeLeft.toFixed(1);
+
+      // 入力状態
+      const left = keys.left || pointerState.left;
+      const right = keys.right || pointerState.right;
+
+      if (left && !right) {
+        astro.vx -= MOVE_ACCEL * dt;
+      } else if (right && !left) {
+        astro.vx += MOVE_ACCEL * dt;
+      } else {
+        // 何も押してないときは減速
+        astro.vx *= FRICTION;
+      }
+
+      // 横速度制限
+      if (astro.vx > MAX_VX) astro.vx = MAX_VX;
+      if (astro.vx < -MAX_VX) astro.vx = -MAX_VX;
+
+      // 位置更新（横方向のみ）
+      astro.x += astro.vx * dt;
+
+      // 画面外に出すぎたら失敗
+      if (astro.x < -60 || astro.x > WIDTH + 60) {
+        setState("fail", { reason: "out_of_bounds" });
+        return;
+      }
+
+      // 画面内にクランプ（完全に外に出る前の見た目用）
+      if (astro.x < ASTRO_RADIUS) astro.x = ASTRO_RADIUS;
+      if (astro.x > WIDTH - ASTRO_RADIUS) astro.x = WIDTH - ASTRO_RADIUS;
+
+      // デブリ生成
+      spawnTimer += dt;
+      if (spawnTimer >= SPAWN_INTERVAL) {
+        spawnTimer = 0;
+        spawnDebris();
+      }
+
+      // デブリ更新
+      for (const d of debrisList) {
+        d.y += d.vy * dt;
+      }
+
+      // 画面外のデブリを削除
+      debrisList = debrisList.filter((d) => d.y < HEIGHT + d.radius + 10);
+      hudDebris.textContent = debrisList.length.toString();
+
+      // 衝突判定
+      for (const d of debrisList) {
+        const dx = astro.x - d.x;
+        const dy = astro.y - d.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < ASTRO_RADIUS + d.radius) {
+          setState("fail", { reason: "hit" });
+          return;
+        }
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, WIDTH, HEIGHT);      
+
+// 上部ドッキングゲート（横幅いっぱいのステーション）
+ctx.save();
+
+// 進捗 0〜1（0 = ゲーム開始 / 1 = 到着タイミング）
+const progressRaw = 1 - timeLeft / GAME_DURATION;
+const progress = Math.min(1, Math.max(0, progressRaw));
+
+// 開始位置・終了位置
+const GATE_START_Y = 40;
+const GATE_END_Y = astro.y - 60; // 松村の少し上まで降りてくる
+const gateY = GATE_START_Y + (GATE_END_Y - GATE_START_Y) * progress;
+
+const gateHeight = 28;
+
+// ゲート本体（横幅いっぱい）
+const gTop = gateY - gateHeight / 2;
+const gBottom = gateY + gateHeight / 2;
+
+const gradGate = ctx.createLinearGradient(0, gTop, 0, gBottom);
+gradGate.addColorStop(0, "rgba(15,23,42,0.98)");
+gradGate.addColorStop(1, "rgba(15,23,42,0.9)");
+
+ctx.fillStyle = gradGate;
+ctx.strokeStyle = "rgba(148,163,184,0.9)";
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.roundRect(0, gTop, WIDTH, gateHeight, 12);
+ctx.fill();
+ctx.stroke();
+
+// 中央のライン（ドッキングゾーンぽいディテール）
+ctx.strokeStyle = "rgba(56,189,248,0.7)";
+ctx.setLineDash([6, 4]);
+ctx.lineWidth = 1.5;
+ctx.beginPath();
+ctx.moveTo(10, gateY);
+ctx.lineTo(WIDTH - 10, gateY);
+ctx.stroke();
+ctx.setLineDash([]);
+
+// ラベル
+ctx.fillStyle = "rgba(248,250,252,0.9)";
+ctx.font = "10px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+ctx.textAlign = "center";
+ctx.textBaseline = "middle";
+ctx.fillText("DOCKING ZONE", WIDTH / 2, gateY - gateHeight / 2 - 10);
+
+ctx.restore();
+
+      // デブリ描画
+      for (const d of debrisList) {
+        ctx.save();
+        ctx.translate(d.x, d.y);
+        ctx.fillStyle = "rgba(148,163,184,0.95)";
+        ctx.strokeStyle = "rgba(15,23,42,0.9)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(0, 0, d.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // ちょっとだけディテール
+        ctx.strokeStyle = "rgba(15,23,42,0.6)";
+        ctx.beginPath();
+        ctx.moveTo(-d.radius / 2, -d.radius / 3);
+        ctx.lineTo(d.radius / 3, d.radius / 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+     // 松村宇宙飛行士
+ctx.save();
+ctx.translate(astro.x, astro.y);
+
+// 横速度で少し傾ける
+const tilt = Math.max(-0.4, Math.min(0.4, -astro.vx / 200));
+ctx.rotate(tilt);
+
+const baseSize = 72; // 画像の最大サイズ
+let drawW = baseSize;
+let drawH = baseSize;
+
+if (astronautImg.complete && astronautImg.naturalWidth > 0) {
+  const img = astronautImg;
+  const aspect = img.naturalWidth / img.naturalHeight;
+
+  if (aspect >= 1) {
+    // 横長：横を基準
+    drawW = baseSize;
+    drawH = baseSize / aspect;
+  } else {
+    // 縦長：縦を基準
+    drawH = baseSize;
+    drawW = baseSize * aspect;
+  }
+
+  ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+} else {
+  // ローディング中の仮アイコン
+  drawW = drawH = baseSize * 0.7;
+  ctx.fillStyle = "#e5e7eb";
+  ctx.beginPath();
+  ctx.arc(0, 0, ASTRO_RADIUS, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#020617";
+  ctx.beginPath();
+  ctx.arc(0, 0, ASTRO_RADIUS * 0.6, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// スラスターの噴射（左右ボタン中のみ）
+const leftActive = keys.left || pointerState.left;
+const rightActive = keys.right || pointerState.right;
+
+ctx.fillStyle = "rgba(56,189,248,0.9)";
+
+// 画像サイズに合わせて炎の位置を決める
+const halfW = drawW / 2;
+const flameY = drawH / 4;
+
+if (leftActive) {
+  ctx.beginPath();
+  ctx.moveTo(-halfW + 6, flameY);
+  ctx.lineTo(-halfW - 10, flameY + 6);
+  ctx.lineTo(-halfW + 6, flameY + 12);
+  ctx.closePath();
+  ctx.fill();
+}
+if (rightActive) {
+  ctx.beginPath();
+  ctx.moveTo(halfW - 6, flameY);
+  ctx.lineTo(halfW + 10, flameY + 6);
+  ctx.lineTo(halfW - 6, flameY + 12);
+  ctx.closePath();
+  ctx.fill();
+}
+
+ctx.restore();
+
+    }
+
+    let lastTime = performance.now();
+
+    function loop(now) {
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+
+      update(dt);
+      draw();
+
+      requestAnimationFrame(loop);
+    }
+
+    // キー操作
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") {
+        keys.left = true;
+      } else if (e.key === "ArrowRight") {
+        keys.right = true;
+      } else if (e.key === " " && state !== "playing") {
+        // スペースでリスタート
+        e.preventDefault();
+        startGame();
+      }
+    });
+
+    window.addEventListener("keyup", (e) => {
+      if (e.key === "ArrowLeft") {
+        keys.left = false;
+      } else if (e.key === "ArrowRight") {
+        keys.right = false;
+      }
+    });
+
+    // タッチ・マウス操作（左右ボタン）
+    function bindThrustButton(btn, side) {
+      const downEvents = ["mousedown", "touchstart"];
+      const upEvents = ["mouseup", "mouseleave", "touchend", "touchcancel"];
+
+      downEvents.forEach((ev) => {
+        btn.addEventListener(ev, (e) => {
+          e.preventDefault();
+          pointerState[side] = true;
+          btn.classList.add("active");
+        });
+      });
+
+      upEvents.forEach((ev) => {
+        btn.addEventListener(ev, (e) => {
+          e.preventDefault();
+          pointerState[side] = false;
+          btn.classList.remove("active");
+        });
+      });
+    }
+
+    bindThrustButton(btnLeft, "left");
+    bindThrustButton(btnRight, "right");
+
+    function startGame() {
+      resetGame();
+      setState("playing");
+        // ← ここに追加
+  bgm.currentTime = 0;
+  bgm.play().catch(() => {});
+    }
+
+    btnStart.addEventListener("click", () => {
+      startGame();
+    });
+
+    // 初期状態
+    resetGame();
+    setState("ready");
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
