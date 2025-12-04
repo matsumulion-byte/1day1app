@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+    />
+    <title>松村ETフライト</title>
+    <style>
+      :root {
+        --bg: #020617;
+        --accent: #fbbf24;
+        --accent-soft: rgba(251, 191, 36, 0.16);
+        --ink: #f9fafb;
+        --muted: #9ca3af;
+        --danger: #fb7185;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: radial-gradient(circle at top, #0b1120 0, #020617 60%);
+        color: var(--ink);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: env(safe-area-inset-top, 16px)
+          env(safe-area-inset-right, 16px)
+          env(safe-area-inset-bottom, 16px)
+          env(safe-area-inset-left, 16px);
+      }
+
+      .app-shell {
+        width: 100%;
+        max-width: 420px;
+        aspect-ratio: 9 / 16;
+        border-radius: 24px;
+        background: rgba(15, 23, 42, 0.9);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.55);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+
+      header {
+        padding: 10px 14px;
+        background: linear-gradient(90deg, #020617, #0b1120);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        z-index: 5;
+      }
+
+      header h1 {
+        font-size: 14px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      header .tag {
+        font-size: 10px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.15);
+        color: var(--accent);
+        border: 1px solid rgba(148, 163, 184, 0.4);
+      }
+
+      main {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+      }
+
+      #game-area {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: 120% center; /* スタート時は月が右の外側 */
+        background-repeat: no-repeat;
+      }
+
+      .bike {
+        position: absolute;
+        width: 140px;
+        aspect-ratio: 1 / 1;
+        background-size: 300% 100%;
+        background-repeat: no-repeat;
+        will-change: transform;
+      }
+
+      .bike.frame-0 {
+        background-position: 0% 0;
+      }
+
+      .bike.frame-1 {
+        background-position: 50% 0;
+      }
+
+      .bike.frame-2 {
+        background-position: 100% 0;
+      }
+
+      .hud {
+        position: absolute;
+        left: 10px;
+        top: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 10px;
+        color: var(--muted);
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+      }
+
+      .hud-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .mute-btn {
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--muted);
+  border-radius: 999px;
+  font-size: 10px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.mute-btn:active {
+  transform: translateY(1px);
+  opacity: 0.8;
+}
+
+      .pill {
+        padding: 3px 7px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid rgba(148, 163, 184, 0.4);
+      }
+
+      .pill strong {
+        color: var(--accent);
+      }
+
+      .gauge-wrap {
+        width: 90px;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        overflow: hidden;
+      }
+
+      .gauge-bar {
+        height: 100%;
+        width: 0%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #22c55e, #facc15, #fb923c);
+        transition: width 0.12s linear;
+      }
+
+      .progress-bar-wrap {
+        flex: 1;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        overflow: hidden;
+      }
+
+      .progress-bar {
+        height: 100%;
+        width: 0%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #38bdf8, #a855f7, #f97316);
+        transition: width 0.1s linear;
+      }
+
+      .overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        text-align: center;
+        background: radial-gradient(
+            circle at top,
+            rgba(15, 23, 42, 0.9),
+            rgba(15, 23, 42, 0.98)
+          ),
+          rgba(15, 23, 42, 0.96);
+        z-index: 10;
+      }
+
+      .overlay-content {
+        max-width: 320px;
+      }
+
+      .overlay h2 {
+        font-size: 22px;
+        margin-bottom: 8px;
+      }
+
+      .overlay p {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.6;
+        margin-bottom: 10px;
+      }
+
+      .rules {
+        margin: 10px auto 16px;
+        padding: 10px 12px;
+        border-radius: 16px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        text-align: left;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .rules li + li {
+        margin-top: 4px;
+      }
+
+      .btn {
+        border: none;
+        cursor: pointer;
+        padding: 10px 22px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        background: radial-gradient(circle at top left, #fed7aa, #f97316);
+        color: #111827;
+        box-shadow: 0 8px 20px rgba(248, 250, 252, 0.35);
+        transition: transform 0.08s ease, box-shadow 0.08s ease,
+          filter 0.08s ease;
+      }
+
+      .btn:active {
+        transform: translateY(1px) scale(0.99);
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.9);
+        filter: brightness(0.96);
+      }
+
+      .btn.secondary {
+        margin-top: 8px;
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid rgba(148, 163, 184, 0.7);
+        box-shadow: none;
+      }
+
+      .result-title {
+        font-size: 20px;
+        margin-bottom: 6px;
+      }
+
+      .result-score {
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 6px;
+      }
+
+      .result-detail {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+
+      .countdown {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        font-weight: 700;
+        color: var(--accent);
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+        pointer-events: none;
+      }
+
+      footer {
+        padding: 6px 10px;
+        font-size: 10px;
+        color: var(--muted);
+        text-align: right;
+        background: linear-gradient(90deg, #020617, #020617);
+      }
+
+      @media (max-height: 640px) {
+        header {
+          padding: 6px 10px;
+        }
+        .overlay h2 {
+          font-size: 18px;
+        }
+        .overlay p {
+          font-size: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header>
+        <h1>松村ETフライト</h1>
+        <div class="tag">12/4 – E.T.の日</div>
+        <button id="btn-mute" class="mute-btn">♪ ON</button>
+      </header>
+
+      <main>
+        <div id="game-area">
+          <div class="bike frame-0" id="bike"></div>
+
+          <div class="hud">
+            <div class="hud-row">
+              <div class="pill">
+                Altitude: <strong id="alt-text">0 m</strong>
+              </div>
+              <div class="pill" id="wind-pill">
+                気流: <strong id="wind-symbol">－</strong>
+              </div>
+              <div class="pill">
+                月まで：<strong id="dist-text">100%</strong>
+              </div>
+            </div>
+            <div class="hud-row">
+              <span>Pedal</span>
+              <div class="gauge-wrap">
+                <div class="gauge-bar" id="pedal-gauge"></div>
+              </div>
+            </div>
+            <div class="hud-row">
+              <span style="width: 40px">進行</span>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar" id="progress-bar"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- スタート画面 -->
+        <div class="overlay" id="overlay-start">
+          <div class="overlay-content">
+            <h2>月までフライト！</h2>
+            <p>
+              画面タップ / スペースキーでペダル。<br />
+              押している間だけ少し上に、離すと落ちます。<br />
+              地面に落ちないように月に到着できればクリア！
+            </p>
+            <ul class="rules">
+              <li>・1プレイ約10秒のショートフライト</li>
+              <li>・押しっぱなしだと上昇、離すと落下</li>
+              <li>・ペダルゲージを使い切るとそれ以上は上がれない</li>
+              <li>・地面に着いたらその場でゲームオーバー</li>
+            </ul>
+            <button class="btn" id="btn-start">スタート</button>
+            <button class="btn secondary" id="btn-hint">
+              操作：タップ or スペースキー
+            </button>
+          </div>
+        </div>
+
+        <!-- リザルト -->
+        <div class="overlay" id="overlay-result" style="display: none">
+          <div class="overlay-content">
+            <div class="result-title" id="result-title"></div>
+            <div class="result-score" id="result-score"></div>
+            <div class="result-detail" id="result-detail"></div>
+            <button class="btn" id="btn-retry">もう一度とぶ</button>
+            <button class="btn secondary" id="btn-back">
+              タイトルにもどる
+            </button>
+          </div>
+        </div>
+
+        <!-- カウントダウン -->
+        <div class="countdown" id="countdown" style="display: none"></div>
+      </main>
+
+      <footer>
+        <span>Tap / Space でペダル。月まで落ちずに飛べ！</span>
+      </footer>
+    </div>
+
+    <script type="module">
+      // ============================
+      // アセットヘルパー（Vercel対応）
+      // ============================
+      const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+      const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+      const asset = (p = "") => {
+        const clean = String(p).replace(/^\.?\//, "");
+        return `${DATE_BASE}${clean}`;
+      };
+
+      const ASSETS = {
+        bg: asset("assets/bg_et_sky.png"),
+        bike: asset("assets/matsu_bike_strip.png"),
+        bgm: asset("assets/bgm.mp3"),
+      };
+// BGM
+const bgm = new Audio(ASSETS.bgm);
+bgm.loop = true;
+bgm.volume = 0.5; // 音量は好みで
+let bgmStarted = false;
+let bgmMuted = false;
+      // DOM
+      const gameArea = document.getElementById("game-area");
+      const bikeEl = document.getElementById("bike");
+      const altText = document.getElementById("alt-text");
+      const distText = document.getElementById("dist-text");
+      const pedalGauge = document.getElementById("pedal-gauge");
+      const progressBar = document.getElementById("progress-bar");
+
+      const overlayStart = document.getElementById("overlay-start");
+      const overlayResult = document.getElementById("overlay-result");
+      const resultTitle = document.getElementById("result-title");
+      const resultScore = document.getElementById("result-score");
+      const resultDetail = document.getElementById("result-detail");
+
+      const countdownEl = document.getElementById("countdown");
+
+      const btnStart = document.getElementById("btn-start");
+      const btnRetry = document.getElementById("btn-retry");
+      const btnBack = document.getElementById("btn-back");
+      const btnMute = document.getElementById("btn-mute");
+
+
+      // 背景・スプライト
+      gameArea.style.backgroundImage = `url(${ASSETS.bg})`;
+      bikeEl.style.backgroundImage = `url(${ASSETS.bike})`;
+
+      // デザイン座標
+      const DESIGN_W = 360;
+      const DESIGN_H = 640;
+      const groundY = DESIGN_H - 110;
+      const bikeWidth = 140;
+      const bikeHeight = 140;
+      const bikeXDesign = 110; // 左寄り固定
+      const windSymbol = document.getElementById("wind-symbol");
+
+      // 物理パラメータ
+      const GRAVITY = 420; // px/s^2
+      const THRUST = 520; // 押している時の上向き加速度
+      const WIND_ZONES = [
+  {
+    name: "安定空域",
+    symbol: "－",
+    accel: 0,              // 風なし
+  },
+  {
+    name: "上昇気流",
+    symbol: "↑",
+    accel: -260,           // 上向きに弱く引っ張る
+  },
+  {
+    name: "下降気流",
+    symbol: "↓",
+    accel: +260,           // 下向きに引っ張る
+  },
+  ];
+
+      // フライト距離（秒換算）
+      const FLIGHT_TIME = 26; // 月まで約10秒
+      const BG_START_POS = 0; // background-position-x %
+      const BG_END_POS = 100; // 到着時の position-x %
+
+      // 状態
+      let state = "title"; // 'title' | 'countdown' | 'play' | 'result'
+      let lastTime = null;
+      let vy = 0;
+      let bikeY = groundY - 100;
+      let pressed = false;
+      let elapsed = 0;
+      let maxAltitude = 0;
+      let pedalTime = 0;
+      const PEDAL_TIME_MAX = 8.0; // 押していられる合計時間（秒）
+
+      // 共通
+      function getScale() {
+        const rect = gameArea.getBoundingClientRect();
+        return rect.width / DESIGN_W;
+      }
+
+      function setFrame(idx) {
+        bikeEl.classList.remove("frame-0", "frame-1", "frame-2");
+        bikeEl.classList.add(`frame-${idx}`);
+      }
+
+      function resetBike() {
+        const scale = getScale();
+        const left = (bikeXDesign - bikeWidth / 2) * scale;
+        const top = (bikeY - bikeHeight) * scale;
+        bikeEl.style.transform = `translate(${left}px, ${top}px)`;
+        setFrame(0);
+      }
+      btnMute.addEventListener("click", () => {
+  bgmMuted = !bgmMuted;
+
+  if (bgmMuted) {
+    bgm.pause();
+    btnMute.textContent = "♪ OFF";
+  } else {
+    // すでに一度でも再生されていれば再開
+    if (bgmStarted) {
+      bgm.play().catch(() => {});
+    } else {
+      // まだならここで初回再生扱いにしてもOK
+      bgm.currentTime = 0;
+      bgm
+        .play()
+        .then(() => {
+          bgmStarted = true;
+        })
+        .catch(() => {});
+    }
+    btnMute.textContent = "♪ ON";
+  }
+});
+
+      function resetGame() {
+        vy = 0;
+        bikeY = groundY - 100;
+        elapsed = 0;
+        maxAltitude = 0;
+        pedalTime = PEDAL_TIME_MAX;
+        pedalGauge.style.width = "100%";
+        altText.textContent = "0 m";
+        distText.textContent = "100%";
+        progressBar.style.width = "0%";
+        gameArea.style.backgroundPosition = `${BG_START_POS}% center`; // 初期位置
+        resetBike();
+      }
+
+      function startCountdown() {
+        overlayStart.style.display = "none";
+        overlayResult.style.display = "none";
+        resetGame();
+        state = "countdown";
+
+        let count = 3;
+        countdownEl.style.display = "flex";
+        countdownEl.textContent = count;
+
+        const timer = setInterval(() => {
+          count--;
+          if (count > 0) {
+            countdownEl.textContent = count;
+          } else {
+            clearInterval(timer);
+            countdownEl.textContent = "GO!";
+            setTimeout(() => {
+              countdownEl.style.display = "none";
+              startPlay();
+            }, 500);
+          }
+        }, 600);
+      }
+
+      function startPlay() {
+        state = "play";
+        lastTime = null;
+        requestAnimationFrame(loop);
+      }
+
+      function loop(timestamp) {
+        if (!lastTime) lastTime = timestamp;
+        const dt = Math.min(0.04, (timestamp - lastTime) / 1000);
+        lastTime = timestamp;
+
+        if (state === "play") {
+          updateGame(dt);
+          requestAnimationFrame(loop);
+        }
+      }
+      function getWindZone(y) {
+  // groundY 近く: 安定
+  if (y > groundY - 80) {
+    return WIND_ZONES[0];
+  }
+  // 中間: 上昇気流
+  if (y > groundY - 260) {
+    return WIND_ZONES[1];
+  }
+  // さらに上: 下降気流
+  return WIND_ZONES[2];
+}
+
+      function updateGame(dt) {
+        const scale = getScale();
+
+        // 経過時間・進捗
+        elapsed += dt;
+        const progress = Math.min(1, elapsed / FLIGHT_TIME);
+        progressBar.style.width = `${progress * 100}%`;
+        distText.textContent = `${Math.round((1 - progress) * 100)}%`;
+
+        // 背景スクロール（右→中央へ）
+        const bgPos = BG_START_POS + (BG_END_POS - BG_START_POS) * progress;
+gameArea.style.backgroundPosition = `${bgPos}% center`;
+
+        // 物理
+        const zone = getWindZone(bikeY);
+
+// HUD に表示（↑ / ↓ / －）
+if (zone.symbol) {
+  windSymbol.textContent = zone.symbol;
+}
+
+// 風込みの実効重力
+const effectiveGravity = GRAVITY + zone.accel;
+
+// 押している間は上向き加速＋風
+if (pressed && pedalTime > 0) {
+  vy -= THRUST * dt;
+  pedalTime = Math.max(0, pedalTime - dt);
+}
+
+// 風＋重力は常にかかる
+vy += effectiveGravity * dt;
+
+        // 速度に上限をかけておく
+        vy = Math.max(-520, Math.min(520, vy));
+
+        bikeY += vy * dt;
+        
+
+        // 最高高度
+        const altitudePx = groundY - bikeY;
+        if (altitudePx > maxAltitude) maxAltitude = altitudePx;
+
+        // ペダルゲージ
+        const gaugeRatio = pedalTime / PEDAL_TIME_MAX;
+        pedalGauge.style.width = `${Math.max(0, gaugeRatio) * 100}%`;
+
+        // バイク位置更新
+        const left = (bikeXDesign - bikeWidth / 2) * scale;
+        const top = (bikeY - bikeHeight) * scale;
+        bikeEl.style.transform = `translate(${left}px, ${top}px)`;
+
+        // 高度表示をざっくりm換算
+        const altitudeMeters = Math.round(altitudePx * 0.3);
+        altText.textContent = `${altitudeMeters} m`;
+
+        // フレームアニメ
+        if (pressed && pedalTime > 0) {
+          setFrame(2);
+        } else if (vy < 0) {
+          setFrame(1);
+        } else {
+          setFrame(0);
+        }
+
+        // 判定：到着 or 着地
+        if (progress >= 1) {
+          finish(true);
+        } else if (bikeY >= groundY) {
+          bikeY = groundY;
+          finish(false);
+        }
+      }
+
+      function finish(success) {
+        state = "result";
+  // ★ リザルト入ったら無音にする
+  bgm.pause();
+  bgm.currentTime = 0; // 任意（次開始時も頭から鳴らす場合）
+        const altitudeMeters = Math.round(maxAltitude * 0.3);
+
+        if (success) {
+          resultTitle.textContent = "E.T. 成功！";
+          resultScore.textContent = "月に到着！";
+          resultDetail.textContent =
+            `最高高度は 約 ${altitudeMeters} m。` +
+            "松村、自転車で宇宙進出。";
+          setFrame(2);
+        } else {
+          resultTitle.textContent = "途中で着地してしまった…";
+          resultScore.textContent = `最高高度 ${altitudeMeters} m`;
+          resultDetail.textContent =
+            "ペダルゲージを温存しながら、月に近づくタイミングで一気にこごう。";
+          setFrame(0);
+        }
+
+        setTimeout(() => {
+          overlayResult.style.display = "flex";
+        }, 400);
+      }
+
+      // 入力ハンドラ
+      function pressDown() {
+        if (state !== "play") return;
+        pressed = true;
+      }
+
+      function pressUp() {
+        pressed = false;
+      }
+
+      gameArea.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        pressDown();
+      });
+
+      gameArea.addEventListener("pointerup", (e) => {
+        e.preventDefault();
+        pressUp();
+      });
+
+      gameArea.addEventListener("pointerleave", pressUp);
+      gameArea.addEventListener("pointercancel", pressUp);
+
+      window.addEventListener("keydown", (e) => {
+        if (e.code === "Space" || e.code === "ArrowUp") {
+          e.preventDefault();
+          pressDown();
+        }
+      });
+
+      window.addEventListener("keyup", (e) => {
+        if (e.code === "Space" || e.code === "ArrowUp") {
+          e.preventDefault();
+          pressUp();
+        }
+      });
+
+      // ボタン
+      btnStart.addEventListener("click", () => {
+  // ここで初回だけ BGM 再生
+  if (!bgmStarted) {
+    bgm.currentTime = 0;
+    bgm
+      .play()
+      .then(() => {
+        bgmStarted = true;
+      })
+      .catch(() => {
+        // サイレント失敗でOK（ブラウザ制限など）
+      });
+  } else if (!bgmMuted) {
+    // 2回目以降で止まってたら再開
+    bgm.play().catch(() => {});
+  }
+
+  startCountdown();
+});
+btnRetry.addEventListener("click", () => {
+  if (bgmStarted && !bgmMuted) {
+    bgm.play().catch(() => {});
+  }
+  startCountdown();
+});
+btnBack.addEventListener("click", () => {
+  overlayResult.style.display = "none";
+  overlayStart.style.display = "flex";
+  state = "title";
+
+  // タイトルでは一旦止める
+  bgm.pause();
+});
+
+
+      // 初期位置
+      window.addEventListener("load", () => {
+        resetGame();
+      });
+
+      window.addEventListener("resize", resetGame);
+    </script>
+  </body>
+</html>
