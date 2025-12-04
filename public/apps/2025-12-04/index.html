@@ -37,7 +37,22 @@
           env(safe-area-inset-bottom, 16px)
           env(safe-area-inset-left, 16px);
       }
+      html, body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none; /* 長押しメニューも無効 */
+}
 
+/* 必要ならボタンだけは選択可に戻す */
+button {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ゲームエリア内のタッチはブラウザに横取りさせない */
+#game-area {
+  touch-action: none;
+}
       .app-shell {
         width: 100%;
         max-width: 420px;
