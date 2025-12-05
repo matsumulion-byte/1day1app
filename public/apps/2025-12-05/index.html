@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+  />
+  <title>1分テトリス松村</title>
+
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-soft: #020617;
+      --panel: #020617;
+      --accent: #f97316;
+      --accent-soft: rgba(249, 115, 22, 0.18);
+      --ink: #f9fafb;
+      --muted: #9ca3af;
+      --danger: #fb7185;
+      --success: #4ade80;
+      --grid: #020617;
+      --border: rgba(15, 23, 42, 0.9);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top, #0b1120 0, #020617 55%);
+      color: var(--ink);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+    }
+
+    .app {
+      margin: auto;
+      width: min(960px, 100%);
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 720px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: radial-gradient(circle at top, #020617 0, #020617 60%);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      box-shadow:
+        0 18px 60px rgba(15, 23, 42, 0.8),
+        0 0 0 1px rgba(15, 23, 42, 0.9);
+      padding: 16px 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .title-main {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .title-sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(249, 115, 22, 0.5);
+      background: linear-gradient(
+        135deg,
+        rgba(249, 115, 22, 0.25),
+        rgba(6, 78, 59, 0.1)
+      );
+      font-size: 0.7rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(249, 115, 22, 0.9);
+    }
+
+    .game-shell {
+      border-radius: 16px;
+      background: radial-gradient(circle at top, #020617 0, #020617 60%);
+      border: 1px solid rgba(15, 23, 42, 0.9);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .game-inner {
+      position: relative;
+      border-radius: 12px;
+      background:
+        radial-gradient(circle at top, #020617 0, #020617 60%);
+      border: 1px solid rgba(30, 64, 175, 0.7);
+      padding: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    canvas {
+      display: block;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(15, 23, 42, 0.8),
+          rgba(15, 23, 42, 1)
+        );
+      border-radius: 6px;
+      border: 1px solid rgba(30, 64, 175, 0.9);
+      max-width: 100%;
+      height: auto;
+    }
+
+    .hud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .hud-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .hud-item {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(30, 64, 175, 0.7);
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .hud-label {
+      color: var(--muted);
+    }
+
+    .hud-value {
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+
+    .btn {
+      appearance: none;
+      border: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      color: var(--ink);
+      background: radial-gradient(circle at top left, #f97316 0, #c2410c 45%, #0b1120 80%);
+      box-shadow:
+        0 10px 25px rgba(248, 113, 22, 0.5),
+        0 0 0 1px rgba(248, 250, 252, 0.04);
+      transition: transform 0.08s ease, box-shadow 0.08s ease,
+        filter 0.12s ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      filter: brightness(1.05);
+      box-shadow:
+        0 14px 35px rgba(248, 113, 22, 0.6),
+        0 0 0 1px rgba(248, 250, 252, 0.06);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow:
+        0 4px 14px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(248, 250, 252, 0.04);
+    }
+
+    .btn-secondary {
+      background: rgba(15, 23, 42, 0.9);
+      box-shadow:
+        0 10px 30px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(51, 65, 85, 0.9);
+    }
+
+    .btn-secondary:hover {
+      filter: brightness(1.1);
+    }
+
+    .controls {
+      margin-top: 6px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .ctrl-btn {
+      border-radius: 12px;
+      border: 1px solid rgba(30, 64, 175, 0.7);
+      background: rgba(15, 23, 42, 0.9);
+      height: 40px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    .ctrl-btn:active {
+      background: rgba(30, 64, 175, 0.95);
+      color: var(--ink);
+    }
+
+    .ctrl-main {
+      color: var(--ink);
+      border-color: rgba(249, 115, 22, 0.7);
+      background: radial-gradient(circle at top, rgba(249, 115, 22, 0.2), rgba(15, 23, 42, 0.95));
+    }
+
+    .help {
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .help kbd {
+      display: inline-block;
+      padding: 1px 5px;
+      border-radius: 4px;
+      border: 1px solid rgba(100, 116, 139, 0.7);
+      font-size: 0.7rem;
+      background: rgba(15, 23, 42, 0.9);
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.7);
+      margin: 0 2px;
+    }
+
+    .result-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+      border-radius: 10px;
+      border: 1px solid rgba(30, 64, 175, 0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      text-align: center;
+      padding: 16px;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    .result-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .result-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .result-title span {
+      color: var(--accent);
+    }
+
+    .result-score {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .result-score strong {
+      font-size: 1.1rem;
+      color: var(--ink);
+    }
+
+    .result-actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <!-- ゲーム側 -->
+    <section class="panel">
+      <header class="panel-header">
+        <div>
+          <div class="title-main">1 MINUTE TETRIS</div>
+          <div class="title-sub">1分タイムアタックで何ライン消せる？</div>
+        </div>
+        <div class="badge">
+          <span class="badge-dot"></span>
+          <span>DAY 2025-12-05</span>
+        </div>
+      </header>
+
+      <div class="game-shell">
+        <div class="hud">
+          <div class="hud-group">
+            <div class="hud-item">
+              <span class="hud-label">TIME</span>
+              <span id="time" class="hud-value">60.0</span>
+              <span class="hud-label">sec</span>
+            </div>
+            <div class="hud-item">
+              <span class="hud-label">LINES</span>
+              <span id="lines" class="hud-value">0</span>
+            </div>
+            <div class="hud-item">
+              <span class="hud-label">SCORE</span>
+              <span id="score" class="hud-value">0</span>
+            </div>
+          </div>
+          <button id="startBtn" class="btn btn-small">
+            ▶ START
+          </button>
+        </div>
+
+        <div class="game-inner">
+          <canvas id="game" width="200" height="400"></canvas>
+
+          <div id="result" class="result-overlay">
+            <div class="result-title">
+              <span>TIME UP</span>
+            </div>
+            <div class="result-score">
+              消したライン：<strong id="resultLines">0</strong><br />
+              スコア：<strong id="resultScore">0</strong>
+            </div>
+            <div class="result-actions">
+              <button id="retryBtn" class="btn btn-secondary">もう1回</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="ctrl-btn" data-action="left">← 左</button>
+          <button class="ctrl-btn" data-action="rotate">↻ 回転</button>
+          <button class="ctrl-btn" data-action="right">→ 右</button>
+          <button class="ctrl-btn ctrl-main" data-action="drop">⬇ 落下</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 説明側 -->
+    <section class="panel">
+      <header class="panel-header">
+        <div>
+          <div class="title-main">HOW TO PLAY</div>
+          <div class="title-sub">操作方法とルール</div>
+        </div>
+      </header>
+      <div class="game-shell" style="flex:1;">
+        <div class="help">
+          <p style="margin-bottom:8px;">
+            1分間でテトリスのラインを何本消せるかを競うタイムアタックです。
+          </p>
+          <p style="margin-bottom:6px;">
+            ▶ <strong>制限時間</strong>：60秒<br>
+            ▶ <strong>フィールド</strong>：10×20マス<br>
+            ▶ <strong>ルール</strong>：横一列が埋まるとライン消去 &amp; スコア加算<br>
+            ▶ <strong>ゲームオーバー</strong>：ブロックが天井に届いてもすぐ終了せず、そのまま時間いっぱいまでプレイ（詰み状態ならほぼ操作不能になります）
+          </p>
+
+          <p style="margin:8px 0 4px;">
+            <strong>スマホの操作</strong>
+          </p>
+          <ul style="margin-left:1em; margin-bottom:8px;">
+            <li>← 左：左に1マス移動</li>
+            <li>→ 右：右に1マス移動</li>
+            <li>↻ 回転：右回転</li>
+            <li>⬇ 落下：1マス早く落下（長押しで連打）</li>
+          </ul>
+
+          <p style="margin:4px 0;">
+            <strong>PCの操作</strong>
+          </p>
+          <p>
+            <kbd>←</kbd> / <kbd>→</kbd>：左右移動<br />
+            <kbd>↑</kbd>：回転<br />
+            <kbd>↓</kbd>：ソフトドロップ（早く落とす）<br />
+            <kbd>Space</kbd>：ハードドロップ（即着地）
+          </p>
+
+          <p style="margin-top:10px;">
+            制限時間内に<strong>連続でラインを消す</strong>とスコアが伸びやすくなります。
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    // ============================
+    // アセットヘルパー（Vercel対応）
+    // ============================
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p = "") => {
+      const clean = String(p).replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    const bgm = new Audio(asset("assets/bgm.mp3"));
+    bgm.loop = true;
+    bgm.volume = 0.7; // 好みで調整
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const timeEl = document.getElementById("time");
+    const linesEl = document.getElementById("lines");
+    const scoreEl = document.getElementById("score");
+    const startBtn = document.getElementById("startBtn");
+    const resultOverlay = document.getElementById("result");
+    const retryBtn = document.getElementById("retryBtn");
+    const resultLinesEl = document.getElementById("resultLines");
+    const resultScoreEl = document.getElementById("resultScore");
+
+    // レイアウト
+    const COLS = 10;
+    const ROWS = 20;
+    const BLOCK_SIZE = 20; // 論理上のサイズ（キャンバスは200x400）
+
+    // タイムアタック設定
+    const GAME_DURATION = 60_000; // 60秒
+    let startTime = 0;
+    let elapsed = 0;
+    let timerId = null;
+
+    // ゲーム状態
+    let board = [];
+    let current = null;
+    let nextDropTime = 0;
+    let dropInterval = 800; // ms
+    let isRunning = false;
+    let animId = null;
+    let totalLines = 0;
+    let score = 0;
+    let combo = 0; // 連続消し用
+
+    // テトリミノ定義（4x4マトリクス）
+    const TETROMINOS = {
+      I: {
+        color: "#38bdf8",
+        shapes: [
+          [
+            [0,0,0,0],
+            [1,1,1,1],
+            [0,0,0,0],
+            [0,0,0,0],
+          ],
+          [
+            [0,0,1,0],
+            [0,0,1,0],
+            [0,0,1,0],
+            [0,0,1,0],
+          ],
+        ],
+      },
+      O: {
+        color: "#eab308",
+        shapes: [
+          [
+            [0,1,1,0],
+            [0,1,1,0],
+            [0,0,0,0],
+            [0,0,0,0],
+          ],
+        ],
+      },
+      T: {
+        color: "#a855f7",
+        shapes: [
+          [
+            [0,1,0,0],
+            [1,1,1,0],
+            [0,0,0,0],
+            [0,0,0,0],
+          ],
+          [
+            [0,1,0,0],
+            [0,1,1,0],
+            [0,1,0,0],
+            [0,0,0,0],
+          ],
+          [
+            [0,0,0,0],
+            [1,1,1,0],
+            [0,1,0,0],
+            [0,0,0,0],
+          ],
+          [
+            [0,1,0,0],
+            [1,1,0,0],
+            [0,1,0,0],
+            [0,0,0,0],
+          ],
+        ],
+      },
+      S: {
+        color: "#22c55e",
+        shapes: [
+          [
+            [0,1,1,0],
+            [1,1,0,0],
+            [0,0,0,0],
+            [0,0,0,0],
+          ],
+          [
+            [0,1,0,0],
+            [0,1,1,0],
+            [0,0,1,0],
+            [0,0,0,0],
+          ],
+        ],
+      },
+      Z: {
+        color: "#f97316",
+        shapes: [
+          [
+            [1,1,0,0],
+            [0,1,1,0],
+            [0,0,0,0],
+            [0,0,0,0],
+          ],
+          [
+            [0,0,1,0],
+            [0,1,1,0],
+            [0,1,0,0],
+            [0,0,0,0],
+          ],
+        ],
+      },
+      J: {
+        color: "#3b82f6",
+        shapes: [
+          [
+            [1,0,0,0],
+            [1,1,1,0],
+            [0,0,0,0],
+            [0,0,0,0],
+          ],
+          [
+            [0,1,1,0],
+            [0,1,0,0],
+            [0,1,0,0],
+            [0,0,0,0],
+          ],
+          [
+            [0,0,0,0],
+            [1,1,1,0],
+            [0,0,1,0],
+            [0,0,0,0],
+          ],
+          [
+            [0,1,0,0],
+            [0,1,0,0],
+            [1,1,0,0],
+            [0,0,0,0],
+          ],
+        ],
+      },
+      L: {
+        color: "#fb923c",
+        shapes: [
+          [
+            [0,0,1,0],
+            [1,1,1,0],
+            [0,0,0,0],
+            [0,0,0,0],
+          ],
+          [
+            [0,1,0,0],
+            [0,1,0,0],
+            [0,1,1,0],
+            [0,0,0,0],
+          ],
+          [
+            [0,0,0,0],
+            [1,1,1,0],
+            [1,0,0,0],
+            [0,0,0,0],
+          ],
+          [
+            [1,1,0,0],
+            [0,1,0,0],
+            [0,1,0,0],
+            [0,0,0,0],
+          ],
+        ],
+      },
+    };
+
+    const TETROMINO_TYPES = Object.keys(TETROMINOS);
+
+    function createBoard() {
+      const b = [];
+      for (let y = 0; y < ROWS; y++) {
+        const row = new Array(COLS).fill(null);
+        b.push(row);
+      }
+      return b;
+    }
+
+    function randomTetromino() {
+      const type = TETROMINO_TYPES[Math.floor(Math.random() * TETROMINO_TYPES.length)];
+      const def = TETROMINOS[type];
+      return {
+        type,
+        rotation: 0,
+        x: 3,
+        y: -1, // 少し上から
+        color: def.color,
+      };
+    }
+
+    function getShape(piece) {
+      const def = TETROMINOS[piece.type];
+      const shapes = def.shapes;
+      return shapes[piece.rotation % shapes.length];
+    }
+
+    function isValidPosition(piece, offsetX = 0, offsetY = 0, rotationDelta = 0) {
+      const test = {
+        ...piece,
+        x: piece.x + offsetX,
+        y: piece.y + offsetY,
+        rotation: piece.rotation + rotationDelta,
+      };
+      const shape = getShape(test);
+
+      for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 4; col++) {
+          if (!shape[row][col]) continue;
+          const x = test.x + col;
+          const y = test.y + row;
+          if (x < 0 || x >= COLS || y >= ROWS) {
+            return false;
+          }
+          if (y >= 0 && board[y][x]) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    function mergePiece(piece) {
+      const shape = getShape(piece);
+      for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 4; col++) {
+          if (!shape[row][col]) continue;
+          const x = piece.x + col;
+          const y = piece.y + row;
+          if (y >= 0 && y < ROWS && x >= 0 && x < COLS) {
+            board[y][x] = piece.color;
+          }
+        }
+      }
+    }
+
+    function clearLines() {
+      let lines = 0;
+      for (let y = ROWS - 1; y >= 0; y--) {
+        if (board[y].every((cell) => cell)) {
+          board.splice(y, 1);
+          board.unshift(new Array(COLS).fill(null));
+          lines++;
+          y++; // 同じ行をもう一度確認
+        }
+      }
+
+      if (lines > 0) {
+        totalLines += lines;
+        // スコア：消したライン＋コンボちょいボーナス
+        combo++;
+        const base = [0, 100, 300, 500, 800][lines] || 1000;
+        score += base + combo * 20;
+        // ちょっとだけスピードアップ
+        dropInterval = Math.max(200, dropInterval - lines * 15);
+
+        linesEl.textContent = String(totalLines);
+        scoreEl.textContent = String(score);
+      } else {
+        combo = 0;
+      }
+    }
+
+    function hardDrop() {
+      if (!current) return;
+      while (isValidPosition(current, 0, 1, 0)) {
+        current.y++;
+      }
+      mergePiece(current);
+      clearLines();
+      spawnNewPiece();
+    }
+
+    function softDrop() {
+      if (!current) return;
+      if (isValidPosition(current, 0, 1, 0)) {
+        current.y++;
+      } else {
+        mergePiece(current);
+        clearLines();
+        spawnNewPiece();
+      }
+    }
+
+    function spawnNewPiece() {
+      current = randomTetromino();
+      // もし最初から置けなければ、もう詰み状態だけど
+      // タイムアタックなのでそのまま時間切れまで続行
+      if (!isValidPosition(current, 0, 0, 0)) {
+        // 実質詰んでるので、動かせないけどゲーム自体はタイムアップまで続行
+      }
+    }
+
+    function drawCell(x, y, color) {
+      const px = x * BLOCK_SIZE;
+      const py = y * BLOCK_SIZE;
+      ctx.fillStyle = color;
+      ctx.fillRect(px, py, BLOCK_SIZE, BLOCK_SIZE);
+
+      // 内側のグラデ
+      const g = ctx.createLinearGradient(px, py, px, py + BLOCK_SIZE);
+      g.addColorStop(0, "rgba(248, 250, 252, 0.28)");
+      g.addColorStop(0.4, "rgba(248, 250, 252, 0.06)");
+      g.addColorStop(1, "rgba(15, 23, 42, 0.9)");
+      ctx.fillStyle = g;
+      ctx.fillRect(px + 1, py + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
+
+      // 枠線
+      ctx.strokeStyle = "rgba(15, 23, 42, 0.7)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px + 0.5, py + 0.5, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
+    }
+
+    function drawBoard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // グリッド背景
+      ctx.save();
+      ctx.strokeStyle = "rgba(15, 23, 42, 0.6)";
+      ctx.lineWidth = 0.5;
+      for (let x = 0; x <= COLS; x++) {
+        ctx.beginPath();
+        ctx.moveTo(x * BLOCK_SIZE + 0.5, 0);
+        ctx.lineTo(x * BLOCK_SIZE + 0.5, ROWS * BLOCK_SIZE);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= ROWS; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0, y * BLOCK_SIZE + 0.5);
+        ctx.lineTo(COLS * BLOCK_SIZE, y * BLOCK_SIZE + 0.5);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 固定ブロック
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          const color = board[y][x];
+          if (color) {
+            drawCell(x, y, color);
+          }
+        }
+      }
+
+      // 現在のピース
+      if (current) {
+        const shape = getShape(current);
+        for (let row = 0; row < 4; row++) {
+          for (let col = 0; col < 4; col++) {
+            if (!shape[row][col]) continue;
+            const x = current.x + col;
+            const y = current.y + row;
+            if (y >= 0) {
+              drawCell(x, y, current.color);
+            }
+          }
+        }
+      }
+    }
+
+    function updateTime() {
+      const now = performance.now();
+      elapsed = now - startTime;
+      const remain = Math.max(0, GAME_DURATION - elapsed);
+      timeEl.textContent = (remain / 1000).toFixed(1);
+
+      if (remain <= 0) {
+        endGame();
+      }
+    }
+
+    function gameLoop(timestamp) {
+      if (!isRunning) return;
+
+      if (!nextDropTime) {
+        nextDropTime = timestamp + dropInterval;
+      }
+
+      if (timestamp >= nextDropTime) {
+        softDrop();
+        nextDropTime = timestamp + dropInterval;
+      }
+
+      drawBoard();
+      animId = requestAnimationFrame(gameLoop);
+    }
+
+    function resetGameState() {
+      board = createBoard();
+      current = null;
+      totalLines = 0;
+      score = 0;
+      combo = 0;
+      dropInterval = 800;
+      linesEl.textContent = "0";
+      scoreEl.textContent = "0";
+      timeEl.textContent = (GAME_DURATION / 1000).toFixed(1);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBoard();
+    }
+
+    function startGame() {
+      resetGameState();
+      isRunning = true;
+      bgm.currentTime = 0;
+bgm.play().catch(() => {});
+      startBtn.textContent = "PLAYING…";
+      startBtn.disabled = true;
+      resultOverlay.classList.remove("show");
+
+      spawnNewPiece();
+      startTime = performance.now();
+      elapsed = 0;
+      if (timerId) clearInterval(timerId);
+      timerId = setInterval(updateTime, 100);
+
+      nextDropTime = 0;
+      if (animId) cancelAnimationFrame(animId);
+      animId = requestAnimationFrame(gameLoop);
+    }
+
+    function endGame() {
+      if (!isRunning) return;
+      isRunning = false;
+      startBtn.textContent = "▶ RESTART";
+      startBtn.disabled = false;
+      if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+      if (animId) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
+      bgm.pause();
+      bgm.currentTime = 0;
+      updateTime(); // 0.0 に揃える
+
+      resultLinesEl.textContent = String(totalLines);
+      resultScoreEl.textContent = String(score);
+      resultOverlay.classList.add("show");
+    }
+
+    // 操作系
+    function handleAction(action) {
+      if (!isRunning || !current) return;
+
+      switch (action) {
+        case "left":
+          if (isValidPosition(current, -1, 0, 0)) current.x--;
+          break;
+        case "right":
+          if (isValidPosition(current, 1, 0, 0)) current.x++;
+          break;
+        case "rotate":
+          if (isValidPosition(current, 0, 0, 1)) current.rotation++;
+          break;
+        case "drop":
+          if (isValidPosition(current, 0, 1, 0)) {
+            current.y++;
+          } else {
+            mergePiece(current);
+            clearLines();
+            spawnNewPiece();
+          }
+          break;
+        case "hardDrop":
+          hardDrop();
+          break;
+      }
+      drawBoard();
+    }
+
+    // ボタン
+    startBtn.addEventListener("click", startGame);
+    retryBtn.addEventListener("click", startGame);
+
+    document.querySelectorAll(".ctrl-btn").forEach((btn) => {
+      btn.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        const action = btn.dataset.action;
+        handleAction(action);
+      }, { passive: false });
+
+      btn.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        const action = btn.dataset.action;
+        handleAction(action);
+      });
+    });
+
+    // キーボード
+    window.addEventListener("keydown", (e) => {
+      if (!isRunning) return;
+
+      switch (e.key) {
+        case "ArrowLeft":
+          e.preventDefault();
+          handleAction("left");
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          handleAction("right");
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          handleAction("rotate");
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          handleAction("drop");
+          break;
+        case " ":
+          e.preventDefault();
+          handleAction("hardDrop");
+          break;
+      }
+    });
+
+    // 初期描画
+    resetGameState();
+  </script>
+</body>
+</html>
