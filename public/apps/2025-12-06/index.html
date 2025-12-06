@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>松村シンフォニー指揮者 - 12/6 シンフォニーの日</title>
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-soft: #02081a;
+      --accent: #fbbf24;
+      --accent-soft: rgba(251, 191, 36, 0.16);
+      --ink: #f9fafb;
+      --muted: #94a3b8;
+      --danger: #fb7185;
+      --intensity: 0.15;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at top,
+        rgba(248, 250, 252, var(--intensity)) 0,
+        #020617 55%);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: max(12px, env(safe-area-inset-top))
+               max(12px, env(safe-area-inset-right))
+               max(16px, env(safe-area-inset-bottom))
+               max(12px, env(safe-area-inset-left));
+      touch-action: none;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      margin: auto;
+      padding: 16px 14px 18px;
+      border-radius: 18px;
+      background: radial-gradient(circle at top, #020921 0, #020617 55%);
+      box-shadow:
+        0 18px 45px rgba(15, 23, 42, 0.8),
+        0 0 0 1px rgba(148, 163, 184, 0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #facc15, #f97316);
+      box-shadow: 0 0 8px rgba(250, 204, 21, 0.8);
+    }
+
+    h1 {
+      font-size: 17px;
+      line-height: 1.4;
+      letter-spacing: 0.03em;
+    }
+
+    .sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .screen {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .screen.is-active {
+      display: flex;
+    }
+
+    .card {
+      padding: 12px 12px 14px;
+      border-radius: 14px;
+      background: radial-gradient(circle at top,
+        rgba(15, 23, 42, 0.95),
+        rgba(15, 23, 42, 0.96));
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    .start-main {
+      display: grid;
+      grid-template-columns: auto 120px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .matsu-illust-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      border-radius: 14px;
+      overflow: hidden;
+      background: radial-gradient(circle at 30% 10%,
+        rgba(251, 191, 36, 0.18),
+        #020617 65%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .matsu-illust-inner {
+      position: relative;
+      width: 82%;
+      aspect-ratio: 3 / 4;
+      border-radius: 12px;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 0,
+        rgba(248, 250, 252, 0.12),
+        rgba(15, 23, 42, 1));
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 6px;
+      box-shadow:
+        0 18px 30px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(148, 163, 184, 0.3);
+    }
+
+    .matsu-illust {
+      max-width: 80%;
+      max-height: 90%;
+      object-fit: contain;
+      transform-origin: 50% 100%;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.1s;
+    }
+
+    .btn-primary {
+      background: radial-gradient(circle at 20% 0,
+        #facc15,
+        #f97316);
+      color: #111827;
+    }
+
+    .btn-ghost {
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--muted);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+    }
+
+    .btn-ghost.active {
+      color: white;
+      border-color: rgba(251, 191, 36, 0.7);
+    }
+
+    .btn-row {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    /* --- GAME AREA --- */
+
+   
+.timer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* ステージ本体 */
+.stage {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.7);
+}
+
+/* 上にかける暗幕 */
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top,
+    rgba(15,23,42,0.75),
+    rgba(15,23,42,0.35));
+  pointer-events: none;
+}
+
+/* 中身のレイアウト */
+.stage-inner {
+  position: relative;
+  z-index: 1;
+  min-height: 360px;                /* ← ステージの高さ */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 説明テキスト */
+.stage-caption {
+  margin-top: 12px;
+  margin-bottom: 12px;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* 指揮者ゾーン：下寄せで中央 */
+.conductor-wrap {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;            /* ↓に寄せる */
+  justify-content: center;
+  padding-bottom: 24px;             /* 足元の高さ調整 */
+}
+
+/* 指揮者 */
+.conductor {
+  width: 230px;                     /* 大きさ */
+  max-width: 80vw;
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 22px 34px rgba(0,0,0,0.95));
+}
+
+/* TAPボタン */
+.beat-row {
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.beat-indicator {
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 30% 20%,
+    rgba(251,191,36,0.1),
+    rgba(15,23,42,0.95));
+  box-shadow: 0 0 0 1px rgba(148,163,184,0.4);
+}
+
+.beat-indicator.is-hit {
+  box-shadow:
+    0 0 0 1px rgba(22,163,74,0.8),
+    0 0 30px rgba(22,163,74,0.7);
+}
+
+.beat-indicator.is-miss {
+  box-shadow:
+    0 0 0 1px rgba(248,113,113,0.85),
+    0 0 30px rgba(248,113,113,0.8);
+}
+  </style>
+</head>
+<body>
+  <main class="app">
+
+    <header>
+      <div>
+        <div class="badge"><span class="badge-dot"></span>12/6 シンフォニーの日</div>
+        <h1>シンフォニー松村</h1>
+        <p class="sub">指揮にあわせタップ！</p>
+      </div>
+      <button id="btn-bgm-toggle" class="btn btn-ghost active">BGM ON</button>
+    </header>
+
+    <!-- START -->
+    <section id="screen-start" class="screen is-active">
+      <div class="card">
+        <div class="start-main">
+          <div>
+            <p>12/6はシンフォニーの日。<br>松村の指揮にあわせてタップしよう！</p>
+          </div>
+          <div class="matsu-illust-wrap">
+            <div class="matsu-illust-inner">
+              <img id="matsu-start" class="matsu-illust" src="" alt="指揮者松村" />
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button id="btn-start" class="btn btn-primary">▶ PLAY</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- GAME -->
+    <section id="screen-game" class="screen">
+      <div class="card">
+        <div class="timer-row">
+          <div>
+            <div style="font-size:11px;color:var(--muted)">TIME</div>
+            <div id="time-text" style="font-size:16px;">94.0s</div>
+          </div>
+          <div style="flex:1;height:8px;border-radius:999px;background:#0f172a;overflow:hidden;">
+            <div id="time-bar"
+                 style="height:8px;background:linear-gradient(90deg,#22c55e,#eab308,#f97316,#ef4444);transform-origin:left;"></div>
+          </div>
+        </div>
+
+        <div class="stage">
+            <div class="stage-inner">
+              <div class="stage-caption">
+                松村の指揮にあわせてタップ！
+            </div>
+          
+              <div class="conductor-wrap">
+                <img id="matsu-game" class="conductor" src="" alt="指揮する松村" />
+              </div>
+          
+              <div class="beat-row">
+                <div id="beat" class="beat-indicator">
+                  <span style="font-size:13px;">TAP</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- ステージの下にステータス -->
+          <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:6px;">
+            GOOD:<span id="good-count">0</span>　MISS:<span id="miss-count">0</span>
+          </div>
+          
+          <div style="text-align:center;margin-top:6px;font-size:11px;">
+            VOL <span id="volume-text">20%</span>
+          </div>
+          
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULT -->
+    <section id="screen-result" class="screen">
+      <div class="card">
+        <h2 id="result-title" style="font-size:16px;font-weight:600;">結果</h2>
+        <p id="result-text" style="font-size:13px;color:var(--muted);margin-bottom:6px;"></p>
+
+        <p>GOOD <strong id="result-good">0</strong></p>
+        <p>MISS <strong id="result-miss">0</strong></p>
+        <p>成功率 <strong id="result-rate">0%</strong></p>
+        <p>最終音量 <strong id="result-volume">20%</strong></p>
+
+        <div class="btn-row">
+          <button id="btn-retry" class="btn btn-primary">▶ RETRY</button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module">
+    // ============================
+    // アセットヘルパー（Vercel対応）
+    // ============================
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p = "") => {
+      const clean = String(p).replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    // 指揮者ポーズ5枚
+    const POSES = [
+      asset("./assets/matsu_conductor_1.png"),
+      asset("./assets/matsu_conductor_2.png"),
+      asset("./assets/matsu_conductor_3.png"),
+      asset("./assets/matsu_conductor_4.png"),
+      asset("./assets/matsu_conductor_5.png"),
+    ];
+
+    // BGM(mp3)
+    const ASSETS = {
+      bgm: asset("./assets/bgm.mp3"),
+      hallBg: asset("./assets/hall_bg.png"),
+    };
+
+    const GAME_DURATION_MS = 94000;
+    const BPM = 87;
+    const BEAT_INTERVAL_MS = 60000 / BPM;
+
+    const screenStart = document.getElementById("screen-start");
+    const screenGame = document.getElementById("screen-game");
+    const screenResult = document.getElementById("screen-result");
+
+    const btnStart = document.getElementById("btn-start");
+    const btnRetry = document.getElementById("btn-retry");
+    const btnBgmToggle = document.getElementById("btn-bgm-toggle");
+
+    const matsuStart = document.getElementById("matsu-start");
+    const matsuGame = document.getElementById("matsu-game");
+    const stageEl = document.querySelector(".stage");
+
+    // ステージの背景画像を設定
+    if (stageEl) {
+      stageEl.style.backgroundImage = `url("${ASSETS.hallBg}")`;
+    }
+
+    const timeText = document.getElementById("time-text");
+    const timeBar = document.getElementById("time-bar");
+
+    const beatEl = document.getElementById("beat");
+    const goodCountEl = document.getElementById("good-count");
+    const missCountEl = document.getElementById("miss-count");
+    const volumeTextEl = document.getElementById("volume-text");
+
+    const resultTitleEl = document.getElementById("result-title");
+    const resultTextEl = document.getElementById("result-text");
+    const resultGoodEl = document.getElementById("result-good");
+    const resultMissEl = document.getElementById("result-miss");
+    const resultRateEl = document.getElementById("result-rate");
+    const resultVolumeEl = document.getElementById("result-volume");
+
+    let poseIndex = 0;
+    matsuStart.src = POSES[0];
+    matsuGame.src = POSES[0];
+
+    const bgm = new Audio(ASSETS.bgm);
+    bgm.loop = true;
+    bgm.volume = 0.2;
+
+    let bgmEnabled = true;
+    btnBgmToggle.addEventListener("click", () => {
+      bgmEnabled = !bgmEnabled;
+      bgm.muted = !bgmEnabled;
+      if (!bgmEnabled) {
+        btnBgmToggle.classList.remove("active");
+        btnBgmToggle.textContent = "BGM OFF";
+      } else {
+        btnBgmToggle.classList.add("active");
+        btnBgmToggle.textContent = "BGM ON";
+      }
+    });
+
+    let isRunning = false;
+    let startTime = 0;
+    let animId = null;
+    let beatTimerId = null;
+
+    let goodCount = 0;
+    let missCount = 0;
+
+    let beatStartedAtLeastOnce = false;
+    let cueActive = false;
+    let tappedThisBeat = false;
+
+    function showScreen(target) {
+      [screenStart, screenGame, screenResult].forEach(s => {
+        s.classList.toggle("is-active", s === target);
+      });
+    }
+
+    function resetStats() {
+      goodCount = 0;
+      missCount = 0;
+      goodCountEl.textContent = "0";
+      missCountEl.textContent = "0";
+      updateVolumeVisual(bgm.volume);
+    }
+
+    function updateVolumeVisual(v) {
+      const vol = Math.max(0.05, Math.min(1, v));
+      const percent = Math.round(vol * 100);
+      volumeTextEl.textContent = percent + "%";
+      const intensity = 0.08 + 0.35 * vol;
+      document.documentElement.style.setProperty("--intensity", intensity);
+    }
+
+    function nextBeat() {
+      if (!isRunning) return;
+
+      if (beatStartedAtLeastOnce && cueActive && !tappedThisBeat) {
+        registerMiss();
+      }
+
+      beatStartedAtLeastOnce = true;
+      cueActive = true;
+      tappedThisBeat = false;
+
+      poseIndex = (poseIndex + 1) % POSES.length;
+      matsuGame.src = POSES[poseIndex];
+
+      matsuGame.style.transform = "translateY(-4px)";
+      setTimeout(() => {
+        matsuGame.style.transform = "translateY(0)";
+      }, 120);
+
+      beatEl.classList.remove("is-hit", "is-miss");
+    }
+
+    function registerGood() {
+      goodCount++;
+      goodCountEl.textContent = goodCount;
+
+      bgm.volume = Math.min(1, bgm.volume + 0.1);
+      updateVolumeVisual(bgm.volume);
+
+      beatEl.classList.add("is-hit");
+    }
+
+    function registerMiss() {
+      missCount++;
+      missCountEl.textContent = missCount;
+
+      bgm.volume = Math.max(0.1, bgm.volume - 0.15);
+      updateVolumeVisual(bgm.volume);
+
+      beatEl.classList.add("is-miss");
+    }
+
+    function handleTap() {
+      if (!isRunning) return;
+      if (cueActive && !tappedThisBeat) {
+        tappedThisBeat = true;
+        cueActive = false;
+        registerGood();
+      }
+    }
+
+    function timerLoop(now) {
+      if (!isRunning) return;
+
+      const elapsed = now - startTime;
+      const remaining = Math.max(0, GAME_DURATION_MS - elapsed);
+
+      timeText.textContent = (remaining / 1000).toFixed(1) + "s";
+      timeBar.style.transform = `scaleX(${remaining / GAME_DURATION_MS})`;
+
+      if (remaining <= 0) {
+        endGame();
+        return;
+      }
+
+      animId = requestAnimationFrame(timerLoop);
+    }
+
+    function startGame() {
+      if (isRunning) return;
+      isRunning = true;
+
+      showScreen(screenGame);
+      resetStats();
+
+      poseIndex = 0;
+      matsuGame.src = POSES[0];
+
+      bgm.currentTime = 0;
+      bgm.volume = 0.2;
+      updateVolumeVisual(bgm.volume);
+      if (bgmEnabled) bgm.play().catch(()=>{});
+
+      beatStartedAtLeastOnce = false;
+      cueActive = false;
+
+      startTime = performance.now();
+      timeBar.style.transform = "scaleX(1)";
+      animId = requestAnimationFrame(timerLoop);
+
+      beatTimerId = setInterval(nextBeat, BEAT_INTERVAL_MS);
+      nextBeat();
+    }
+
+    function endGame() {
+      if (!isRunning) return;
+      isRunning = false;
+
+      if (animId) cancelAnimationFrame(animId);
+      if (beatTimerId) clearInterval(beatTimerId);
+
+      if (beatStartedAtLeastOnce && cueActive && !tappedThisBeat) {
+        registerMiss();
+      }
+
+      bgm.pause();
+      bgm.currentTime = 0;
+
+      const total = goodCount + missCount;
+      const rate = total > 0 ? Math.round((goodCount / total) * 100) : 0;
+      const finalVol = Math.round(bgm.volume * 100);
+
+      resultGoodEl.textContent = goodCount;
+      resultMissEl.textContent = missCount;
+      resultRateEl.textContent = rate + "%";
+      resultVolumeEl.textContent = finalVol + "%";
+
+      if (rate >= 80 && finalVol >= 80) {
+        resultTitleEl.textContent = "フルシンフォニー・松村マエストロ！";
+        resultTextEl.textContent = "息ぴったり。松村楽団が今日も会心の出来。";
+      } else if (rate >= 50) {
+        resultTitleEl.textContent = "なかなかの指揮ぶり";
+        resultTextEl.textContent = "もう少し合わせればホールが沸く！";
+      } else {
+        resultTitleEl.textContent = "リハーサルから出直し松村…";
+        resultTextEl.textContent = "テンポをつかめば一気に化ける。あと1回いこう。";
+      }
+
+      showScreen(screenResult);
+    }
+
+    btnStart.addEventListener("click", startGame);
+    btnRetry.addEventListener("click", startGame);
+
+    screenGame.addEventListener("pointerdown", handleTap);
+    window.addEventListener("keydown", (e) => {
+      if (!isRunning) return;
+      if (e.key === " " || e.key === "Enter") {
+        e.preventDefault();
+        handleTap();
+      }
+    });
+  </script>
+</body>
+</html>
