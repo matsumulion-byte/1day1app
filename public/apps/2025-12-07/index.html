@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta
     name="viewport"
-    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+    content="width=device-width,initial-scale=1,maximum-scale=1.0,minimum-scale=1.0,viewport-fit=cover,user-scalable=no"
   />
   <title>松村オーナメント・バランスツリー - 12/7 クリスマスツリーの日</title>
   <style>
@@ -22,6 +22,14 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      touch-action: manipulation;
+    }
+
+    html, body {
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     body {
@@ -853,6 +861,16 @@ function endGame() {
     overlayTitle.textContent = "松村オーナメントツリーへようこそ";
     overlayText.innerHTML =
       "指揮者松村、武士松村、ゾンビ松村…<br/>歴代松村たちをツリーにぶら下げよう。<br/>ただし、倒れたらゲームオーバー！";
+
+    // ダブルタップで拡大されないようにする
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (evt) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        evt.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, false);
   </script>
 </body>
 </html>
