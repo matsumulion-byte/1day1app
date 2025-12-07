@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+  />
+  <title>松村オーナメント・バランスツリー - 12/7 クリスマスツリーの日</title>
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-soft: #02081a;
+      --accent: #f97316;
+      --accent-soft: rgba(248, 171, 70, 0.18);
+      --danger: #fb7185;
+      --ink: #f9fafb;
+      --muted: #9ca3af;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, #0b1120 0, #020617 55%);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: env(safe-area-inset-top, 16px)
+        env(safe-area-inset-right, 16px)
+        env(safe-area-inset-bottom, 16px)
+        env(safe-area-inset-left, 16px);
+    }
+
+    .shell {
+      margin: auto;
+      width: 100%;
+      max-width: 480px;
+      background: linear-gradient(
+        145deg,
+        rgba(15, 23, 42, 0.96),
+        rgba(15, 23, 42, 0.88)
+      );
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      box-shadow:
+        0 24px 80px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(15, 23, 42, 0.8);
+      padding: 16px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    header h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    header h1 span.emoji {
+      font-size: 1.3rem;
+    }
+
+    header .sub {
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    #game-wrap {
+      background: radial-gradient(circle at top, #0f172a 0, #020617 70%);
+      border-radius: 20px;
+      padding: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #game-canvas {
+      width: 100%;
+      max-width: 100%;
+      border-radius: 16px;
+      background: linear-gradient(
+        180deg,
+        #020617 0,
+        #020617 55%,
+        #052e16 56%,
+        #166534 100%
+      );
+      touch-action: none;
+    }
+
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+    }
+
+    .hud-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .label {
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .value {
+      font-weight: 600;
+    }
+
+    .status-pill {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      font-size: 0.7rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .status-pill.safe {
+      border-color: rgba(52, 211, 153, 0.8);
+      color: #6ee7b7;
+    }
+
+    .status-pill.danger {
+      border-color: rgba(248, 113, 113, 0.9);
+      color: #fecaca;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .controls button {
+      flex: 1;
+      border-radius: 999px;
+      border: none;
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--ink);
+      box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: transform 0.08s ease, box-shadow 0.12s ease,
+        background 0.12s ease;
+    }
+
+    .controls button:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.9),
+        0 6px 18px rgba(15, 23, 42, 0.9);
+      background: rgba(30, 64, 175, 0.8);
+    }
+
+    .controls button.main {
+      background: radial-gradient(
+        circle at top left,
+        #f97316,
+        #ea580c 45%,
+        #9a3412 100%
+      );
+      box-shadow:
+        0 0 0 1px rgba(251, 146, 60, 0.9),
+        0 10px 28px rgba(248, 171, 70, 0.8);
+    }
+
+    .controls button.main:active {
+      background: radial-gradient(
+        circle at top left,
+        #fb923c,
+        #ea580c 45%,
+        #7c2d12 100%
+      );
+    }
+
+    .footer-text {
+      font-size: 0.7rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .footer-text strong {
+      color: #facc15;
+      font-weight: 600;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 8px;
+      border-radius: 16px;
+      background: radial-gradient(
+        circle at top,
+        rgba(15, 23, 42, 0.95),
+        rgba(15, 23, 42, 0.98)
+      );
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      gap: 10px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .overlay h2 {
+      font-size: 1rem;
+      margin-bottom: 2px;
+    }
+
+    .overlay p {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .overlay button {
+      margin-top: 4px;
+      border-radius: 999px;
+      border: none;
+      padding: 8px 18px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: radial-gradient(
+        circle at top left,
+        #22c55e,
+        #16a34a 50%,
+        #166534 100%
+      );
+      color: #f9fafb;
+      cursor: pointer;
+      box-shadow:
+        0 0 0 1px rgba(34, 197, 94, 0.9),
+        0 10px 30px rgba(22, 163, 74, 0.8);
+      transition: transform 0.08s ease, box-shadow 0.12s ease;
+    }
+
+    .overlay button:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow:
+        0 0 0 1px rgba(34, 197, 94, 1),
+        0 6px 20px rgba(21, 128, 61, 0.9);
+    }
+
+    @media (min-width: 540px) {
+      .shell {
+        padding: 18px 18px 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <h1>
+          <span class="emoji">🎄</span>
+          松村オーナメント・バランスツリー
+        </h1>
+        <div class="sub">12/7 クリスマスツリーの日 - 倒さずに何人ぶら下げられる？</div>
+      </div>
+    </header>
+
+    <section id="game-wrap">
+      <canvas id="game-canvas" width="360" height="520"></canvas>
+
+      <div class="overlay visible" id="overlay">
+        <h2 id="overlay-title">ツリーに松村を飾ろう</h2>
+        <p id="overlay-text">
+          歴代松村オールスターがオーナメントになって登場！<br />
+          左右に動かして、倒れないようにバランスよくぶら下げよう。
+        </p>
+        <button id="btn-start">▶ ゲームスタート</button>
+      </div>
+
+      <div class="hud">
+        <div class="hud-left">
+          <div>
+            <span class="label">吊るした松村</span>
+            <span class="value" id="score">0人</span>
+          </div>
+          <div>
+            <span class="label">ベスト</span>
+            <span class="value" id="best">0人</span>
+          </div>
+        </div>
+        <div>
+          <span class="status-pill safe" id="status-pill">
+            <span>🟢</span><span id="status-text">安定しています</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="btn-left" aria-label="左へ">
+          ← 左
+        </button>
+        <button id="btn-hang" class="main">
+          吊るす！
+        </button>
+        <button id="btn-right" aria-label="右へ">
+          右 →
+        </button>
+      </div>
+    </section>
+
+    <p class="footer-text">
+      画面をドラッグしても松村の位置を動かせます。<br />
+      PCの方は <strong>← → キー</strong> で移動、
+      <strong>スペース / Enter</strong> で吊るせます。
+    </p>
+  </main>
+
+  <script type="module">
+    // Vercel用のパス解決ヘルパー
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    // 歴代松村たちのスプライト
+    const ORNAMENT_SPRITES = [
+      asset("./assets/shiki.png"),   // 指揮者松村
+      asset("./assets/bushi.png"),   // 武士松村
+      asset("./assets/zombie.png"),  // ゾンビ松村
+      asset("./assets/jiyu.png"),    // 自由の松村
+      asset("./assets/yokai.png"),   // 妖怪松村
+      asset("./assets/kimono.png"),  // 着物松村
+      asset("./assets/bike.png"),    // チャリ松村
+      asset("./assets/space.png"),   // 宇宙松村
+    ];
+// BGM 読み込み（1日1アプリ用の asset() を使用）
+const bgm = new Audio(asset("./assets/bgm.mp3"));
+bgm.loop = true;
+bgm.volume = 0.8; // 音量は好みで調整（0.0〜1.0）
+
+    // ツリー画像（自作の木の画像） ./assets/tree.png を想定
+    const TREE_IMG_SRC = asset("./assets/tree.png");
+    const treeImg = new Image();
+    let treeImgLoaded = false;
+    treeImg.onload = () => {
+      treeImgLoaded = true;
+    };
+    treeImg.src = TREE_IMG_SRC;
+
+    // オーナメント画像プリロード
+    const ornamentImages = [];
+    let imagesLoaded = 0;
+    let imagesReady = false;
+
+    ORNAMENT_SPRITES.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        imagesLoaded++;
+        if (imagesLoaded >= ORNAMENT_SPRITES.length) {
+          imagesReady = true;
+        }
+      };
+      ornamentImages.push(img);
+    });
+
+    const canvas = document.getElementById("game-canvas");
+    const ctx = canvas.getContext("2d");
+
+    // DPR対応
+    const dpr = window.devicePixelRatio || 1;
+    const baseWidth = canvas.width;
+    const baseHeight = canvas.height;
+    canvas.width = baseWidth * dpr;
+    canvas.height = baseHeight * dpr;
+    ctx.scale(dpr, dpr);
+
+    // UI要素
+    const overlay = document.getElementById("overlay");
+    const overlayTitle = document.getElementById("overlay-title");
+    const overlayText = document.getElementById("overlay-text");
+    const btnStart = document.getElementById("btn-start");
+    const btnLeft = document.getElementById("btn-left");
+    const btnRight = document.getElementById("btn-right");
+    const btnHang = document.getElementById("btn-hang");
+    const scoreEl = document.getElementById("score");
+    const bestEl = document.getElementById("best");
+    const statusPill = document.getElementById("status-pill");
+    const statusText = document.getElementById("status-text");
+
+    // ゲーム定数
+    const PIVOT_X = baseWidth / 2;
+    const PIVOT_Y = baseHeight * 0.78;
+    const TREE_HEIGHT = 260;
+    const TREE_WIDTH = 220;
+
+    // オーナメントの基本サイズ
+    const BASE_ORNAMENT_SIZE = 60;
+    const MOVE_STEP = 22;
+
+    // ツリーの左右、可動範囲
+    const LEFT_LIMIT = PIVOT_X - TREE_WIDTH * 0.5;
+    const RIGHT_LIMIT = PIVOT_X + TREE_WIDTH * 0.5;
+
+    // 枝フック（真ん中なし）
+    const HOOK_COLUMNS = [-0.9, -0.55, -0.25, 0.25, 0.55, 0.9];
+    const HOOK_POSITIONS = HOOK_COLUMNS.map(
+      (c) => PIVOT_X + c * (TREE_WIDTH / 2)
+    );
+
+    const BASE_MASS = 8;
+    const MAX_TILT_RAD = 0.65;
+    // 実効重心ズレがこれを超えたら倒れる（ちょっと厳しめ）
+    const FAIL_OFFSET_X = 30;
+    // ズレ → 角度変換（小さいほどよく揺れる）
+    const BALANCE_SCALE = 100;
+
+    // 状態
+    let gameState = "ready";
+    let score = 0;
+    let best = Number(localStorage.getItem("matsuTreeBest") || "0");
+    bestEl.textContent = `${best}人`;
+
+    let placedOrnaments = [];
+    let activeOrnament = null;
+
+    let currentAngle = 0;
+    let targetAngle = 0;
+
+    let isPointerDown = false;
+
+    // ユーティリティ
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+    function snapToHook(x) {
+      let best = HOOK_POSITIONS[0];
+      let bestDist = Math.abs(x - best);
+      for (let i = 1; i < HOOK_POSITIONS.length; i++) {
+        const fx = HOOK_POSITIONS[i];
+        const d = Math.abs(x - fx);
+        if (d < bestDist) {
+          best = fx;
+          bestDist = d;
+        }
+      }
+      return best;
+    }
+
+    function randomOrnamentImage() {
+      if (!imagesReady) {
+        return ornamentImages[0] || null;
+      }
+      const idx = Math.floor(Math.random() * ornamentImages.length);
+      return ornamentImages[idx];
+    }
+
+    function createNewActiveOrnament() {
+      const img = randomOrnamentImage();
+      const size = BASE_ORNAMENT_SIZE * (0.85 + Math.random() * 0.4);
+      const weight = 1 * (size / BASE_ORNAMENT_SIZE);
+
+      activeOrnament = {
+        img,
+        x: PIVOT_X,
+        y: baseHeight * 0.18,
+        size,
+        weight,
+        wobblePhase: Math.random() * Math.PI * 2,
+      };
+    }
+
+    function resetGame() {
+      score = 0;
+      placedOrnaments = [];
+      scoreEl.textContent = "0人";
+      currentAngle = 0;
+      targetAngle = 0;
+      updateStatus("safe");
+      createNewActiveOrnament();
+    }
+
+    function updateStatus(mode) {
+      if (mode === "danger") {
+        statusPill.classList.remove("safe");
+        statusPill.classList.add("danger");
+        statusText.textContent = "かなり傾いています…！";
+      } else {
+        statusPill.classList.remove("danger");
+        statusPill.classList.add("safe");
+        statusText.textContent = "安定しています";
+      }
+    }
+
+    function startGame() {
+  if (gameState === "playing") return;
+
+  gameState = "playing";
+  overlay.classList.remove("visible");
+  resetGame();
+
+  // ▶ BGM 再生（ユーザー操作後なので自動再生OK）
+  bgm.currentTime = 0;
+  bgm.play().catch(()=>{});
+}
+
+
+function endGame() {
+  if (gameState !== "playing") return;
+  gameState = "gameover";
+
+  // ◀ BGM 停止
+  bgm.pause();
+
+  if (score > best) {
+    best = score;
+    localStorage.setItem("matsuTreeBest", String(best));
+    bestEl.textContent = `${best}人`;
+  }
+
+  overlayTitle.textContent = "ツリーが倒れてしまった！";
+  overlayText.innerHTML = `今回は <strong>${score}人</strong> の松村を飾りました。<br/>もう一度バランスに挑戦しよう。`;
+  btnStart.textContent = "⟳ もう一度遊ぶ";
+  overlay.classList.add("visible");
+}
+
+    function moveActive(dx) {
+      if (gameState !== "playing" || !activeOrnament) return;
+      activeOrnament.x = clamp(
+        activeOrnament.x + dx,
+        LEFT_LIMIT,
+        RIGHT_LIMIT
+      );
+    }
+
+    function handlePointerMove(evt) {
+      if (!isPointerDown || gameState !== "playing" || !activeOrnament) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = evt.clientX - rect.left;
+      activeOrnament.x = clamp(x, LEFT_LIMIT, RIGHT_LIMIT);
+    }
+
+    function placeOrnament() {
+      if (gameState !== "playing" || !activeOrnament) return;
+
+      // ツリーの中腹〜上部くらいのランダム位置にぶら下げる
+      const minOffset = TREE_HEIGHT * 0.25;
+      const maxOffset = TREE_HEIGHT * 0.9;
+      const offset = minOffset + Math.random() * (maxOffset - minOffset);
+      const dropY = PIVOT_Y - offset;
+
+      // いちばん近い枝フックにスナップ
+      const snappedX = snapToHook(activeOrnament.x);
+      activeOrnament.x = snappedX;
+
+      const localX = snappedX - PIVOT_X;
+      const localY = dropY - PIVOT_Y;
+
+      placedOrnaments.push({
+        img: activeOrnament.img,
+        localX,
+        localY,
+        size: activeOrnament.size,
+        weight: activeOrnament.weight,
+      });
+
+      score += 1;
+      scoreEl.textContent = `${score}人`;
+
+      // 重心計算
+      let totalWeight = BASE_MASS;
+      let sumX = 0;
+
+      placedOrnaments.forEach((o) => {
+        totalWeight += o.weight;
+        sumX += o.weight * o.localX;
+      });
+
+      const offsetX = sumX / totalWeight;
+
+      // 「オーナメントが増えるほど倒れやすくなる」係数（ちょい強め）
+      const tiltFactor = 1 + placedOrnaments.length * 0.3;
+      const effectiveOffsetX = offsetX * tiltFactor;
+
+      let angle = effectiveOffsetX / BALANCE_SCALE;
+      angle = clamp(angle, -MAX_TILT_RAD, MAX_TILT_RAD);
+      targetAngle = angle;
+
+      if (Math.abs(effectiveOffsetX) > FAIL_OFFSET_X) {
+        updateStatus("danger");
+        targetAngle =
+          effectiveOffsetX > 0
+            ? MAX_TILT_RAD * 1.1
+            : -MAX_TILT_RAD * 1.1;
+        setTimeout(() => endGame(), 380);
+      } else {
+        if (Math.abs(effectiveOffsetX) > FAIL_OFFSET_X * 0.7) {
+          updateStatus("danger");
+        } else {
+          updateStatus("safe");
+        }
+        createNewActiveOrnament();
+      }
+    }
+
+    // 背景
+    function drawBackground() {
+      const g = ctx.createLinearGradient(0, 0, 0, baseHeight);
+      g.addColorStop(0, "#020617");
+      g.addColorStop(0.55, "#020617");
+      g.addColorStop(0.56, "#052e16");
+      g.addColorStop(1, "#166534");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, baseWidth, baseHeight);
+
+      ctx.fillStyle = "rgba(248, 250, 252, 0.9)";
+      for (let i = 0; i < 30; i++) {
+        const x = (i * 79) % baseWidth;
+        const y = 20 + ((i * 53) % (baseHeight * 0.4));
+        const r = (i % 3) === 0 ? 1.2 : 0.7;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "rgba(226, 232, 240, 0.45)";
+      for (let i = 0; i < 26; i++) {
+        const x = (i * 41 + 23) % baseWidth;
+        const y = baseHeight * 0.45 + ((i * 67) % (baseHeight * 0.25));
+        ctx.beginPath();
+        ctx.arc(x, y, 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "#052e16";
+      ctx.fillRect(0, PIVOT_Y + 8, baseWidth, baseHeight - PIVOT_Y - 8);
+      ctx.fillStyle = "#022c22";
+      ctx.beginPath();
+      ctx.arc(
+        baseWidth / 2,
+        PIVOT_Y + 18,
+        baseWidth * 0.6,
+        Math.PI,
+        0
+      );
+      ctx.fill();
+    }
+
+    // ツリー & 吊るされた松村
+    function drawTreeAndOrnaments() {
+      ctx.save();
+      ctx.translate(PIVOT_X, PIVOT_Y);
+      ctx.rotate(currentAngle);
+
+      if (treeImgLoaded) {
+        const imgW = TREE_WIDTH;
+        const imgH = TREE_HEIGHT + 60;
+        ctx.drawImage(
+          treeImg,
+          -imgW / 2,
+          -imgH,
+          imgW,
+          imgH
+        );
+      } else {
+        // フォールバック
+        ctx.fillStyle = "#14532d";
+        ctx.beginPath();
+        ctx.moveTo(0, -TREE_HEIGHT);
+        ctx.lineTo(-TREE_WIDTH / 2, 0);
+        ctx.lineTo(TREE_WIDTH / 2, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#16a34a";
+        const tiers = 3;
+        for (let i = 0; i < tiers; i++) {
+          const t = i / tiers;
+          const w = TREE_WIDTH * (0.7 - t * 0.25);
+          const y = -TREE_HEIGHT * (0.7 - t * 0.25);
+          ctx.beginPath();
+          ctx.moveTo(0, y - 18);
+          ctx.lineTo(-w / 2, y + 12);
+          ctx.lineTo(w / 2, y + 12);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        ctx.fillStyle = "#78350f";
+        ctx.fillRect(-12, 0, 24, 40);
+      }
+
+      // ★ 上の星はなし ★
+
+      placedOrnaments.forEach((o) => {
+        if (!o.img) return;
+        const size = o.size;
+        const x = o.localX;
+        const y = o.localY;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.shadowColor = "rgba(15,23,42,0.9)";
+        ctx.shadowBlur = 6;
+        ctx.drawImage(
+          o.img,
+          -size / 2,
+          -size / 2,
+          size,
+          size
+        );
+        ctx.restore();
+      });
+
+      ctx.restore();
+    }
+
+    // 落下中の松村
+    function drawActiveOrnament(time) {
+      if (!activeOrnament || !activeOrnament.img) return;
+      const { x, y, size } = activeOrnament;
+
+      const t = time * 0.004 + activeOrnament.wobblePhase;
+      const bob = Math.sin(t) * 6;
+
+      ctx.save();
+      ctx.translate(x, y + bob);
+      ctx.shadowColor = "rgba(15,23,42,0.9)";
+      ctx.shadowBlur = 8;
+      ctx.drawImage(
+        activeOrnament.img,
+        -size / 2,
+        -size / 2,
+        size,
+        size
+      );
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.5)";
+      ctx.setLineDash([4, 4]);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, y + size / 2);
+      ctx.lineTo(
+        x,
+        PIVOT_Y - TREE_HEIGHT * 0.1
+      );
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function loop(timestamp) {
+      requestAnimationFrame(loop);
+
+      currentAngle += (targetAngle - currentAngle) * 0.08;
+
+      // 見た目用の小さな揺れ（オーナメント増えるほどグラグラ）
+      const t = timestamp * 0.001;
+      const wobbleBase = gameState === "playing" ? 0.07 : 0.035;
+      const wobbleScale = 1 + placedOrnaments.length * 0.04;
+      const wobble = Math.sin(t * 1.9) * wobbleBase * wobbleScale;
+
+      const savedAngle = currentAngle;
+      currentAngle = currentAngle + wobble;
+
+      drawBackground();
+      drawTreeAndOrnaments();
+      if (gameState !== "ready") {
+        drawActiveOrnament(timestamp);
+      }
+
+      currentAngle = savedAngle;
+
+      ctx.save();
+      ctx.fillStyle = "rgba(15,23,42,0.45)";
+      ctx.font = "700 11px system-ui, -apple-system, BlinkMacSystemFont";
+      ctx.textAlign = "center";
+      ctx.fillText("MATSUMURA TREE", baseWidth / 2, PIVOT_Y + 52);
+      ctx.restore();
+    }
+
+    requestAnimationFrame(loop);
+
+    // イベント
+    btnStart.addEventListener("click", () => {
+      startGame();
+    });
+
+    btnLeft.addEventListener("click", () => moveActive(-MOVE_STEP));
+    btnRight.addEventListener("click", () => moveActive(MOVE_STEP));
+    btnHang.addEventListener("click", () => placeOrnament());
+
+    canvas.addEventListener("pointerdown", (evt) => {
+      isPointerDown = true;
+      handlePointerMove(evt);
+    });
+
+    canvas.addEventListener("pointermove", handlePointerMove);
+
+    window.addEventListener("pointerup", () => {
+      isPointerDown = false;
+    });
+
+    window.addEventListener("keydown", (evt) => {
+      if (evt.key === "ArrowLeft") {
+        evt.preventDefault();
+        moveActive(-MOVE_STEP);
+      } else if (evt.key === "ArrowRight") {
+        evt.preventDefault();
+        moveActive(MOVE_STEP);
+      } else if (evt.key === " " || evt.key === "Enter") {
+        evt.preventDefault();
+        placeOrnament();
+      }
+    });
+
+    overlayTitle.textContent = "松村オーナメントツリーへようこそ";
+    overlayText.innerHTML =
+      "指揮者松村、武士松村、ゾンビ松村…<br/>歴代松村たちをツリーにぶら下げよう。<br/>ただし、倒れたらゲームオーバー！";
+  </script>
+</body>
+</html>
