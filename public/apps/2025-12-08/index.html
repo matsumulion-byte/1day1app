@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+  />
+  <title>松村モザイクカメラ - 12/8</title>
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-soft: #02081a;
+      --accent: #f97316;
+      --accent-soft: rgba(248, 171, 70, 0.16);
+      --ink: #f9fafb;
+      --muted: #9ca3af;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: radial-gradient(circle at top, #0b1120 0, #020617 55%);
+      color: var(--ink);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 960px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .card {
+      background: linear-gradient(135deg, #020617 0, #02081a 60%, #030712 100%);
+      border-radius: 16px;
+      padding: 12px 14px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      box-shadow:
+        0 20px 40px rgba(15, 23, 42, 0.75),
+        0 0 0 1px rgba(15, 23, 42, 0.9);
+    }
+
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .file-input-label {
+      position: relative;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #111827;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(248, 113, 22, 0.35);
+      border: 1px solid rgba(124, 45, 18, 0.7);
+      white-space: nowrap;
+    }
+
+    .file-input-label span.icon {
+      font-size: 14px;
+    }
+
+    .file-input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .slider-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+    }
+
+    .slider-wrap label {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .slider-wrap input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 120px;
+      height: 4px;
+      border-radius: 999px;
+      background: #020617;
+      outline: none;
+    }
+
+    .slider-wrap input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: var(--accent);
+      border: 2px solid #111827;
+      box-shadow: 0 0 0 1px rgba(248, 113, 22, 0.5);
+      cursor: pointer;
+    }
+
+    .slider-wrap input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: var(--accent);
+      border: 2px solid #111827;
+      box-shadow: 0 0 0 1px rgba(248, 113, 22, 0.5);
+      cursor: pointer;
+    }
+
+    .slider-value {
+      font-size: 11px;
+      color: var(--muted);
+      min-width: 2.5em;
+      text-align: right;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+
+    .canvas-wrap {
+      margin-top: 8px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #020617;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      position: relative;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      image-rendering: pixelated;
+    }
+
+    .placeholder {
+      padding: 48px 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .actions {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--ink);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--accent-soft);
+      border-color: rgba(249, 115, 22, 0.9);
+      color: var(--accent);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #f97316 0, #b45309 60%, #111827 100%);
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9);
+    }
+
+    @media (max-width: 640px) {
+      .card {
+        padding: 10px 10px 12px;
+      }
+      .title {
+        font-size: 18px;
+      }
+      .control-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .actions {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="badge">
+        <span class="badge-dot"></span>
+        <span>1日1アプリ / 2025-12-08</span>
+      </div>
+      <div class="title">松村モザイクカメラ</div>
+      <p class="subtitle">
+        写真ぜんぶ、松村で埋めつくすカメラ。<br />
+        画像を選ぶと、ランダムなポーズの松村たちがモザイクみたいに並びます。
+      </p>
+    </header>
+
+    <section class="card">
+      <div class="control-row">
+        <label class="file-input-label">
+          <span class="icon">📷</span>
+          <span>写真を選ぶ / 撮る</span>
+          <input
+            id="file-input"
+            class="file-input"
+            type="file"
+            accept="image/*"
+            capture="environment"
+          />
+        </label>
+
+        <div class="slider-wrap">
+          <label for="block-size">ブロック</label>
+          <input
+            id="block-size"
+            type="range"
+            min="8"
+            max="32"
+            step="2"
+            value="6"
+          />
+          <span class="slider-value" id="block-size-label">24px</span>
+        </div>
+      </div>
+
+      <p class="hint">
+        <code>/assets</code> に背景透過の松村PNGを複数枚置いておくと、
+        ブロックごとにランダムな松村が使われます。<br />
+        ブロックを小さくすると細かく、大きくすると大胆なモザイクになります。
+      </p>
+
+      <div class="canvas-wrap">
+        <canvas id="canvas"></canvas>
+        <div id="placeholder" class="placeholder">
+          まだ画像がありません。<br />「写真を選ぶ」から好きな画像を読み込んでください。
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="reroll" class="btn" disabled>松村シャッフル</button>
+        <button id="save" class="btn btn-primary" disabled>
+          📥 画像として保存
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    console.log("script loaded");
+  
+    // Vercel用のパス解決ヘルパー
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+  
+    // 松村画像（assets フォルダに置く）
+    const MATSU_SOURCES = [
+      asset("./assets/matsu1.png"),
+      asset("./assets/matsu2.png"),
+      asset("./assets/matsu3.png"),
+      asset("./assets/matsu4.png"),
+      asset("./assets/matsu5.png"),
+      asset("./assets/matsu6.png"),
+    ];
+  
+    const matsuImgs = MATSU_SOURCES.map((src) => {
+      const img = new Image();
+      img.src = src;
+      return img;
+    });
+  
+    let matsuReady = false;
+    let matsuLoadedCount = 0;
+    matsuImgs.forEach((img) => {
+      img.onload = () => {
+        matsuLoadedCount++;
+        if (matsuLoadedCount === matsuImgs.length) {
+          matsuReady = true;
+          console.log("all matsu loaded");
+        }
+      };
+    });
+  
+    const fileInput = document.getElementById("file-input");
+    const blockSizeSlider = document.getElementById("block-size");
+    const blockSizeLabel = document.getElementById("block-size-label");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const placeholder = document.getElementById("placeholder");
+    const rerollBtn = document.getElementById("reroll");
+    const saveBtn = document.getElementById("save");
+  
+    // 元画像用キャンバス
+    const sourceCanvas = document.createElement("canvas");
+    const sourceCtx = sourceCanvas.getContext("2d");
+  
+    // 1ブロック分の合成用キャンバス
+    const tileCanvas = document.createElement("canvas");
+    const tileCtx = tileCanvas.getContext("2d");
+  
+    let hasImage = false;
+  
+    const MAX_WIDTH = 900;
+    const MAX_HEIGHT = 900;
+  
+    function updateBlockLabel() {
+      const v = Number(blockSizeSlider.value);
+      blockSizeLabel.textContent = v + "px";
+    }
+  
+    updateBlockLabel();
+  
+    blockSizeSlider.addEventListener("input", () => {
+      updateBlockLabel();
+      if (hasImage) drawMosaic();
+    });
+  
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) {
+        console.log("no file");
+        return;
+      }
+      console.log("file selected:", file.name, file.type);
+  
+      const img = new Image();
+      img.onload = () => {
+        console.log("image loaded:", img.width, img.height);
+  
+        const scale = Math.min(
+          MAX_WIDTH / img.width,
+          MAX_HEIGHT / img.height,
+          1
+        );
+        const sw = Math.round(img.width * scale);
+        const sh = Math.round(img.height * scale);
+  
+        sourceCanvas.width = sw;
+        sourceCanvas.height = sh;
+        sourceCtx.clearRect(0, 0, sw, sh);
+        sourceCtx.drawImage(img, 0, 0, sw, sh);
+  
+        canvas.width = sw;
+        canvas.height = sh;
+  
+        hasImage = true;
+        placeholder.style.display = "none";
+        rerollBtn.disabled = false;
+        saveBtn.disabled = false;
+  
+        drawMosaic();
+      };
+      img.onerror = (err) => {
+        console.error("image load error", err);
+        alert("画像の読み込みに失敗しました。PNG/JPEGで試してみてください。");
+      };
+      img.src = URL.createObjectURL(file);
+      fileInput.value = "";
+    });
+  
+    rerollBtn.addEventListener("click", () => {
+      if (!hasImage) return;
+      drawMosaic();
+    });
+  
+    saveBtn.addEventListener("click", () => {
+      if (!hasImage) return;
+      const link = document.createElement("a");
+      link.download = "matsu_mosaic.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    });
+  
+    function drawMosaic() {
+  if (!hasImage) return;
+  const w = sourceCanvas.width;
+  const h = sourceCanvas.height;
+  const block = Number(blockSizeSlider.value);
+
+  console.log("drawMosaic", { w, h, block });
+
+  const imageData = sourceCtx.getImageData(0, 0, w, h).data;
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, w, h);
+
+  const hasAnyMatsu = matsuReady && matsuImgs.length > 0;
+  const fallbackMatsu = matsuImgs[0];
+
+  // 1ブロック用のタイルキャンバス（ここに合成してから本体に貼る）
+  tileCanvas.width = block;
+  tileCanvas.height = block;
+
+  for (let y = 0; y < h; y += block) {
+    for (let x = 0; x < w; x += block) {
+      let r = 0, g = 0, b = 0, count = 0;
+
+      for (let dy = 0; dy < block; dy++) {
+        const yy = y + dy;
+        if (yy >= h) break;
+        for (let dx = 0; dx < block; dx++) {
+          const xx = x + dx;
+          if (xx >= w) break;
+          const idx = (yy * w + xx) * 4;
+          r += imageData[idx];
+          g += imageData[idx + 1];
+          b += imageData[idx + 2];
+          count++;
+        }
+      }
+
+      if (count === 0) continue;
+
+      r /= count;
+      g /= count;
+      b /= count;
+
+      const color = `rgb(${r}, ${g}, ${b})`;
+      const matsu = hasAnyMatsu
+        ? matsuImgs[Math.floor(Math.random() * matsuImgs.length)]
+        : fallbackMatsu;
+
+      // ★ タイルキャンバスを使う
+      tileCtx.clearRect(0, 0, block, block);
+
+      // ① 松村をそのまま描く
+      tileCtx.globalCompositeOperation = "source-over";
+      tileCtx.drawImage(matsu, 0, 0, block, block);
+
+      // ② 上から色を乗算する（松村の濃淡を残しつつ色づけ）
+      tileCtx.globalCompositeOperation = "multiply";
+      tileCtx.fillStyle = color;
+      tileCtx.fillRect(0, 0, block, block);
+
+      tileCtx.globalCompositeOperation = "source-over";
+
+      // ③ 出来上がったタイルを本キャンバスに配置
+      ctx.drawImage(tileCanvas, x, y);
+    }
+  }
+}
+
+  </script>
+  
+  
+</body>
+</html>
