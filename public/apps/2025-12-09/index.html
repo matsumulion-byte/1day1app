@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+  />
+  <title>松村ジャンプコンビ - 12/9</title>
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-soft: #02081a;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.16);
+      --danger: #fb7185;
+      --ink: #f9fafb;
+      --muted: #9ca3af;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #0b1120 0, #020617 55%);
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .frame {
+      width: min(480px, 100%);
+      aspect-ratio: 9 / 16;
+      border-radius: 24px;
+      background: linear-gradient(145deg, #020617, #02081a);
+      box-shadow:
+        0 20px 60px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(148, 163, 184, 0.2);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    header .title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    header .badge {
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .stats {
+      display: flex;
+      gap: 6px;
+    }
+
+    .stat {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+    }
+
+    .stat-label {
+      color: var(--muted);
+    }
+
+    .stat-value {
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .play-area {
+      flex: 1;
+      border-radius: 18px;
+      overflow: hidden;
+      position: relative;
+      background: radial-gradient(circle at top, #1f2933 0, #020617 70%);
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    .rink {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center bottom;
+      filter: saturate(1.05);
+    }
+
+    .ice-fog {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at bottom, rgba(15, 23, 42, 0.55), transparent 60%),
+        linear-gradient(to top, rgba(15, 23, 42, 0.45), transparent 55%);
+      pointer-events: none;
+    }
+
+    .jump-line {
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      bottom: 22%;
+      height: 2px;
+      background: linear-gradient(
+        to right,
+        transparent,
+        rgba(209, 213, 219, 0.9),
+        transparent
+      );
+      box-shadow: 0 0 10px rgba(191, 219, 254, 0.4);
+      opacity: 0.9;
+    }
+
+    .jump-line::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -3px;
+      width: 42px;
+      height: 8px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.5), transparent);
+      opacity: 0;
+      transition: opacity 0.08s;
+    }
+
+    .play-area.in-zone .jump-line::after {
+      opacity: 1;
+    }
+
+    .skater {
+      position: absolute;
+      bottom: 22%;
+      left: 50%;
+      transform: translate(-50%, 0);
+      width: 42%;
+      max-width: 190px;
+      pointer-events: none;
+      filter: drop-shadow(0 16px 30px rgba(15, 23, 42, 0.9));
+      transition: filter 0.1s;
+    }
+
+    .skater.is-jumping {
+      filter: drop-shadow(0 26px 40px rgba(59, 130, 246, 0.9));
+    }
+
+    /* 回転数別のジャンプアニメーション */
+
+    .skater.jump-spin-1 {
+  animation: jumpSpin1 520ms ease-out forwards;
+}
+.skater.jump-spin-2 {
+  animation: jumpSpin2 520ms ease-out forwards;
+}
+.skater.jump-spin-3 {
+  animation: jumpSpin3 520ms ease-out forwards;
+}
+.skater.jump-spin-4 {
+  animation: jumpSpin4 520ms ease-out forwards;
+}
+/* ★ 追加 */
+.skater.jump-spin-5 {
+  animation: jumpSpin5 520ms ease-out forwards;
+}
+.skater.jump-spin-6 {
+  animation: jumpSpin6 520ms ease-out forwards;
+}
+
+
+    @keyframes jumpSpin1 {
+      0% {
+        transform: translate(-50%, 0) scale(1) rotate(0deg);
+      }
+      40% {
+        transform: translate(-50%, -130px) scale(1.05) rotate(360deg);
+      }
+      100% {
+        transform: translate(-50%, 0) scale(1) rotate(720deg);
+      }
+    }
+
+    @keyframes jumpSpin2 {
+      0% {
+        transform: translate(-50%, 0) scale(1) rotate(0deg);
+      }
+      40% {
+        transform: translate(-50%, -140px) scale(1.07) rotate(720deg);
+      }
+      100% {
+        transform: translate(-50%, 0) scale(1) rotate(1080deg);
+      }
+    }
+
+    @keyframes jumpSpin3 {
+      0% {
+        transform: translate(-50%, 0) scale(1) rotate(0deg);
+      }
+      40% {
+        transform: translate(-50%, -150px) scale(1.08) rotate(1080deg);
+      }
+      100% {
+        transform: translate(-50%, 0) scale(1) rotate(1440deg);
+      }
+    }
+
+    @keyframes jumpSpin4 {
+      0% {
+        transform: translate(-50%, 0) scale(1) rotate(0deg);
+      }
+      40% {
+        transform: translate(-50%, -160px) scale(1.1) rotate(1440deg);
+      }
+      100% {
+        transform: translate(-50%, 0) scale(1) rotate(1800deg);
+      }
+    }
+    @keyframes jumpSpin5 {
+  0% {
+    transform: translate(-50%, 0) scale(1) rotate(0deg);
+  }
+  40% {
+    transform: translate(-50%, -170px) scale(1.12) rotate(1800deg);
+  }
+  100% {
+    transform: translate(-50%, 0) scale(1) rotate(2160deg); /* 6周回ってる感じ */
+  }
+}
+
+@keyframes jumpSpin6 {
+  0% {
+    transform: translate(-50%, 0) scale(1) rotate(0deg);
+  }
+  40% {
+    transform: translate(-50%, -180px) scale(1.15) rotate(2160deg);
+  }
+  100% {
+    transform: translate(-50%, 0) scale(1) rotate(2520deg);
+  }
+}
+
+
+    .hint-label {
+      position: absolute;
+      left: 50%;
+      bottom: 29%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      pointer-events: none;
+    }
+
+    .play-area.in-zone .hint-label {
+      color: var(--accent);
+      border-color: rgba(56, 189, 248, 0.8);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.7);
+    }
+
+    .tap-icon {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      position: relative;
+    }
+
+    .tap-icon::after {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border-radius: inherit;
+      border: 2px solid currentColor;
+      opacity: 0.4;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      background: radial-gradient(
+        circle at top,
+        rgba(15, 23, 42, 0.2),
+        rgba(15, 23, 42, 0.95)
+      );
+      backdrop-filter: blur(8px);
+    }
+
+    .overlay.hidden {
+      display: none;
+    }
+
+    .panel {
+      width: 90%;
+      max-width: 320px;
+      border-radius: 20px;
+      padding: 16px 16px 14px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      box-shadow:
+        0 18px 45px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(15, 23, 42, 0.9);
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      letter-spacing: 0.04em;
+    }
+
+    .panel-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .howto {
+      font-size: 11px;
+      padding: 10px 10px 9px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .howto li {
+      margin-left: 1.1em;
+      margin-bottom: 3px;
+    }
+
+    .panel-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+
+    .panel-stats span {
+      font-weight: 600;
+    }
+
+    .panel-stats small {
+      color: var(--muted);
+      font-weight: 400;
+      margin-left: 4px;
+      font-size: 11px;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      border: none;
+      border-radius: 999px;
+      padding: 9px 0;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition:
+        transform 0.08s ease-out,
+        box-shadow 0.08s ease-out,
+        background 0.12s,
+        color 0.12s;
+    }
+
+    .btn-primary {
+      background: radial-gradient(circle at top left, #38bdf8, #0ea5e9);
+      color: #0b1120;
+      box-shadow:
+        0 10px 25px rgba(56, 189, 248, 0.4),
+        0 0 0 1px rgba(15, 23, 42, 0.8);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+    }
+
+    .btn:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: none;
+    }
+
+    .footer-note {
+      margin-top: 4px;
+      text-align: right;
+      font-size: 10px;
+      color: var(--muted);
+      opacity: 0.8;
+    }
+
+    @media (max-width: 400px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+
+      .stats {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .hint-label {
+        font-size: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <header>
+      <div class="title">
+        ⛸ 松村ジャンプコンビ
+        <span class="badge">Endless Jump</span>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-label">Combo</span>
+          <span class="stat-value" id="combo-current">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Best</span>
+          <span class="stat-value" id="combo-best">0</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="play-area" id="play-area" aria-label="ジャンプゲームエリア">
+      <div class="rink" id="rink"></div>
+      <div class="ice-fog"></div>
+      <div class="jump-line"></div>
+      <div class="hint-label">
+        <span class="tap-icon"></span>
+        <span id="hint-text">まずは動きを見て、ライン中央でタップ！</span>
+      </div>
+      <img class="skater" id="skater" alt="フィギュアスケート松村" />
+
+      <!-- スタート画面 -->
+      <div class="overlay" id="overlay-start">
+        <div class="panel">
+          <div class="panel-title">松村ジャンプコンビ</div>
+          <div class="panel-sub">
+            滑る松村がジャンプラインの中央を通過する瞬間にタップ。<br />
+            失敗したら即終了、何連続で決められるかのチャレンジです。
+          </div>
+          <ul class="howto">
+            <li>画面全体タップでジャンプ（PCはスペース / Enter）</li>
+            <li>ライン中央付近でタップすると成功</li>
+            <li>最初の1回だけミス許容。2回目以降はミスで即終了</li>
+          </ul>
+          <div class="button-row">
+            <button class="btn btn-primary" id="btn-start">♪ BGMありで開始</button>
+            <button class="btn btn-ghost" id="btn-start-mute">MUTEで開始</button>
+          </div>
+          <div class="footer-note">※ BGM は ./assets/bgm.mp3 を差し替え可</div>
+        </div>
+      </div>
+
+      <!-- リザルト画面 -->
+      <div class="overlay hidden" id="overlay-result">
+        <div class="panel">
+          <div class="panel-title">Result</div>
+          <div class="panel-stats">
+            <div>連続ジャンプ <span id="result-combo">0</span><small>combo</small></div>
+            <div>ベスト <span id="result-best">0</span><small>combo</small></div>
+          </div>
+          <div class="panel-sub">
+            回り続けるうちに、いつの間にか4回転の世界へ…。<br />
+            もう一度、ノーミスコンビネーションに挑戦してみる？
+          </div>
+          <div class="button-row">
+            <button class="btn btn-primary" id="btn-retry">↻ RETRY</button>
+            <button class="btn btn-ghost" id="btn-back">タイトルに戻る</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    // Vercel用のパス解決ヘルパー
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    const ASSETS = {
+      rink: asset("./assets/rink.png"),
+      skate: asset("./assets/matsu_skate.png"),
+      jump: asset("./assets/matsu_jump.png"),
+      bgm: asset("./assets/bgm.mp3"),
+    };
+
+    // DOM
+    const playArea = document.getElementById("play-area");
+    const rink = document.getElementById("rink");
+    const skater = document.getElementById("skater");
+    const overlayStart = document.getElementById("overlay-start");
+    const overlayResult = document.getElementById("overlay-result");
+    const btnStart = document.getElementById("btn-start");
+    const btnStartMute = document.getElementById("btn-start-mute");
+    const btnRetry = document.getElementById("btn-retry");
+    const btnBack = document.getElementById("btn-back");
+    const comboCurrentEl = document.getElementById("combo-current");
+    const comboBestEl = document.getElementById("combo-best");
+    const resultComboEl = document.getElementById("result-combo");
+    const resultBestEl = document.getElementById("result-best");
+    const hintTextEl = document.getElementById("hint-text");
+
+    // 背景 & スケーター画像
+    rink.style.backgroundImage = `url("${ASSETS.rink}")`;
+    skater.src = ASSETS.skate;
+
+    // BGM
+    const bgm = new Audio(ASSETS.bgm);
+    bgm.loop = true;
+    bgm.volume = 0.7;
+    let bgmEnabled = true;
+
+    const State = {
+      READY: "ready",
+      PLAYING: "playing",
+      JUMPING: "jumping",
+      GAMEOVER: "gameover",
+    };
+
+    let state = State.READY;
+    let combo = 0;
+    let bestCombo = 0;
+    let lastTime = null;
+
+    // 位置・判定
+    let skaterX = 0;
+    let skaterSpeed = 200; // 初速
+    let skaterDir = 1;
+    const EDGE_MARGIN = 32;
+    const ZONE_X_RATIO = 0.5;
+    let zoneTolerancePx = 42;
+    let zoneActive = false;
+    let mustJumpThisPass = false;
+    let gracePasses = 1; // 最初だけミス許容
+
+    // ジャンプ関連
+    const JUMP_DURATION = 520;
+    let jumpElapsed = 0;
+    let jumpLevel = 1; // 1〜4
+
+// ジャンプレベル（1〜6）
+function calcJumpLevel(c) {
+  if (c >= 25) return 6;      // 6回転ゾーン
+  if (c >= 18) return 5;      // 5回転ゾーン
+  if (c >= 12) return 4;      // クワド
+  if (c >= 7)  return 3;      // トリプル
+  if (c >= 3)  return 2;      // ダブル
+  return 1;                   // シングル
+}
+
+
+    function resetGameVariables() {
+      const rect = playArea.getBoundingClientRect();
+
+      // 進行方向ランダム & 端寄りスタート
+      skaterDir = Math.random() > 0.5 ? 1 : -1;
+      skaterX = skaterDir === 1 ? rect.width * 0.15 : rect.width * 0.85;
+
+      skaterSpeed = 200;
+      zoneTolerancePx = 48; // ちょい甘めスタート
+      combo = 0;
+      gracePasses = 1;
+      zoneActive = false;
+      mustJumpThisPass = false;
+      jumpElapsed = 0;
+      jumpLevel = 1;
+      comboCurrentEl.textContent = "0";
+      playArea.classList.remove("in-zone");
+      hintTextEl.textContent = "まずは動きを見て、ライン中央でタップ！";
+      skater.className = "skater";
+      skater.src = ASSETS.skate;
+      state = State.PLAYING;
+      lastTime = null;
+    }
+
+    function startGame({ muteBgm = false } = {}) {
+      bgmEnabled = !muteBgm;
+      if (bgmEnabled) {
+        bgm.currentTime = 0;
+        bgm.play().catch(() => {});
+      } else {
+        bgm.pause();
+      }
+
+      overlayStart.classList.add("hidden");
+      overlayResult.classList.add("hidden");
+      resetGameVariables();
+    }
+
+    function stopBgm() {
+      if (bgmEnabled) {
+        bgm.pause();
+      }
+    }
+
+    function endGame() {
+      if (state === State.GAMEOVER || state === State.READY) return;
+
+      state = State.GAMEOVER;
+      if (combo > bestCombo) bestCombo = combo;
+
+      comboBestEl.textContent = String(bestCombo);
+      resultComboEl.textContent = String(combo);
+      resultBestEl.textContent = String(bestCombo);
+
+      stopBgm();
+      overlayResult.classList.remove("hidden");
+    }
+
+    function onSuccessfulJump() {
+  combo += 1;
+  comboCurrentEl.textContent = String(combo);
+  if (combo > bestCombo) {
+    comboBestEl.textContent = String(combo);
+  }
+
+  // ★ コンボに応じて結構ガッツリ速くしていく
+  skaterSpeed = Math.min(skaterSpeed + 18, 430);
+  // ★ 判定幅もコンボが上がるほどじわっと絞る
+  zoneTolerancePx = Math.max(22, zoneTolerancePx - 1.6);
+
+  jumpLevel = calcJumpLevel(combo);
+
+  if (combo >= 3 && combo < 7) {
+    hintTextEl.textContent = "ダブルゾーン突入！リズムをキープ";
+  } else if (combo >= 7 && combo < 12) {
+    hintTextEl.textContent = "トリプル連発中！集中…";
+  } else if (combo >= 12 && combo < 18) {
+    hintTextEl.textContent = "クワドの世界へ…🔥";
+  } else if (combo >= 18 && combo < 25) {
+    hintTextEl.textContent = "5回転エリア！一瞬のズレでアウト";
+  } else if (combo >= 25) {
+    hintTextEl.textContent = "6回転モード😇 もはや人間じゃない";
+  }
+}
+
+
+    function handleJumpInput() {
+      if (state === State.READY || state === State.GAMEOVER) return;
+      if (state === State.JUMPING) return;
+      if (state !== State.PLAYING) return;
+
+      const rect = playArea.getBoundingClientRect();
+      const zoneX = rect.width * ZONE_X_RATIO;
+      const dist = Math.abs(skaterX - zoneX);
+      const inZone = dist <= zoneTolerancePx;
+
+      if (!inZone || !mustJumpThisPass) {
+        if (gracePasses > 0) {
+          gracePasses -= 1;
+          mustJumpThisPass = false;
+          hintTextEl.textContent = "次からはミスするとそこで終了！";
+          return;
+        }
+        endGame();
+        return;
+      }
+
+      // 成功ジャンプ
+      state = State.JUMPING;
+      jumpElapsed = 0;
+      mustJumpThisPass = false;
+
+      skater.src = ASSETS.jump;
+skater.classList.remove(
+  "jump-spin-1",
+  "jump-spin-2",
+  "jump-spin-3",
+  "jump-spin-4",
+  "jump-spin-5",
+  "jump-spin-6"
+);
+skater.classList.add("is-jumping", `jump-spin-${jumpLevel}`);
+
+      onSuccessfulJump();
+    }
+
+    function loop(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const deltaMs = timestamp - lastTime;
+      const dt = deltaMs / 1000;
+      lastTime = timestamp;
+
+      const rect = playArea.getBoundingClientRect();
+      const width = rect.width;
+      const leftLimit = EDGE_MARGIN;
+      const rightLimit = width - EDGE_MARGIN;
+      const zoneX = width * ZONE_X_RATIO;
+
+      if (state === State.PLAYING) {
+        skaterX += skaterSpeed * skaterDir * dt;
+
+        if (skaterX < leftLimit) {
+          skaterX = leftLimit;
+          skaterDir = 1;
+        } else if (skaterX > rightLimit) {
+          skaterX = rightLimit;
+          skaterDir = -1;
+        }
+
+        const dist = Math.abs(skaterX - zoneX);
+        const inZone = dist <= zoneTolerancePx;
+
+        if (inZone && !zoneActive) {
+          zoneActive = true;
+          mustJumpThisPass = true;
+          playArea.classList.add("in-zone");
+        } else if (!inZone && zoneActive) {
+          if (mustJumpThisPass) {
+            if (gracePasses > 0) {
+              gracePasses -= 1;
+              mustJumpThisPass = false;
+              hintTextEl.textContent = "次からはミスするとそこで終了！";
+            } else {
+              endGame();
+            }
+          }
+          zoneActive = false;
+          mustJumpThisPass = false;
+          playArea.classList.remove("in-zone");
+        }
+      } else if (state === State.JUMPING) {
+        jumpElapsed += deltaMs;
+        if (jumpElapsed >= JUMP_DURATION) {
+          state = State.PLAYING;
+          jumpElapsed = 0;
+          skater.classList.remove(
+  "is-jumping",
+  "jump-spin-1",
+  "jump-spin-2",
+  "jump-spin-3",
+  "jump-spin-4",
+  "jump-spin-5",
+  "jump-spin-6"
+);
+
+          skater.src = ASSETS.skate;
+          playArea.classList.remove("in-zone");
+        }
+      }
+
+      skater.style.left = `${skaterX}px`;
+      requestAnimationFrame(loop);
+    }
+
+    requestAnimationFrame(loop);
+
+    // 入力
+    playArea.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      handleJumpInput();
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space" || e.code === "Enter") {
+        e.preventDefault();
+        handleJumpInput();
+      }
+    });
+
+    // ボタン
+    btnStart.addEventListener("click", () => {
+      startGame({ muteBgm: false });
+    });
+
+    btnStartMute.addEventListener("click", () => {
+      startGame({ muteBgm: true });
+    });
+
+    btnRetry.addEventListener("click", () => {
+      overlayResult.classList.add("hidden");
+      startGame({ muteBgm: !bgmEnabled });
+    });
+
+    btnBack.addEventListener("click", () => {
+      overlayResult.classList.add("hidden");
+      overlayStart.classList.remove("hidden");
+      state = State.READY;
+      combo = 0;
+      comboCurrentEl.textContent = "0";
+      playArea.classList.remove("in-zone");
+      skater.className = "skater";
+      skater.src = ASSETS.skate;
+      stopBgm();
+    });
+
+    window.addEventListener("resize", () => {
+      if (state === State.READY || state === State.GAMEOVER) return;
+      const rect = playArea.getBoundingClientRect();
+      skaterX = rect.width * 0.5;
+    });
+  </script>
+</body>
+</html>
