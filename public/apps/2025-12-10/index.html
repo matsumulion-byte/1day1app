@@ -27,10 +27,12 @@
 
     html, body {
       height: 100%;
+      overflow-x: hidden;
     }
 
     body {
       min-height: 100vh;
+      max-height: 100vh;
       font-family: system-ui, -apple-system, BlinkMacSystemFont,
         "Segoe UI", sans-serif;
       background:
@@ -39,6 +41,7 @@
       display: flex;
       align-items: stretch;
       justify-content: center;
+      overflow-y: auto;
     }
 
     .app {
@@ -49,6 +52,8 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
+      min-height: 0;
+      max-height: 100vh;
     }
 
     header {
@@ -70,6 +75,8 @@
       flex: 1;
       display: flex;
       flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
     }
 
     .screen {
@@ -353,13 +360,94 @@
       font-size: 0.7rem;
       color: var(--muted);
       opacity: 0.85;
+      flex-shrink: 0;
     }
 
     @media (max-height: 640px) {
       .app {
-        padding: 6px;
+        padding: 4px;
+        gap: 4px;
+        max-height: 100vh;
       }
       header {
+        display: none;
+      }
+      .hud {
+        font-size: 0.7rem;
+        padding: 2px 6px 1px;
+        flex-shrink: 0;
+      }
+      .road-wrap {
+        padding: 4px 0;
+        min-height: 0;
+        flex: 1 1 auto;
+      }
+      .controls {
+        margin-top: 2px;
+        gap: 4px;
+        flex-shrink: 0;
+      }
+      .controls button {
+        padding-block: 8px;
+        font-size: 0.8rem;
+      }
+      #bike {
+        width: 70px;
+        height: 119px;
+        bottom: 20px;
+      }
+      .pickup, .obstacle {
+        width: 75px;
+        height: 48px;
+      }
+      .obstacle-police {
+        width: 100px;
+        height: 62px;
+      }
+      footer {
+        display: none;
+      }
+    }
+    
+    @media (max-height: 568px) {
+      .app {
+        padding: 2px;
+        gap: 2px;
+        max-height: 100vh;
+      }
+      .hud {
+        font-size: 0.65rem;
+        padding: 1px 4px;
+        flex-shrink: 0;
+      }
+      .road-wrap {
+        padding: 2px 0;
+        min-height: 0;
+        flex: 1 1 auto;
+      }
+      .controls {
+        margin-top: 2px;
+        gap: 4px;
+        flex-shrink: 0;
+      }
+      .controls button {
+        padding-block: 6px;
+        font-size: 0.75rem;
+      }
+      #bike {
+        width: 60px;
+        height: 102px;
+        bottom: 16px;
+      }
+      .pickup, .obstacle {
+        width: 65px;
+        height: 42px;
+      }
+      .obstacle-police {
+        width: 90px;
+        height: 56px;
+      }
+      footer {
         display: none;
       }
     }
