@@ -1,0 +1,889 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+  />
+  <title>松村三億円ラン - 12/10 三億円事件の日</title>
+
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-soft: #02081a;
+      --accent: #f97316;
+      --accent-soft: rgba(248, 171, 70, 0.16);
+      --danger: #fb7185;
+      --ink: #f9fafb;
+      --muted: #9ca3af;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top, #0b1120 0, #020617 60%);
+      color: var(--ink);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    header {
+      text-align: center;
+      padding: 4px 8px 8px;
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      margin-bottom: 2px;
+    }
+
+    header p {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .screen {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    /* START画面 */
+    #screen-start {
+      gap: 16px;
+      padding: 12px;
+      border-radius: 16px;
+      background: linear-gradient(145deg, #02081a, #020617 60%, #111827);
+      box-shadow:
+        0 12px 30px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(148, 163, 184, 0.12);
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .start-title {
+      font-size: 1.1rem;
+    }
+
+    .start-desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .start-desc strong {
+      color: #facc15;
+    }
+
+    .start-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--accent);
+      color: #111827;
+      box-shadow: 0 6px 18px rgba(248, 171, 70, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.08s ease;
+    }
+
+    button:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: 0 3px 10px rgba(248, 171, 70, 0.4);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: rgba(15, 23, 42, 0.8);
+      color: var(--muted);
+      box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.2);
+    }
+
+    /* GAME画面 */
+    #screen-game {
+      gap: 8px;
+    }
+
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      padding: 4px 8px 2px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #02081a, #020617);
+      box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.2);
+    }
+
+    .hud span.value {
+      font-weight: 700;
+      color: #facc15;
+    }
+
+    .hud .hits span.value {
+      color: var(--danger);
+    }
+
+    .road-wrap {
+      flex: 1;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 8px 0;
+    }
+
+    .road {
+      position: relative;
+      width: 100%;
+      max-width: 360px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: linear-gradient(to bottom, #020617 0, #020617 40%, #02081f 100%);
+      box-shadow:
+        0 18px 40px rgba(0, 0, 0, 0.9),
+        0 0 0 1px rgba(148, 163, 184, 0.25);
+    }
+
+    .road::before,
+    .road::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 18%;
+      pointer-events: none;
+      background: linear-gradient(to bottom, rgba(15,23,42,0.95), rgba(15,23,42,0.9));
+      z-index: 0;
+    }
+
+    .road::before { left: 0; }
+    .road::after  { right: 0; }
+
+    .center-line {
+      position: absolute;
+      left: 50%;
+      top: -40px;
+      width: 6px;
+      height: 160%;
+      transform: translateX(-50%);
+      background-image: linear-gradient(
+        to bottom,
+        rgba(248,250,252,0.9) 0,
+        rgba(248,250,252,0.9) 14px,
+        transparent 14px,
+        transparent 34px
+      );
+      background-size: 100% 40px;
+      background-repeat: repeat-y;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* バイク（小さく、左寄り） */
+    #bike {
+      position: absolute;
+      bottom: 26px;
+      left: 45%;
+      width: 80px;
+      height: 136px;
+      transform: translateX(-50%);
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center bottom;
+      z-index: 3;
+      transition: transform 0.08s linear;
+      filter: drop-shadow(0 12px 16px rgba(0,0,0,0.95));
+    }
+
+    /* アイテム */
+    .pickup,
+    .obstacle {
+      position: absolute;
+      width: 90px;
+      height: 58px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      z-index: 2;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+    }
+
+    .pickup-money {
+      background-color: transparent;
+    }
+
+    /* パトカーを大きく */
+    .obstacle-police {
+      background-color: transparent;
+      width: 120px;
+      height: 75px;
+      box-shadow:
+        0 12px 22px rgba(0,0,0,0.7);
+    }
+
+    .hit-flash {
+      animation: hitFlash 0.25s ease-out;
+    }
+
+    @keyframes hitFlash {
+      0%   { filter: drop-shadow(0 0 0 rgba(248,113,113,0.0)) brightness(1); }
+      20%  { filter: drop-shadow(0 0 18px rgba(248,113,113,0.9)) brightness(1.4); }
+      100% { filter: drop-shadow(0 12px 16px rgba(0,0,0,0.95)) brightness(1); }
+    }
+
+    .shake {
+      animation: shake 0.25s ease-out;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-3px); }
+      100% { transform: translateX(0); }
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .controls button {
+      flex: 1;
+      font-size: 0.9rem;
+      padding-block: 10px;
+    }
+
+    .controls button span {
+      font-size: 1rem;
+    }
+
+    #screen-result {
+      padding: 12px;
+      border-radius: 16px;
+      background: linear-gradient(145deg, #02081a, #020617 60%, #111827);
+      box-shadow:
+        0 16px 32px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(148, 163, 184, 0.2);
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .result-title {
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+    }
+
+    .result-main-score {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #facc15;
+      margin-bottom: 4px;
+    }
+
+    .result-sub {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    footer {
+      margin-top: 6px;
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--muted);
+      opacity: 0.85;
+    }
+
+    @media (max-height: 640px) {
+      .app {
+        padding: 6px;
+      }
+      header {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <h1>松村三億円ラン</h1>
+      <p>12/10 三億円事件の日｜白バイ松村で三億円を持ち逃げせよ</p>
+    </header>
+
+    <main>
+      <section id="screen-start" class="screen active">
+        <div>
+          <div class="start-title">三億円を持ち逃げせよ！</div>
+          <p class="start-desc">
+            1968年12月10日、多摩で起きた <strong>三億円事件</strong>。<br />
+            白バイ松村となって札束をかき集めながら、<br />
+            パトカーの追跡をかいくぐって<span>30秒</span>逃げ切ろう。
+          </p>
+        </div>
+
+        <div class="start-controls">
+          <button id="btn-start">
+            ▶ START（30秒ラン）
+          </button>
+          <button id="btn-bgm-toggle" class="btn-secondary">
+            ♫ BGM：OFF
+          </button>
+          <p style="font-size:0.75rem;color:var(--muted);line-height:1.5;">
+            スマホ：画面下の左右ボタンで操作<br />
+            PC：キーボードの ← → / A D キーでも操作できます
+          </p>
+        </div>
+      </section>
+
+      <section id="screen-game" class="screen">
+        <div class="hud">
+          <div class="time">
+            TIME：<span id="time-value" class="value">30.0</span>s
+          </div>
+          <div class="score">
+            獲得金額：¥<span id="score-value" class="value">0</span> 万
+          </div>
+          <div class="hits">
+            ヒット：<span id="hits-value" class="value">0</span>/3
+          </div>
+        </div>
+
+        <div class="road-wrap">
+          <div id="road" class="road">
+            <div class="center-line"></div>
+            <div id="bike"></div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="btn-left"><span>◀</span> LEFT</button>
+          <button id="btn-right">RIGHT <span>▶</span></button>
+        </div>
+      </section>
+
+      <section id="screen-result" class="screen">
+        <div>
+          <div id="result-title" class="result-title">結果</div>
+          <div id="result-main-score" class="result-main-score">¥0 万</div>
+          <div id="result-detail" class="result-sub"></div>
+        </div>
+        <button id="btn-retry">↻ もう一度逃げる</button>
+      </section>
+    </main>
+
+    <footer>
+      1日1アプリ / 松村三億円ラン
+    </footer>
+  </div>
+
+  <script type="module">
+    // Vercel用のパス解決ヘルパー
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    const ASSETS = {
+      bike:   asset("./assets/bike.png"),
+      money:  asset("./assets/money.png"),
+      police: asset("./assets/police.png"),
+      bgm:    asset("./assets/bgm.mp3"),
+    };
+
+    const screenStart  = document.getElementById("screen-start");
+    const screenGame   = document.getElementById("screen-game");
+    const screenResult = document.getElementById("screen-result");
+
+    const btnStart      = document.getElementById("btn-start");
+    const btnRetry      = document.getElementById("btn-retry");
+    const btnLeft       = document.getElementById("btn-left");
+    const btnRight      = document.getElementById("btn-right");
+    const btnBgmToggle  = document.getElementById("btn-bgm-toggle");
+    console.log("BGMトグルボタン取得:", btnBgmToggle);
+
+    const timeValue   = document.getElementById("time-value");
+    const scoreValue  = document.getElementById("score-value");
+    const hitsValue   = document.getElementById("hits-value");
+
+    const roadEl      = document.getElementById("road");
+    const bikeEl      = document.getElementById("bike");
+    const centerLine  = document.querySelector(".center-line");
+
+    const resultTitle     = document.getElementById("result-title");
+    const resultMainScore = document.getElementById("result-main-score");
+    const resultDetail    = document.getElementById("result-detail");
+
+    console.log("BGMファイルパス:", ASSETS.bgm);
+    const bgm = new Audio(ASSETS.bgm);
+    bgm.loop = true;
+    bgm.volume = 0.7;
+    bgm.preload = "auto";
+    let bgmEnabled = true; // デフォルトでON
+
+    // BGMの読み込みエラーを確認
+    bgm.addEventListener("error", (e) => {
+      console.error("❌ BGMファイルの読み込みエラー:", e, bgm.error);
+    });
+    
+    bgm.addEventListener("loadeddata", () => {
+      console.log("✅ BGMファイル読み込み完了", {
+        readyState: bgm.readyState,
+        src: bgm.src
+      });
+    });
+
+    // BGMの状態を確認する関数
+    function playBGM() {
+      console.log("playBGM() 呼び出し", {
+        src: bgm.src,
+        readyState: bgm.readyState,
+        paused: bgm.paused,
+        volume: bgm.volume,
+        muted: bgm.muted
+      });
+      
+      bgm.muted = false;
+      bgm.currentTime = 0;
+      
+      const playPromise = bgm.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log("✅ BGM再生開始成功", {
+              paused: bgm.paused,
+              readyState: bgm.readyState,
+              volume: bgm.volume,
+              muted: bgm.muted
+            });
+          })
+          .catch((err) => {
+            console.error("❌ BGM再生エラー:", err, {
+              paused: bgm.paused,
+              readyState: bgm.readyState,
+              volume: bgm.volume,
+              muted: bgm.muted,
+              error: bgm.error
+            });
+          });
+      } else {
+        console.warn("⚠️ play()がPromiseを返しませんでした");
+      }
+    }
+
+    // BGMの状態を更新する関数（表示のみ更新、再生はゲーム中のみ）
+    function updateBGMState() {
+      const displayText = bgmEnabled ? "♫ BGM：ON" : "♫ BGM：OFF";
+      btnBgmToggle.textContent = displayText;
+      console.log("BGM状態更新:", { bgmEnabled, displayText, isRunning });
+      
+      // ゲーム中の場合のみ、実際にBGMを再生/停止する
+      if (isRunning) {
+        if (bgmEnabled) {
+          playBGM();
+        } else {
+          bgm.pause();
+          bgm.currentTime = 0;
+          console.log("BGM停止");
+        }
+      }
+    }
+
+    if (btnBgmToggle) {
+      // 初期状態を明示的に設定
+      btnBgmToggle.textContent = bgmEnabled ? "♫ BGM：ON" : "♫ BGM：OFF";
+      console.log("BGM初期状態:", { bgmEnabled, paused: bgm.paused, buttonText: btnBgmToggle.textContent });
+      
+      btnBgmToggle.addEventListener("click", () => {
+        console.log("BGMトグルボタンクリック（変更前）", { bgmEnabled });
+        bgmEnabled = !bgmEnabled;
+        console.log("BGMトグルボタンクリック（変更後）", { bgmEnabled });
+        updateBGMState();
+      });
+      console.log("BGMトグルボタンのイベントリスナー設定完了");
+    } else {
+      console.error("❌ BGMトグルボタンが見つかりません");
+    }
+
+    let isRunning = false;
+    let lastTime = 0;
+    let timeLeft = 31.0;
+
+    let score = 0;
+    let hits  = 0;
+    const MAX_HITS = 3;
+
+    // センターからもっと外側に： roadWidth * 0.30
+    const LANE_FACTOR = 0.31;
+    const lanes = [-1, 1];
+    let playerLaneIndex = 0;
+    let targetTilt = 0;
+
+    let scroll = 0;
+    let baseSpeed = 320; // 初期速度を上げる
+    let currentSpeed = baseSpeed;
+    let spawnTimer = 0;
+
+    const objects = [];
+
+    bikeEl.style.backgroundImage = `url("${ASSETS.bike}")`;
+
+    function showScreen(name) {
+      [screenStart, screenGame, screenResult].forEach(s => s.classList.remove("active"));
+      if (name === "start")  screenStart.classList.add("active");
+      if (name === "game")   screenGame.classList.add("active");
+      if (name === "result") screenResult.classList.add("active");
+    }
+
+    btnStart.addEventListener("click", startGame);
+    btnRetry.addEventListener("click", startGame);
+
+    function resetGameState() {
+      timeLeft = 31.0;
+      score = 0;
+      hits  = 0;
+
+      timeValue.textContent  = timeLeft.toFixed(1);
+      scoreValue.textContent = score.toLocaleString("ja-JP");
+      hitsValue.textContent  = hits;
+
+      scroll = 0;
+      baseSpeed = 320; // 初期速度を上げる
+      currentSpeed = baseSpeed;
+      spawnTimer = 0;
+
+      playerLaneIndex = 0;
+      targetTilt = 0;
+      updateBikePosition();
+
+      objects.forEach(o => o.el.remove());
+      objects.length = 0;
+
+      roadEl.classList.remove("shake");
+      bikeEl.classList.remove("hit-flash");
+      centerLine.style.transform = "translateX(-50%) translateY(0)";
+    }
+
+    function startGame() {
+      resetGameState();
+      showScreen("game");
+      isRunning = true;
+      lastTime = performance.now();
+
+      if (bgmEnabled) {
+        playBGM();
+      } else {
+        bgm.pause();
+        bgm.currentTime = 0;
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    function loop(timestamp) {
+      if (!isRunning) return;
+
+      const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+      lastTime = timestamp;
+
+      timeLeft -= dt;
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        timeValue.textContent = timeLeft.toFixed(1);
+        endGame("escape");
+        return;
+      }
+      timeValue.textContent = timeLeft.toFixed(1);
+
+      const progress = 1 - timeLeft / 30;
+      baseSpeed = 320 + progress * 80; // 速度の増加を大きく
+      currentSpeed = Math.max(currentSpeed, baseSpeed * 0.6);
+
+      scroll += currentSpeed * dt;
+      const offset = scroll % 40;
+      centerLine.style.transform = `translateX(-50%) translateY(${offset}px)`;
+
+      updateBikePosition();
+
+      spawnTimer -= dt;
+      if (spawnTimer <= 0) {
+        spawnObject();
+        const baseInterval = 0.55; // スポーン間隔を短く
+        const extraSpeed   = progress * 0.35;
+        spawnTimer = Math.max(0.25, baseInterval - extraSpeed * 0.4); // 最小間隔も短く
+      }
+
+      updateObjects(dt);
+
+      requestAnimationFrame(loop);
+    }
+
+    function updateBikePosition() {
+      const rect = roadEl.getBoundingClientRect();
+      const roadWidth = rect.width;
+      const centerX   = roadWidth / 2;
+      const laneWidth = roadWidth * LANE_FACTOR;
+
+      const laneOffset = lanes[playerLaneIndex] * laneWidth;
+      const bikeX = centerX + laneOffset;
+
+      bikeEl.style.transform =
+        `translateX(${bikeX - roadWidth / 2}px) translateY(0) rotate(${targetTilt}deg)`;
+    }
+
+    function moveLane(dir) {
+      const prev = playerLaneIndex;
+      playerLaneIndex = Math.min(lanes.length - 1, Math.max(0, playerLaneIndex + dir));
+      if (playerLaneIndex !== prev) {
+        targetTilt = dir < 0 ? -7 : 7;
+        setTimeout(() => { targetTilt = 0; }, 90);
+      }
+    }
+
+    function spawnObject() {
+      const laneIndex = Math.floor(Math.random() * lanes.length);
+
+      // 札束70% / パトカー30% くらい（難易度アップ）
+      const type = Math.random() > 0.7 ? "police" : "money";
+
+      const div = document.createElement("div");
+      let className = "";
+
+      if (type === "money") {
+        className = "pickup pickup-money";
+        div.style.backgroundImage = `url("${ASSETS.money}")`;
+      } else {
+        className = "obstacle obstacle-police";
+        div.style.backgroundImage = `url("${ASSETS.police}")`;
+      }
+
+      div.className = className;
+
+      const rect = roadEl.getBoundingClientRect();
+      const roadWidth = rect.width;
+      const centerX   = roadWidth / 2;
+      const laneWidth = roadWidth * LANE_FACTOR;
+      const laneOffset = lanes[laneIndex] * laneWidth;
+      const x = centerX + laneOffset;
+
+      // パトカーは120px、札束は90pxなので、タイプに応じて調整
+      const widthOffset = type === "police" ? 60 : 45;
+      div.style.left = `${x - widthOffset}px`;
+      div.style.top  = `-80px`;
+
+      roadEl.appendChild(div);
+
+      objects.push({
+        el: div,
+        type,
+        y: -80
+      });
+    }
+
+    function updateObjects(dt) {
+      const roadRect  = roadEl.getBoundingClientRect();
+      const roadHeight = roadRect.height;
+
+      const bikeRect = bikeEl.getBoundingClientRect();
+      const bikeHitTop    = bikeRect.top + bikeRect.height * 0.2;
+      const bikeHitBottom = bikeRect.bottom - bikeRect.height * 0.2;
+      const bikeHitLeft   = bikeRect.left + bikeRect.width * 0.15;
+      const bikeHitRight  = bikeRect.right - bikeRect.width * 0.15;
+
+      for (let i = objects.length - 1; i >= 0; i--) {
+        const obj = objects[i];
+        obj.y += currentSpeed * dt;
+        obj.el.style.top = `${obj.y}px`;
+
+        if (obj.y > roadHeight + 80) {
+          obj.el.remove();
+          objects.splice(i, 1);
+          continue;
+        }
+
+        const objRect = obj.el.getBoundingClientRect();
+        const objLeft   = objRect.left;
+        const objRight  = objRect.right;
+        const objTop    = objRect.top;
+        const objBottom = objRect.bottom;
+
+        const intersect =
+          objLeft   < bikeHitRight &&
+          objRight  > bikeHitLeft &&
+          objTop    < bikeHitBottom &&
+          objBottom > bikeHitTop;
+
+        if (intersect) {
+          handleHit(obj);
+          obj.el.remove();
+          objects.splice(i, 1);
+        }
+      }
+    }
+
+    function handleHit(obj) {
+      if (obj.type === "money") {
+        score += 100;
+        scoreValue.textContent = score.toLocaleString("ja-JP");
+        popText("+100", "#facc15");
+      } else if (obj.type === "police") {
+        hits++;
+        hitsValue.textContent = hits;
+        roadEl.classList.add("shake");
+        bikeEl.classList.add("hit-flash");
+        currentSpeed = baseSpeed * 0.6;
+
+        setTimeout(() => {
+          roadEl.classList.remove("shake");
+          bikeEl.classList.remove("hit-flash");
+        }, 260);
+
+        if (hits >= MAX_HITS) {
+          endGame("caught");
+        }
+      }
+    }
+
+    function popText(text, color) {
+      const pop = document.createElement("div");
+      pop.textContent = text;
+      pop.style.position = "absolute";
+      pop.style.left = "50%";
+      pop.style.bottom = "205px";
+      pop.style.transform = "translateX(-50%)";
+      pop.style.fontSize = "1.1rem";
+      pop.style.fontWeight = "800";
+      pop.style.color = color;
+      pop.style.textShadow = "0 0 10px rgba(0,0,0,0.9)";
+      pop.style.pointerEvents = "none";
+      pop.style.transition = "opacity 0.5s ease-out, transform 0.5s ease-out";
+
+      roadEl.appendChild(pop);
+
+      requestAnimationFrame(() => {
+        pop.style.opacity = "0";
+        pop.style.transform = "translateX(-50%) translateY(-24px)";
+      });
+
+      setTimeout(() => {
+        pop.remove();
+      }, 520);
+    }
+
+    function endGame(reason) {
+      if (!isRunning) return;
+      isRunning = false;
+
+      bgm.pause();
+      bgm.currentTime = 0;
+
+      const finalScore = score;
+      const scoreText  = `¥${finalScore.toLocaleString("ja-JP")} 万`;
+      resultMainScore.textContent = scoreText;
+
+      if (reason === "escape") {
+        resultTitle.textContent = "逃げ切り成功！";
+        if (finalScore >= 300) {
+          resultDetail.textContent = "見事に三億円級の持ち逃げに成功しました。きょうはしっかり足を洗いましょう。";
+        } else if (finalScore >= 150) {
+          resultDetail.textContent = "そこそこの金額は持ち逃げできましたが、伝説にはあと一歩届かず…。";
+        } else {
+          resultDetail.textContent = "全然稼げずに逃げ切ってしまいました。時効までコツコツ働きましょう。";
+        }
+      } else if (reason === "caught") {
+        resultTitle.textContent = "逮捕…！";
+        resultDetail.textContent = "パトカーに追いつかれてしまいました。あなたの名前はしっかり調書に残りました。";
+      } else {
+        resultTitle.textContent = "終了";
+        resultDetail.textContent = "松村は静かにバイクを降りました。";
+      }
+
+      showScreen("result");
+    }
+
+    btnLeft.addEventListener("click", () => moveLane(-1));
+    btnRight.addEventListener("click", () => moveLane(1));
+
+    window.addEventListener("keydown", (e) => {
+      if (!isRunning) return;
+      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+        moveLane(-1);
+      } else if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+        moveLane(1);
+      }
+    });
+
+    roadEl.addEventListener("click", (e) => {
+      if (!isRunning) return;
+      const rect = roadEl.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      if (x < rect.width / 2) moveLane(-1);
+      else moveLane(1);
+    });
+  </script>
+</body>
+</html>
