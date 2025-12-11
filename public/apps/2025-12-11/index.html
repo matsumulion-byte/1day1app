@@ -93,11 +93,9 @@ canvas, button, body {
   </div>
 
 <script type="module">
-/* 動的アセット（Vercel/ローカル両立） */
-const asset = (p) => {
-  const currentDir = window.location.pathname.replace(/\/[^\/]*$/, '/');
-  return `${currentDir}assets/${p}`;
-};
+/* 動的アセット（Vercel/ローカル両立）
+   URL 基準で解決し、パスずれ（/apps/xxx/ 配下 or 直アクセス）を防ぐ */
+const asset = (p) => new URL(`./assets/${p}`, window.location.href).toString();
 /* ===== 設定 ===== */
 // 現在のディレクトリ配下の assets を見るように修正（ローカル/本番両対応）
 const PHOTO_FILE = asset("matsumura_photo.jpg");
