@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>今年の漢字</title>
+  <style>
+    :root{
+      --bg:#0b0a07;
+      --paper-shadow: 0 20px 60px rgba(0,0,0,.55);
+      --ink: rgba(10,10,10,.92);
+      --muted: rgba(255,255,255,.72);
+      --muted2: rgba(255,255,255,.55);
+      --card: rgba(255,255,255,.06);
+      --line: rgba(255,255,255,.12);
+      --btn: rgba(255,255,255,.10);
+      --btn2: rgba(255,255,255,.16);
+      --safeB: env(safe-area-inset-bottom);
+      --safeT: env(safe-area-inset-top);
+    }
+
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{
+      min-height:100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(1200px 700px at 50% 10%, rgba(255,210,120,.09), transparent 60%),
+        radial-gradient(900px 500px at 20% 40%, rgba(180,220,255,.08), transparent 55%),
+        radial-gradient(1000px 700px at 80% 70%, rgba(255,255,255,.05), transparent 55%),
+        var(--bg);
+      color: #fff;
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+      padding: calc(14px + var(--safeT)) 14px calc(14px + var(--safeB));
+      overflow-x:hidden;
+    }
+
+    .app{
+      width:min(980px, 100%);
+      display:grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 12px;
+    }
+
+    header{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:10px;
+      padding: 2px 2px 0;
+    }
+    h1{
+      font-size: 20px;
+      letter-spacing:.04em;
+      font-weight: 700;
+      opacity:.92;
+    }
+    .sub{
+      font-size: 12px;
+      color: var(--muted2);
+      white-space:nowrap;
+    }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 14px 45px rgba(0,0,0,.35);
+      overflow:hidden;
+      position:relative;
+      min-height: 520px;
+      display:grid;
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr;
+      gap: 12px;
+    }
+
+    .form{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items:center;
+    }
+    .input{
+      width:100%;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.14);
+      color:#fff;
+      border-radius: 14px;
+      padding: 14px 14px;
+      font-size: 16px;
+      outline:none;
+    }
+    .input::placeholder{ color: rgba(255,255,255,.45); }
+    .btn{
+      border: 1px solid rgba(255,255,255,.16);
+      background: linear-gradient(180deg, var(--btn2), var(--btn));
+      color:#fff;
+      border-radius: 14px;
+      padding: 13px 14px;
+      font-weight: 700;
+      letter-spacing:.04em;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      white-space:nowrap;
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    .stage{
+      position:relative;
+      display:grid;
+      place-items:center;
+      padding: 6px 0 2px;
+    }
+
+    /* 演出の暗転 */
+    .veil{
+      position:absolute;
+      inset:-20px;
+      background:
+        radial-gradient(1000px 700px at 50% 50%, rgba(0,0,0,.55), rgba(0,0,0,.92)),
+        rgba(0,0,0,.8);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .25s ease;
+      z-index: 20;
+    }
+    .veil.on{ opacity:1; }
+
+    /* 半紙 */
+    .paperWrap{
+      width: min(86vw, 520px);
+      /* 半紙っぽい比率（ざっくり） */
+      aspect-ratio: 3 / 4;
+      position:relative;
+      transform: translateY(14px) scale(.98);
+      opacity: 0;
+      transition: transform .55s cubic-bezier(.2,.9,.2,1), opacity .4s ease;
+      filter: drop-shadow(var(--paper-shadow));
+      z-index: 10;
+    }
+    .paperWrap.show{
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .paper{
+      position:absolute;
+      inset:0;
+      background: center / cover no-repeat;
+      border-radius: 8px; /* 画像次第で自然 */
+    }
+
+    /* 文字（筆） */
+    .calligraphy{
+      position:absolute;
+      inset: 8% 10%;
+      background: center / contain no-repeat;
+      opacity:0;
+      transform: scale(.985);
+      filter: blur(2px) contrast(1.05);
+      transition: opacity 1.4s ease, transform 1.8s ease, filter 2.4s ease;
+      z-index: 2;
+      
+    }
+    .paperWrap.ink .calligraphy{
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0px) contrast(1.08);
+}
+
+    /* “墨がにじんで出てくる”マスク */
+    .inkMask{
+      position:absolute;
+      inset: 8% 10%;
+      z-index: 3;
+      pointer-events:none;
+      opacity: 0;
+    }
+    .paperWrap.ink .inkMask{
+  opacity: 1;
+  animation: maskOut 3.2s cubic-bezier(.2,.9,.2,1) forwards;
+}
+
+@keyframes maskOut{
+  0%   { transform: scale(0.98); filter: blur(0px);   opacity:1; }
+  25%  { transform: scale(1.00); filter: blur(1px);   opacity:1; }
+  60%  { transform: scale(1.02); filter: blur(2px);   opacity:.9; }
+  85%  { transform: scale(1.04); filter: blur(5px);   opacity:.55; }
+  100% { transform: scale(1.07); filter: blur(12px);  opacity:0; }
+}
+
+    /* マスクは黒い雲で覆ってから、消えていくイメージ */
+    .inkMask::before{
+      content:"";
+      position:absolute;
+      inset:-10%;
+      background:
+        radial-gradient(100px 70px at 20% 30%, rgba(0,0,0,.85), transparent 60%),
+        radial-gradient(140px 90px at 60% 20%, rgba(0,0,0,.78), transparent 60%),
+        radial-gradient(180px 130px at 35% 55%, rgba(0,0,0,.85), transparent 65%),
+        radial-gradient(220px 160px at 65% 60%, rgba(0,0,0,.78), transparent 70%),
+        radial-gradient(260px 190px at 40% 85%, rgba(0,0,0,.78), transparent 72%),
+        rgba(0,0,0,.18);
+      filter: blur(10px);
+      transform: scale(1.02);
+      mix-blend-mode: multiply;
+      opacity: .95;
+      border-radius: 16px;
+    }
+    @keyframes maskOut{
+      0%{ transform: scale(1); filter: blur(0px); opacity:1; }
+      70%{ transform: scale(1.02); filter: blur(1px); opacity:.9; }
+      100%{ transform: scale(1.05); filter: blur(10px); opacity:0; }
+    }
+
+    /* 上の見出し（半紙の上に小さく） */
+    .caption{
+      position:absolute;
+      left: 10%;
+      right: 10%;
+      top: 5.5%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 8px;
+      z-index: 5;
+      pointer-events:none;
+      color: rgba(0,0,0,.78);
+      font-weight: 800;
+      letter-spacing:.06em;
+      text-shadow: 0 1px 0 rgba(255,255,255,.25);
+    }
+    .caption .label{
+      font-size: 13px;
+      opacity:.86;
+    }
+    .caption .year{
+      font-size: 13px;
+      opacity:.72;
+      font-weight: 700;
+    }
+
+    /* 下の注釈 */
+    .hint{
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+      opacity: .9;
+      padding: 0 2px;
+    }
+    .hint b{ color:#fff; }
+
+    footer{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 0 2px;
+      color: var(--muted2);
+      font-size: 12px;
+    }
+    .miniBtn{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.9);
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      font-weight: 700;
+    }
+    .miniBtn:active{ transform: translateY(1px); }
+
+    /* スマホで1画面に収めやすく */
+    @media (max-height: 740px){
+      .panel{ min-height: 480px; }
+      .paperWrap{ width: min(84vw, 460px); }
+    }
+    @media (max-height: 680px){
+      .panel{ min-height: 450px; }
+      .paperWrap{ width: min(82vw, 430px); }
+      .input{ padding: 12px 12px; }
+      .btn{ padding: 12px 12px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <h1>今年の漢字</h1>
+      <div class="sub">12/12</div>
+    </header>
+
+    <main class="panel" aria-label="今年の漢字ジェネレーター">
+      <div class="form">
+        <input id="txt" class="input" inputmode="text" autocomplete="off" maxlength="20"
+          placeholder="好きな漢字（または言葉）を入力" />
+        <button id="go" class="btn">発表</button>
+      </div>
+
+      <div class="stage">
+        <div id="veil" class="veil" aria-hidden="true"></div>
+
+        <div id="paperWrap" class="paperWrap" aria-live="polite">
+          <div class="paper" id="paper"></div>
+
+          <div class="caption" aria-hidden="true">
+            <div class="label">今年の漢字</div>
+            <div class="year" id="year"></div>
+          </div>
+
+          <div class="calligraphy" id="calligraphy" aria-label="結果"></div>
+          <div class="inkMask" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div class="hint">
+        何を書いても、<b>結果が出ます</b>。<br />
+        EnterでもOK。
+      </div>
+    </main>
+
+    <footer>
+      <div>※演出の都合で一瞬暗転します</div>
+      <button id="reset" class="miniBtn" type="button">やり直す</button>
+    </footer>
+  </div>
+
+  <script type="module">
+    // Vercel/ローカルでパスがズレないように日付ベースで解決
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    const ASSETS = {
+      paper: asset("./assets/hanshi.png"),
+      matsu: asset("./assets/matsumura.png"),
+    };
+
+    const $ = (s) => document.querySelector(s);
+    const txt = $("#txt");
+    const go = $("#go");
+    const reset = $("#reset");
+    const veil = $("#veil");
+    const paperWrap = $("#paperWrap");
+    const paper = $("#paper");
+    const calligraphy = $("#calligraphy");
+    const year = $("#year");
+
+    year.textContent = new Date().getFullYear();
+
+    paper.style.backgroundImage = `url("${ASSETS.paper}")`;
+    calligraphy.style.backgroundImage = `url("${ASSETS.matsu}")`;
+
+    let busy = false;
+
+    function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+    async function reveal(){
+      if (busy) return;
+      busy = true;
+
+      // 入力値は“読んだ感”だけ残しておく（ネタバレしない程度に）
+      const v = (txt.value || "").trim();
+      if (!v) {
+        txt.focus();
+        busy = false;
+        return;
+      }
+
+      // 演出開始
+      veil.classList.add("on");
+      // 半紙を隠してから出す（毎回気持ちよく）
+      paperWrap.classList.remove("show", "ink");
+      await sleep(180);
+
+      // 暗転を少し残して“発表感”
+      await sleep(220);
+      veil.classList.remove("on");
+// 半紙表示
+paperWrap.classList.add("show");
+await sleep(520);          // ← ここ長め（半紙を見せる間）
+
+veil.classList.remove("on");
+await sleep(420);          // ← 余韻
+
+paperWrap.classList.add("ink");
+
+
+      // ちょい振動（対応端末のみ）
+      try { navigator.vibrate?.(18); } catch {}
+
+      // 入力はそのまま残す（もう一回押したくなるので）
+      busy = false;
+    }
+
+    function resetView(){
+      veil.classList.remove("on");
+      paperWrap.classList.remove("show", "ink");
+      txt.value = "";
+      txt.focus();
+    }
+
+    go.addEventListener("click", reveal);
+
+    txt.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        reveal();
+      }
+    });
+
+    reset.addEventListener("click", resetView);
+
+    // 初期フォーカス（SPでは出すぎる場合あるので少し遅らせる）
+    setTimeout(() => { try { txt.focus(); } catch {} }, 350);
+  </script>
+</body>
+</html>
