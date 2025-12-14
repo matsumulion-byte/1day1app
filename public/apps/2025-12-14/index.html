@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+  />
+  <title>マツムラダムスの大予言</title>
+
+  <style>
+    :root {
+      --bg: #0b0b0b;
+      --ink: #2a1f0f;
+      --btn: #3b2b16;
+      --btn-text: #f3e6c9;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #1a1a1a, #000);
+      color: #fff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 420px;
+      padding: 16px 14px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+    }
+
+    .parchment {
+      position: relative;
+      flex: 1;
+      background-image: url("");
+      background-size: cover;
+      background-position: center;
+      border-radius: 8px;
+      padding: 20px 16px;
+      box-shadow:
+        inset 0 0 30px rgba(0,0,0,0.25),
+        0 10px 30px rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .oracle {
+  position: absolute;
+  bottom: 8px;
+  left: 6px;          /* ← right → left に変更 */
+  height: 55%;
+  max-height: 420px;
+  opacity: 0.22;
+  pointer-events: none;
+  filter:
+    sepia(20%)
+    contrast(0.9)
+    drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+}
+
+.prophecy {
+  width: 100%;
+  max-width: 70%;        /* ← 右側に収める */
+  margin-left: auto;     /* ← 右寄せのキモ */
+  color: var(--ink);
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 16px;
+  line-height: 2.4;
+  letter-spacing: 0.08em;
+  white-space: pre-line;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+
+
+    .prophecy.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .btn {
+      appearance: none;
+      border: none;
+      background: var(--btn);
+      color: var(--btn-text);
+      padding: 14px;
+      border-radius: 999px;
+      font-size: 15px;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <h1>マツムラダムスの大予言</h1>
+
+    <div class="parchment">
+        <img
+          src=""
+          alt="マツムラダムス"
+          class="oracle"
+          id="oracle"
+        />
+        <div id="prophecy" class="prophecy"></div>
+      </div>
+      
+
+    <button id="btn" class="btn">予言を授かる</button>
+  </div>
+
+  <script type="module">
+    // 1日1アプリ用 アセット解決
+    const asset = (p) => new URL(p, import.meta.url).toString();
+    document.querySelector('.parchment').style.backgroundImage =
+      `url(${asset('./assets/parchment.png')})`;
+      const oracleImg = document.getElementById("oracle");
+oracleImg.src = asset("./assets/matsumuradamus.png");
+
+    const parts = {
+        when: [
+  "忘却が訪れし刻",
+  "月が名を失う頃",
+  "兆しなき朝の直前",
+  "静寂が破れる刹那",
+  "数えられぬ夜の果て"
+]
+,
+who: [
+  "日常の裏側で",
+  "名もなき獣が",
+  "見えざる契約が",
+  "古き約束の影が",
+  "眠れる兆候が"
+],
+action: [
+  "牙を剥き始める",
+  "形を変えて歩き出す",
+  "静かに爪を立てる",
+  "再び息を吹き返す",
+  "境界を越えて現れる"
+],
+result: [
+  "それに名を与えた者だけが先へ進む",
+  "気づかぬ者は同じ円を巡り続ける",
+  "選択はすでに刻まれている",
+  "答えは問いよりも古い",
+  "沈黙もまた一つの契約である"
+]
+    };
+
+    const btn = document.getElementById("btn");
+    const prophecyEl = document.getElementById("prophecy");
+
+    const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    async function writeProphecy() {
+      btn.disabled = true;
+      prophecyEl.textContent = "";
+      prophecyEl.classList.remove("show");
+
+      const lines = [
+        rand(parts.when),
+        rand(parts.who),
+        rand(parts.action),
+        rand(parts.result)
+      ];
+
+      for (const line of lines) {
+        prophecyEl.textContent += line + "\n";
+        await new Promise(r => setTimeout(r, 450));
+      }
+
+      prophecyEl.classList.add("show");
+      btn.disabled = false;
+    }
+
+    btn.addEventListener("click", writeProphecy);
+  </script>
+</body>
+</html>
