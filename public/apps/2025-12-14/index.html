@@ -134,8 +134,14 @@
   </div>
 
   <script type="module">
-    // 1日1アプリ用 アセット解決
-    const asset = (p) => new URL(p, import.meta.url).toString();
+    // Vercel/ローカルでパスがズレないように日付ベースで解決
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+    
     document.querySelector('.parchment').style.backgroundImage =
       `url(${asset('./assets/parchment.png')})`;
       const oracleImg = document.getElementById("oracle");
