@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>ウマ松村 年賀状メーカー</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;700;900&family=Yuji+Syuku&family=Kaisei+Tokumin:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root{
+      --panel: rgba(255,255,255,.05);
+      --line: rgba(255,255,255,.12);
+      --ink:#f8fafc;
+      --muted: rgba(255,255,255,.65);
+      --accent:#ef4444;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      min-height:100vh;
+      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background: linear-gradient(180deg,#07060a,#0b0a08);
+      color:var(--ink);
+      padding:14px;
+      display:flex;
+      justify-content:center;
+    }
+    .wrap{
+      width:min(1120px,100%);
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      gap:12px;
+    }
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}}
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:16px;
+      overflow:hidden;
+    }
+    header{
+      padding:12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:10px;
+    }
+    h1{
+      font-size:13px;
+      letter-spacing:.12em;
+      font-weight:900;
+    }
+    .hint{font-size:12px;color:var(--muted)}
+    .stage{padding:12px;display:flex;justify-content:center}
+    .card{
+      width:min(460px,100%);
+      aspect-ratio:2/3;
+      background:linear-gradient(180deg,#fbf3dd,#f3e2b7);
+      border-radius:14px;
+      overflow:hidden;
+      position:relative;
+      box-shadow: 0 18px 30px rgba(0,0,0,.25);
+    }
+    canvas{width:100%;height:100%;touch-action:none;display:block}
+
+    .controls{padding:12px;display:flex;flex-direction:column;gap:10px}
+    label{font-size:12px;color:var(--muted);display:block;margin:0 0 6px}
+    input,textarea,select{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.25);
+      color:#fff;
+      padding:8px 10px;
+      outline:none;
+    }
+    textarea{min-height:80px;resize:vertical}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    @media(max-width:900px){.row{grid-template-columns:1fr}}
+    .thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .thumb{
+      border:1px solid var(--line);
+      border-radius:10px;
+      overflow:hidden;
+      cursor:pointer;
+      aspect-ratio:3/2;
+    }
+    .thumb[data-active="true"]{outline:2px solid var(--accent)}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .btns{display:flex;gap:8px;margin-top:6px}
+    button{
+      flex:1;
+      border-radius:12px;
+      border:0;
+      padding:10px;
+      font-weight:900;
+      background:linear-gradient(180deg,#ef4444,#991b1b);
+      color:#fff;
+      cursor:pointer;
+    }
+    button.secondary{
+      background:rgba(255,255,255,.12);
+      border:1px solid var(--line);
+    }
+    .small{font-size:12px;color:var(--muted);line-height:1.5}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <section class="panel">
+    <header>
+      <h1>UMA MATSUMURA NENGAJO</h1>
+      <div class="hint">画像 / スタンプ / 文章 をドラッグ</div>
+    </header>
+    <div class="stage">
+      <div class="card">
+        <canvas id="cv" width="1000" height="1500"></canvas>
+      </div>
+    </div>
+    <div style="padding:0 12px 12px" class="small">
+      ヒント：触れないときは「前面レイヤー」を上にしてみて。
+    </div>
+  </section>
+
+  <section class="panel">
+    <header>
+      <h1>CONTROLS</h1>
+      <div class="hint">レイヤー切替あり</div>
+    </header>
+
+    <div class="controls">
+      <div>
+        <label>画像選択</label>
+        <div class="thumbs" id="thumbs">
+          <div class="thumb" data-i="0" data-active="true"><img id="t0" alt="uma1"></div>
+          <div class="thumb" data-i="1"><img id="t1" alt="uma2"></div>
+          <div class="thumb" data-i="2"><img id="t2" alt="uma3"></div>
+        </div>
+        <div class="small" style="margin-top:6px">
+          assets：<code>./assets/uma1.png</code> / <code>uma2.png</code> / <code>uma3.png</code>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="stampText">スタンプ</label>
+          <select id="stampText">
+            <option value="HAPPY NEW YEAR">HAPPY NEW YEAR</option>
+            <option value="謹賀新年" selected>謹賀新年</option>
+          </select>
+        </div>
+        <div>
+          <label for="year">年</label>
+          <input id="year" value="2026" inputmode="numeric">
+        </div>
+      </div>
+
+      <div>
+        <label for="message">メッセージ</label>
+        <textarea id="message">今年もどうぞよろしくお願いいたします。</textarea>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="font">フォント</label>
+          <select id="font">
+            <option value="Shippori Mincho">Shippori Mincho</option>
+            <option value="Kaisei Tokumin">Kaisei Tokumin</option>
+            <option value="Yuji Syuku" selected>Yuji Syuku</option>
+          </select>
+        </div>
+        <div>
+          <label for="textSize">文字サイズ</label>
+          <input id="textSize" type="range" min="28" max="72" value="44">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="photoScale">画像拡大</label>
+          <input id="photoScale" type="range" min="0.6" max="2.2" step="0.01" value="1">
+        </div>
+        <div>
+          <label for="stampScale">スタンプ拡大</label>
+          <input id="stampScale" type="range" min="0.6" max="2.2" step="0.01" value="1">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="textScale">文章拡大</label>
+          <input id="textScale" type="range" min="0.6" max="2" step="0.01" value="1">
+        </div>
+        <div>
+          <label for="layerPreset">レイヤー</label>
+          <select id="layerPreset">
+            <option value="photo-stamp-text">画像→奥 / スタンプ→中 / 文章→前</option>
+            <option value="photo-text-stamp">画像→奥 / 文章→中 / スタンプ→前</option>
+            <option value="stamp-photo-text">スタンプ→奥 / 画像→中 / 文章→前</option>
+            <option value="text-photo-stamp">文章→奥 / 画像→中 / スタンプ→前</option>
+            <option value="stamp-text-photo">スタンプ→奥 / 文章→中 / 画像→前</option>
+            <option value="text-stamp-photo">文章→奥 / スタンプ→中 / 画像→前</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btns">
+        <button id="download">PNG保存</button>
+        <button id="reset" class="secondary">配置リセット</button>
+        <button id="bringFront" class="secondary">選択を最前面</button>
+      </div>
+
+      <div class="small">
+        「選択を最前面」は、最後に触った要素（画像/スタンプ/文章）を前に出す。
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script type="module">
+  // Vercel / ローカル両対応のパス解決
+  const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+  const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+  const asset = (p) => {
+    const clean = String(p || "").replace(/^\.?\//, "");
+    return `${DATE_BASE}${clean}`;
+  };
+
+  const ASSETS = [
+    asset("./assets/uma1.png"),
+    asset("./assets/uma2.png"),
+    asset("./assets/uma3.png"),
+  ];
+
+  const cv = document.getElementById("cv");
+  const ctx = cv.getContext("2d");
+
+  const $thumbs = document.getElementById("thumbs");
+  const $stampText = document.getElementById("stampText");
+  const $year = document.getElementById("year");
+  const $message = document.getElementById("message");
+  const $font = document.getElementById("font");
+  const $textSize = document.getElementById("textSize");
+  const $photoScale = document.getElementById("photoScale");
+  const $stampScale = document.getElementById("stampScale");
+  const $textScale = document.getElementById("textScale");
+  const $layerPreset = document.getElementById("layerPreset");
+  const $download = document.getElementById("download");
+  const $reset = document.getElementById("reset");
+  const $bringFront = document.getElementById("bringFront");
+
+  // images
+  const imgs = ASSETS.map((src) => {
+    const im = new Image();
+    im.crossOrigin = "anonymous";
+    im.src = src;
+    return im;
+  });
+
+  // thumbs
+  document.getElementById("t0").src = ASSETS[0];
+  document.getElementById("t1").src = ASSETS[1];
+  document.getElementById("t2").src = ASSETS[2];
+
+  // state
+  const state = {
+    bgIndex: 0,
+    year: $year.value,
+
+    photo: { cx: cv.width * 0.5, cy: 720, scale: parseFloat($photoScale.value) },
+    stamp: { x: cv.width * 0.5, y: 150, scale: parseFloat($stampScale.value), text: $stampText.value },
+    text:  {
+      x: 120, y: 1180,
+      scale: parseFloat($textScale.value),
+      size: parseInt($textSize.value,10),
+      font: $font.value,
+      value: $message.value
+    },
+
+    // 描画順（後ろ→前）
+    zOrder: ["photo", "stamp", "text"],
+
+    // bounds cache
+    _photoRect: null,
+    _stampRect: null,
+    _textRect: null,
+  };
+
+  // --- helpers ---
+  function paperBackground() {
+    const g = ctx.createLinearGradient(0, 0, 0, cv.height);
+    g.addColorStop(0, "#fbf3dd");
+    g.addColorStop(1, "#f3e2b7");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, cv.width, cv.height);
+
+    ctx.save();
+    ctx.globalAlpha = 0.10;
+    ctx.fillStyle = "#6b4e2e";
+    for (let i = 0; i < 14; i++) {
+      const r = 40 + Math.random() * 140;
+      const x = Math.random() * cv.width;
+      const y = Math.random() * cv.height;
+      ctx.beginPath();
+      ctx.ellipse(x, y, r * 1.2, r, Math.random() * Math.PI, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function setTextStyle(font, weight, sizePx){
+    ctx.font = `${weight} ${sizePx}px "${font}", ui-serif, "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif`;
+  }
+
+  function computePhotoRect() {
+    const im = imgs[state.bgIndex];
+    if (!im.complete || !im.naturalWidth) return null;
+
+    const pad = 80;
+    const boxW = cv.width - pad * 2;
+    const boxH = 820;
+
+    const iw = im.naturalWidth, ih = im.naturalHeight;
+    const base = Math.min(boxW / iw, boxH / ih);
+    const s = base * state.photo.scale;
+
+    const dw = iw * s, dh = ih * s;
+    const dx = state.photo.cx - dw / 2;
+    const dy = state.photo.cy - dh / 2;
+
+    return { x: dx, y: dy, w: dw, h: dh };
+  }
+
+  function computeStampRect() {
+    const s = state.stamp;
+    const txt = `${s.text}${state.year ? " " + state.year : ""}`;
+
+    ctx.save();
+    setTextStyle("Yuji Syuku", 900, Math.round(96 * s.scale));
+    const w = ctx.measureText(txt).width + 80 * s.scale;
+    const h = 150 * s.scale;
+    ctx.restore();
+
+    // 枠を含むざっくり
+    return { x: s.x - w/2, y: s.y - h + 30*s.scale, w, h };
+  }
+
+  function computeTextRect() {
+    const t = state.text;
+    const size = t.size * t.scale;
+    const maxWidth = cv.width - 200;
+    const lineHeight = size * 1.35;
+
+    ctx.save();
+    setTextStyle(t.font, 700, Math.round(size));
+
+    const lines = [];
+    const paras = String(t.value || "").split("\n");
+    for (const para of paras) {
+      const chars = para.split("");
+      let line = "";
+      for (const ch of chars) {
+        const test = line + ch;
+        if (ctx.measureText(test).width > maxWidth && line !== "") {
+          lines.push(line);
+          line = ch;
+          if (lines.length >= 8) break;
+        } else line = test;
+      }
+      if (line) lines.push(line);
+      lines.push("");
+      if (lines.length >= 8) break;
+    }
+    while (lines.length && lines[lines.length - 1] === "") lines.pop();
+
+    const w = Math.min(
+      maxWidth,
+      Math.max(80, ...lines.map(l => ctx.measureText(l).width || 0))
+    );
+    const h = Math.max(lineHeight, lines.length * lineHeight);
+
+    ctx.restore();
+
+    return { x: t.x - 10, y: t.y - size, w: w + 20, h: h + 20 };
+  }
+
+  function drawPhoto() {
+  const im = imgs[state.bgIndex];
+  if (!im.complete || !im.naturalWidth) return;
+
+  const r = state._photoRect = computePhotoRect();
+  if (!r) return;
+
+  // 影なしでそのまま描画
+  ctx.drawImage(im, r.x, r.y, r.w, r.h);
+}
+
+  function drawStamp() {
+    const s = state.stamp;
+    const txt = `${s.text}${state.year ? " " + state.year : ""}`;
+
+    state._stampRect = computeStampRect();
+
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+
+    const size = 96 * s.scale;
+    setTextStyle("Yuji Syuku", 900, Math.round(size));
+
+    ctx.lineWidth = Math.max(6, size * 0.08);
+    ctx.strokeStyle = "rgba(255,255,255,.45)";
+    ctx.fillStyle = "#8b1d1d";
+
+    ctx.strokeText(txt, s.x, s.y);
+    ctx.fillText(txt, s.x, s.y);
+
+    // 朱印枠
+    const w = ctx.measureText(txt).width + 70 * s.scale;
+    const h = 130 * s.scale;
+    ctx.globalAlpha = 0.55;
+    ctx.lineWidth = Math.max(6, 8*s.scale);
+    ctx.strokeStyle = "#8b1d1d";
+    ctx.strokeRect(s.x - w/2, s.y - h + 20*s.scale, w, h);
+
+    ctx.restore();
+  }
+
+  function drawMessage() {
+    const t = state.text;
+    const size = t.size * t.scale;
+
+    state._textRect = computeTextRect();
+
+    ctx.save();
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    setTextStyle(t.font, 700, Math.round(size));
+
+    ctx.shadowColor = "rgba(0,0,0,.22)";
+    ctx.shadowBlur = 2;
+    ctx.shadowOffsetY = 1;
+
+    ctx.lineWidth = Math.max(3, size*0.10);
+    ctx.strokeStyle = "rgba(255,255,255,.42)";
+    ctx.fillStyle = "#2a241b";
+
+    const maxWidth = cv.width - 200;
+    const lineHeight = size * 1.35;
+
+    // wrap
+    const lines = [];
+    const paras = String(t.value || "").split("\n");
+    for (const para of paras) {
+      const chars = para.split("");
+      let line = "";
+      for (const ch of chars) {
+        const test = line + ch;
+        if (ctx.measureText(test).width > maxWidth && line !== "") {
+          lines.push(line);
+          line = ch;
+          if (lines.length >= 8) break;
+        } else line = test;
+      }
+      if (line) lines.push(line);
+      lines.push("");
+      if (lines.length >= 8) break;
+    }
+    while (lines.length && lines[lines.length - 1] === "") lines.pop();
+
+    lines.slice(0, 8).forEach((ln, i) => {
+      const yy = t.y + i * lineHeight;
+      ctx.strokeText(ln, t.x, yy);
+      ctx.fillText(ln, t.x, yy);
+    });
+
+    ctx.restore();
+  }
+
+  function frame() {
+    ctx.save();
+    ctx.strokeStyle = "rgba(60,40,20,.35)";
+    ctx.lineWidth = 10;
+    ctx.strokeRect(16, 16, cv.width - 32, cv.height - 32);
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    paperBackground();
+
+    // 後ろ→前の順で描画
+    for (const key of state.zOrder) {
+      if (key === "photo") drawPhoto();
+      if (key === "stamp") drawStamp();
+      if (key === "text")  drawMessage();
+    }
+
+    frame();
+
+    // ドラッグ中のガイド
+    if (drag.active && drag.target) {
+      const b = elements[drag.target].bounds();
+      ctx.save();
+      ctx.strokeStyle = "rgba(239,68,68,.55)";
+      ctx.lineWidth = 6;
+      ctx.setLineDash([12, 10]);
+      ctx.strokeRect(b.x, b.y, b.w, b.h);
+      ctx.restore();
+    }
+  }
+
+  // --- elements / hit test ---
+  function photoBounds(){ return state._photoRect || computePhotoRect() || { x:80, y:250, w:cv.width-160, h:820 }; }
+  function stampBounds(){ return state._stampRect || computeStampRect(); }
+  function textBounds(){  return state._textRect  || computeTextRect(); }
+
+  const elements = {
+    photo: { bounds: photoBounds, moveTo(x,y){ state.photo.cx = x; state.photo.cy = y; } },
+    stamp: { bounds: stampBounds, moveTo(x,y){ state.stamp.x = x; state.stamp.y = y; } },
+    text:  { bounds: textBounds,  moveTo(x,y){ state.text.x  = x; state.text.y  = y; } },
+  };
+
+  function getPointerPos(e){
+    const rect = cv.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (cv.width / rect.width);
+    const y = (e.clientY - rect.top) * (cv.height / rect.height);
+    return {x, y};
+  }
+
+  function hitTest(pos){
+    // 前面から当てたいので、zOrderを逆順（前→後）で判定
+    const frontToBack = [...state.zOrder].reverse();
+    for (const key of frontToBack) {
+      const b = elements[key].bounds();
+      if (pos.x >= b.x && pos.x <= b.x + b.w && pos.y >= b.y && pos.y <= b.y + b.h) return key;
+    }
+    return null;
+  }
+
+  const drag = { active:false, target:null, offX:0, offY:0 };
+  let lastSelected = "stamp";
+
+  cv.addEventListener("pointerdown", (e)=>{
+    const p = getPointerPos(e);
+    const hit = hitTest(p);
+    if (!hit) return;
+
+    lastSelected = hit;
+
+    cv.setPointerCapture(e.pointerId);
+    drag.active = true;
+    drag.target = hit;
+
+    const b = elements[hit].bounds();
+    drag.offX = p.x - (b.x + b.w/2);
+    drag.offY = p.y - (b.y + b.h/2);
+
+    draw();
+  });
+
+  cv.addEventListener("pointermove", (e)=>{
+    if (!drag.active || !drag.target) return;
+    const p = getPointerPos(e);
+
+    const nx = p.x - drag.offX;
+    const ny = p.y - drag.offY;
+
+    const key = drag.target;
+    if (key === "photo") {
+      state.photo.cx = Math.max(60, Math.min(cv.width - 60, nx));
+      state.photo.cy = Math.max(220, Math.min(cv.height - 120, ny));
+    } else if (key === "stamp") {
+      state.stamp.x = Math.max(120, Math.min(cv.width - 120, nx));
+      state.stamp.y = Math.max(120, Math.min(cv.height - 120, ny));
+    } else if (key === "text") {
+      state.text.x  = Math.max(60, Math.min(cv.width - 60, nx));
+      state.text.y  = Math.max(220, Math.min(cv.height - 80, ny));
+    }
+    draw();
+  });
+
+  cv.addEventListener("pointerup", ()=>{
+    drag.active = false;
+    drag.target = null;
+    draw();
+  });
+  cv.addEventListener("pointercancel", ()=>{
+    drag.active = false;
+    drag.target = null;
+    draw();
+  });
+
+  // --- UI events ---
+  function setActiveThumb(i){
+    [...$thumbs.querySelectorAll(".thumb")].forEach(el=>{
+      el.dataset.active = (parseInt(el.dataset.i,10) === i) ? "true" : "false";
+    });
+  }
+
+  $thumbs.addEventListener("click", (e)=>{
+    const el = e.target.closest(".thumb");
+    if (!el) return;
+    state.bgIndex = parseInt(el.dataset.i, 10);
+    setActiveThumb(state.bgIndex);
+    draw();
+  });
+
+  $stampText.addEventListener("change", ()=>{ state.stamp.text = $stampText.value; draw(); });
+  $year.addEventListener("input", ()=>{ state.year = $year.value; draw(); });
+
+  $message.addEventListener("input", ()=>{ state.text.value = $message.value; draw(); });
+  $font.addEventListener("change", ()=>{ state.text.font = $font.value; draw(); });
+  $textSize.addEventListener("input", ()=>{ state.text.size = parseInt($textSize.value,10); draw(); });
+
+  $photoScale.addEventListener("input", ()=>{ state.photo.scale = parseFloat($photoScale.value); draw(); });
+  $stampScale.addEventListener("input", ()=>{ state.stamp.scale = parseFloat($stampScale.value); draw(); });
+  $textScale.addEventListener("input", ()=>{ state.text.scale = parseFloat($textScale.value); draw(); });
+
+  function applyLayerPreset(val){
+    // val: "photo-stamp-text" etc.
+    const parts = String(val).split("-");
+    if (parts.length === 3 && parts.every(p => ["photo","stamp","text"].includes(p))) {
+      state.zOrder = parts; // back->front
+    }
+    draw();
+  }
+  $layerPreset.addEventListener("change", ()=> applyLayerPreset($layerPreset.value));
+
+  $bringFront.addEventListener("click", ()=>{
+    // 最後に触った要素を最前面へ（配列末尾へ）
+    const z = state.zOrder.filter(k => k !== lastSelected);
+    z.push(lastSelected);
+    state.zOrder = z;
+    // preset表示は実態とズレるが、そこは気にしない（簡潔優先）
+    draw();
+  });
+
+  $reset.addEventListener("click", ()=>{
+    state.photo.cx = cv.width * 0.5;
+    state.photo.cy = 720;
+    state.photo.scale = 1.0;
+    $photoScale.value = "1";
+
+    state.stamp.x = cv.width * 0.5;
+    state.stamp.y = 150;
+    state.stamp.scale = 1.0;
+    $stampScale.value = "1";
+
+    state.text.x = 120;
+    state.text.y = 1180;
+    state.text.scale = 1.0;
+    $textScale.value = "1";
+
+    draw();
+  });
+
+  $download.addEventListener("click", ()=>{
+    const a = document.createElement("a");
+    a.download = `nengajo_umamatsumura_${state.year || "year"}.png`;
+    a.href = cv.toDataURL("image/png");
+    a.click();
+  });
+
+  // font load (canvas崩れ防止)
+  async function ensureFonts(){
+    await Promise.all([
+      document.fonts.load('900 96px "Yuji Syuku"'),
+      document.fonts.load('700 44px "Shippori Mincho"'),
+      document.fonts.load('700 44px "Kaisei Tokumin"'),
+    ]);
+    await document.fonts.ready;
+  }
+
+  // init
+  setActiveThumb(0);
+  imgs.forEach(im => im.addEventListener("load", draw));
+  imgs.forEach(im => im.addEventListener("error", draw));
+
+  (async ()=>{
+    try{ await ensureFonts(); }catch(e){}
+    draw();
+  })();
+</script>
+</body>
+</html>
