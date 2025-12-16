@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>ふーって松村 - 12/16 紙の記念日</title>
+  <style>
+    :root{
+      --bg:#050814;
+      --panel:#0e1223;
+      --ink:#f6f7ff;
+      --muted:#9ca3c7;
+      --accent:#22c55e;
+      --shadow: 0 18px 40px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      background: radial-gradient(1200px 700px at 50% -10%, #1a2450 0%, var(--bg) 60%);
+      color:var(--ink);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+      height: 100svh;
+      overflow: hidden;
+
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+      padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom));
+      touch-action: manipulation;
+    }
+    .app{
+      width:min(560px, 100%);
+      height: 100%;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .card{
+      background: rgba(14,18,35,.82);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+
+      display:flex;
+      flex-direction:column;
+      min-height: 0;
+    }
+    header{
+      padding:12px 14px 8px;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+      flex: 0 0 auto;
+    }
+    h1{font-size:16px; letter-spacing:.04em}
+    .sub{font-size:12px; color:var(--muted); margin-top:4px; line-height:1.45}
+    .badge{
+      font-size:12px; font-weight:900;
+      padding:6px 10px; border-radius:999px;
+      background: rgba(255,255,255,.12);
+      color: rgba(255,255,255,.9);
+      white-space:nowrap;
+    }
+
+    .stage{
+      padding: 0 12px 10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    .canvasWrap{
+      border-radius: 16px;
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      flex: 1 1 auto;
+      min-height: 220px;
+      display:flex;
+    }
+    canvas{ display:block; width:100%; height:100%; }
+
+    .meter{
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.06);
+      flex: 0 0 auto;
+    }
+    .meterTop{
+      display:flex; align-items:center; justify-content:space-between;
+      font-size:12px; color:var(--muted);
+      margin-bottom:8px;
+    }
+    .bar{
+      height:12px;
+      border-radius:999px;
+      background: rgba(255,255,255,.08);
+      overflow:hidden;
+      position:relative;
+    }
+    .fill{
+      height:100%;
+      width:0%;
+      border-radius:999px;
+      background: linear-gradient(90deg, rgba(34,197,94,.25), rgba(34,197,94,.95));
+    }
+    .th{
+      position:absolute; top:0; bottom:0; width:2px;
+      background: rgba(255,255,255,.35);
+      left: 18%;
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      padding: 0 12px 12px;
+      flex: 0 0 auto;
+    }
+    button{
+      flex:1;
+      border:0;
+      border-radius: 14px;
+      padding: 14px 12px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      cursor:pointer;
+      box-shadow: 0 10px 20px rgba(0,0,0,.25);
+      transform: translateY(0);
+      transition: transform .08s ease, filter .08s ease;
+    }
+    button:active{transform: translateY(1px); filter: brightness(.95);}
+    .btnStart{background: rgba(34,197,94,.95); color:#04130a;}
+    .btnStop{
+      background: rgba(255,255,255,.08);
+      color: var(--ink);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:none;
+    }
+    button:disabled{opacity:.5; cursor:not-allowed; transform:none;}
+
+    .fine{
+      padding: 0 14px 12px;
+      font-size:11px;
+      color: var(--muted);
+      line-height: 1.55;
+      flex: 0 0 auto;
+    }
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card">
+      <header>
+        <div>
+          <h1>ふーって松村</h1>
+          <div class="sub">息を吹きかけると、松村がペラペラするだけ。</div>
+        </div>
+        <div class="badge" id="badge">待機</div>
+      </header>
+
+      <div class="stage">
+        <div class="canvasWrap">
+          <canvas id="c"></canvas>
+        </div>
+
+        <div class="meter">
+          <div class="meterTop">
+            <span>風量（マイク音量）</span>
+            <span class="mono">TH:<span id="thVal">0.18</span> / v:<span id="vVal">0.00</span></span>
+          </div>
+          <div class="bar">
+            <div class="th" id="thLine"></div>
+            <div class="fill" id="fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btnStart" id="btnStart">🎤 はじめる</button>
+        <button class="btnStop" id="btnStop" disabled>■ とめる</button>
+      </div>
+
+      <div class="fine">
+        ※ マイク許可が必要（HTTPS推奨）／iPhoneはボタン押下後に動きます。<br/>
+        ※ 内容の認識はしません（音量だけ）。
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  // Vercel / ローカル両対応のパス解決
+  const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+  const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+  const asset = (p) => {
+    const clean = String(p || "").replace(/^\.?\//, "");
+    return `${DATE_BASE}${clean}`;
+  };
+
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+
+  const badge = document.getElementById("badge");
+  const btnStart = document.getElementById("btnStart");
+  const btnStop  = document.getElementById("btnStop");
+  const fillEl   = document.getElementById("fill");
+  const thValEl  = document.getElementById("thVal");
+  const vValEl   = document.getElementById("vVal");
+  const thLine   = document.getElementById("thLine");
+
+  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+  const lerp  = (a,b,t)=>a+(b-a)*t;
+
+  // --- Canvas resize（潰れ防止：描画座標はCSS px基準）
+  function resizeCanvas(){
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+    canvas.width  = Math.floor(rect.width  * dpr);
+    canvas.height = Math.floor(rect.height * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener("resize", ()=>{ resizeCanvas(); draw(); }, {passive:true});
+
+  // --- 画像読み込み
+  const matsuImg = new Image();
+  matsuImg.src = asset("./assets/matsu.png");
+  let imgReady = false;
+  matsuImg.onload = ()=>{ imgReady = true; draw(); };
+  matsuImg.onerror = ()=>{ imgReady = false; draw(); };
+
+  // --- マイク解析
+  let audioCtx = null;
+  let analyser = null;
+  let stream = null;
+  let data = null;
+  let rafId = null;
+  let running = false;
+
+  const TH = 0.18;
+  thValEl.textContent = TH.toFixed(2);
+  thLine.style.left = `${TH*100}%`;
+
+  function computeRMS(buf){
+    let sum = 0;
+    for(let i=0;i<buf.length;i++){
+      const x = buf[i];
+      sum += x*x;
+    }
+    const rms = Math.sqrt(sum / buf.length);
+    return clamp(rms * 2.4, 0, 1);
+  }
+
+  // --- 状態（ペラペラ）
+  const st = {
+    wob: 0,
+    ang: 0,
+    windSm: 0, // 0..1 平滑化
+    flutter: 0, // ★追加：実際のペラペラ強度（0..1
+  };
+
+  // 背景の紙粉（ほんのり）
+  const dust = Array.from({length: 70}, ()=>({
+    x: Math.random(),
+    y: Math.random(),
+    r: Math.random()*2.0+0.6,
+    s: Math.random()*0.45+0.08
+  }));
+
+  function drawBG(W,H){
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0, "rgba(255,255,255,0.05)");
+    g.addColorStop(1, "rgba(0,0,0,0.00)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = "rgba(255,255,255,0.18)";
+    for(const d of dust){
+      const x = d.x * W;
+      const y = d.y * H;
+      ctx.beginPath();
+      ctx.arc(x, y, d.r, 0, Math.PI*2);
+      ctx.fill();
+
+      d.x -= (0.0014 + d.s*0.0032) * (0.8 + st.windSm*1.7);
+      d.y += Math.sin((performance.now()/900) + d.x*12) * 0.00035;
+      if(d.x < -0.05){ d.x = 1.05; d.y = Math.random(); }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // 画像を「潰さず」に（contain）で表示しつつ、横スライスでペラペラ
+  function drawFlutterMatsu(W,H){
+    if(!imgReady){
+      ctx.fillStyle = "rgba(255,255,255,0.75)";
+      ctx.font = "800 14px system-ui, -apple-system, 'Segoe UI', sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("画像読み込み中…", W/2, H/2);
+      return;
+    }
+
+    const iw = matsuImg.naturalWidth;
+    const ih = matsuImg.naturalHeight;
+
+    // 画面内に収める（contain） → これで潰れない
+    const maxW = W * 0.72;
+    const maxH = H * 0.78;
+    const scale = Math.min(maxW/iw, maxH/ih);
+
+    const dw = iw * scale;
+    const dh = ih * scale;
+
+    const cx = W * 0.52;
+    const cy = H * 0.52;
+
+    // 風で全体が少し傾く（紙感）
+    const tilt = lerp(0.02, -0.22, st.windSm);
+    st.ang = lerp(st.ang, tilt, 0.10);
+
+    // ペラペラ周期
+// ★普段はほぼ止まる。吹いた時だけ進む
+st.wob += 0.006 + st.flutter*0.55;
+
+// ★振幅も flutter 基準（普段はほぼ揺れない）
+const ampX = 0.6 + Math.pow(st.flutter, 1.35) * 18;
+const ampY = 0.3 + Math.pow(st.flutter, 1.25) * 12;
+
+    const phase = st.wob;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(st.ang);
+
+    // 影（松村だけでも浮く）
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.beginPath();
+    ctx.ellipse(0, dh*0.40, dw*0.30, dh*0.07, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+
+    // 画像を横スライスして波打たせる（アスペクト維持のまま）
+    const slices = 28;
+    const sliceH = dh / slices;
+    const srcSliceH = ih / slices;
+
+    for(let i=0;i<slices;i++){
+      const t = i/(slices-1); // 0..1
+      const y = (-dh/2) + i*sliceH;
+
+      const dx = Math.sin(phase*1.05 + t*6.4) * ampX;
+      const dy = Math.sin(phase*0.90 + t*5.1 + 0.8) * ampY;
+
+      ctx.drawImage(
+        matsuImg,
+        0, i*srcSliceH, iw, srcSliceH,
+        (-dw/2) + dx, y + dy, dw, sliceH + 1
+      );
+    }
+
+    // 風ライン（吹いてる時だけ）
+    if(st.windSm > TH){
+      const a = clamp((st.windSm-TH)/0.6, 0, 1);
+      ctx.globalAlpha = 0.10 + a*0.20;
+      ctx.strokeStyle = "rgba(34,197,94,1)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([10, 10]);
+      for(let k=0;k<4;k++){
+        const yy = (-dh*0.18) + k*(dh*0.14);
+        ctx.beginPath();
+        ctx.moveTo(-dw/2 - 90, yy);
+        ctx.lineTo(-dw/2 - 10, yy + Math.sin(phase*0.9 + k)*6);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.restore();
+  }
+
+  function draw(){
+    const W = canvas.getBoundingClientRect().width;
+    const H = canvas.getBoundingClientRect().height;
+
+    ctx.clearRect(0,0,W,H);
+    drawBG(W,H);
+    drawFlutterMatsu(W,H);
+
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.14)";
+    ctx.font = "800 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+    ctx.textAlign = "left";
+    ctx.fillText("BLOW TO FLUTTER", 12, 18);
+    ctx.restore();
+
+    if(!running){
+      ctx.save();
+      ctx.fillStyle = "rgba(5,8,20,0.45)";
+      ctx.fillRect(0,0,W,H);
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.font = "900 26px system-ui, -apple-system, 'Segoe UI', sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("🎤 マイクで「ふー」", W/2, H*0.46);
+      ctx.fillStyle = "rgba(255,255,255,0.70)";
+      ctx.font = "700 14px system-ui, -apple-system, 'Segoe UI', sans-serif";
+      ctx.fillText("息を吹きかけるとペラペラします", W/2, H*0.54);
+      ctx.restore();
+    }
+  }
+
+  function tick(){
+  if(!running) return;
+
+  analyser.getFloatTimeDomainData(data);
+  const v = computeRMS(data);
+
+  vValEl.textContent = v.toFixed(2);
+  fillEl.style.width = `${clamp(v*100,0,100)}%`;
+
+  // 風量の平滑化（環境差を吸収）
+  const k = v > st.windSm ? 0.18 : 0.06;
+  st.windSm = lerp(st.windSm, v, k);
+
+  // ★しきい値「っぽく」するけど、切り替えない（soft knee）
+  // TH付近からヌルッと立ち上がる
+  const knee = 0.10; // 大きいほど柔らかい
+  const raw = (st.windSm - (TH - knee)) / (0.55 + knee); // だいたい0..1へ
+  const target = clamp(raw, 0, 1);
+
+  // ★flutterはスプリングっぽく追従（上も下もなめらか）
+  const follow = 0.16; // 追従スピード（小さいほど柔らかい）
+  st.flutter = lerp(st.flutter, target, follow);
+
+  draw();
+  rafId = requestAnimationFrame(tick);
+}
+
+
+  async function startMic(){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    await audioCtx.resume();
+
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation:true, noiseSuppression:true, autoGainControl:true },
+      video: false
+    });
+
+    const src = audioCtx.createMediaStreamSource(stream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    analyser.smoothingTimeConstant = 0.85;
+    src.connect(analyser);
+
+    data = new Float32Array(analyser.fftSize);
+
+    running = true;
+    badge.textContent = "ふー待ち";
+    btnStart.disabled = true;
+    btnStop.disabled = false;
+
+    draw();
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function stopMic(){
+    running = false;
+    badge.textContent = "停止";
+    btnStart.disabled = false;
+    btnStop.disabled = true;
+
+    if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
+    if(stream){
+      stream.getTracks().forEach(t=>t.stop());
+      stream = null;
+    }
+    if(audioCtx){
+      try{ audioCtx.close(); }catch(e){}
+      audioCtx = null;
+    }
+    analyser = null;
+    data = null;
+
+    const unwind = ()=>{
+      st.windSm = lerp(st.windSm, 0, 0.08);
+      draw();
+      if(st.windSm > 0.002) requestAnimationFrame(unwind);
+      else { st.windSm = 0; draw(); }
+    };
+    unwind();
+  }
+
+  btnStart.addEventListener("click", async ()=>{
+    badge.textContent = "準備中…";
+    try{
+      await startMic();
+    }catch(err){
+      console.error(err);
+      badge.textContent = "マイク不可";
+      btnStart.disabled = false;
+      btnStop.disabled = true;
+      draw();
+      alert("マイクの許可が必要です（HTTPS環境でお試しください）");
+    }
+  });
+
+  btnStop.addEventListener("click", stopMic);
+
+  // 初期化
+  resizeCanvas();
+  draw();
+</script>
+</body>
+</html>
