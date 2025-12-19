@@ -1,0 +1,1327 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>割り勘奉行</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.09);
+      --line: rgba(255,255,255,.14);
+      --ink:#f3f6ff;
+      --muted: rgba(243,246,255,.72);
+      --accent:#7dd3fc;
+      --good:#86efac;
+      --warn:#fbbf24;
+      --danger:#fb7185;
+      --shadow: 0 18px 55px rgba(0,0,0,.45);
+      --r: 18px;
+    }
+
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    html,body{ height:100%; }
+    body{
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1100px 700px at 20% -10%, rgba(125,211,252,.22), transparent 55%),
+        radial-gradient(900px 700px at 110% 30%, rgba(251,113,133,.16), transparent 55%),
+        radial-gradient(900px 600px at 40% 120%, rgba(134,239,172,.14), transparent 60%),
+        linear-gradient(180deg, #050816, var(--bg));
+      min-height: 100vh;
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+      padding: 16px 12px 22px;
+    }
+
+    .app{
+      width:min(980px, 100%);
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+
+    header{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 6px 2px 0;
+    }
+    h1{
+      font-size: 18px;
+      letter-spacing:.02em;
+      line-height:1.2;
+    }
+    .sub{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .pill{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .pill b{ color: var(--ink); font-weight:700; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .card{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding: 12px 14px;
+      background: rgba(255,255,255,.03);
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .card .hd h2{
+      font-size: 13px;
+      letter-spacing:.03em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .card .bd{ padding: 14px; }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    label{
+      display:block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .field{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      border-radius: 12px;
+      padding: 10px 10px;
+      display:flex;
+      gap: 8px;
+      align-items:center;
+    }
+    .field span{
+      color: rgba(243,246,255,.55);
+      font-size: 12px;
+      min-width: 14px;
+      text-align:center;
+    }
+    input, select{
+      width:100%;
+      border:0;
+      outline:0;
+      background: transparent;
+      color: var(--ink);
+      font-size: 16px;
+    }
+    input::placeholder{ color: rgba(243,246,255,.35); }
+
+    .small{
+      font-size: 12px;
+      color: var(--muted);
+      line-height:1.6;
+    }
+
+    .modes{
+      display:flex;
+      gap: 8px;
+      flex-wrap:wrap;
+      margin-top: 6px;
+    }
+    .chip{
+      cursor:pointer;
+      user-select:none;
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+      font-size: 13px;
+      color: var(--muted);
+      transition: .15s ease;
+    }
+    .chip[aria-checked="true"]{
+      border-color: rgba(125,211,252,.65);
+      background: rgba(125,211,252,.12);
+      color: var(--ink);
+    }
+
+    .counts{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .counter{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 14px;
+      padding: 10px 10px;
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items:center;
+    }
+    .counter .meta{
+      display:flex;
+      flex-direction:column;
+      gap: 2px;
+      min-width:0;
+    }
+    .counter .name{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size: 14px;
+      color: var(--ink);
+      font-weight: 700;
+    }
+    .counter .hint{
+      font-size: 12px;
+      color: var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .ctrl{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .btnMini{
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--ink);
+      font-size: 18px;
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      transition:.12s ease;
+    }
+    .btnMini:active{ transform: translateY(1px); }
+    .num{
+      min-width: 40px;
+      text-align:center;
+      font-variant-numeric: tabular-nums;
+      font-size: 16px;
+      color: var(--ink);
+      opacity:.95;
+    }
+
+    .footerActions{
+      display:flex;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      flex: 1 1 160px;
+      border-radius: 14px;
+      padding: 12px 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--ink);
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing:.03em;
+      cursor:pointer;
+      transition:.15s ease;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 8px;
+      min-height: 44px;
+    }
+    .btn.primary{
+      border-color: rgba(125,211,252,.6);
+      background: rgba(125,211,252,.16);
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn[disabled]{
+      opacity:.55;
+      cursor:not-allowed;
+    }
+
+    .resultTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+    .badge{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: var(--muted);
+      display:flex;
+      gap: 8px;
+      align-items:center;
+    }
+    .badge b{ color: var(--ink); }
+
+    .bugyoWrap{
+      display:flex;
+      gap: 12px;
+      align-items:center;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 16px;
+      padding: 10px 10px;
+      margin: 10px 0 12px;
+      overflow:hidden;
+    }
+    .bugyoWrap .imgBox{
+      width: 90px;
+      flex: 0 0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .bugyoWrap img{
+      width: 82px;
+      height: auto;
+      filter: drop-shadow(0 14px 18px rgba(0,0,0,.35));
+      transform: translateY(2px);
+    }
+    .bugyoWrap .talk{
+      min-width:0;
+    }
+    .bugyoWrap .talk .title{
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .bugyoWrap .talk .line{
+      font-size: 14px;
+      line-height: 1.55;
+      font-weight: 800;
+      letter-spacing:.02em;
+    }
+
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+    .item{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 14px;
+      padding: 10px 10px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .item .left{
+      display:flex;
+      flex-direction:column;
+      gap: 3px;
+      min-width:0;
+    }
+    .item .role{
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--ink);
+    }
+    .item .desc{
+      font-size: 12px;
+      color: var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .yen{
+      font-size: 16px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      white-space:nowrap;
+    }
+
+    .note{
+      margin-top: 10px;
+      padding: 10px 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.03);
+      border: 1px dashed rgba(255,255,255,.18);
+      color: var(--muted);
+      font-size: 12px;
+      line-height:1.6;
+    }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, .92);
+      color: var(--ink);
+      border: 1px solid rgba(255,255,255,.14);
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+      opacity: 0;
+      pointer-events:none;
+      transition: .2s ease;
+      max-width: min(520px, calc(100% - 24px));
+      text-align:center;
+    }
+    .toast.show{ opacity: 1; }
+
+    .hidden{ display:none !important; }
+
+    /* SP */
+    @media (max-width: 860px){
+      .grid{ grid-template-columns: 1fr; }
+      header{ align-items:flex-start; flex-direction:column; }
+      h1{ font-size: 17px; }
+    }
+    /* === Bugyo Modal === */
+.modal{
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 12px;
+}
+.modal.show{ display:flex; }
+
+.modal .backdrop{
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,.62);
+  backdrop-filter: blur(8px);
+}
+
+.modal .panel{
+  position: relative;
+  width: min(680px, 100%);
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,.18);
+  background:
+    radial-gradient(900px 500px at 20% 0%, rgba(125,211,252,.18), transparent 60%),
+    radial-gradient(800px 500px at 110% 30%, rgba(251,113,133,.14), transparent 60%),
+    rgba(10, 14, 28, .78);
+  box-shadow: 0 30px 120px rgba(0,0,0,.6);
+  overflow: hidden;
+  transform: translateY(10px) scale(.98);
+  opacity: 0;
+  transition: .18s ease;
+}
+.modal.show .panel{
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.modal .panelHd{
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+}
+.modal .panelHd .ttl{
+  font-size: 13px;
+  color: rgba(243,246,255,.78);
+  font-weight: 800;
+  letter-spacing:.03em;
+}
+.modal .close{
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color: var(--ink);
+  font-size: 18px;
+  cursor:pointer;
+}
+.modal .close:active{ transform: translateY(1px); }
+
+.modal .panelBd{
+  padding: 16px;
+  display:grid;
+  grid-template-columns: 1.1fr .9fr;
+  gap: 14px;
+  align-items:center;
+}
+
+.modal .bugyoBig{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 10px;
+}
+.modal .bugyoBig img{
+  width: min(320px, 70vw);
+  max-height: 58vh;
+  height: auto;
+  filter: drop-shadow(0 24px 28px rgba(0,0,0,.45));
+}
+
+.modal .speech{
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  border-radius: 18px;
+  padding: 14px 14px;
+}
+.modal .speech .who{
+  font-size: 12px;
+  color: rgba(243,246,255,.7);
+  margin-bottom: 6px;
+  font-weight: 800;
+}
+.modal .speech .line{
+  font-size: 16px;
+  line-height: 1.6;
+  font-weight: 900;
+  white-space: pre-line;
+}
+
+.modal .actions{
+  grid-column: 1 / -1;
+  display:flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+.modal .actions .btn{
+  flex: 1 1 auto;
+}
+
+@media (max-width: 720px){
+  .modal .panelBd{ grid-template-columns: 1fr; }
+  .modal .bugyoBig img{ width: min(320px, 78vw); }
+}
+.modalSummary{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top: 10px;
+}
+.modalList{
+  margin-top: 12px;
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+  max-height: min(42vh, 420px);
+  overflow:auto;
+  padding-right: 2px;
+}
+.modalList .item{ margin:0; }
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>割り勘奉行</h1>
+        <div class="sub">総額と人数を入れるだけ。気まずさは奉行が裁く。</div>
+      </div>
+      <div class="pill"><span>端数処理:</span> <b id="roundingLabel">偉い人に寄せる</b></div>
+    </header>
+
+    <div class="grid">
+      <!-- INPUT -->
+      <section class="card">
+        <div class="hd">
+          <h2>入力</h2>
+          <div class="small" id="totalCountHint">合計人数: 0人</div>
+        </div>
+        <div class="bd">
+          <div class="row">
+            <div>
+              <label for="total">総額</label>
+              <div class="field">
+                <span>¥</span>
+                <input id="total" inputmode="numeric" placeholder="120000" />
+              </div>
+            </div>
+            <div>
+              <label for="mode">割り方</label>
+              <div class="field">
+                <select id="mode">
+                    <option value="boss">上司・部下</option>
+                    <option value="gender">男女</option>
+                    <option value="custom">カスタム</option>
+                    <option value="flat">フラット</option> <!-- ★追加 -->
+                  </select>
+                  
+              </div>
+            </div>
+          </div>
+
+          <label>端数の寄せ先</label>
+          <div class="modes" id="roundingGroup" role="radiogroup" aria-label="端数の寄せ先">
+            <div class="chip" data-round="high" role="radio" aria-checked="true">偉い人に寄せる</div>
+            <div class="chip" data-round="low" role="radio" aria-checked="false">若者に優しく</div>
+            <div class="chip" data-round="host" role="radio" aria-checked="false">幹事が背負う</div>
+            <div class="chip" data-round="none" role="radio" aria-checked="false">四捨五入</div>
+          </div>
+
+          <div class="counts" id="countsArea"></div>
+
+          <div class="footerActions">
+            <button class="btn primary" id="calcBtn">🧮 奉行に裁かせる</button>
+            <button class="btn" id="resetBtn">↺ リセット</button>
+          </div>
+
+          <div class="note">
+            ※ 人数は「＋/−」で調整。<br>
+            ※ 結果は100円単位に丸めます（忘年会仕様）。<br>
+            ※ 端数は奉行の裁定により寄せられます。
+          </div>
+        </div>
+      </section>
+
+      <!-- RESULT -->
+      <section class="card" id="resultCard">
+        <div class="hd">
+          <h2>結果</h2>
+          <div class="small" id="statusText">まだ裁定は下っていません</div>
+        </div>
+        <div class="bd">
+          <div class="resultTop">
+            <div class="badge">合計支払: <b id="sumOut">—</b></div>
+          </div>
+
+        
+
+          <div class="list" id="resultList"></div>
+
+          <div class="footerActions" style="margin-top:12px">
+            <button class="btn" id="copyBtn" disabled>📋 結果をコピー</button>
+            <button class="btn" id="shareBtn" disabled>📨 共有（対応端末）</button>
+          </div>
+
+          <div class="note" id="detailNote">
+            ここに端数処理の説明が出ます。
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">コピーしました</div>
+<!-- Bugyo Modal -->
+<div class="modal" id="bugyoModal" aria-hidden="true">
+    <div class="backdrop" data-close></div>
+    <div class="panel" role="dialog" aria-modal="true" aria-label="割り勘奉行の裁定">
+      <div class="panelHd">
+        <div class="ttl">割り勘奉行の裁定</div>
+        <button class="close" type="button" id="bugyoClose" aria-label="閉じる">×</button>
+      </div>
+      <div class="panelBd">
+        <div class="bugyoBig">
+          <img id="bugyoModalImg" alt="割り勘奉行" />
+        </div>
+        <div class="speech">
+          <div class="who">割り勘奉行</div>
+          <div class="line" id="bugyoModalLine">…</div>
+        </div>
+        <div class="modalSummary">
+            <div class="badge">総額: <b id="mTotal">—</b></div>
+            <div class="badge">合計支払: <b id="mSum">—</b></div>
+          </div>
+          
+          <div class="modalList" id="mList"></div>
+          <div class="note" id="mNote" style="margin-top:10px">—</div>
+          
+        <div class="actions">
+          <button class="btn primary" type="button" id="bugyoOk">よき</button>
+          <button class="btn" type="button" id="bugyoAgain">もう一回言って</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script type="module">
+    // Vercel用のパス解決
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    // === ASSET ===
+    // /app/YYYY-MM-DD/assets/ に置いた画像名に合わせて変更してOK
+    const BUGYO_SRC = asset("./assets/bugyo.png");
+
+    // === STATE ===
+    const state = {
+      mode: "boss",
+      rounding: "high", // high | low | host | none
+      stepYen: 100,     // 100円単位で丸める
+    };
+
+    // === PRESETS ===
+    const presets = {
+  boss: [
+    { key: "boss",  label: "上司",  weight: 1.5, hint: "多めに出しがち" },
+    { key: "senior",label: "先輩",  weight: 1.2, hint: "ちょい多め" },
+    { key: "peer",  label: "同期",  weight: 1.0, hint: "基準" },
+    { key: "junior",label: "後輩",  weight: 0.8, hint: "優しさ" },
+  ],
+  gender: [
+    { key: "male",  label: "男性",  weight: 1.2, hint: "多め" },
+    { key: "female",label: "女性",  weight: 1.0, hint: "基準" },
+  ],
+  custom: [
+    { key: "host", label: "幹事",  weight: 1.3, hint: "背負いがち" },
+    { key: "vip",  label: "VIP",   weight: 1.6, hint: "偉そう" },
+    { key: "norm", label: "ふつう", weight: 1.0, hint: "基準" },
+    { key: "soft", label: "お財布やさしめ", weight: 0.7, hint: "優遇" },
+  ],
+  // ★追加
+  flat: [
+    { key: "all", label: "人数", weight: 1.0, hint: "全員同額" },
+  ],
+};
+
+
+    // counts (人数) 初期
+    const counts = {};
+    Object.keys(presets).forEach(m=>{
+      counts[m] = {};
+      presets[m].forEach(r => counts[m][r.key] = 0);
+    });
+    // 初期値（それっぽく）
+    counts.boss.boss = 1; counts.boss.senior = 2; counts.boss.peer = 3; counts.boss.junior = 1;
+    counts.gender.male = 3; counts.gender.female = 2;
+    counts.custom.host = 1; counts.custom.vip = 1; counts.custom.norm = 3; counts.custom.soft = 1;
+    counts.flat.all = 4; // ★初期人数
+
+
+    // === ELEMENTS ===
+    const totalEl = document.getElementById("total");
+    const modeEl = document.getElementById("mode");
+    const countsArea = document.getElementById("countsArea");
+    const totalCountHint = document.getElementById("totalCountHint");
+
+    const roundingGroup = document.getElementById("roundingGroup");
+    const roundingLabel = document.getElementById("roundingLabel");
+
+    const calcBtn = document.getElementById("calcBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    const resultCard = document.getElementById("resultCard");
+    const statusText = document.getElementById("statusText");
+    const totalOut = document.getElementById("totalOut");
+    const sumOut = document.getElementById("sumOut");
+    const resultList = document.getElementById("resultList");
+    const detailNote = document.getElementById("detailNote");
+
+    const bugyoWrap = document.getElementById("bugyoWrap");
+    const bugyoImg = document.getElementById("bugyoImg");
+    const bugyoLineEl = document.getElementById("bugyoLine");
+
+    const copyBtn = document.getElementById("copyBtn");
+    const shareBtn = document.getElementById("shareBtn");
+    const toast = document.getElementById("toast");
+// Modal
+const bugyoModal = document.getElementById("bugyoModal");
+const bugyoModalImg = document.getElementById("bugyoModalImg");
+const bugyoModalLine = document.getElementById("bugyoModalLine");
+const bugyoClose = document.getElementById("bugyoClose");
+const bugyoOk = document.getElementById("bugyoOk");
+const bugyoAgain = document.getElementById("bugyoAgain");
+const mTotal = document.getElementById("mTotal");
+const mSum = document.getElementById("mSum");
+const mList = document.getElementById("mList");
+const mNote = document.getElementById("mNote");
+
+
+bugyoModalImg.src = BUGYO_SRC;
+
+
+    // === UTILS ===
+    const fmtYen = (n) => "¥" + Math.round(n).toLocaleString("ja-JP");
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+    function parseYen(s){
+      if(!s) return 0;
+      const n = Number(String(s).replace(/[^\d]/g,""));
+      return Number.isFinite(n) ? n : 0;
+    }
+    function openBugyoModal(line){
+  bugyoModalLine.textContent = line;
+  bugyoModal.classList.add("show");
+  bugyoModal.setAttribute("aria-hidden","false");
+  document.body.style.overflow = "hidden";
+}
+
+function closeBugyoModal(){
+  bugyoModal.classList.remove("show");
+  bugyoModal.setAttribute("aria-hidden","true");
+  document.body.style.overflow = "";
+}
+
+bugyoModal.addEventListener("click", (e)=>{
+  if(e.target && e.target.hasAttribute("data-close")) closeBugyoModal();
+});
+bugyoClose.addEventListener("click", closeBugyoModal);
+bugyoOk.addEventListener("click", closeBugyoModal);
+bugyoAgain.addEventListener("click", ()=>{
+  const line = bugyoLineFor(state.mode, state.rounding);
+  openBugyoModal(line);
+});
+window.addEventListener("keydown", (e)=>{
+  if(e.key === "Escape" && bugyoModal.classList.contains("show")) closeBugyoModal();
+});
+
+
+    function ensureNonZeroCounts(mode){
+  const roles = presets[mode];
+  const sum = roles.reduce((s,r)=> s + (counts[mode]?.[r.key] || 0), 0);
+  if (sum > 0) return;
+
+  // 0人なら最低限の初期値を注入
+  if(mode === "flat") counts.flat.all = 4;
+  else if(mode === "gender"){ counts.gender.male = 3; counts.gender.female = 2; }
+  else if(mode === "boss"){ counts.boss.boss = 1; counts.boss.senior = 2; counts.boss.peer = 3; counts.boss.junior = 1; }
+  else if(mode === "custom"){ counts.custom.host = 1; counts.custom.vip = 1; counts.custom.norm = 3; counts.custom.soft = 1; }
+}
+
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=>toast.classList.remove("show"), 1200);
+    }
+
+    function updateRoundingUI(){
+      const map = { high:"偉い人に寄せる", low:"若者に優しく", host:"幹事が背負う", none:"四捨五入" };
+      roundingLabel.textContent = map[state.rounding] || "偉い人に寄せる";
+      [...roundingGroup.querySelectorAll(".chip")].forEach(ch=>{
+        const on = ch.dataset.round === state.rounding;
+        ch.setAttribute("aria-checked", on ? "true" : "false");
+      });
+    }
+
+    function totalPeople(mode){
+      return presets[mode].reduce((sum,r)=> sum + (counts[mode][r.key]||0), 0);
+    }
+
+    function renderCounters(){
+      countsArea.innerHTML = "";
+      const mode = state.mode;
+      const roles = presets[mode];
+
+      roles.forEach(r=>{
+        const wrap = document.createElement("div");
+        wrap.className = "counter";
+        wrap.innerHTML = `
+          <div class="meta">
+            <div class="name">${escapeHtml(r.label)} <span style="font-size:12px;color:rgba(243,246,255,.6);font-weight:800">×${r.weight.toFixed(1)}</span></div>
+            <div class="hint">${escapeHtml(r.hint)}</div>
+          </div>
+          <div class="ctrl">
+            <button class="btnMini" type="button" data-act="dec" aria-label="${escapeHtml(r.label)} 減らす">−</button>
+            <div class="num" data-num>${counts[mode][r.key]||0}</div>
+            <button class="btnMini" type="button" data-act="inc" aria-label="${escapeHtml(r.label)} 増やす">＋</button>
+          </div>
+        `;
+        const numEl = wrap.querySelector("[data-num]");
+        const dec = wrap.querySelector('[data-act="dec"]');
+        const inc = wrap.querySelector('[data-act="inc"]');
+
+        dec.addEventListener("click", ()=>{
+          counts[mode][r.key] = clamp((counts[mode][r.key]||0)-1, 0, 999);
+          numEl.textContent = counts[mode][r.key];
+          updateTotalCountHint();
+        });
+        inc.addEventListener("click", ()=>{
+          counts[mode][r.key] = clamp((counts[mode][r.key]||0)+1, 0, 999);
+          numEl.textContent = counts[mode][r.key];
+          updateTotalCountHint();
+        });
+
+        countsArea.appendChild(wrap);
+      });
+
+      updateTotalCountHint();
+    }
+    function renderModalResult(res){
+  mTotal.textContent = fmtYen(res.total);
+  mSum.textContent = fmtYen(res.sum);
+  mNote.textContent = res.note;
+
+  mList.innerHTML = "";
+  res.items.forEach(it=>{
+    const el = document.createElement("div");
+    el.className = "item";
+    el.innerHTML = `
+      <div class="left">
+        <div class="role">${escapeHtml(it.label)} <span style="font-size:12px;color:rgba(243,246,255,.55);font-weight:900">×${it.weight.toFixed(1)}</span></div>
+        <div class="desc">${escapeHtml(it.hint)} / ${it.count}人 / 1人あたり</div>
+      </div>
+      <div style="text-align:right">
+        <div class="yen">${fmtYen(it.per)}</div>
+        <div style="font-size:12px;color:rgba(243,246,255,.6);margin-top:2px">合計 ${fmtYen(it.total)}</div>
+      </div>
+    `;
+    mList.appendChild(el);
+  });
+}
+
+
+    function updateTotalCountHint(){
+      const n = totalPeople(state.mode);
+      totalCountHint.textContent = `合計人数: ${n}人`;
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    // === BUGYO LINES ===
+    function bugyoLineFor(mode, rounding){
+      const base = [
+        "此度の勘定、しかと見届けた",
+        "不満は酒で流すがよい",
+        "年末につき、情けを加味した",
+        "財布の厚み、考慮済みである",
+        "異議は二次会で受け付ける",
+        "宴の秩序は、勘定より始まる",
+        "この割り方、空気は読めておる",
+      ];
+
+      const byMode = {
+        boss: [
+          "上司は多めに、後輩は控えめである",
+          "先輩は少し張り切るがよい",
+          "同期は平等、後輩は守るのだ",
+        ],
+        gender: [
+          "此度は男女の按分、慎重に行った",
+          "差をつけるもよし、話し合いもよし",
+          "礼節ある割り勘、見事である",
+        ],
+        custom: [
+          "カスタムは自由。ゆえに責任も自由",
+          "幹事の魂、しかと見えた",
+          "VIPの存在感、勘定にも反映した",
+        ],
+      };
+
+      const byRound = {
+        high: "端数は、もっとも立派そうな者に寄せた",
+        low: "端数は、若者の未来のために軽くした",
+        host:"端数は、幹事が背負った（強い）",
+        none:"端数は、四捨五入で穏便にした",
+      };
+
+      const pick = (arr)=> arr[Math.floor(Math.random()*arr.length)];
+
+      // 2行にする
+      const modeLines = byMode[mode] || [];
+const l1 = pick([...base, ...modeLines]);
+      const l2 = byRound[rounding] || byRound.high;
+      return `${l1}\n${l2}`;
+    }
+
+    // === CALC ===
+    function calc(){
+      const total = parseYen(totalEl.value);
+      const mode = state.mode;
+      const roles = presets[mode];
+
+      const people = totalPeople(mode);
+      if(total <= 0){
+        showToast("総額を入力してね");
+        return null;
+      }
+      if(people <= 0){
+        showToast("人数が0人です");
+        return null;
+      }
+
+      // 合計重み
+      let weightSum = 0;
+      roles.forEach(r=>{
+        const c = counts[mode][r.key]||0;
+        weightSum += c * r.weight;
+      });
+      if(weightSum <= 0){
+        showToast("重みが0です");
+        return null;
+      }
+
+      const perPoint = total / weightSum;
+
+      // まず理論値を計算
+      const items = [];
+      roles.forEach(r=>{
+        const c = counts[mode][r.key]||0;
+        if(c <= 0) return;
+        const raw = perPoint * r.weight;
+        items.push({
+          key: r.key,
+          label: r.label,
+          count: c,
+          weight: r.weight,
+          rawPer: raw,           // 1人あたり理論
+          rawTotal: raw * c,      // グループ合計理論
+          per: 0,
+          total: 0,
+          hint: r.hint
+        });
+      });
+
+      // 100円単位に丸める（基本は四捨五入）
+      const step = state.stepYen;
+      items.forEach(it=>{
+        it.per = Math.round(it.rawPer / step) * step;
+        it.total = it.per * it.count;
+      });
+
+      let sum = items.reduce((s,it)=> s + it.total, 0);
+      let diff = total - sum; // +なら足りない / -なら多い
+
+      // 端数調整：diff を step の倍数になるように（totalがstepで割り切れない場合は最後に飲み込む）
+      // ここでは diff を step 単位で調整できる範囲まで寄せる
+      const stepsNeeded = Math.trunc(diff / step); // 正負
+      const remainder = diff - stepsNeeded * step; // step未満
+
+      // 調整対象の選定（高/低/幹事/none）
+      const idxTarget = pickAdjustTargetIndex(items, mode, state.rounding);
+
+      // step単位の差分をターゲットへ反映（1人あたりではなく「グループ合計」で合わせる）
+      // グループ人数で割り切れない場合は、1人あたりに配れないので、別グループにも分散する
+      // → ここは「グループの中で一部の人だけ+100円」を表現しない簡易仕様として、
+      //    人数が1のグループ優先で吸収する
+      if(state.rounding !== "none"){
+        diff = total - sum;
+        if(Math.abs(diff) >= step){
+          applyDiffByStep(items, total, step, mode, state.rounding);
+          sum = items.reduce((s,it)=> s + it.total, 0);
+          diff = total - sum;
+        }
+      } else {
+        // none: 全体四捨五入運用（sumとtotalのズレは説明に回す）
+      }
+
+      // 最終：まだズレていたら、1人グループ or 最優先ターゲットに remainder も含めて丸め説明で吸収
+      // 実際の支払で1円単位は扱わない想定なので、ここは「合計支払」と「総額」がズレるケースを避けるため、
+      // 最後にターゲットのtotalにdiffを加算（※表示上のみ。100円単位を崩す可能性）
+      sum = items.reduce((s,it)=> s + it.total, 0);
+      diff = total - sum;
+      if(diff !== 0){
+        // diffを吸収できそうな場所（人数1 or ターゲット）
+        const oneIdx = items.findIndex(it=> it.count === 1);
+        const t = (oneIdx >= 0) ? oneIdx : idxTarget;
+        items[t].total += diff;
+        // perも整合させる（人数1以外は厳密でないが、表示としての整合だけ取る）
+        items[t].per = Math.round(items[t].total / items[t].count);
+        sum = items.reduce((s,it)=> s + it.total, 0);
+      }
+
+      // 端数説明
+      const note = buildRoundingNote(mode, state.rounding, total, sum);
+
+      return { total, sum, mode, items, note };
+    }
+
+    function pickAdjustTargetIndex(items, mode, rounding){
+      // 並び順に依存して「偉い/若者/幹事」を推定
+      // boss: boss(偉い) / junior(若者) / custom: host(幹事) / gender: male=high側に寄せ(仮)
+      const findKey = (key)=> items.findIndex(it=> it.key === key);
+      if(rounding === "high"){
+        if(mode === "boss") return Math.max(0, findKey("boss"));
+        if(mode === "gender") return Math.max(0, findKey("male") >= 0 ? findKey("male") : 0);
+        if(mode === "custom") return Math.max(0, findKey("vip") >= 0 ? findKey("vip") : 0);
+      }
+      if(rounding === "low"){
+        if(mode === "boss") return Math.max(0, findKey("junior") >= 0 ? findKey("junior") : items.length-1);
+        if(mode === "gender") return Math.max(0, findKey("female") >= 0 ? findKey("female") : items.length-1);
+        if(mode === "custom") return Math.max(0, findKey("soft") >= 0 ? findKey("soft") : items.length-1);
+      }
+      if(rounding === "host"){
+        if(mode === "custom") return Math.max(0, findKey("host") >= 0 ? findKey("host") : 0);
+        // boss/gender でも「幹事っぽい」= 先頭に寄せ
+        return 0;
+      }
+      return 0;
+    }
+
+    function applyDiffByStep(items, total, step, mode, rounding){
+      // sumを total に近づけるように、step単位でグループ合計を調整
+      // 優先順: 人数1 → 人数で割り切れるグループ → ターゲット
+      let sum = items.reduce((s,it)=> s + it.total, 0);
+      let diff = total - sum; // +なら足りない
+
+      // 調整候補配列を作る
+      const targetIdx = pickAdjustTargetIndex(items, mode, rounding);
+      const order = [];
+
+      // 1人グループ優先
+      items.forEach((it, idx)=> { if(it.count === 1) order.push(idx); });
+
+      // stepが人数で割り切れるか（グループ全員を+100にする必要があるため）
+      items.forEach((it, idx)=>{
+        if(order.includes(idx)) return;
+        if(step % it.count === 0) order.push(idx);
+      });
+
+      // ターゲットを最後に必ず
+      if(!order.includes(targetIdx)) order.push(targetIdx);
+
+      // それでも足りない場合に備え、残りも追加
+      items.forEach((_, idx)=>{ if(!order.includes(idx)) order.push(idx); });
+
+      let guard = 9999;
+      while(diff !== 0 && guard-- > 0){
+        const sign = diff > 0 ? 1 : -1;
+        // 1stepだけ進める
+        let progressed = false;
+        for(const idx of order){
+          const it = items[idx];
+          // グループ合計を step だけ動かせるか？（= per を step/人数 だけ動かす必要）
+          // 人数で割り切れない場合はスキップ
+          if(step % it.count !== 0) continue;
+          const perDelta = (step / it.count) * sign;
+          const newPer = it.per + perDelta;
+
+          // 0円未満は避ける
+          if(newPer < 0) continue;
+
+          it.per = newPer;
+          it.total = it.per * it.count;
+          progressed = true;
+          break;
+        }
+        if(!progressed) break;
+
+        sum = items.reduce((s,it)=> s + it.total, 0);
+        diff = total - sum;
+        // diffがstep未満になったら抜けてOK（最後に吸収）
+        if(Math.abs(diff) < step) break;
+      }
+    }
+
+    function buildRoundingNote(mode, rounding, total, sum){
+      const mapMode = { boss:"上司・部下割り", gender:"男女割り", custom:"カスタム割り" };
+      const mapRound = {
+        high:"端数は「偉い人」側へ寄せました。",
+        low:"端数は「若者に優しく」寄せました。",
+        host:"端数は「幹事が背負う」裁定としました。",
+        none:"端数は四捨五入（全体の丸め）としました。"
+      };
+      const diff = total - sum;
+      const diffText = diff === 0 ? "合計は総額と一致しています。" : `合計が総額と ${Math.abs(diff).toLocaleString("ja-JP")}円 ${diff>0?"不足":"超過"}しています（最後に奉行が調整）。`;
+      return `【${mapMode[mode]||""}】${mapRound[rounding]||""}\n${diffText}`;
+    }
+
+    function buildShareText(res){
+      const lines = [];
+      lines.push("【割り勘奉行】");
+      lines.push(`総額 ${fmtYen(res.total)}`);
+      lines.push("");
+      res.items.forEach(it=>{
+        lines.push(`${it.label}（${it.count}人）: 1人 ${fmtYen(it.per)} / 合計 ${fmtYen(it.total)}`);
+      });
+      lines.push("");
+      lines.push(`合計支払 ${fmtYen(res.sum)}`);
+      lines.push("");
+      lines.push(detailNote.textContent);
+      return lines.join("\n");
+    }
+
+    // === RENDER RESULT ===
+    function renderResult(res){
+      // status
+      statusText.textContent = "奉行の裁定が下りました";
+      totalOut.textContent = fmtYen(res.total);
+      sumOut.textContent = fmtYen(res.sum);
+
+
+
+      // list
+      resultList.innerHTML = "";
+      res.items.forEach(it=>{
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <div class="left">
+            <div class="role">${escapeHtml(it.label)} <span style="font-size:12px;color:rgba(243,246,255,.55);font-weight:900">×${it.weight.toFixed(1)}</span></div>
+            <div class="desc">${escapeHtml(it.hint)} / ${it.count}人 / 1人あたり</div>
+          </div>
+          <div style="text-align:right">
+            <div class="yen">${fmtYen(it.per)}</div>
+            <div style="font-size:12px;color:rgba(243,246,255,.6);margin-top:2px">合計 ${fmtYen(it.total)}</div>
+          </div>
+        `;
+        resultList.appendChild(el);
+      });
+
+      detailNote.textContent = res.note;
+
+      copyBtn.disabled = false;
+      shareBtn.disabled = false;
+      copyBtn._shareText = buildShareText(res);
+      shareBtn._shareText = copyBtn._shareText;
+    }
+
+    // === EVENTS ===
+    modeEl.addEventListener("change", ()=>{
+      state.mode = modeEl.value;
+      ensureNonZeroCounts(state.mode); // ★追加
+      renderCounters();
+      statusText.textContent = "まだ裁定は下っていません";
+      bugyoWrap.classList.add("hidden");
+      resultList.innerHTML = "";
+      totalOut.textContent = "—";
+      sumOut.textContent = "—";
+      copyBtn.disabled = true;
+      shareBtn.disabled = true;
+      detailNote.textContent = "ここに端数処理の説明が出ます。";
+    });
+
+    roundingGroup.addEventListener("click", (e)=>{
+      const chip = e.target.closest(".chip");
+      if(!chip) return;
+      state.rounding = chip.dataset.round;
+      updateRoundingUI();
+    });
+
+    calcBtn.addEventListener("click", ()=>{
+  const res = calc();
+  if(!res) return;
+
+  statusText.textContent = "奉行、算盤をはじいております…";
+  bugyoWrap.classList.add("hidden");
+  resultList.innerHTML = "";
+  copyBtn.disabled = true;
+  shareBtn.disabled = true;
+
+  setTimeout(()=>{
+  renderResult(res); // 右側の通常の結果（内訳など）は今のまま出す
+
+  const line = bugyoLineFor(res.mode, state.rounding);
+  renderModalResult(res);     // ★追加：モーダルに結果も流す
+  openBugyoModal(line);       // ★モーダルOPEN
+}, 450);
+
+});
+
+
+    resetBtn.addEventListener("click", ()=>{
+      totalEl.value = "";
+      // countsは初期値に戻す
+      Object.keys(presets).forEach(m=>{
+        presets[m].forEach(r => counts[m][r.key] = 0);
+      });
+      counts.boss.boss = 1; counts.boss.senior = 2; counts.boss.peer = 3; counts.boss.junior = 1;
+      counts.gender.male = 3; counts.gender.female = 2;
+      counts.custom.host = 1; counts.custom.vip = 1; counts.custom.norm = 3; counts.custom.soft = 1;
+counts.flat.all = 4; // ★追加
+
+      state.mode = "boss";
+      state.rounding = "high";
+      modeEl.value = state.mode;
+      updateRoundingUI();
+      renderCounters();
+
+      statusText.textContent = "まだ裁定は下っていません";
+      bugyoWrap.classList.add("hidden");
+      resultList.innerHTML = "";
+      totalOut.textContent = "—";
+      sumOut.textContent = "—";
+      copyBtn.disabled = true;
+      shareBtn.disabled = true;
+      detailNote.textContent = "ここに端数処理の説明が出ます。";
+      showToast("リセットしました");
+    });
+
+    copyBtn.addEventListener("click", async ()=>{
+      try{
+        await navigator.clipboard.writeText(copyBtn._shareText || "");
+        showToast("結果をコピーしました");
+      }catch{
+        // fallback
+        const ta = document.createElement("textarea");
+        ta.value = copyBtn._shareText || "";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+        showToast("結果をコピーしました");
+      }
+    });
+
+    shareBtn.addEventListener("click", async ()=>{
+      const text = shareBtn._shareText || "";
+      if(navigator.share){
+        try{
+          await navigator.share({ text });
+        }catch{
+          // cancel etc
+        }
+      }else{
+        showToast("この端末は共有に未対応（コピーしてね）");
+      }
+    });
+
+    // Enterで計算
+    totalEl.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter"){
+        calcBtn.click();
+      }
+    });
+
+// INIT（これに差し替え）
+state.mode = modeEl.value;          // ★selectの値と同期
+ensureNonZeroCounts(state.mode);    // ★0人なら初期値注入
+updateRoundingUI();
+renderCounters();                   // ★ここで人数(＋/−)が出る
+  </script>
+</body>
+</html>
