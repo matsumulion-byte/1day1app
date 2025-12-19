@@ -550,6 +550,37 @@
 }
 .modalList .item{ margin:0; }
 
+/* === Modal scroll fix === */
+.modal{
+  overflow: auto;                 /* ★モーダル全体をスクロール可能に */
+  -webkit-overflow-scrolling: touch; /* iOS慣性スクロール */
+}
+
+.modal .panel{
+  max-height: calc(100vh - 36px); /* ★画面に収める（padding 18*2 想定） */
+  display: flex;
+  flex-direction: column;
+}
+
+/* ヘッダー固定、本文だけスクロール */
+.modal .panelBd{
+  overflow: auto;                 /* ★中身が溢れたらここがスクロール */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* もし下のactionsが見切れるなら、本文に余白 */
+.modal .panelBd{
+  padding-bottom: 18px;
+}
+.modal .panelHd{
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(10, 14, 28, .92);
+  backdrop-filter: blur(10px);
+}
+
+
   </style>
 </head>
 <body>
