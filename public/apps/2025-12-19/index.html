@@ -579,7 +579,18 @@
   background: rgba(10, 14, 28, .92);
   backdrop-filter: blur(10px);
 }
+.modal .panel{
+  max-height: calc(100vh - 36px);
+  display: flex;
+  flex-direction: column;
+}
 
+.modal .panelBd{
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
+}
 
   </style>
 </head>
