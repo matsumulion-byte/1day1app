@@ -1,0 +1,939 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>念力スプーン曲げ（ユリ・ゲラー記念）</title>
+  <style>
+    :root{
+      --bg0:#050814;
+      --bg1:#0b1230;
+      --panel: rgba(255,255,255,.08);
+      --panel2: rgba(255,255,255,.12);
+      --line: rgba(255,255,255,.16);
+      --ink:#f4f6ff;
+      --muted: rgba(244,246,255,.72);
+      --accent:#a78bfa;
+      --accent2:#22d3ee;
+      --danger:#fb7185;
+      --good:#34d399;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --r: 18px;
+      --safeT: env(safe-area-inset-top, 0px);
+      --safeB: env(safe-area-inset-bottom, 0px);
+      --safeL: env(safe-area-inset-left, 0px);
+      --safeR: env(safe-area-inset-right, 0px);
+    }
+
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    html,body{ height:100%; }
+    body{
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1100px 700px at 20% 10%, rgba(167,139,250,.25), transparent 55%),
+        radial-gradient(900px 600px at 85% 25%, rgba(34,211,238,.18), transparent 60%),
+        radial-gradient(800px 600px at 50% 110%, rgba(251,113,133,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+      overflow:hidden;
+      touch-action: none;
+    }
+
+    .wrap{
+      height: 100svh;
+      padding: calc(14px + var(--safeT)) calc(14px + var(--safeR)) calc(14px + var(--safeB)) calc(14px + var(--safeL));
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+    }
+
+    .app{
+      width:min(980px, 100%);
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+    }
+
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width: 0;
+    }
+
+    h1{
+      font-size: 18px;
+      letter-spacing:.02em;
+      line-height:1.15;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .sub{
+      font-size: 12px;
+      color: var(--muted);
+      line-height:1.4;
+    }
+
+    .badgeRow{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      align-items:center;
+    }
+
+    .chip{
+      font-size: 12px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border-radius: 999px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.22);
+      user-select:none;
+      -webkit-user-select:none;
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+
+    .chip strong{ font-weight: 800; }
+
+    .main{
+      flex: 1;
+      min-height: 0;
+      display:grid;
+      grid-template-rows: 1fr auto;
+      gap: 12px;
+    }
+
+    .stage{
+      position:relative;
+      border-radius: var(--r);
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      min-height: 0;
+    }
+
+    canvas{
+      width:100%;
+      height:100%;
+      display:block;
+    }
+
+    .overlay{
+      position:absolute;
+      inset: 0;
+      pointer-events:none;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      padding: 12px;
+    }
+
+    .hint{
+      pointer-events:none;
+      width:min(720px, 100%);
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.25);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 14px;
+      padding: 10px 12px;
+      color: rgba(244,246,255,.86);
+      font-size: 12px;
+      line-height: 1.4;
+      box-shadow: 0 12px 40px rgba(0,0,0,.35);
+    }
+
+    .controls{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+    button{
+      appearance:none;
+      border:none;
+      border-radius: 16px;
+      padding: 14px 14px;
+      font-weight: 800;
+      letter-spacing:.02em;
+      color: var(--ink);
+      background: linear-gradient(180deg, rgba(167,139,250,.95), rgba(167,139,250,.70));
+      box-shadow: 0 16px 45px rgba(167,139,250,.24);
+      border: 1px solid rgba(255,255,255,.18);
+      cursor:pointer;
+      user-select:none;
+      -webkit-user-select:none;
+      touch-action: manipulation;
+    }
+    button.secondary{
+      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.07));
+      box-shadow: 0 16px 45px rgba(0,0,0,.22);
+      color: rgba(244,246,255,.92);
+    }
+    button:active{ transform: translateY(1px); }
+
+    .footerNote{
+      margin-top: 2px;
+      font-size: 11px;
+      color: rgba(244,246,255,.62);
+      line-height: 1.35;
+      text-align:center;
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom: calc(16px + var(--safeB));
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.15);
+      color: rgba(244,246,255,.92);
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 16px 45px rgba(0,0,0,.35);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .toast.show{
+      opacity:1;
+      transform: translateX(-50%) translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="app">
+      <header>
+        <div class="title">
+          <h1>念力スプーン曲げ</h1>
+          <div class="sub">長押しで集中 → 傾きで方向 → メーターMAXで“グニャ…”。（ユリ・ゲラー記念）</div>
+        </div>
+        <div class="badgeRow">
+          <div class="chip">念力 <strong id="psiLabel">0%</strong></div>
+          <div class="chip">傾き <strong id="tiltLabel">0°</strong></div>
+        </div>
+      </header>
+
+      <div class="main">
+        <div class="stage" id="stage">
+          <canvas id="c"></canvas>
+          <div class="overlay">
+            <div class="hint" id="hint">
+              画面を<strong>長押し</strong>して念力チャージ。スマホを<strong>傾ける</strong>と曲がる方向が変わる。<br/>
+              iPhoneは最初に「センサー許可」を押してね。
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="controls">
+            <button id="btnSensor" class="secondary">センサー許可（iPhone用）</button>
+            <button id="btnReset" class="secondary">リセット</button>
+            <button id="btnBgm" class="secondary">BGM：OFF</button>
+          </div>
+          <div class="footerNote">※うまく傾きが取れない場合は、センサー許可→もう一度試してね。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module">
+    // Vercel用のパス解決（/YYYY-MM-DD/ を自動認識）
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    const canvas = document.getElementById('c');
+    const stage  = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+
+    const psiLabel  = document.getElementById('psiLabel');
+    const tiltLabel = document.getElementById('tiltLabel');
+    const hint = document.getElementById('hint');
+    const toast = document.getElementById('toast');
+
+    const btnSensor = document.getElementById('btnSensor');
+    const btnReset  = document.getElementById('btnReset');
+    const btnBgm = document.getElementById('btnBgm');
+
+
+    // Audio (WebAudio)
+    let audioCtx = null;
+    function ensureAudio(){
+      if (!audioCtx){
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+    }
+    function beep(freq=440, dur=0.08, type='sine', gain=0.035){
+      if (!audioCtx) return;
+      const t0 = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(gain, t0 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(t0);
+      o.stop(t0 + dur + 0.02);
+    }
+    function whoosh(){
+      if (!audioCtx) return;
+      const t0 = audioCtx.currentTime;
+      // noise-ish: rapid filtered beeps
+      for (let i=0;i<10;i++){
+        const f = 220 + Math.random()*900;
+        const d = 0.02 + Math.random()*0.03;
+        const g = 0.01 + Math.random()*0.02;
+        setTimeout(()=>beep(f, d, 'triangle', g), i*12);
+      }
+    }
+    function successJingle(){
+      if (!audioCtx) return;
+      const seq = [
+        [523.25, 0.09], [659.25, 0.09], [783.99, 0.12],
+        [1046.5, 0.16]
+      ];
+      let t = 0;
+      for (const [f,d] of seq){
+        setTimeout(()=>beep(f,d,'sine',0.05), t);
+        t += d*1000*0.95;
+      }
+    }
+    // ===== BGM (loop) + PSI linkage =====
+const BGM_URL = asset('./assets/bgm.mp3'); // ←あなたのBGMファイル名に合わせる
+
+let bgmEnabled = false;
+let bgmLoaded = false;
+let bgmBuffer = null;
+
+let bgmSource = null;
+let bgmGain = null;
+let bgmFilter = null;
+
+async function loadBgm(){
+  if (bgmLoaded) return;
+  ensureAudio();
+  const res = await fetch(BGM_URL);
+  const buf = await res.arrayBuffer();
+  bgmBuffer = await audioCtx.decodeAudioData(buf);
+  bgmLoaded = true;
+}
+
+function startBgm(){
+  if (!audioCtx || !bgmBuffer) return;
+  stopBgm();
+
+  bgmSource = audioCtx.createBufferSource();
+  bgmSource.buffer = bgmBuffer;
+  bgmSource.loop = true;
+
+  bgmFilter = audioCtx.createBiquadFilter();
+  bgmFilter.type = 'lowpass';
+  bgmFilter.frequency.value = 600; // 初期はモコモコ
+  bgmFilter.Q.value = 0.8;
+
+  bgmGain = audioCtx.createGain();
+  bgmGain.gain.value = 0.0001;
+
+  bgmSource.connect(bgmFilter);
+  bgmFilter.connect(bgmGain);
+  bgmGain.connect(audioCtx.destination);
+
+  bgmSource.start();
+}
+
+function stopBgm(){
+  if (bgmSource){
+    try { bgmSource.stop(); } catch(_) {}
+    try { bgmSource.disconnect(); } catch(_) {}
+  }
+  bgmSource = null;
+  bgmGain = null;
+  bgmFilter = null;
+}
+
+function setBgmEnabled(on){
+  bgmEnabled = on;
+  btnBgm.textContent = on ? 'BGM：ON' : 'BGM：OFF';
+  if (!on){
+    stopBgm();
+  }else{
+    // load→start（ユーザー操作の直後に呼ばれるのが理想）
+    loadBgm().then(()=>{
+      startBgm();
+      showToast('BGM ON');
+    }).catch(()=>{
+      showToast('BGM 読み込み失敗');
+      bgmEnabled = false;
+      btnBgm.textContent = 'BGM：OFF';
+    });
+  }
+}
+
+// BGMボタン
+btnBgm.addEventListener('click', ()=>{
+  ensureAudio();
+  setBgmEnabled(!bgmEnabled);
+});
+
+
+    // State
+    let W=0,H=0, DPR=1;
+
+    let isPressing = false;
+    let psi = 0;          // 0..1
+    let bend = 0;         // 0..1 (target: psi when charging; after success holds)
+    let bendVel = 0;
+
+    let tilt = 0;         // -1..1 (left/right)
+    let tiltSmooth = 0;
+    let orientationSeen = false;
+let forcePcTilt = false;
+
+// 起動後しばらく待ってもdeviceorientationが来なければPC扱いにする
+setTimeout(() => {
+  if (!orientationSeen) forcePcTilt = true;
+}, 800);
+
+
+    let success = false;
+    let sparkleT = 0;
+    let snap = 0; // 0..1 100%到達時の“グニャ”ブースト
+
+    
+
+    // For "mind power" feel: keep slight decay when not pressing
+    const PSI_UP = 0.05;     // per sec
+    const PSI_DOWN = 0.18;   // per sec
+
+    function resize(){
+      const r = stage.getBoundingClientRect();
+      DPR = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+      W = Math.floor(r.width);
+      H = Math.floor(r.height);
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(DPR,0,0,DPR,0,0);
+    }
+    window.addEventListener('resize', resize, {passive:true});
+    resize();
+
+    function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
+    function lerp(a,b,t){ return a + (b-a)*t; }
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=>toast.classList.remove('show'), 1200);
+    }
+
+    // Sensor permissions (iOS)
+    async function requestSensor(){
+      try{
+        if (typeof DeviceOrientationEvent !== 'undefined' &&
+            typeof DeviceOrientationEvent.requestPermission === 'function'){
+          const res = await DeviceOrientationEvent.requestPermission();
+          if (res === 'granted'){
+            showToast('センサーOK');
+            btnSensor.textContent = 'センサー許可（OK）';
+            btnSensor.disabled = true;
+            btnSensor.style.opacity = 0.75;
+          }else{
+            showToast('許可されませんでした');
+          }
+        }else{
+          showToast('この端末は許可不要です');
+          btnSensor.textContent = 'センサー許可（不要）';
+          btnSensor.disabled = true;
+          btnSensor.style.opacity = 0.75;
+        }
+      }catch(e){
+        showToast('センサー許可でエラー');
+      }
+    }
+    btnSensor.addEventListener('click', async ()=>{
+      ensureAudio();
+      await requestSensor();
+    });
+
+    function handleOrientation(e){
+  // gammaが数値で来た＝使える端末
+  if (typeof e.gamma === 'number') {
+    orientationSeen = true;
+    forcePcTilt = false;
+    tilt = clamp(e.gamma / 45, -1, 1);
+  }
+}
+
+    window.addEventListener('deviceorientation', handleOrientation, true);
+    // ===== PC fallback controls =====
+let pcTilt = 0;          // -1..1
+let keyL = false, keyR = false;
+
+function updatePcTilt(dt){
+  // キー入力の目標値
+  let target = 0;
+  if (keyL) target -= 1;
+  if (keyR) target += 1;
+
+  // マウス入力（ステージ内にいる時だけ）
+  if (mouseActive){
+    target = clamp(mouseTilt, -1, 1);
+  }
+
+  // いい感じにスムーズに追従
+  const speed = 10; // 大きいほど早い
+  pcTilt = lerp(pcTilt, target, 1 - Math.pow(0.001, dt * speed));
+}
+
+// Mouse
+let mouseActive = false;
+let mouseTilt = 0;
+
+stage.addEventListener('pointermove', (e)=>{
+  // PCはマウス移動でも傾きっぽくできる
+  if (e.pointerType === 'mouse'){
+    const r = stage.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width; // 0..1
+    mouseTilt = (x - 0.5) * 2;               // -1..1
+    mouseActive = true;
+  }
+});
+stage.addEventListener('pointerleave', ()=>{
+  mouseActive = false;
+});
+
+// Keyboard tilt (←/→, A/D)
+window.addEventListener('keydown', (e)=>{
+  if (e.repeat) return;
+  if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') keyL = true;
+  if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') keyR = true;
+
+  // Spaceで念力（押しっぱなし）
+  if (e.code === 'Space'){
+    // スクロール防止
+    e.preventDefault();
+    if (!isPressing) pressStart();
+  }
+}, {passive:false});
+
+window.addEventListener('keyup', (e)=>{
+  if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') keyL = false;
+  if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') keyR = false;
+
+  if (e.code === 'Space'){
+    e.preventDefault();
+    pressEnd();
+  }
+}, {passive:false});
+
+
+    // Input (press anywhere on stage)
+    function pressStart(){
+      ensureAudio();
+      if (!bgmEnabled){
+  setBgmEnabled(true);
+}
+      isPressing = true;
+      hint.style.opacity = 0.0;
+      // subtle cue
+      beep(220, 0.06, 'sine', 0.03);
+      if (navigator.vibrate) navigator.vibrate(10);
+    }
+    function pressEnd(){
+      isPressing = false;
+    }
+
+    stage.addEventListener('pointerdown', (e)=>{
+      stage.setPointerCapture(e.pointerId);
+      pressStart();
+    });
+    stage.addEventListener('pointerup', pressEnd);
+    stage.addEventListener('pointercancel', pressEnd);
+    stage.addEventListener('pointerleave', pressEnd);
+
+    // Reset
+    function resetAll(){
+      isPressing = false;
+      psi = 0;
+      bend = 0;
+      bendVel = 0;
+      success = false;
+      sparkleT = 0;
+      hint.style.opacity = 1;
+      psiLabel.textContent = '0%';
+      tiltLabel.textContent = '0°';
+      showToast('リセットしました');
+    }
+    btnReset.addEventListener('click', ()=>{
+      ensureAudio();
+      beep(180, 0.06, 'triangle', 0.03);
+      resetAll();
+    });
+
+    // Draw helpers
+    function roundRect(x,y,w,h,r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+    }
+
+    function drawBackground(){
+      // subtle grid + vignette
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      ctx.strokeStyle = 'rgba(255,255,255,.12)';
+      ctx.lineWidth = 1;
+
+      const step = 42;
+      for (let x = (W%step)/2; x < W; x += step){
+        ctx.beginPath();
+        ctx.moveTo(x,0);
+        ctx.lineTo(x,H);
+        ctx.stroke();
+      }
+      for (let y = (H%step)/2; y < H; y += step){
+        ctx.beginPath();
+        ctx.moveTo(0,y);
+        ctx.lineTo(W,y);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // vignette
+      const g = ctx.createRadialGradient(W*0.5,H*0.45, Math.min(W,H)*0.2, W*0.5,H*0.55, Math.max(W,H)*0.7);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(0,0,0,.45)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,W,H);
+    }
+
+    function drawPsiMeter(){
+      const pad = 16;
+      const w = Math.min(520, W - pad*2);
+      const h = 16;
+      const x = (W - w)/2;
+      const y = 16;
+
+      // base
+      ctx.save();
+      ctx.globalAlpha = 0.95;
+      ctx.fillStyle = 'rgba(0,0,0,.25)';
+      ctx.strokeStyle = 'rgba(255,255,255,.16)';
+      ctx.lineWidth = 1;
+      roundRect(x,y,w,h,999);
+      ctx.fill();
+      ctx.stroke();
+
+      // fill gradient-ish via two layers
+      const fillW = Math.max(0, Math.floor((w-4) * psi));
+      if (fillW > 0){
+        const gx = x+2, gy = y+2, gh = h-4;
+        // accent layer
+        ctx.fillStyle = 'rgba(167,139,250,.95)';
+        roundRect(gx, gy, fillW, gh, 999);
+        ctx.fill();
+        // glow
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = 'rgba(34,211,238,.95)';
+        roundRect(gx, gy, Math.max(0, fillW-8), gh, 999);
+        ctx.fill();
+      }
+
+      // label
+      ctx.globalAlpha = 0.95;
+      ctx.fillStyle = 'rgba(244,246,255,.86)';
+      ctx.font = '12px system-ui, -apple-system, "Noto Sans JP", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(success ? '成功：念力スプーン完成！' : (isPressing ? '集中…' : '長押しで念力チャージ'), W/2, y + h/2);
+
+      ctx.restore();
+    }
+
+    function drawSpoon(){
+      // Spoon parameters
+      const cx = W*0.5;
+      const cy = H*0.54;
+      const scale = Math.min(W, H) / 520;
+
+      const baseLen = 320 * scale;
+      const handleLen = 220 * scale;
+      const bowlLen = baseLen - handleLen;
+
+      const bendAmt = success ? 1 : bend; // 0..1
+
+// 0〜99%は曲がりにくく、終盤で効いてくるカーブ
+const eased = Math.pow(clamp(bendAmt, 0, 1), 5); // 5は好みで 4〜7
+
+// 成功時の“グニャ”ブースト（短時間だけ強く）
+const boost = 1 + snap * 1.8; // 1.8は好みで 1.2〜2.5
+
+const angle = (tiltSmooth * 0.55) * (0.10 + 0.90 * eased) * boost;
+const kink  = (0.10 + 0.85 * eased) * boost;
+
+
+      // glow intensity
+      const glow = clamp(psi*1.3, 0, 1);
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(-Math.PI / 2);
+
+
+      // aura
+      if (glow > 0.02){
+        ctx.save();
+        ctx.globalAlpha = 0.35 * glow;
+        const rg = ctx.createRadialGradient(0, 0, 10*scale, 0, 0, 240*scale);
+        rg.addColorStop(0, 'rgba(167,139,250,.45)');
+        rg.addColorStop(0.55, 'rgba(34,211,238,.22)');
+        rg.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = rg;
+        ctx.beginPath();
+        ctx.arc(0, 0, 240*scale, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Spoon path with "kink"
+      const w = 26 * scale;
+      const w2 = 18 * scale;
+      const metal1 = 'rgba(240,245,255,.95)';
+      const metal2 = 'rgba(170,182,220,.95)';
+      const edge = 'rgba(255,255,255,.22)';
+
+     
+
+      // handle segment (straight)
+      ctx.save();
+      // handle gradient
+      const lg1 = ctx.createLinearGradient(-baseLen/2,0, baseLen/2,0);
+      lg1.addColorStop(0, metal2);
+      lg1.addColorStop(0.5, metal1);
+      lg1.addColorStop(1, metal2);
+
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = lg1;
+      ctx.lineWidth = w;
+      ctx.beginPath();
+      ctx.moveTo(-baseLen/2, 0);
+      ctx.lineTo(-baseLen/2 + handleLen, 0);
+      ctx.stroke();
+
+      // edge highlight
+      ctx.globalAlpha = 0.55;
+      ctx.strokeStyle = edge;
+      ctx.lineWidth = 2*scale;
+      ctx.beginPath();
+      ctx.moveTo(-baseLen/2, -w*0.22);
+      ctx.lineTo(-baseLen/2 + handleLen, -w*0.22);
+      ctx.stroke();
+      ctx.restore();
+
+      // kink segment + bowl segment
+      ctx.save();
+      ctx.translate(-baseLen/2 + handleLen, 0);
+      ctx.rotate(angle * kink);
+
+      // neck (slightly thinner)
+      const lg2 = ctx.createLinearGradient(0,0, bowlLen,0);
+      lg2.addColorStop(0, metal2);
+      lg2.addColorStop(0.55, metal1);
+      lg2.addColorStop(1, metal2);
+
+      ctx.strokeStyle = lg2;
+      ctx.lineWidth = w2;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(bowlLen*0.25, 0);
+      ctx.stroke();
+
+      // bowl (ellipse-ish)
+      ctx.save();
+      ctx.translate(bowlLen*0.65, 0);
+      ctx.rotate(angle * 0.25);
+
+      // bowl body
+      const bowlW = 120*scale;
+      const bowlH = 64*scale;
+
+      // bowl fill gradient
+      const rg2 = ctx.createRadialGradient(-bowlW*0.15, -bowlH*0.2, 10*scale, 0, 0, bowlW*0.75);
+      rg2.addColorStop(0, metal1);
+      rg2.addColorStop(1, metal2);
+
+      ctx.fillStyle = rg2;
+      ctx.strokeStyle = 'rgba(255,255,255,.20)';
+      ctx.lineWidth = 2*scale;
+
+      ctx.beginPath();
+      ctx.ellipse(0, 0, bowlW/2, bowlH/2, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.stroke();
+
+      // inner highlight
+      ctx.globalAlpha = 0.55;
+      ctx.strokeStyle = 'rgba(255,255,255,.18)';
+      ctx.lineWidth = 2*scale;
+      ctx.beginPath();
+      ctx.ellipse(-bowlW*0.07, -bowlH*0.05, bowlW*0.34, bowlH*0.22, 0, 0, Math.PI*2);
+      ctx.stroke();
+
+      ctx.restore();
+      ctx.restore();
+
+      // sparks on success
+      if (success){
+        ctx.save();
+        const t = sparkleT;
+        ctx.globalAlpha = 0.9;
+        for (let i=0;i<22;i++){
+          const a = (i/22)*Math.PI*2 + t*0.9;
+          const r = (120 + 30*Math.sin(t*1.8 + i))*scale;
+          const x = Math.cos(a)*r;
+          const y = Math.sin(a)*r*0.75;
+          ctx.fillStyle = (i%2===0) ? 'rgba(167,139,250,.95)' : 'rgba(34,211,238,.92)';
+          ctx.beginPath();
+          ctx.arc(x,y, (2.2 + 1.8*Math.sin(t*2.2 + i))*scale, 0, Math.PI*2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    // Physics-ish update
+    let last = performance.now();
+    function tick(now){
+      const dt = Math.min(0.033, (now - last) / 1000);
+      last = now;
+
+      // Smooth tilt
+// 既存：tiltSmooth = lerp(tiltSmooth, tilt, ...)
+// ↓置き換え
+const hasDeviceTilt = 'DeviceOrientationEvent' in window; // 雑判定でOK
+// deviceorientationが来ない端末はPC操作に切り替え
+if (forcePcTilt) {
+  updatePcTilt(dt);
+  tilt = pcTilt;
+}
+tiltSmooth = lerp(tiltSmooth, tilt, 1 - Math.pow(0.001, dt));
+
+
+      // Update psi
+      if (!success){
+        if (isPressing){
+          psi = clamp(psi + PSI_UP * dt, 0, 1);
+          // micro feedback while charging
+          if (psi > 0.02 && Math.random() < 0.05){
+            // tiny blip depending on psi
+            if (audioCtx && Math.random() < 0.18) beep(200 + psi*600, 0.02, 'sine', 0.008);
+          }
+        }else{
+          psi = clamp(psi - PSI_DOWN * dt, 0, 1);
+        }
+      }
+// ===== BGM PSI linkage =====
+if (bgmEnabled && bgmGain && bgmFilter){
+  // psi: 0..1 / snap: 0..1（あなたが入れた“グニャブースト”）
+  const p = clamp(psi, 0, 1);
+  const e = Math.pow(p, 3); // 溜めの感じ（好みで2〜4）
+
+  // ローパス：溜め中はこもる → 終盤で開く → 成功時は一瞬さらに開く
+  const cutoff = 450 + 4200 * e + 2200 * snap; // Hz
+  bgmFilter.frequency.value = clamp(cutoff, 200, 8000);
+
+  // 音量：少しずつ上がる + 成功時ブースト
+  const g = 0.03 + 0.12 * Math.pow(p, 2) + 0.08 * snap;
+  bgmGain.gain.value = clamp(g, 0.0001, 0.28);
+}
+
+      // Bend follows psi with spring
+      const target = success ? 1 : psi;
+      const k = 18; // stiffness
+      const c = 6;  // damping
+      const a = k*(target - bend) - c*bendVel;
+      bendVel += a * dt;
+      bend += bendVel * dt;
+      bend = clamp(bend, 0, 1);
+
+      // snapは自然減衰（ブーストは短く）
+snap = Math.max(0, snap - dt * 2.6);
+
+      // Success condition
+      if (!success && psi >= 0.999){
+        success = true;
+        sparkleT = 0;
+        snap = 1; // ← ここが“めっちゃ曲がる”のトリガー
+
+        showToast('成功！スプーンが曲がった（気がする）');
+        if (navigator.vibrate) navigator.vibrate([30,30,70,30,120]);
+        whoosh();
+        setTimeout(()=>successJingle(), 90);
+      }
+
+      // Labels
+      const psiPct = Math.round((success ? 1 : psi) * 100);
+      psiLabel.textContent = psiPct + '%';
+      tiltLabel.textContent = Math.round(tiltSmooth * 45) + '°';
+
+      // Draw
+      ctx.clearRect(0,0,W,H);
+      drawBackground();
+      drawPsiMeter();
+      drawSpoon();
+
+      if (success){
+        sparkleT += dt;
+      }
+
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    // First user gesture helper (audio)
+    window.addEventListener('pointerdown', ensureAudio, {once:true, passive:true});
+
+    // Friendly initial toast
+    setTimeout(()=>showToast('長押しで念力、傾けて方向！'), 350);
+  </script>
+</body>
+</html>
