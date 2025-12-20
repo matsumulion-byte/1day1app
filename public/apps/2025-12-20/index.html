@@ -216,6 +216,13 @@
       opacity:1;
       transform: translateX(-50%) translateY(-2px);
     }
+    /* iOS長押し対策（選択・コピー・吹き出し） */
+body, .stage, canvas, button {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
   </style>
 </head>
 <body>
@@ -278,6 +285,19 @@
     const btnSensor = document.getElementById('btnSensor');
     const btnReset  = document.getElementById('btnReset');
     const btnBgm = document.getElementById('btnBgm');
+    // ===== Sensor button: show only when needed (iOS) =====
+const needsIOSPermission =
+  typeof DeviceOrientationEvent !== 'undefined' &&
+  typeof DeviceOrientationEvent.requestPermission === 'function';
+
+if (!needsIOSPermission) {
+  btnSensor.style.display = 'none';
+  // ついでに説明文もPC/Android向けに変えるならここで
+  // hint.innerHTML = '画面を<strong>長押し</strong>して念力チャージ。傾ける/PC操作で曲げる。';
+} else {
+  btnSensor.style.display = ''; // 表示
+}
+
 
 
     // Audio (WebAudio)
@@ -335,6 +355,10 @@ let bgmBuffer = null;
 let bgmSource = null;
 let bgmGain = null;
 let bgmFilter = null;
+// iOS/PCの長押し・右クリックメニュー・選択開始を無効化
+document.addEventListener('contextmenu', (e) => e.preventDefault(), { passive: false });
+document.addEventListener('selectstart', (e) => e.preventDefault(), { passive: false });
+
 
 async function loadBgm(){
   if (bgmLoaded) return;
@@ -574,6 +598,7 @@ window.addEventListener('keyup', (e)=>{
     }
 
     stage.addEventListener('pointerdown', (e)=>{
+        e.preventDefault(); // ← 長押し挙動の抑止（重要）
       stage.setPointerCapture(e.pointerId);
       pressStart();
     });
