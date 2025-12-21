@@ -1,0 +1,939 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>忘却の松村</title>
+  <meta name="theme-color" content="#0b1020" />
+  <style>
+    :root{
+      --bg:#070a14;
+      --bg2:#0b1020;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.10);
+      --line: rgba(255,255,255,.14);
+      --ink:#f3f6ff;
+      --muted: rgba(243,246,255,.72);
+      --good:#34d399;
+      --danger:#fb7185;
+      --accent:#a78bfa;
+      --accent2:#22d3ee;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --r: 22px;
+      --btnH: 58px;
+      --safeB: env(safe-area-inset-bottom, 0px);
+      --safeT: env(safe-area-inset-top, 0px);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      color:var(--ink);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
+      background:
+        radial-gradient(900px 520px at 30% 10%, rgba(167,139,250,.18), transparent 60%),
+        radial-gradient(900px 520px at 75% 25%, rgba(34,211,238,.16), transparent 58%),
+        radial-gradient(1000px 700px at 50% 120%, rgba(255,255,255,.06), transparent 58%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      overflow:hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    /* 画面中央に収める。SPでも下ボタンが必ず見える */
+        .wrap{
+  height: 100svh;                 /* 画面の高さに固定 */
+  display: grid;
+  grid-template-rows: auto 1fr auto; /* header / main / footer */
+  padding: calc(14px + var(--safeT)) 14px calc(14px + var(--safeB));
+  gap: 12px;
+  overflow: hidden;               /* wrap 自体ははみ出さない */
+}
+
+
+    header{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      padding: 4px 2px 0;
+    }
+
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      line-height:1;
+    }
+
+    h1{
+      margin:0;
+      font-size: 24px;
+      letter-spacing: .08em;
+      font-weight: 900;
+      text-shadow: 0 10px 26px rgba(0,0,0,.35);
+    }
+    .hint{
+      margin:0;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: .04em;
+    }
+
+    .matsu{
+      width: 86px;
+      height: 86px;
+      flex: 0 0 auto;
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 10px 28px rgba(0,0,0,.35);
+      overflow:hidden;
+      display:grid;
+      place-items:center;
+      position: relative;
+    }
+    .matsu img{
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transform: translateZ(0);
+    }
+    .matsu::after{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.10), transparent 55%);
+      pointer-events:none;
+    }
+
+    main{
+  min-height: 0;
+  overflow: hidden;               /* ← mainはスクロールしない */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+
+
+    .card{
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  overflow:hidden;
+
+  /* 追加：リストだけスクロールさせるための肝 */
+  display:flex;
+  flex-direction:column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+
+    .inputRow{
+      display:flex;
+      gap: 10px;
+      padding: 12px;
+      align-items:center;
+    }
+    .inputRow input{
+      flex: 1 1 auto;
+      height: 46px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: var(--ink);
+      padding: 0 14px;
+      outline: none;
+      font-size: 16px;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    .inputRow input::placeholder{ color: rgba(243,246,255,.45); }
+
+    .btn{
+      height: 46px;
+      padding: 0 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color: var(--ink);
+      font-weight: 800;
+      letter-spacing: .02em;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active{ transform: translateY(1px) scale(.99); }
+
+    .btn.primary{
+      background: linear-gradient(90deg, rgba(167,139,250,.95), rgba(34,211,238,.92));
+      border-color: rgba(255,255,255,.22);
+      color: #07101c;
+      box-shadow: 0 16px 44px rgba(34,211,238,.12), 0 18px 56px rgba(167,139,250,.14);
+    }
+
+    .btn.ghost{
+      background: rgba(0,0,0,.16);
+    }
+
+    .listWrap{
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.listWrap::after{
+  content:"";
+  position:absolute;
+  left:0; right:0;
+  bottom:0;
+  height: 26px;
+  pointer-events:none;
+  background: linear-gradient(to bottom, rgba(11,16,32,0), rgba(11,16,32,.65));
+  opacity: .9;
+}
+
+
+.listHead{
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  padding: 12px;
+}
+
+@media (max-width: 520px){
+  .listHead{
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "badge meter"
+      "btns  btns";
+  }
+  .badge{ grid-area: badge; white-space: nowrap; }
+  .meter{ grid-area: meter; min-width: 0; }
+  .miniBtns{ grid-area: btns; justify-content: flex-end; flex-wrap: nowrap; }
+}
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      font-size: 12px;
+      color: rgba(7,16,28,.88);
+      background: rgba(255,255,255,.84);
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+
+    .miniBtns{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+    .miniBtns .btn{
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+
+    .list{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;                 /* ← ここがスクロールする */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 0 12px 12px 12px;
+  touch-action: pan-y;            /* ← iOSでスクロール殺されるのを予防 */
+}
+
+
+
+
+    .item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 10px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.16);
+      margin-bottom: 10px;
+      position: relative;
+      transform: translateZ(0);
+    }
+
+    .item .txt{
+      font-size: 15px;
+      color: var(--ink);
+      line-height: 1.2;
+      word-break: break-word;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .item .x{
+      width: 34px; height: 34px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color: var(--ink);
+      cursor:pointer;
+      font-weight: 900;
+      display:grid;
+      place-items:center;
+      flex: 0 0 auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 下部固定：大ボタン */
+    .footer{
+  min-height: 0;
+}
+
+
+    .forgetBtn{
+      height: var(--btnH);
+      width: 100%;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.20);
+      background: linear-gradient(90deg, rgba(255,255,255,.88), rgba(255,255,255,.72));
+      color: #081325;
+      font-weight: 1000;
+      letter-spacing: .08em;
+      font-size: 16px;
+      cursor:pointer;
+      box-shadow: 0 18px 64px rgba(0,0,0,.42);
+      position: relative;
+      overflow:hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .forgetBtn::before{
+      content:"";
+      position:absolute; inset:-60px;
+      background: conic-gradient(from 210deg, rgba(167,139,250,.0), rgba(167,139,250,.55), rgba(34,211,238,.55), rgba(167,139,250,.0));
+      filter: blur(14px);
+      opacity: .55;
+      transform: rotate(0deg);
+      transition: opacity .2s ease;
+    }
+    .forgetBtn span{
+      position: relative;
+      z-index:1;
+    }
+    .forgetBtn:active{ transform: translateY(1px) scale(.995); }
+    .forgetBtn:disabled{
+      opacity: .45;
+      cursor:not-allowed;
+    }
+
+    .subline{
+      text-align:center;
+      font-size: 12px;
+      color: rgba(243,246,255,.62);
+      letter-spacing: .04em;
+      min-height: 16px;
+    }
+
+    /* 画面効果 */
+    .shake{
+      animation: shake .55s ease-in-out 1;
+    }
+    @keyframes shake{
+      0%,100%{ transform: translate3d(0,0,0); }
+      15%{ transform: translate3d(2px,-1px,0) rotate(-.3deg); }
+      30%{ transform: translate3d(-2px,1px,0) rotate(.35deg); }
+      45%{ transform: translate3d(2px,1px,0) rotate(-.25deg); }
+      60%{ transform: translate3d(-2px,-1px,0) rotate(.25deg); }
+      75%{ transform: translate3d(1px,0px,0) rotate(-.15deg); }
+    }
+    .meter{
+  flex: 1 1 auto;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.20);
+  border: 1px solid rgba(255,255,255,.10);
+  overflow:hidden;
+  min-width: 120px;
+}
+.meter__bar{
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(167,139,250,.9), rgba(34,211,238,.9));
+  box-shadow: 0 10px 30px rgba(34,211,238,.10);
+  transition: width .22s ease;
+}
+
+    /* 吸い込み消滅 */
+    .suck{
+      animation: suck 650ms cubic-bezier(.2,.8,.2,1) forwards;
+      transform-origin: var(--ox, 50%) var(--oy, 80%);
+      filter: blur(0px);
+    }
+    @keyframes suck{
+      0%{ opacity: 1; transform: translate3d(0,0,0) scale(1) rotate(0deg); filter: blur(0px); }
+      55%{ opacity: .9; transform: translate3d(calc(var(--dx, 0px) * .6), calc(var(--dy, 0px) * .6), 0) scale(.65) rotate(-8deg); filter: blur(1px); }
+      100%{ opacity: 0; transform: translate3d(var(--dx, 0px), var(--dy, 0px), 0) scale(.06) rotate(-18deg); filter: blur(6px); }
+    }
+
+    /* トースト */
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: calc(84px + var(--safeB));
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.62);
+      border: 1px solid rgba(255,255,255,.14);
+      color: rgba(243,246,255,.92);
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      letter-spacing: .02em;
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      z-index: 50;
+    }
+    .toast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(-2px);
+    }
+
+    /* 紙吹雪キャンバス */
+    canvas#fx{
+      position: fixed;
+      inset: 0;
+      pointer-events:none;
+      z-index: 40;
+    }
+
+    /* モーダル的な完了表示 */
+    .done{
+      position: fixed;
+      inset: 0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 16px;
+      z-index: 45;
+      background: rgba(0,0,0,.28);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .done.show{ display:flex; }
+    .doneCard{
+      width: min(520px, 100%);
+      border-radius: 26px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      box-shadow: 0 30px 90px rgba(0,0,0,.55);
+      padding: 16px 16px 14px;
+    }
+    .doneCard h2{
+      margin: 0 0 8px;
+      font-size: 18px;
+      letter-spacing: .06em;
+    }
+    .doneCard p{
+      margin: 0 0 14px;
+      color: rgba(243,246,255,.80);
+      line-height: 1.5;
+      font-size: 13px;
+    }
+    .doneActions{
+      display:flex;
+      gap: 10px;
+      justify-content:flex-end;
+    }
+
+    /* 長押し選択などの抑制（完全ではないが効く） */
+    button, .btn, .forgetBtn, .x{
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    @media (min-width: 760px){
+      .wrap{
+        max-width: 760px;
+        margin: 0 auto;
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+      h1{ font-size: 28px; }
+      .matsu{ width: 98px; height: 98px; }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="fx"></canvas>
+
+  <div class="wrap" id="app">
+    <header id="hdr">
+      <div class="title">
+        <h1 id="ttl">忘却の松村</h1>
+        <p class="hint">忘れたいものを、ためて、ボタンで忘年。</p>
+      </div>
+      <div class="matsu" aria-label="松村">
+        <img id="matsuImg" alt="松村" />
+      </div>
+    </header>
+
+    <main>
+      <section class="card" aria-label="入力とリスト">
+        <div class="inputRow">
+          <input id="txt" type="text" inputmode="text" autocomplete="off" maxlength="60"
+            placeholder="忘れたいこと（例：深夜の差し戻し）" />
+          <button class="btn" id="addBtn" type="button">追加</button>
+        </div>
+
+        <div class="listWrap">
+          <div class="listHead">
+            <div class="badge" id="countBadge">0 / 40</div>
+            <div class="meter">
+                <div class="meter__bar" id="meterBar"></div>
+              </div>
+              
+            <div class="miniBtns">
+              <button class="btn ghost" id="randBtn" type="button">おまかせ</button>
+              <button class="btn ghost" id="clearBtn" type="button">消す</button>
+            </div>
+          </div>
+
+          <div class="list" id="list" aria-label="忘れたいものリスト"></div>
+        </div>
+      </section>
+    </main>
+
+    <div class="footer">
+      <button id="forgetBtn" class="forgetBtn" type="button" disabled>
+        <span>ぜんぶ忘れる</span>
+      </button>
+      <div class="subline" id="subline"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">入力してから追加してね</div>
+
+  <div class="done" id="done">
+    <div class="doneCard">
+      <h2>忘年完了</h2>
+      <p id="doneText">……何を忘れたんだっけ？</p>
+      <div class="doneActions">
+        <button class="btn ghost" id="closeDone" type="button">閉じる</button>
+        <button class="btn primary" id="againBtn" type="button">もう一回</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Vercel用のパス解決ヘルパー
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    // ====== 設定 ======
+    const MAX = 40;
+    const PRESETS = [
+      "深夜の差し戻し",
+      "謎の修正依頼",
+      "無限の確認待ち",
+      "既読スルー",
+      "会議が会議で終わった日",
+      "締切が前倒しになった瞬間",
+      "バグの再現しないバグ",
+      "なぜか増えるタスク",
+      "返信催促を忘れた自分",
+      "「ちょっとだけ」って言われたやつ",
+      "資料の微修正100連発",
+      "SNSの炎上ヒヤリ",
+      "PDFが重すぎ問題",
+      "Zoomの音出ない事件",
+      "誤字を見つけた瞬間",
+      "方向性が一周したやつ"
+    ];
+
+    // ====== DOM ======
+    const app = document.getElementById("app");
+    const hdr = document.getElementById("hdr");
+    const ttl = document.getElementById("ttl");
+    const txt = document.getElementById("txt");
+    const addBtn = document.getElementById("addBtn");
+    const randBtn = document.getElementById("randBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const list = document.getElementById("list");
+    const badge = document.getElementById("countBadge");
+    const forgetBtn = document.getElementById("forgetBtn");
+    const subline = document.getElementById("subline");
+    const toast = document.getElementById("toast");
+
+    const done = document.getElementById("done");
+    const closeDone = document.getElementById("closeDone");
+    const againBtn = document.getElementById("againBtn");
+    const matsuImg = document.getElementById("matsuImg");
+
+    const fx = document.getElementById("fx");
+    const ctx = fx.getContext("2d");
+    const meterBar = document.getElementById("meterBar");
+
+
+    // ====== 画像/BGM ======
+    const matsuNormal = asset("./assets/matsumura_normal.png");
+    const matsuBokan  = asset("./assets/matsumura_bokan.png");
+    matsuImg.src = matsuNormal;
+
+    const audio = new Audio(asset("./assets/bgm.mp3"));
+    audio.loop = false;
+    audio.preload = "auto";
+    audio.volume = 0; // フェード用
+    let audioUnlocked = false;
+
+    // ====== State ======
+    let items = [];
+    let forgetting = false;
+
+    // ====== Utils ======
+    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=> toast.classList.remove("show"), 1100);
+    }
+    function updateUI(){
+  badge.textContent = `${items.length} / ${MAX}`;
+  forgetBtn.disabled = (items.length === 0 || forgetting);
+  clearBtn.disabled = (items.length === 0 || forgetting);
+  randBtn.disabled = (items.length >= MAX || forgetting);
+  addBtn.disabled = (items.length >= MAX || forgetting);
+  txt.disabled = forgetting;
+
+  // 忘却レベル（0〜100）
+  const p = Math.round((items.length / MAX) * 100);
+  if (meterBar) meterBar.style.width = `${p}%`;
+
+  // 入力量でサブテキスト変化
+  if(items.length === 0){
+    subline.textContent = "忘れたいことを、どんどん追加して。";
+  } else if(items.length < 5){
+    subline.textContent = "まだ序盤。もっと忘れていい。";
+  } else if(items.length < 12){
+    subline.textContent = "いいね、その調子。忘却が進行中。";
+  } else if(items.length < 25){
+    subline.textContent = "忘却濃度が高い。そろそろ押せる。";
+  } else if(items.length < 35){
+    subline.textContent = "危険域。記憶が薄くなってきた。";
+  } else {
+    subline.textContent = "臨界点。押したら戻れない。";
+  }
+
+  // 入力量でボタンの“圧”を増やす（光り方）
+  // ※ CSS変えずに inline で軽く演出
+  const glow = clamp(items.length / MAX, 0, 1);
+  forgetBtn.style.filter = `brightness(${1 + glow*0.12})`;
+}
+
+
+    function render(){
+      list.innerHTML = "";
+      const frag = document.createDocumentFragment();
+      items.forEach((t, idx)=>{
+        const row = document.createElement("div");
+        row.className = "item";
+        row.dataset.idx = String(idx);
+
+        const span = document.createElement("div");
+        span.className = "txt";
+        span.textContent = t;
+
+        const x = document.createElement("button");
+        x.className = "x";
+        x.type = "button";
+        x.textContent = "×";
+        x.addEventListener("click", ()=>{
+          if(forgetting) return;
+          items.splice(idx, 1);
+          render();
+          updateUI();
+        });
+
+        row.appendChild(span);
+        row.appendChild(x);
+        frag.appendChild(row);
+      });
+      list.appendChild(frag);
+    }
+
+    function addItem(s){
+      const v = (s ?? "").trim();
+      if(!v){
+        showToast("忘れたいことを書いてね");
+        return;
+      }
+      if(items.length >= MAX){
+        showToast("もうこれ以上は忘れられない…（上限）");
+        return;
+      }
+      items.unshift(v);
+      render();
+      updateUI();
+      txt.value = "";
+      txt.focus();
+      unlockAudio(); // 操作時にアンロック
+    }
+
+    function randomAdd(){
+      if(items.length >= MAX) return;
+      const pick = PRESETS[Math.floor(Math.random()*PRESETS.length)];
+      addItem(pick);
+    }
+
+    // iOS対策: ユーザー操作で一度再生を試みて unlock
+    async function unlockAudio(){
+      if(audioUnlocked) return;
+      try{
+        audio.volume = 0.001;
+        await audio.play();
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = 0;
+        audioUnlocked = true;
+      }catch(e){
+        // まだ許可されてない場合は無視
+      }
+    }
+
+    function fadeTo(target, ms=500){
+      target = clamp(target, 0, 1);
+      const start = audio.volume;
+      const t0 = performance.now();
+      return new Promise(resolve=>{
+        function tick(now){
+          const p = clamp((now - t0)/ms, 0, 1);
+          audio.volume = start + (target - start) * (1 - Math.pow(1-p, 3));
+          if(p < 1) requestAnimationFrame(tick);
+          else resolve();
+        }
+        requestAnimationFrame(tick);
+      });
+    }
+
+    // ====== 紙吹雪 ======
+    let confetti = [];
+    function resizeFx(){
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      fx.width = Math.floor(innerWidth * dpr);
+      fx.height = Math.floor(innerHeight * dpr);
+      fx.style.width = innerWidth + "px";
+      fx.style.height = innerHeight + "px";
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    window.addEventListener("resize", resizeFx, {passive:true});
+    resizeFx();
+
+    function burstConfetti(n=120){
+      confetti = [];
+      for(let i=0;i<n;i++){
+        confetti.push({
+          x: innerWidth/2 + (Math.random()*80-40),
+          y: innerHeight*0.35 + (Math.random()*40-20),
+          vx: (Math.random()*2-1) * 5,
+          vy: (Math.random()*-1) * 7 - 2,
+          r: Math.random()*3 + 2,
+          a: 1,
+          g: Math.random()*0.18 + 0.10,
+          rot: Math.random()*Math.PI,
+          vr: (Math.random()*2-1) * 0.2
+        });
+      }
+    }
+
+    function drawFx(){
+      ctx.clearRect(0,0,innerWidth,innerHeight);
+      if(confetti.length === 0) return;
+
+      for(const p of confetti){
+        p.vy += p.g;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vr;
+        p.a *= 0.988;
+
+        // 色は指定しない縛りがあるわけじゃないので、ここはランダムに見せるため固定色は避けつつ簡単に
+        // ただしCSSのテーマに合わせて白寄りの紙吹雪にする
+        ctx.save();
+        ctx.globalAlpha = clamp(p.a, 0, 1);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = "rgba(255,255,255,.88)";
+        ctx.fillRect(-p.r*2, -p.r, p.r*4, p.r*2);
+        ctx.restore();
+      }
+
+      confetti = confetti.filter(p => p.a > 0.06 && p.y < innerHeight + 40);
+      if(confetti.length) requestAnimationFrame(drawFx);
+    }
+
+    // ====== 忘却アニメ ======
+    function getForgetOrigin(){
+      const b = forgetBtn.getBoundingClientRect();
+      return {
+        x: b.left + b.width/2,
+        y: b.top + b.height/2
+      };
+    }
+
+    function setMatsumura(mode){ // "normal" | "bokan"
+      matsuImg.src = (mode === "bokan") ? matsuBokan : matsuNormal;
+    }
+
+    async function doForgetAll(){
+      if(forgetting) return;
+      if(items.length === 0){
+        showToast("忘れたいものがない…？");
+        return;
+      }
+      forgetting = true;
+      updateUI();
+      unlockAudio();
+
+      // BGM play + fade in
+      try{
+        if(audio.paused) await audio.play();
+      }catch(e){}
+      await fadeTo(1, 420);
+
+      // 画面シェイク、タイトル歪みっぽい
+      app.classList.remove("shake");
+      void app.offsetWidth;
+      app.classList.add("shake");
+
+      setMatsumura("bokan");
+
+      // 吸い込みポイント（ボタン中心）
+      const origin = getForgetOrigin();
+
+      // 各アイテムに個別の dx,dy を設定して吸い込む
+      const nodes = Array.from(list.querySelectorAll(".item"));
+      const delays = [];
+
+      nodes.forEach((el, i)=>{
+        const r = el.getBoundingClientRect();
+        const cx = r.left + r.width/2;
+        const cy = r.top + r.height/2;
+        const dx = origin.x - cx;
+        const dy = origin.y - cy;
+
+        el.style.setProperty("--dx", dx + "px");
+        el.style.setProperty("--dy", dy + "px");
+        el.style.setProperty("--ox", (r.width/2) + "px");
+        el.style.setProperty("--oy", (r.height/2) + "px");
+
+        // ステップ感：少しずつ遅らせる
+        const d = Math.min(220, i * 22);
+        delays.push(new Promise(res=>{
+          setTimeout(()=>{
+            el.classList.add("suck");
+            res();
+          }, d);
+        }));
+      });
+
+      await Promise.all(delays);
+
+      // 吸い込み完了待ち
+      await new Promise(r => setTimeout(r, 760));
+      const countBefore = items.length;
+
+      // 全消去
+      items = [];
+      render();
+
+// 紙吹雪（入れた量で増える）
+burstConfetti(clamp(60 + items.length * 4, 80, 220));
+requestAnimationFrame(drawFx);
+
+
+      // 完了モーダル
+      done.classList.add("show");
+
+      forgetting = false;
+      updateUI();
+    }
+
+    function resetAll(){
+      done.classList.remove("show");
+      setMatsumura("normal");
+      subline.textContent = "忘れたいことを、どんどん追加して。";
+      txt.focus();
+        // 曲が終わってたら最初から再生できるように準備
+  if (audio.ended) {
+    try { audio.currentTime = 0; } catch(e){}
+    audio.volume = 0;
+  }
+
+    }
+
+    // ====== Events ======
+    addBtn.addEventListener("click", ()=> addItem(txt.value));
+    txt.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter"){
+        e.preventDefault();
+        addItem(txt.value);
+      }
+    });
+
+    randBtn.addEventListener("click", ()=>{
+      unlockAudio();
+      randomAdd();
+    });
+
+    clearBtn.addEventListener("click", ()=>{
+      if(forgetting) return;
+      if(items.length === 0) return;
+      items = [];
+      render();
+      updateUI();
+      showToast("リストを消した（まだ忘れてない）");
+      unlockAudio();
+    });
+
+    forgetBtn.addEventListener("click", doForgetAll);
+
+    closeDone.addEventListener("click", ()=>{
+      done.classList.remove("show");
+    });
+    againBtn.addEventListener("click", resetAll);
+
+    // モーダル外タップで閉じる
+    done.addEventListener("click", (e)=>{
+      if(e.target === done) done.classList.remove("show");
+    });
+
+    // 最初にUI更新
+    updateUI();
+
+    // 初回ユーザー操作で確実に音をアンロック（クリック/タップを拾う）
+    window.addEventListener("pointerdown", unlockAudio, { once:true, passive:true });
+
+    // 長押しテキスト選択を多少抑える
+    document.addEventListener("gesturestart", (e)=> e.preventDefault(), {passive:false});
+  </script>
+</body>
+</html>
