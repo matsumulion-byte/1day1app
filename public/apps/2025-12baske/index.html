@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>FREE THROW 10</title>
+
+  <style>
+    :root{
+      --bg:#070a12;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.66);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(0,0,0,.45);
+      --good:#4ade80;
+      --accent:#60a5fa;
+      --r:18px;
+    }
+
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+      -webkit-user-select:none;
+      user-select:none;
+      -webkit-touch-callout:none;
+    }
+
+    html,body{
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+      touch-action:manipulation;
+    }
+
+    .app{
+      height:100svh;
+      min-height:100svh;
+      padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom) 12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-width: 620px;
+      margin: 0 auto;
+    }
+    @supports(height:100dvh){
+      .app{ height:100dvh; min-height:100dvh; }
+    }
+
+    header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding-top: 4px;
+    }
+
+    .ttl{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .ttl b{
+      letter-spacing:.10em;
+      font-size:14px;
+    }
+    .ttl span{
+      color:var(--muted);
+      font-size:12px;
+      letter-spacing:.04em;
+    }
+
+    button{
+      appearance:none;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.08);
+      color:var(--ink);
+      border-radius:999px;
+      padding:8px 12px;
+      font-weight:800;
+      letter-spacing:.06em;
+      cursor:pointer;
+      touch-action:manipulation;
+    }
+    button:active{ transform: translateY(1px); }
+    button:disabled{ opacity:.42; cursor:not-allowed; transform:none; }
+
+    .stage{
+      position:relative;
+      flex:1;
+      min-height:0;
+      border-radius:var(--r);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.10);
+      background:
+        radial-gradient(1200px 520px at 50% 0%,rgba(96,165,250,.15),transparent 60%),
+        radial-gradient(900px 420px at 20% 10%,rgba(250,204,21,.10),transparent 60%),
+        linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.20));
+    }
+
+    .bg{
+      position:absolute; inset:0;
+      background-position:center;
+      background-size:cover;
+      opacity:.88;
+      pointer-events:none;
+    }
+    .bg::after{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.62));
+    }
+
+    canvas{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      touch-action:none;
+    }
+
+    .player{
+      position:absolute;
+      left:6%;
+      bottom:16%;
+      width:56%;
+      max-width:330px;
+      pointer-events:none;
+      filter:drop-shadow(0 18px 30px rgba(0,0,0,.6));
+      transition: opacity .12s ease;
+    }
+    .hide{opacity:0}
+    .show{opacity:1}
+
+    .hud{
+      position:absolute;
+      top:8px;
+      left:8px;
+      right:8px;
+      display:flex;
+      justify-content:space-between;
+      pointer-events:none;
+      font-size:12px;
+      gap:8px;
+    }
+    .pill{
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(0,0,0,.42);
+      border:1px solid var(--line);
+      font-weight:900;
+      letter-spacing:.06em;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .pill .m{ color: var(--muted); font-weight:800; }
+
+    .flash{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:28px;
+      font-weight:1000;
+      letter-spacing:.16em;
+      opacity:0;
+      pointer-events:none;
+      transform: translateY(10px) scale(.98);
+      transition: opacity .16s ease, transform .16s ease;
+      text-shadow: 0 18px 40px rgba(0,0,0,.6);
+    }
+    .flash.show{
+      opacity:1;
+      transform: translateY(0) scale(1);
+    }
+    .flash.good{ color: var(--good); }
+
+    .overlay{
+      position:absolute;
+      left:8px;
+      right:8px;
+      bottom:8px;
+      border-radius:16px;
+      background:var(--panel);
+      border:1px solid var(--line);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      padding:10px;
+      display:grid;
+      gap:8px;
+      z-index: 10;
+    }
+
+    .overlayTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .hint{
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:.06em;
+      font-weight:800;
+    }
+
+    .meterWrap{ display:grid; gap:4px; }
+    .meterLabel{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .meterLabel b{ color:var(--ink); letter-spacing:.06em; }
+
+    .meter{
+      position:relative;
+      height:36px;
+      border-radius:12px;
+      background:rgba(255,255,255,.08);
+      border:1px solid var(--line);
+      overflow:hidden;
+      touch-action:manipulation;
+    }
+    .zone{
+      position:absolute;
+      top:0; bottom:0;
+      left: var(--zl, 40%);
+      width: var(--zw, 20%);
+      background: rgba(74,222,128,.18);
+      border-left: 1px solid rgba(74,222,128,.35);
+      border-right: 1px solid rgba(74,222,128,.35);
+    }
+    .cursor{
+      position:absolute;
+      top:-6px;
+      width:8px;
+      height:48px;
+      background:#fff;
+      border-radius:999px;
+      transform:translateX(-50%);
+      left:50%;
+      box-shadow: 0 10px 26px rgba(0,0,0,.35);
+    }
+    .meter.locked .cursor{ background: rgba(96,165,250,.95); }
+
+    .actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+    }
+    .primary{
+      border-color: rgba(96,165,250,.55);
+      background: rgba(96,165,250,.20);
+    }
+
+    .footerRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .tiny{ opacity:.9; }
+
+    @media (max-height: 720px){
+      .player{ bottom: 18%; }
+      .overlay{ padding: 9px; gap: 7px; }
+      .meter{ height: 34px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <div class="ttl">
+        <b>FREE THROW 10</b>
+        <span>12/21 — Basketball Day</span>
+      </div>
+      <button id="soundBtn" aria-label="sound">🔊</button>
+    </header>
+
+    <section class="stage" id="stage">
+      <div class="bg" id="bg"></div>
+      <canvas id="c"></canvas>
+
+      <img id="imgReady" class="player show" alt="" />
+      <img id="imgShoot" class="player hide" alt="" />
+
+      <div class="hud">
+        <div class="pill"><span class="m">SHOT</span> <span id="shot">1</span><span class="m">/10</span></div>
+        <div class="pill"><span class="m">IN</span> <span id="made">0</span></div>
+      </div>
+
+      <div id="flash" class="flash good">SWISH</div>
+
+      <div class="overlay" id="overlay">
+        <div class="overlayTop">
+          <div class="hint" id="hint">ANGLE をタップして止める</div>
+          <button id="startBtn">START</button>
+        </div>
+
+        <div class="meterWrap">
+          <div class="meterLabel">
+            <div>ANGLE <b id="angleVal">—</b></div>
+            <div class="tiny">tap to lock</div>
+          </div>
+          <div class="meter" id="angleMeter" role="button" aria-label="angle meter">
+            <div class="zone" id="angleZone"></div>
+            <div class="cursor" id="angleCursor"></div>
+          </div>
+        </div>
+
+        <div class="meterWrap">
+          <div class="meterLabel">
+            <div>POWER <b id="powerVal">—</b></div>
+            <div class="tiny">tap to lock</div>
+          </div>
+          <div class="meter" id="powerMeter" role="button" aria-label="power meter">
+            <div class="zone" id="powerZone"></div>
+            <div class="cursor" id="powerCursor"></div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="resetBtn">RESET</button>
+          <button id="shootBtn" class="primary" disabled>SHOOT</button>
+        </div>
+
+        <div class="footerRow">
+          <span class="tiny">角度 → 強さ → SHOOT（10回）</span>
+          <span class="tiny" id="stateTxt">READY</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module">
+    // =========================================================
+    // iOS：ダブルタップ拡大・ジェスチャ抑止
+    // =========================================================
+    let lastTouchEnd = 0;
+    document.addEventListener("touchend", (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive:false });
+
+    document.addEventListener("dblclick", (e) => e.preventDefault(), { passive:false });
+
+    ["gesturestart","gesturechange","gestureend"].forEach(ev=>{
+      document.addEventListener(ev, (e)=>e.preventDefault(), { passive:false });
+    });
+
+    // =========================================================
+    // 1日1アプリ：動的アセット参照
+    // =========================================================
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    // =========================================================
+    // アセット（必要に応じて差し替え）
+    // =========================================================
+    const ASSETS = {
+      playerReady: asset("./assets/player_ready.png"),
+      playerShoot: asset("./assets/player_shoot.png"),
+      bg: asset("./assets/bg_court.png"),
+      bgm: asset("./assets/bgm.mp3"),
+      swish: asset("./assets/se_swish.mp3"),
+    };
+
+    // DOM
+    const c = document.getElementById("c");
+    const ctx = c.getContext("2d");
+    const bgEl = document.getElementById("bg");
+
+    const imgReady = document.getElementById("imgReady");
+    const imgShoot = document.getElementById("imgShoot");
+
+    const shotEl = document.getElementById("shot");
+    const madeEl = document.getElementById("made");
+    const flash = document.getElementById("flash");
+    const hint = document.getElementById("hint");
+    const stateTxt = document.getElementById("stateTxt");
+
+    const angleMeter = document.getElementById("angleMeter");
+    const powerMeter = document.getElementById("powerMeter");
+    const angleCursor = document.getElementById("angleCursor");
+    const powerCursor = document.getElementById("powerCursor");
+    const angleVal = document.getElementById("angleVal");
+    const powerVal = document.getElementById("powerVal");
+
+    const startBtn = document.getElementById("startBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const shootBtn = document.getElementById("shootBtn");
+    const soundBtn = document.getElementById("soundBtn");
+
+    // =========================================================
+    // Audio（存在しなくても落ちない）
+    // =========================================================
+    const audio = {
+      enabled: true,
+      started: false,
+      bgm: null,
+      swish: null,
+      init(){
+        try{
+          this.bgm = new Audio();
+          this.bgm.src = ASSETS.bgm;
+          this.bgm.loop = true;
+          this.bgm.volume = 0.35;
+
+          this.swish = new Audio();
+          this.swish.src = ASSETS.swish;
+          this.swish.volume = 0.7;
+        }catch(e){}
+      },
+      async startOnce(){
+        if (this.started) return;
+        this.started = true;
+        if (!this.enabled || !this.bgm) return;
+        try{ await this.bgm.play(); }catch(e){}
+      },
+      toggle(){
+        this.enabled = !this.enabled;
+        soundBtn.textContent = this.enabled ? "🔊" : "🔇";
+        if (!this.enabled){
+          try{ this.bgm && this.bgm.pause(); }catch(e){}
+        }else{
+          this.startOnce();
+        }
+      },
+      playSwish(){
+        if (!this.enabled || !this.swish) return;
+        try{
+          this.swish.currentTime = 0;
+          this.swish.play();
+        }catch(e){}
+      }
+    };
+
+    // assets set
+    imgReady.src = ASSETS.playerReady;
+    imgShoot.src = ASSETS.playerShoot;
+    bgEl.style.backgroundImage = `url("${ASSETS.bg}")`;
+    audio.init();
+
+    // =========================================================
+    // Canvas fit
+    // =========================================================
+    function fitCanvas(){
+      const r = c.getBoundingClientRect();
+      const dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+      c.width = Math.floor(r.width * dpr);
+      c.height = Math.floor(r.height * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      drawStatic();
+    }
+    window.addEventListener("resize", fitCanvas);
+
+    // =========================================================
+    // Geometry
+    // =========================================================
+    function geom(){
+      const w = c.getBoundingClientRect().width;
+      const h = c.getBoundingClientRect().height;
+
+      const rimY = h * 0.22;
+      const rimCX = w * 0.78;
+      const rimW = w * 0.14;
+
+      const boardW = rimW * 0.42;
+      const boardH = rimW * 0.62;
+      const boardX = rimCX + rimW*0.42;
+      const boardY = rimY - boardH*0.55;
+
+      const startX = w * 0.40;
+      const startY = h * 0.62;
+
+      return {
+        w,h,
+        rim: { cx: rimCX, y: rimY, w: rimW },
+        board: { x: boardX, y: boardY, w: boardW, h: boardH },
+        start: { x: startX, y: startY },
+      };
+    }
+
+    // =========================================================
+    // Draw
+    // =========================================================
+    function clear(){
+      const g = geom();
+      ctx.clearRect(0,0,g.w,g.h);
+    }
+
+    function drawBall(x,y,r){
+      ctx.save();
+      ctx.fillStyle = "rgba(255,132,60,.95)";
+      ctx.beginPath();
+      ctx.arc(x,y,r,0,Math.PI*2);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(20,20,20,.45)";
+      ctx.lineWidth = Math.max(1.5, r*0.14);
+      ctx.beginPath();
+      ctx.arc(x,y,r*0.92, -Math.PI/3, Math.PI/3);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x,y,r*0.92, Math.PI*2/3, Math.PI*4/3);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawStatic(){
+      clear();
+      const g = geom();
+
+      // backboard
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,.18)";
+      ctx.fillRect(g.board.x, g.board.y, g.board.w, g.board.h);
+      ctx.restore();
+
+      // rim
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,160,80,.95)";
+      ctx.lineWidth = Math.max(4, g.h*0.010);
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(g.rim.cx - g.rim.w/2, g.rim.y);
+      ctx.lineTo(g.rim.cx + g.rim.w/2, g.rim.y);
+      ctx.stroke();
+      ctx.restore();
+
+      // ball at hand
+      if (GAME.mode !== "shooting"){
+        const r = Math.min(g.w,g.h)*0.028;
+        drawBall(g.start.x, g.start.y, r);
+      }
+    }
+
+    function drawFrame(){
+      drawStatic();
+      if (GAME.ball){
+        drawBall(GAME.ball.x, GAME.ball.y, GAME.ball.r);
+      }
+    }
+
+    // =========================================================
+    // Game state
+    // =========================================================
+    const GAME = {
+      shotsMax: 10,
+      shot: 1,
+      made: 0,
+
+      angleLocked: false,
+      powerLocked: false,
+      angleDeg: 45,   // 30-60
+      power01: 0.55,  // 0-1
+
+      dirA: 1,
+      dirP: 1,
+
+      mode: "idle", // idle|aimA|aimP|ready|shooting|done
+      ball: null,
+      lastTs: 0,
+      swished: false
+    };
+
+    // zone表示
+    function setZones(){
+      const aMin=30, aMax=60;
+      const zA0=(44-aMin)/(aMax-aMin);
+      const zA1=(50-aMin)/(aMax-aMin);
+      document.getElementById("angleZone").style.setProperty("--zl", `${(zA0*100).toFixed(1)}%`);
+      document.getElementById("angleZone").style.setProperty("--zw", `${((zA1-zA0)*100).toFixed(1)}%`);
+
+      const zP0=0.50, zP1=0.62;
+      document.getElementById("powerZone").style.setProperty("--zl", `${(zP0*100).toFixed(1)}%`);
+      document.getElementById("powerZone").style.setProperty("--zw", `${((zP1-zP0)*100).toFixed(1)}%`);
+    }
+
+    function updateUI(){
+      const a01 = (GAME.angleDeg - 30) / 30;
+      angleCursor.style.left = `${(a01*100).toFixed(2)}%`;
+      powerCursor.style.left = `${(GAME.power01*100).toFixed(2)}%`;
+
+      angleVal.textContent = `${Math.round(GAME.angleDeg)}°`;
+      powerVal.textContent = `${Math.round(GAME.power01*100)}%`;
+
+      angleMeter.classList.toggle("locked", GAME.angleLocked);
+      powerMeter.classList.toggle("locked", GAME.powerLocked);
+
+      shootBtn.disabled = !(GAME.angleLocked && GAME.powerLocked && GAME.mode === "ready");
+
+      if (GAME.mode === "done"){
+        hint.textContent = `RESULT: ${GAME.made}/10`;
+      } else if (!GAME.angleLocked){
+        hint.textContent = "ANGLE をタップして止める";
+      } else if (!GAME.powerLocked){
+        hint.textContent = "POWER をタップして止める";
+      } else {
+        hint.textContent = "SHOOT";
+      }
+
+      stateTxt.textContent = (GAME.mode === "done") ? "DONE" : `SHOT ${GAME.shot}/10`;
+      shotEl.textContent = String(GAME.shot);
+      madeEl.textContent = String(GAME.made);
+    }
+
+    // =========================================================
+    // Meter animation
+    // =========================================================
+    function meterLoop(ts){
+      if (!GAME.lastTs) GAME.lastTs = ts;
+      const dt = Math.min(0.033, (ts - GAME.lastTs)/1000);
+      GAME.lastTs = ts;
+
+      if (GAME.mode === "aimA" && !GAME.angleLocked){
+        const speed = 0.95;
+        GAME.angleDeg += GAME.dirA * speed * 30 * dt;
+        if (GAME.angleDeg >= 60){ GAME.angleDeg = 60; GAME.dirA = -1; }
+        if (GAME.angleDeg <= 30){ GAME.angleDeg = 30; GAME.dirA =  1; }
+      }
+
+      if ((GAME.mode === "aimP" || GAME.mode === "ready") && GAME.angleLocked && !GAME.powerLocked){
+        const speed = 1.25;
+        GAME.power01 += GAME.dirP * speed * dt;
+        if (GAME.power01 >= 1){ GAME.power01 = 1; GAME.dirP = -1; }
+        if (GAME.power01 <= 0){ GAME.power01 = 0; GAME.dirP =  1; }
+      }
+
+      updateUI();
+      if (GAME.mode !== "shooting") drawStatic();
+      requestAnimationFrame(meterLoop);
+    }
+
+    // =========================================================
+    // Shooting
+    // =========================================================
+    function showFlash(){
+      flash.classList.add("show");
+      setTimeout(()=>flash.classList.remove("show"), 420);
+    }
+
+    function shoot(){
+      // ★状態を厳密化（噛み防止）
+      if (!(GAME.angleLocked && GAME.powerLocked && GAME.mode === "ready")) return;
+      if (GAME.mode === "shooting" || GAME.mode === "done") return;
+
+      audio.startOnce();
+
+      GAME.mode = "shooting";
+      GAME.swished = false;
+
+      imgReady.classList.add("hide"); imgReady.classList.remove("show");
+      imgShoot.classList.add("show"); imgShoot.classList.remove("hide");
+
+      const g = geom();
+      const base = Math.min(g.w,g.h);
+
+      const angleRad = (GAME.angleDeg * Math.PI)/180;
+
+      // ★飛びが見えない問題が出にくいように調整
+      const vMin = base * 1.05;
+      const vMax = base * 1.55;
+      const v = vMin + (vMax - vMin) * GAME.power01;
+
+      const vx = Math.cos(angleRad) * v;
+      const vy = -Math.sin(angleRad) * v;
+
+      GAME.ball = {
+        x: g.start.x,
+        y: g.start.y,
+        vx, vy,
+        r: base * 0.028,
+        t: 0
+      };
+
+      GAME.lastTs = 0;
+      requestAnimationFrame(simLoop);
+    }
+
+    function simLoop(ts){
+      if (!GAME.lastTs) GAME.lastTs = ts;
+      const dt = Math.min(0.020, (ts - GAME.lastTs)/1000);
+      GAME.lastTs = ts;
+
+      const g = geom();
+      const b = GAME.ball;
+      if (!b) return;
+
+      // ★重力も少し調整（見える放物線）
+      const grav = g.h * 1.90;
+      b.vy += grav * dt;
+
+      const prevY = b.y;
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      b.t += dt;
+
+      // backboard bounce
+      const bd = g.board;
+      if (b.x + b.r > bd.x && b.x - b.r < bd.x + bd.w && b.y + b.r > bd.y && b.y - b.r < bd.y + bd.h){
+        b.vx *= -0.55;
+        b.x = bd.x - b.r - 1;
+      }
+
+      // swish detect
+      const rim = g.rim;
+      const crossed = (prevY < rim.y) && (b.y >= rim.y);
+      const inX = (b.x > rim.cx - rim.w*0.42) && (b.x < rim.cx + rim.w*0.42);
+      const down = b.vy > 0;
+
+      if (!GAME.swished && crossed && inX && down){
+        GAME.swished = true;
+        endShot(true);
+        return;
+      }
+
+      // out
+      if (b.y - b.r > g.h + 30 || b.x + b.r < -30 || b.x - b.r > g.w + 30 || b.t > 2.6){
+        endShot(false);
+        return;
+      }
+
+      drawFrame();
+      requestAnimationFrame(simLoop);
+    }
+
+    function endShot(made){
+      GAME.ball = null;
+      drawStatic();
+
+      if (made){
+        GAME.made++;
+        madeEl.textContent = String(GAME.made);
+        showFlash();
+        audio.playSwish();
+      }
+
+      setTimeout(()=>{
+        // image back
+        imgShoot.classList.add("hide"); imgShoot.classList.remove("show");
+        imgReady.classList.add("show"); imgReady.classList.remove("hide");
+
+        // ★ここが2回目以降の詰まりの原因だった：加算→判定の順にする
+        GAME.shot++;
+
+        if (GAME.shot > GAME.shotsMax){
+          GAME.mode = "done";
+          shootBtn.disabled = true;
+          updateUI();
+          return;
+        }
+
+        // 次投へ
+        GAME.angleLocked = false;
+        GAME.powerLocked = false;
+        GAME.mode = "aimA";
+        updateUI();
+        drawStatic();
+      }, 520);
+    }
+
+    // =========================================================
+    // Tap helpers（iOS保険で touchstart も拾う）
+    // =========================================================
+    function bindTap(el, fn){
+      const h = (e)=>{
+        e.preventDefault();
+        fn(e);
+      };
+      el.addEventListener("pointerdown", h, { passive:false });
+      el.addEventListener("touchstart", h, { passive:false });
+    }
+
+    bindTap(angleMeter, async ()=>{
+      await audio.startOnce();
+      if (GAME.mode === "shooting" || GAME.mode === "done") return;
+      if (!GAME.angleLocked){
+        GAME.angleLocked = true;
+        GAME.mode = "aimP";
+        updateUI();
+      }
+    });
+
+    bindTap(powerMeter, async ()=>{
+      await audio.startOnce();
+      if (GAME.mode === "shooting" || GAME.mode === "done") return;
+      if (!GAME.angleLocked) return;
+      if (!GAME.powerLocked){
+        GAME.powerLocked = true;
+        GAME.mode = "ready";
+        updateUI();
+      }
+    });
+
+    shootBtn.addEventListener("click", async ()=>{
+      await audio.startOnce();
+      shoot();
+    });
+
+    resetBtn.addEventListener("click", async ()=>{
+      await audio.startOnce();
+      if (GAME.mode === "shooting") return;
+      if (GAME.mode === "done"){
+        // done中のresetはリスタート扱い
+        startBtn.click();
+        return;
+      }
+      GAME.angleLocked = false;
+      GAME.powerLocked = false;
+      GAME.mode = "aimA";
+      updateUI();
+      drawStatic();
+    });
+
+    startBtn.addEventListener("click", async ()=>{
+      await audio.startOnce();
+      GAME.shot = 1;
+      GAME.made = 0;
+      GAME.angleDeg = 45;
+      GAME.power01 = 0.55;
+      GAME.angleLocked = false;
+      GAME.powerLocked = false;
+      GAME.mode = "aimA";
+      imgShoot.classList.add("hide"); imgShoot.classList.remove("show");
+      imgReady.classList.add("show"); imgReady.classList.remove("hide");
+      updateUI();
+      drawStatic();
+    });
+
+    soundBtn.addEventListener("click", ()=>{
+      audio.toggle();
+    });
+
+    // =========================================================
+    // Boot
+    // =========================================================
+    setZones();
+    fitCanvas();
+    GAME.mode = "aimA";
+    updateUI();
+    drawStatic();
+    requestAnimationFrame(meterLoop);
+  </script>
+</body>
+</html>

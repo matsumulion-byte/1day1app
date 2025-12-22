@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>回転パズル松村（4×4）</title>
+  <style>
+    :root{
+      --bg:#070a14;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.10);
+      --line: rgba(255,255,255,.14);
+      --ink:#f3f6ff;
+      --muted: rgba(243,246,255,.72);
+      --accent:#60a5fa;
+      --good:#34d399;
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
+    body{
+      margin:0;
+      background: radial-gradient(1200px 800px at 50% 0%, #0b1638 0%, var(--bg) 55%);
+      color:var(--ink);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      overflow:hidden; /* 画面内で完結させる */
+      -webkit-tap-highlight-color: transparent;
+      user-select:none;
+      -webkit-user-select:none;
+      -webkit-touch-callout:none;
+      touch-action: manipulation;
+    }
+
+    .app{
+      height:100svh; /* iOS対策 */
+      display:flex;
+      flex-direction:column;
+      padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+      gap:12px;
+    }
+
+    header{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .title{
+      line-height:1.1;
+    }
+    .title h1{
+      font-size:18px;
+      margin:0;
+      letter-spacing:.02em;
+    }
+    .title p{
+      margin:6px 0 0;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .meta{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+    .badge{
+      font-size:12px;
+      padding:6px 10px;
+      border:1px solid var(--line);
+      background: var(--panel);
+      border-radius:999px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .badge strong{ color:var(--ink); font-weight:700; }
+
+    main{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:0;
+    }
+
+    .boardWrap{
+      width:min(92vw, 520px);
+      aspect-ratio:1/1;
+      border-radius:18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      box-shadow: 0 18px 40px rgba(0,0,0,.35);
+      padding:10px;
+      display:flex;
+      align-items:stretch;
+      justify-content:stretch;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .grid{
+      width:100%;
+      height:100%;
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap:8px;
+    }
+
+    .tile{
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background-color: rgba(255,255,255,.04);
+      background-repeat:no-repeat;
+      background-size: 400% 400%; /* 4x4 */
+      position:relative;
+      overflow:hidden;
+      transform: translateZ(0);
+      touch-action: manipulation;
+      cursor:pointer;
+    }
+
+    .tile::after{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,0) 55%);
+      pointer-events:none;
+      opacity:.8;
+      mix-blend-mode: screen;
+    }
+
+    .tile:active{
+      transform: scale(.985);
+    }
+
+    .hint{
+      position:absolute;
+      inset:10px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.18);
+      pointer-events:none;
+      opacity:.18;
+    }
+
+    footer{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    .btnRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    button{
+      appearance:none;
+      border:1px solid var(--line);
+      background: var(--panel);
+      color:var(--ink);
+      padding:12px 14px;
+      border-radius:14px;
+      font-weight:700;
+      letter-spacing:.02em;
+      cursor:pointer;
+      touch-action: manipulation;
+    }
+    button:active{ transform: scale(.99); }
+    button.primary{
+      background: linear-gradient(180deg, rgba(96,165,250,.28), rgba(96,165,250,.12));
+      border-color: rgba(96,165,250,.38);
+    }
+
+    .status{
+      flex:1;
+      min-width: 180px;
+      text-align:right;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.3;
+    }
+    .status strong{ color:var(--ink); }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.16);
+      color:var(--ink);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:13px;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      white-space:nowrap;
+    }
+    .toast.show{
+      opacity:1;
+      transform: translateX(-50%) translateY(-2px);
+    }
+
+    /* 小さめ端末の余白最適化 */
+    @media (max-height: 640px){
+      .app{ gap:10px; padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)); }
+      .boardWrap{ padding:8px; border-radius:16px; }
+      .grid{ gap:7px; }
+      button{ padding:11px 12px; border-radius:12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="title">
+        <h1>回転パズル松村</h1>
+        <p>タップしたマス＋上下左右が90°回転する</p>
+      </div>
+      <div class="meta">
+        <div class="badge">手数 <strong id="moves">0</strong></div>
+        <div class="badge">状態 <strong id="state">—</strong></div>
+      </div>
+    </header>
+
+    <main>
+      <div class="boardWrap" aria-label="Puzzle board">
+        <div class="hint" aria-hidden="true"></div>
+        <div class="grid" id="grid"></div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="btnRow">
+        <button class="primary" id="shuffleBtn">▶ SHUFFLE</button>
+        <button id="resetBtn">↺ RESET</button>
+      </div>
+      <div class="status" id="status">
+        画像: <strong id="imgName">matsumura.png</strong><br/>
+        そろう条件: <strong>全タイルが0°</strong>
+      </div>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast">そろいました</div>
+
+  <script type="module">
+    // Vercel用のパス解決ヘルパー（/YYYY-MM-DD/ 配下に静的配置）
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    // ===== 設定 =====
+    const GRID = 4;                  // 4×4
+    const IMG_PATH = "./assets/matsumura.png"; // ここに松村画像を置く
+    const SHUFFLE_STEPS = 40;        // シャッフル回数（多いほど難しく）
+    const ROTATIONS = [0, 90, 180, 270];
+
+    // ===== DOM =====
+    const gridEl = document.getElementById("grid");
+    const movesEl = document.getElementById("moves");
+    const stateEl = document.getElementById("state");
+    const statusEl = document.getElementById("status");
+    const imgNameEl = document.getElementById("imgName");
+    const shuffleBtn = document.getElementById("shuffleBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const toastEl = document.getElementById("toast");
+
+    // ===== 状態 =====
+    const imgUrl = asset(IMG_PATH);
+    imgNameEl.textContent = IMG_PATH.split("/").pop();
+
+    // 各タイルの回転状態（0/90/180/270）
+    let rot = [];
+    let moves = 0;
+    let locked = false;
+
+    function idx(r, c){ return r * GRID + c; }
+
+    function neighborsCross(i){
+      const r = Math.floor(i / GRID);
+      const c = i % GRID;
+      const list = [i];
+      if (r > 0) list.push(idx(r-1, c));
+      if (r < GRID-1) list.push(idx(r+1, c));
+      if (c > 0) list.push(idx(r, c-1));
+      if (c < GRID-1) list.push(idx(r, c+1));
+      return list;
+    }
+
+    function rotateTile(i, times=1){
+      // times=1 => 90deg
+      const cur = rot[i];
+      const next = (cur + 90 * times) % 360;
+      rot[i] = next;
+    }
+
+    function applyVisual(i){
+      const tile = gridEl.children[i];
+      tile.style.transform = `rotate(${rot[i]}deg)`;
+    }
+
+    function updateHUD(){
+      movesEl.textContent = String(moves);
+      const solved = isSolved();
+      stateEl.textContent = solved ? "OK" : "…";
+      stateEl.style.color = solved ? "var(--good)" : "var(--ink)";
+    }
+
+    function isSolved(){
+      // 全タイルが0°ならOK（画像の向きが揃う）
+      for (let i = 0; i < rot.length; i++){
+        if ((rot[i] % 360) !== 0) return false;
+      }
+      return true;
+    }
+
+    let toastTimer = null;
+    function toast(msg){
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove("show"), 900);
+    }
+
+    function onTap(i){
+      if (locked) return;
+
+      locked = true;
+      const list = neighborsCross(i);
+
+      // まとめて回転
+      for (const j of list) rotateTile(j, 1);
+      // 表示更新
+      for (const j of list) applyVisual(j);
+
+      moves++;
+      updateHUD();
+
+      // クリア演出（過剰にしない）
+      if (isSolved()){
+        toast("そろいました");
+      }
+
+      // 連打で壊れないようにちょい待つ
+      setTimeout(() => { locked = false; }, 70);
+    }
+
+    function buildGrid(){
+      gridEl.innerHTML = "";
+      rot = new Array(GRID * GRID).fill(0);
+
+      for (let r = 0; r < GRID; r++){
+        for (let c = 0; c < GRID; c++){
+          const i = idx(r, c);
+          const tile = document.createElement("button");
+          tile.type = "button";
+          tile.className = "tile";
+          tile.setAttribute("aria-label", `tile ${i+1}`);
+          tile.style.backgroundImage = `url("${imgUrl}")`;
+
+          // 背景位置（4x4で切り出し）
+          const x = (c / (GRID - 1)) * 100;
+          const y = (r / (GRID - 1)) * 100;
+          tile.style.backgroundPosition = `${x}% ${y}%`;
+
+          // 初期回転
+          tile.style.transform = "rotate(0deg)";
+
+          // iOSの長押し選択など回避
+          tile.addEventListener("contextmenu", (e) => e.preventDefault());
+          tile.addEventListener("pointerdown", (e) => {
+            // テキスト選択系を抑止
+            e.preventDefault();
+          }, { passive:false });
+
+          tile.addEventListener("click", () => onTap(i));
+          gridEl.appendChild(tile);
+        }
+      }
+    }
+
+    function reset(){
+      moves = 0;
+      rot.fill(0);
+      for (let i = 0; i < rot.length; i++) applyVisual(i);
+      updateHUD();
+      toast("リセット");
+    }
+
+    function shuffle(){
+      moves = 0;
+
+      // ランダムに「合法手」を積む（必ず解ける形になる）
+      const steps = SHUFFLE_STEPS;
+      for (let k = 0; k < steps; k++){
+        const i = Math.floor(Math.random() * (GRID * GRID));
+        const list = neighborsCross(i);
+        for (const j of list) rotateTile(j, 1);
+      }
+
+      // 表示反映
+      for (let i = 0; i < rot.length; i++) applyVisual(i);
+
+      // たまに初期で揃っちゃうのを避ける
+      if (isSolved()){
+        // 1手だけ崩す
+        const i = Math.floor(Math.random() * (GRID * GRID));
+        const list = neighborsCross(i);
+        for (const j of list) rotateTile(j, 1);
+        for (const j of list) applyVisual(j);
+      }
+
+      updateHUD();
+      toast("シャッフル");
+    }
+
+    // ===== 起動 =====
+    buildGrid();
+    reset();
+
+    shuffleBtn.addEventListener("click", shuffle);
+    resetBtn.addEventListener("click", reset);
+
+    // 画面外スクロール事故を抑止（特にiOS）
+    document.addEventListener("touchmove", (e) => {
+      // 画面全体でスクロールさせない
+      e.preventDefault();
+    }, { passive:false });
+  </script>
+</body>
+</html>
