@@ -262,6 +262,16 @@
       const clean = String(p || "").replace(/^\.?\//, "");
       return `${DATE_BASE}${clean}`;
     };
+    const bgm = new Audio(asset("./assets/bgm.mp3"));
+bgm.loop = true;
+bgm.volume = 0.35;
+let bgmStarted = false;
+
+function startBGM(){
+  if (bgmStarted) return;
+  bgmStarted = true;
+  bgm.play().catch(()=>{});
+}
 
     // ===== 設定 =====
     const GRID = 4;                  // 4×4
@@ -337,6 +347,7 @@
     }
 
     function onTap(i){
+      startBGM();
       if (locked) return;
 
       locked = true;
@@ -432,7 +443,10 @@
     buildGrid();
     reset();
 
-    shuffleBtn.addEventListener("click", shuffle);
+    shuffleBtn.addEventListener("click", () => {
+  startBGM();
+  shuffle();
+});
     resetBtn.addEventListener("click", reset);
 
     // 画面外スクロール事故を抑止（特にiOS）
