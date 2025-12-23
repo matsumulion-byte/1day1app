@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>松村を探せ</title>
+  <meta name="theme-color" content="#0b1020" />
+  <style>
+    :root{
+      --bg:#070a14;
+      --line: rgba(255,255,255,.14);
+      --ink:#f3f6ff;
+      --muted: rgba(243,246,255,.70);
+      --good:#34d399;
+      --bad:#fb7185;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 700px at 50% -10%, rgba(96,165,250,.18), transparent 60%),
+        radial-gradient(900px 600px at 10% 110%, rgba(52,211,153,.10), transparent 60%),
+        radial-gradient(900px 600px at 110% 110%, rgba(251,113,133,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg), #040611 60%, #02030a);
+      color:var(--ink);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+      user-select:none;
+      overflow:hidden;
+    }
+
+    .wrap{
+      min-height:100svh;
+      display:flex;
+      flex-direction:column;
+      padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+      gap:10px;
+    }
+
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-width:0;
+      flex:1;
+    }
+    h1{
+      margin:0;
+      font-size:16px;
+      letter-spacing:.06em;
+      font-weight:800;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* ヒント */
+    .hint{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      width:100%;
+      padding:10px 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.28);
+      border-radius:16px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 26px rgba(0,0,0,.28);
+    }
+    .hint .label{
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .hint .thumb{
+      width:42px;
+      height:42px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      overflow:hidden;
+      display:grid;
+      place-items:center;
+      flex:0 0 auto;
+    }
+    .hint .thumb img{
+      width:85%;
+      height:85%;
+      object-fit:contain;
+      filter: saturate(.95) brightness(1.02) contrast(1.02);
+      opacity:.98;
+      pointer-events:none;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+    .hint .meta{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:0;
+    }
+    .hint .meta .main{
+      font-size:13px;
+      font-weight:800;
+      letter-spacing:.02em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .hint .meta .sub{
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      color:var(--ink);
+      border-radius:14px;
+      padding:10px 12px;
+      font-weight:800;
+      font-size:12px;
+      letter-spacing:.04em;
+      cursor:pointer;
+      box-shadow: 0 10px 30px rgba(0,0,0,.28);
+      white-space:nowrap;
+      flex:0 0 auto;
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    .board{
+      flex:1;
+      display:flex;
+      background: rgba(255,255,255,.04);
+      border:1px solid var(--line);
+      border-radius:18px;
+      overflow:hidden;
+      position:relative;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 18px 50px rgba(0,0,0,.35);
+      min-height: 0;
+    }
+
+    /* ===== ビュー（ここがズーム＆パン領域） ===== */
+    .view{
+      position:absolute;
+      inset:0;
+      overflow:hidden; /* スクロールバーは出さない */
+      touch-action: none; /* ピンチ/パンをJSで制御 */
+    }
+
+    /* 実体はこのcontentに全部乗る（背景/松村/雪） */
+    .content{
+      position:absolute;
+      left:0; top:0;
+      width:100%;
+      height:100%;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+
+    /* 背景 */
+    .stage{
+      position:absolute;
+      inset:0;
+      background: #000 center/cover no-repeat;
+      transform: translateZ(0);
+    }
+    .stage::after{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(900px 600px at 50% 10%, rgba(255,255,255,.06), transparent 60%),
+        radial-gradient(1200px 900px at 50% 60%, rgba(0,0,0,.0), rgba(0,0,0,.35));
+      pointer-events:none;
+      mix-blend-mode: multiply;
+    }
+
+    /* 雪 */
+    .snow{
+      position:absolute; inset:0;
+      pointer-events:none;
+      opacity:.55;
+      filter: blur(.2px);
+      mix-blend-mode: screen;
+    }
+    .snow::before,
+    .snow::after{
+      content:"";
+      position:absolute; inset:-30%;
+      background-repeat: repeat;
+      animation: snowFall 10s linear infinite;
+      will-change: transform;
+    }
+    .snow::before{
+      opacity:.55;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.9) 0 1px, transparent 2px),
+        radial-gradient(circle, rgba(255,255,255,.7) 0 1px, transparent 2px),
+        radial-gradient(circle, rgba(255,255,255,.8) 0 1px, transparent 2px);
+      background-size: 140px 140px, 220px 220px, 320px 320px;
+      background-position: 0 0, 40px 60px, 120px 30px;
+      animation-duration: 12s;
+    }
+    .snow::after{
+      opacity:.45;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.85) 0 2px, transparent 3px),
+        radial-gradient(circle, rgba(255,255,255,.65) 0 2px, transparent 3px);
+      background-size: 260px 260px, 420px 420px;
+      background-position: 10px 80px, 160px 20px;
+      animation-duration: 18s;
+      animation-direction: reverse;
+    }
+    @keyframes snowFall{
+      0%   { transform: translate3d(0,-8%,0); }
+      100% { transform: translate3d(0, 8%,0); }
+    }
+
+    /* 松村（馴染ませ） */
+    .matsumura{
+      position:absolute;
+      left:50%;
+      top:50%;
+      width: 80px;
+      height:auto;
+      transform: translate(-50%,-50%);
+      pointer-events:none;
+      user-select:none;
+      -webkit-user-drag:none;
+
+      filter:
+        saturate(0.55)
+        brightness(0.90)
+        contrast(0.92)
+        blur(0.6px);
+
+      mix-blend-mode: overlay;
+      opacity: .92;
+    }
+    .ground{
+      position:absolute;
+      width: 60px; height: 16px;
+      border-radius: 999px;
+      background: rgba(0,0,0,1);
+      opacity:.14;
+      transform: translate(-50%,-50%);
+      pointer-events:none;
+      mix-blend-mode: multiply;
+      filter: blur(2px);
+    }
+
+    .toast{
+      position:absolute;
+      left:50%; top:14px;
+      transform: translateX(-50%) translateY(-6px);
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.45);
+      font-size:12px;
+      color: var(--muted);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      backdrop-filter: blur(6px);
+      z-index:6;
+    }
+    .toast.on{
+      opacity:1;
+      transform: translateX(-50%) translateY(0px);
+    }
+    .flash{
+      position:absolute; inset:0;
+      pointer-events:none;
+      opacity:0;
+      background: radial-gradient(700px 500px at var(--fx,50%) var(--fy,50%), rgba(52,211,153,.22), transparent 60%);
+      transition: opacity .18s ease;
+      z-index:5;
+      mix-blend-mode: screen;
+    }
+    .flash.on{ opacity:1; }
+
+    /* 下部にズームヒント */
+    .zoomHint{
+      position:absolute;
+      left:12px; bottom:12px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.32);
+      color:rgba(243,246,255,.76);
+      font-size:12px;
+      backdrop-filter: blur(6px);
+      z-index:7;
+      pointer-events:none;
+    }
+
+    /* 終了オーバーレイ */
+    .overlay{
+      position:absolute; inset:0;
+      background: radial-gradient(900px 600px at 50% 20%, rgba(52,211,153,.16), transparent 60%),
+                  rgba(0,0,0,.55);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .22s ease;
+      z-index:20;
+    }
+    .overlay.is-on{ opacity:1; pointer-events:auto; }
+
+    .card{
+      width:min(520px, 100%);
+      border-radius:18px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+      padding:16px;
+    }
+    .card h2{
+      margin:0 0 8px;
+      font-size:16px;
+      letter-spacing:.05em;
+    }
+    .card p{
+      margin:0 0 14px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.6;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .pill{
+      font-size:12px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>松村を探せ</h1>
+
+        <div class="hint" aria-label="ヒント">
+          <div class="thumb" aria-hidden="true">
+            <img id="hintImg" alt="" />
+          </div>
+          <div class="meta">
+            <div class="main">これを探せ</div>
+            <div class="sub">ピンチで拡大・ドラッグで移動</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn" id="restartBtn" type="button" aria-label="リスタート">
+        ↻ リスタート
+      </button>
+    </header>
+
+    <main class="board" aria-label="ゲーム盤">
+      <div class="view" id="view">
+        <div class="content" id="content">
+          <div class="stage" id="stage" aria-label="人混み背景"></div>
+
+          <div class="ground" id="ground" aria-hidden="true"></div>
+          <img class="matsumura" id="matsu" alt="松村" />
+          <div class="snow" aria-hidden="true"></div>
+
+          <div class="flash" id="flash" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div class="toast" id="toast" aria-live="polite"></div>
+      <div class="zoomHint">ピンチで拡大 / ドラッグで移動</div>
+
+      <div class="overlay is-on" id="overlay" role="dialog" aria-modal="true">
+        <div class="card">
+          <h2 id="ovTitle">松村を探せ</h2>
+          <p id="ovText">上の見本と同じ松村を、背景の中から探してタップしてください。見つけにくいときは拡大できます。</p>
+          <div class="row">
+            <span class="pill">見本あり</span>
+            <span class="pill">拡大OK</span>
+            <span class="pill">見つけたら終了</span>
+          </div>
+          <div style="height:12px"></div>
+          <button class="btn" id="startBtn" type="button">▶ はじめる</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    // Vercel用のパス解決ヘルパー（/YYYY-MM-DD/ 配下に静的配置）
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    // ===== 設定 =====
+    const BG_SRC   = asset("./assets/crowd.png");
+    const MATS_SRC = asset("./assets/matsumura.png");
+    const BGM_SRC  = asset("./assets/bgm.mp3"); // ファイル名に合わせて変えてOK
+
+    const stage = document.getElementById("stage");
+    const matsu = document.getElementById("matsu");
+    const ground = document.getElementById("ground");
+    const overlay = document.getElementById("overlay");
+    const startBtn = document.getElementById("startBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const toast = document.getElementById("toast");
+    const flash = document.getElementById("flash");
+    const hintImg = document.getElementById("hintImg");
+
+    const view = document.getElementById("view");
+    const content = document.getElementById("content");
+
+    let locked = false;
+    let audioCtx = null;
+
+    // BGM
+    const bgm = new Audio(BGM_SRC);
+    bgm.loop = true;
+    bgm.preload = "auto";
+    bgm.volume = 0.55;
+
+    function playBgm(){ bgm.play().catch(()=>{}); }
+    function stopBgm(){
+      try{ bgm.pause(); bgm.currentTime = 0; }catch(_){}
+    }
+
+    window.addEventListener("contextmenu", (e) => e.preventDefault(), { passive:false });
+
+    function ensureAudio(){
+      if (audioCtx) return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      audioCtx = new AC();
+    }
+    function beep(type="good"){
+      if (!audioCtx) return;
+      const t = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = "sine";
+      o.frequency.value = type === "good" ? 660 : 180;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.16, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + (type==="good" ? 0.14 : 0.10));
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.start(t);
+      o.stop(t + 0.2);
+    }
+    function vib(ms){
+      try{ navigator.vibrate && navigator.vibrate(ms); }catch(_){}
+    }
+    function showToast(msg, kind="muted"){
+      toast.textContent = msg;
+      toast.style.color = kind === "good" ? "rgba(52,211,153,.92)"
+                        : kind === "bad" ? "rgba(251,113,133,.92)"
+                        : "rgba(243,246,255,.78)";
+      toast.classList.add("on");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=>toast.classList.remove("on"), 650);
+    }
+    function rand(min, max){ return min + Math.random()*(max-min); }
+
+    // ===== ズーム＆パン状態 =====
+    const st = {
+      scale: 1,
+      minScale: 1,
+      maxScale: 2.6,
+      tx: 0,
+      ty: 0
+    };
+
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+    function applyTransform(){
+      content.style.transform = `translate(${st.tx}px, ${st.ty}px) scale(${st.scale})`;
+    }
+
+    function clampPan(){
+      // content(=viewサイズ)をスケールした“見かけのサイズ”
+      const r = view.getBoundingClientRect();
+      const vw = r.width, vh = r.height;
+      const cw = vw * st.scale;
+      const ch = vh * st.scale;
+
+      // 端まで見えるように：パン可能範囲を計算
+      // scale=1 のときは中央固定（tx=ty=0）
+      const minTx = Math.min(0, vw - cw);
+      const minTy = Math.min(0, vh - ch);
+      const maxTx = 0;
+      const maxTy = 0;
+
+      st.tx = clamp(st.tx, minTx, maxTx);
+      st.ty = clamp(st.ty, minTy, maxTy);
+    }
+
+    function setScaleAt(newScale, cx, cy){
+      // cx,cy は view 内座標
+      const r = view.getBoundingClientRect();
+      const vx = cx;
+      const vy = cy;
+
+      const old = st.scale;
+      newScale = clamp(newScale, st.minScale, st.maxScale);
+      if (Math.abs(newScale - old) < 0.0001) return;
+
+      // 変換前の content 座標におけるポイントを維持するよう tx/ty を調整
+      // content point = (view point - t) / scale
+      const px = (vx - st.tx) / old;
+      const py = (vy - st.ty) / old;
+
+      st.scale = newScale;
+      st.tx = vx - px * st.scale;
+      st.ty = vy - py * st.scale;
+
+      clampPan();
+      applyTransform();
+    }
+
+    function resetView(){
+      st.scale = 1;
+      st.tx = 0;
+      st.ty = 0;
+      applyTransform();
+    }
+
+    // ===== 松村配置 =====
+    function placeMatsumura(){
+      const r = view.getBoundingClientRect();
+      const w = r.width;
+      const h = r.height;
+
+      // 少し大きめ（優しめ）
+      const base = Math.min(w, h);
+      const targetH = rand(base * 0.09, base * 0.12);
+      const aspect = (matsu.naturalWidth || 1) / (matsu.naturalHeight || 1);
+      const mw = targetH * aspect;
+      const mh = targetH;
+
+      // 下寄り多め
+      const x = rand(w * 0.08, w * 0.92 - mw);
+      const y = rand(h * 0.40, h * 0.82 - mh);
+
+      matsu.style.width = `${mw}px`;
+      matsu.style.left = `${x}px`;
+      matsu.style.top  = `${y}px`;
+      matsu.style.transform = `translate(0,0)`;
+
+      ground.style.width = `${mw * 0.55}px`;
+      ground.style.height = `${Math.max(10, mh * 0.10)}px`;
+      ground.style.left = `${x + mw * 0.52}px`;
+      ground.style.top  = `${y + mh * 0.92}px`;
+      ground.style.transform = `translate(-50%,-50%)`;
+
+      flash.style.setProperty("--fx", `${((x + mw*0.5)/w)*100}%`);
+      flash.style.setProperty("--fy", `${((y + mh*0.5)/h)*100}%`);
+    }
+
+    function hitTest(clientX, clientY){
+      // “画面上の座標”での当たり判定でOK（transform後もgetBoundingClientRectが効く）
+      const rect = matsu.getBoundingClientRect();
+      const padX = rect.width  * 0.04;
+      const padY = rect.height * 0.04;
+      const x1 = rect.left + padX;
+      const y1 = rect.top  + padY;
+      const x2 = rect.right - padX;
+      const y2 = rect.bottom - padY;
+      return (clientX >= x1 && clientX <= x2 && clientY >= y1 && clientY <= y2);
+    }
+
+    function build(){
+      locked = false;
+      stage.style.backgroundImage = `url("${BG_SRC}")`;
+
+      matsu.src = MATS_SRC;
+      matsu.draggable = false;
+      hintImg.src = MATS_SRC;
+      hintImg.draggable = false;
+
+      resetView();
+      placeMatsumura();
+      setTimeout(placeMatsumura, 60);
+
+      showToast("探してタップ");
+    }
+
+    function onTapLike(e){
+      if (locked) return;
+
+      ensureAudio();
+      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
+
+      const ok = hitTest(e.clientX, e.clientY);
+
+      if (ok){
+        locked = true;
+        beep("good");
+        vib(20);
+
+        flash.classList.add("on");
+        setTimeout(()=>flash.classList.remove("on"), 180);
+
+        showToast("見つかった", "good");
+        stopBgm();
+
+        setTimeout(() => {
+          document.getElementById("ovTitle").textContent = "見つかった";
+          document.getElementById("ovText").textContent = "松村を確保しました。";
+          startBtn.textContent = "▶ もう一回";
+          overlay.classList.add("is-on");
+        }, 380);
+      } else {
+        beep("bad");
+        vib(10);
+        showToast("ちがう", "bad");
+      }
+    }
+
+    function start(){
+      overlay.classList.remove("is-on");
+      build();
+      playBgm();
+    }
+
+    startBtn.addEventListener("click", start);
+    restartBtn.addEventListener("click", () => {
+      overlay.classList.remove("is-on");
+      build();
+      playBgm();
+    });
+
+    // ===== ピンチ＆パン（Pointer Events） =====
+    const pointers = new Map();
+    let lastTapT = 0;
+
+    function dist(a,b){ const dx=a.x-b.x, dy=a.y-b.y; return Math.hypot(dx,dy); }
+    function mid(a,b){ return { x:(a.x+b.x)/2, y:(a.y+b.y)/2 }; }
+
+    let pinchStart = null; // {d, scale, mid}
+    let panStart = null;   // {x,y, tx,ty}
+
+    view.addEventListener("pointerdown", (e)=>{
+      // overlay中は触らせない
+      if (overlay.classList.contains("is-on")) return;
+
+      view.setPointerCapture(e.pointerId);
+      pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+
+      // ダブルタップ（ポインタ1本のときだけ）
+      const now = performance.now();
+      if (pointers.size === 1){
+        if (now - lastTapT < 260){
+          const r = view.getBoundingClientRect();
+          const cx = e.clientX - r.left;
+          const cy = e.clientY - r.top;
+          const target = (st.scale < 1.4) ? 1.8 : 1;
+          setScaleAt(target, cx, cy);
+          lastTapT = 0;
+          return;
+        }
+        lastTapT = now;
+      }
+
+      if (pointers.size === 1){
+        panStart = { x:e.clientX, y:e.clientY, tx:st.tx, ty:st.ty };
+      } else if (pointers.size === 2){
+        const arr = [...pointers.values()];
+        const m = mid(arr[0], arr[1]);
+        pinchStart = { d: dist(arr[0], arr[1]), scale: st.scale, mid:m };
+        panStart = null;
+      }
+    }, { passive:false });
+
+    view.addEventListener("pointermove", (e)=>{
+      if (!pointers.has(e.pointerId)) return;
+      pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+
+      if (pointers.size === 1 && panStart){
+        // パン
+        const p = [...pointers.values()][0];
+        st.tx = panStart.tx + (p.x - panStart.x);
+        st.ty = panStart.ty + (p.y - panStart.y);
+        clampPan();
+        applyTransform();
+      } else if (pointers.size === 2 && pinchStart){
+        // ピンチズーム
+        const arr = [...pointers.values()];
+        const d = dist(arr[0], arr[1]);
+        const m = mid(arr[0], arr[1]);
+        const r = view.getBoundingClientRect();
+        const cx = m.x - r.left;
+        const cy = m.y - r.top;
+
+        const nextScale = pinchStart.scale * (d / pinchStart.d);
+        setScaleAt(nextScale, cx, cy);
+      }
+    }, { passive:false });
+
+    function endPointer(e){
+      pointers.delete(e.pointerId);
+      if (pointers.size === 1){
+        // 2本→1本になったらパンに切り替え
+        const p = [...pointers.values()][0];
+        panStart = { x:p.x, y:p.y, tx:st.tx, ty:st.ty };
+        pinchStart = null;
+      } else if (pointers.size === 0){
+        panStart = null;
+        pinchStart = null;
+      }
+    }
+    view.addEventListener("pointerup", endPointer, { passive:true });
+    view.addEventListener("pointercancel", endPointer, { passive:true });
+
+    // クリック（タップ）判定
+    // パン/ピンチ後にも反応しすぎないよう、pointerupで軽く判定する
+    let moved = false;
+    let downPos = null;
+    view.addEventListener("pointerdown", (e)=>{
+      moved = false;
+      downPos = { x:e.clientX, y:e.clientY, t:performance.now() };
+    }, { passive:true });
+
+    view.addEventListener("pointermove", (e)=>{
+      if (!downPos) return;
+      const dx = e.clientX - downPos.x;
+      const dy = e.clientY - downPos.y;
+      if (Math.hypot(dx,dy) > 7) moved = true;
+    }, { passive:true });
+
+    view.addEventListener("pointerup", (e)=>{
+      if (overlay.classList.contains("is-on")) return;
+      if (!downPos) return;
+      const dt = performance.now() - downPos.t;
+
+      // “ドラッグ”や“ピンチ”っぽい動きはタップ扱いしない
+      if (!moved && pointers.size === 0 && dt < 320){
+        onTapLike(e);
+      }
+      downPos = null;
+    }, { passive:true });
+
+    // リサイズ時
+    let rszTimer = null;
+    window.addEventListener("resize", () => {
+      clearTimeout(rszTimer);
+      rszTimer = setTimeout(() => {
+        if (!overlay.classList.contains("is-on")) {
+          build();
+        }
+      }, 180);
+    });
+
+    // 初期
+    build();
+  </script>
+</body>
+</html>
