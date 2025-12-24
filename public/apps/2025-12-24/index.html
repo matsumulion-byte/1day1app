@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>松村プレゼントアキネーター</title>
+  <meta name="theme-color" content="#d94a3a" />
+  <style>
+    :root{
+      --ink:#1a1a1a;
+      --muted: rgba(20,20,20,.62);
+      --card: rgba(255,255,255,.90);
+      --line: rgba(0,0,0,.10);
+      --shadow: 0 22px 60px rgba(0,0,0,.18);
+      --r:22px;
+
+      --red:#d94a3a;
+      --green:#2e8b57;
+      --cream:#fff4e7;
+
+      --btn:#ffffff;
+      --btnLine: rgba(0,0,0,.12);
+      --btnShadow: 0 10px 24px rgba(0,0,0,.10);
+    }
+
+    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      color:var(--ink);
+      font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      overflow:hidden;
+      -webkit-user-select:none; user-select:none;
+
+      background:
+        radial-gradient(900px 700px at 15% 10%, rgba(217,74,58,.28), transparent 60%),
+        radial-gradient(800px 600px at 85% 15%, rgba(46,139,87,.22), transparent 55%),
+        radial-gradient(1200px 900px at 50% 100%, rgba(255,244,231,.95), transparent 55%),
+        linear-gradient(180deg, #fff6ea 0%, #ffe9d6 45%, #fff6ea 100%);
+    }
+
+    /* snow */
+    body::before{
+      content:"";
+      position:fixed; inset:-20px;
+      pointer-events:none;
+      opacity:.55;
+      background:
+        radial-gradient(circle at 12% 18%, rgba(255,255,255,.95) 0 2px, transparent 3px),
+        radial-gradient(circle at 70% 22%, rgba(255,255,255,.85) 0 1.8px, transparent 3px),
+        radial-gradient(circle at 30% 60%, rgba(255,255,255,.85) 0 1.6px, transparent 3px),
+        radial-gradient(circle at 86% 72%, rgba(255,255,255,.9) 0 2px, transparent 3px),
+        radial-gradient(circle at 55% 40%, rgba(255,255,255,.70) 0 1.2px, transparent 3px),
+        radial-gradient(circle at 40% 86%, rgba(255,255,255,.80) 0 1.5px, transparent 3px);
+      background-size: 260px 260px, 300px 300px, 340px 340px, 380px 380px, 420px 420px, 500px 500px;
+      animation: drift 16s linear infinite;
+      filter: blur(.2px);
+    }
+    @keyframes drift{
+      from{ transform: translateY(-18px); }
+      to{ transform: translateY(18px); }
+    }
+
+    .app{
+      height:100%;
+      max-width: 760px;
+      margin:0 auto;
+      padding: 14px 14px calc(12px + env(safe-area-inset-bottom));
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    header{
+      padding-top: env(safe-area-inset-top);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .title{ min-width:0; }
+    h1{
+      margin:0;
+      font-size: 16px;
+      font-weight: 950;
+      letter-spacing:.01em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .sub{
+      margin:6px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+      line-height:1.35;
+      font-weight: 700;
+    }
+
+    .topRight{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-shrink:0;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.74);
+      border:1px solid rgba(0,0,0,.10);
+      box-shadow: 0 10px 22px rgba(0,0,0,.08);
+      font-size:12px;
+      color: rgba(20,20,20,.75);
+      white-space:nowrap;
+      font-weight: 900;
+    }
+    .dot{
+      width:8px;height:8px;border-radius:50%;
+      background: rgba(0,0,0,.28);
+      box-shadow: 0 0 0 3px rgba(0,0,0,.06);
+    }
+    .soundBtn{
+      border:1px solid rgba(0,0,0,.10);
+      background: rgba(255,255,255,.74);
+      color: rgba(20,20,20,.75);
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight: 950;
+      cursor:pointer;
+      touch-action: manipulation;
+      box-shadow: 0 10px 22px rgba(0,0,0,.08);
+    }
+    .soundBtn:active{ transform: translateY(1px); }
+
+    .card{
+      flex:1;
+      min-height:0;
+      border-radius: var(--r);
+      border:1px solid rgba(0,0,0,.10);
+      background: var(--card);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      backdrop-filter: blur(10px);
+    }
+
+    .cardTop{
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-size:12px;
+      color: rgba(20,20,20,.65);
+      font-weight: 950;
+    }
+
+    .bar{
+      flex:1;
+      height: 10px;
+      border-radius:999px;
+      background: rgba(0,0,0,.06);
+      border:1px solid rgba(0,0,0,.08);
+      overflow:hidden;
+    }
+    .bar i{
+      display:block;
+      height:100%;
+      width:0%;
+      border-radius:999px;
+      background:
+        repeating-linear-gradient(
+          45deg,
+          rgba(217,74,58,.78) 0 10px,
+          rgba(255,255,255,.90) 10px 20px,
+          rgba(46,139,87,.74) 20px 30px,
+          rgba(255,255,255,.90) 30px 40px
+        );
+    }
+
+   /* stageの密度を上げる（間延び対策） */
+/* stage：上(qa)が伸びて、下(ボタン)が下に固定 */
+.stage{
+  flex:1;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+  padding: 12px;
+}
+
+/* 画像＋テキストを中央にまとめる */
+.qa{
+  flex: 1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap: 12px;
+  text-align:center;
+}
+
+/* 画像枠：しっかり大きく */
+.hero{
+  width: 100%;
+  height: clamp(240px, 38vh, 420px);  /* ←デカく */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* 画像：絶対に中央、見切れない */
+.hero img{
+  height: 100%;
+  width: 100%;
+  max-width: min(560px, 92vw);        /* ←max幅を上げる/端末依存を減らす */
+  object-fit: contain;                /* ←見切れ禁止 */
+  object-position: center center;     /* ←中央固定 */
+  display:block;
+  margin: 0 auto;
+}
+
+/* 質問文 */
+.bigText{
+  margin:0;
+  font-size: clamp(18px, 3.0vh, 26px);
+  line-height:1.18;
+  font-weight: 1000;
+}
+
+/* ボタンは下に固定 */
+.choices, .ctaRow{
+  margin-top: auto;
+}
+
+    .desc{
+      text-align:center;
+      margin: 0;
+      color: rgba(20,20,20,.70);
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-line;
+      font-weight: 800;
+    }
+
+    /* ボタンは下に固定。間延びを作る“空白専用行”は作らない */
+    .choices{
+      margin-top: auto;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .btn{
+      padding: 14px 12px;
+      border-radius: 16px;
+      border: 1px solid var(--btnLine);
+      background: var(--btn);
+      color: rgba(20,20,20,.92);
+      font-size: 15px;
+      font-weight: 950;
+      cursor:pointer;
+      touch-action: manipulation;
+      text-align:center;
+      box-shadow: var(--btnShadow);
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.full{ grid-column: 1 / -1; }
+
+    .ctaRow{
+      margin-top: auto;
+      display:flex;
+      gap:10px;
+    }
+    .cta{
+      flex:1;
+      padding: 13px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(0,0,0,.12);
+      background: linear-gradient(180deg, rgba(217,74,58,.92), rgba(217,74,58,.80));
+      color: #fff;
+      font-weight: 1000;
+      cursor:pointer;
+      box-shadow: 0 14px 28px rgba(217,74,58,.22);
+    }
+    .cta.secondary{
+      background: #fff;
+      color: rgba(20,20,20,.82);
+      box-shadow: 0 10px 22px rgba(0,0,0,.10);
+    }
+
+    .footer{
+      padding: 10px 12px;
+      border-top: 1px solid rgba(0,0,0,.08);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      color: rgba(20,20,20,.60);
+      font-size:12px;
+      font-weight: 900;
+    }
+
+    @media (max-height: 720px){
+      .hero{ height: clamp(140px, 26vh, 210px); }
+      .btn{ padding: 12px 10px; }
+      .stage{ padding: 10px 10px 12px; }
+      .qa{ padding-top: 4px; gap: 8px; }
+    }
+
+    /* --- BGM Permission Overlay --- */
+.bgmOverlay{
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0,0,0,.20);
+  backdrop-filter: blur(8px);
+}
+
+.bgmOverlay.isShow{ display:flex; }
+
+.bgmCard{
+  width: min(520px, 92vw);
+  border-radius: 22px;
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(0,0,0,.12);
+  box-shadow: 0 24px 70px rgba(0,0,0,.22);
+  overflow:hidden;
+}
+
+.bgmCardHead{
+  padding: 14px 16px 10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.bgmCardTitle{
+  font-weight: 1000;
+  letter-spacing: .01em;
+}
+
+.bgmCardBody{
+  padding: 0 16px 14px;
+  color: rgba(20,20,20,.70);
+  font-weight: 750;
+  line-height: 1.5;
+  font-size: 13px;
+}
+
+.bgmCardBtns{
+  display:flex;
+  gap:10px;
+  padding: 0 16px 16px;
+}
+
+.bgmCardBtns button{
+  flex:1;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,.12);
+  padding: 12px 10px;
+  font-weight: 1000;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.bgmOn{
+  background: linear-gradient(180deg, rgba(217,74,58,.92), rgba(217,74,58,.80));
+  color:#fff;
+  box-shadow: 0 14px 28px rgba(217,74,58,.22);
+}
+
+.bgmOff{
+  background:#fff;
+  color: rgba(20,20,20,.85);
+  box-shadow: 0 10px 22px rgba(0,0,0,.10);
+}
+
+.bgmTiny{
+  padding: 10px 16px 14px;
+  border-top: 1px solid rgba(0,0,0,.08);
+  color: rgba(20,20,20,.55);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <h1>松村プレゼントアキネーター</h1>
+      </div>
+      <div class="topRight">
+        <button class="soundBtn" id="soundBtn">BGM: OFF</button>
+        <div class="chip"><span class="dot"></span><span id="pillText">質問</span></div>
+      </div>
+    </header>
+
+    <section class="card" id="card"></section>
+  </div>
+
+  <script type="module">
+    // Vercel用のパス解決ヘルパー
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    const IMG = {
+      santa: asset("./assets/santa_question.png"),
+      gifts: {
+        superalloy: asset("./assets/gift_superalloy.png"),
+        sweater:   asset("./assets/gift_sweater.png"),
+        coal:      asset("./assets/gift_coal.png"),
+        mug:       asset("./assets/gift_mug.png"),
+        sweets:    asset("./assets/gift_sweets.png"),
+        pierce:    asset("./assets/gift_pierce.png"),
+      }
+    };
+
+    // preload
+    (() => {
+      [IMG.santa, ...Object.values(IMG.gifts)].forEach(u => {
+        const im = new Image(); im.decoding="async"; im.src = u;
+      });
+    })();
+
+    const bgm = new Audio(asset("./assets/bgm.mp3"));
+    bgm.loop = true;
+    bgm.volume = 0.22;
+
+    const ANSWERS = [
+      { key:"yes",    label:"はい",         full:false },
+      { key:"no",     label:"いいえ",       full:false },
+      { key:"maybeY", label:"たぶんそう",   full:false },
+      { key:"maybeN", label:"たぶんちがう", full:false },
+      { key:"idk",    label:"わからない",   full:true },
+    ];
+
+    const QUESTIONS = [
+      { id:1, text:"雪を見ると、ちょっと静かになる" },
+      { id:2, text:"クリスマスといえば、サーモンだと思う", special:"salmon" },
+      { id:3, text:"包み紙は、あとで取っておきがち" },
+      { id:4, text:"松村のことを、実はあまり好きじゃない", special:"ng" },
+      { id:5, text:"プレゼントは、開ける前が一番長い" },
+    ];
+
+    const RESULTS = {
+      superalloy: { name:"超合金松村", body:"強い信念には、\nそれなりの重さがあります。" },
+      sweater:   { name:"松村セーター", body:"着る覚悟がある人にだけ、\n似合うものです。" },
+      coal:      { name:"石炭まつむら", body:"サンタは、\nちゃんと見ています。" },
+      mug:       { name:"松村マグカップ", body:"毎日の中に、\n松村をひとつ。" },
+      sweets:    { name:"松村菓子", body:"迷ったときは、\n甘いものでいいと思います。" },
+      pierce:    { name:"松村の逆立ちしたピアス", body:"正しい向きは、\n決まっていません。" },
+    };
+
+    const state = {
+      step: 0,
+      answers: [],
+      lockedResult: null,
+      superalloyFlag: false,
+      soundEnabled: false,
+    };
+
+    const $card = document.getElementById("card");
+    const $pillText = document.getElementById("pillText");
+    const $soundBtn = document.getElementById("soundBtn");
+
+    function setSoundUI(){
+      $soundBtn.textContent = state.soundEnabled ? "BGM: ON" : "BGM: OFF";
+    }
+    async function ensureAudio(){
+      if (!state.soundEnabled) return;
+      try{ if (bgm.paused) await bgm.play(); }catch(e){}
+    }
+
+    $soundBtn.addEventListener("click", async ()=>{
+      state.soundEnabled = !state.soundEnabled;
+      setSoundUI();
+      if (!state.soundEnabled){ try{ bgm.pause(); }catch(e){} return; }
+      await ensureAudio();
+    }, {passive:true});
+    setSoundUI();
+
+    function renderQuestion(){
+      $pillText.textContent = "質問";
+      const q = QUESTIONS[state.step];
+      const progress = Math.round((state.step / QUESTIONS.length) * 100);
+
+      $card.innerHTML = `
+        <div class="cardTop">
+          <div>Q${q.id} / ${QUESTIONS.length}</div>
+          <div class="bar" aria-hidden="true"><i style="width:${progress}%"></i></div>
+        </div>
+
+        <div class="stage">
+          <div class="qa">
+            <div class="hero">
+              <img src="${IMG.santa}" alt="松村サンタ" decoding="async" loading="eager">
+            </div>
+            <p class="bigText">${escapeHtml(q.text)}</p>
+          </div>
+
+          <div class="choices">
+            ${ANSWERS.map(a => `
+              <button class="btn ${a.full ? "full" : ""}" data-ans="${a.key}">
+                ${escapeHtml(a.label)}
+              </button>
+            `).join("")}
+          </div>
+        </div>
+
+        <div class="footer">
+          <span>※ 何回でも</span>
+          <span>${state.step+1} / ${QUESTIONS.length}</span>
+        </div>
+      `;
+
+      $card.querySelectorAll(".btn").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          await ensureAudio();
+          chooseAnswer(q, btn.dataset.ans);
+        }, {passive:true});
+      });
+    }
+
+    function chooseAnswer(q, ansKey){
+      state.answers.push({ qid:q.id, key: ansKey });
+
+      if (q.special === "salmon" && ansKey === "yes") state.superalloyFlag = true;
+
+      if (q.special === "ng") {
+        if (ansKey === "yes") state.lockedResult = "coal";
+        if (ansKey === "no")  state.lockedResult = "sweater";
+      }
+
+      state.step++;
+      if (state.step >= QUESTIONS.length) renderResult(computeResult());
+      else renderQuestion();
+    }
+
+    function computeResult(){
+      if (state.superalloyFlag) return "superalloy";
+      if (state.lockedResult) return state.lockedResult;
+
+      const keys = state.answers.map(a=>a.key);
+      const idk = keys.filter(k=>k==="idk").length;
+      const maybe = keys.filter(k=>k==="maybeY" || k==="maybeN").length;
+
+      if (idk >= 2) return "sweets";
+      if (maybe >= 3) return "pierce";
+      return "mug";
+    }
+
+    function renderResult(resKey){
+      $pillText.textContent = "結果";
+      const r = RESULTS[resKey];
+      const img = IMG.gifts[resKey] || IMG.gifts.mug;
+
+      $card.innerHTML = `
+        <div class="cardTop">
+          <div>完了</div>
+          <div class="bar" aria-hidden="true"><i style="width:100%"></i></div>
+        </div>
+
+        <div class="stage">
+          <div class="qa">
+            <div class="hero">
+              <img src="${img}" alt="${escapeHtml(r.name)}" decoding="async" loading="eager">
+            </div>
+            <p class="bigText">${escapeHtml(r.name)}</p>
+            <p class="desc">${escapeHtml(r.body)}</p>
+          </div>
+
+          <div class="ctaRow">
+            <button class="cta" id="retryBtn">もう一度</button>
+            <button class="cta secondary" id="copyBtn">コピー</button>
+          </div>
+        </div>
+
+        <div class="footer">
+          <span>メリークリスマス</span>
+          <span>OK</span>
+        </div>
+      `;
+
+      document.getElementById("retryBtn").addEventListener("click", reset, {passive:true});
+      document.getElementById("copyBtn").addEventListener("click", ()=>copyResult(r.name), {passive:true});
+    }
+
+    function reset(){
+      state.step = 0;
+      state.answers = [];
+      state.lockedResult = null;
+      state.superalloyFlag = false;
+      renderQuestion();
+    }
+
+    function copyResult(name){
+      const text = `松村プレゼントアキネーター結果：${name}`;
+      if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).catch(()=>fallbackCopy(text));
+      else fallbackCopy(text);
+    }
+    function fallbackCopy(text){
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand("copy"); }catch(e){}
+      ta.remove();
+    }
+
+    function escapeHtml(s){
+      return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    }
+
+    renderQuestion();
+    // --- BGM preference (persist) ---
+const PREF_KEY = "matsu_bgm_pref"; // "on" | "off"
+const $bgmOverlay = document.getElementById("bgmOverlay");
+const $bgmAllow = document.getElementById("bgmAllow");
+const $bgmDeny = document.getElementById("bgmDeny");
+
+function showBgmOverlay(){
+  $bgmOverlay.classList.add("isShow");
+  $bgmOverlay.setAttribute("aria-hidden", "false");
+}
+
+function hideBgmOverlay(){
+  $bgmOverlay.classList.remove("isShow");
+  $bgmOverlay.setAttribute("aria-hidden", "true");
+}
+
+function loadPref(){
+  try{ return localStorage.getItem(PREF_KEY); }catch(e){ return null; }
+}
+function savePref(v){
+  try{ localStorage.setItem(PREF_KEY, v); }catch(e){}
+}
+
+async function enableBgmByUserGesture(){
+  state.soundEnabled = true;
+  setSoundUI();
+  savePref("on");
+  await ensureAudio(); // play試行
+}
+
+function disableBgm(){
+  state.soundEnabled = false;
+  setSoundUI();
+  savePref("off");
+  try{ bgm.pause(); }catch(e){}
+}
+
+// 初回：prefがなければオーバーレイ
+const pref = loadPref();
+if (pref === "on"){
+  state.soundEnabled = true;
+  setSoundUI();
+  // 自動再生は失敗するかもなので、後段の「最初のタップで再試行」で鳴る
+} else if (pref === "off"){
+  state.soundEnabled = false;
+  setSoundUI();
+} else {
+  showBgmOverlay();
+}
+
+// ボタン
+$bgmAllow?.addEventListener("click", async ()=>{
+  hideBgmOverlay();
+  await enableBgmByUserGesture(); // これが「最初のユーザー操作」になるので鳴りやすい
+}, {passive:true});
+
+$bgmDeny?.addEventListener("click", ()=>{
+  hideBgmOverlay();
+  disableBgm();
+}, {passive:true});
+
+// できるだけ鳴らす：最初のユーザー操作で再試行（ONのときだけ）
+function kickAudioOnce(){
+  if (!state.soundEnabled) return;
+  ensureAudio();
+  window.removeEventListener("pointerdown", kickAudioOnce, true);
+  window.removeEventListener("touchstart", kickAudioOnce, true);
+}
+window.addEventListener("pointerdown", kickAudioOnce, true);
+window.addEventListener("touchstart", kickAudioOnce, true);
+
+  </script>
+  <div class="bgmOverlay" id="bgmOverlay" aria-hidden="true">
+    <div class="bgmCard" role="dialog" aria-modal="true" aria-label="BGM設定">
+      <div class="bgmCardHead">
+        <div class="bgmCardTitle">BGMを流しますか？</div>
+        <div style="font-weight:900;color:rgba(20,20,20,.55)">♪</div>
+      </div>
+      <div class="bgmCardBody">
+        雰囲気のために、軽くBGMが流れます。いつでも右上で切り替えできます。
+      </div>
+      <div class="bgmCardBtns">
+        <button class="bgmOn" id="bgmAllow">ON（おすすめ）</button>
+        <button class="bgmOff" id="bgmDeny">OFF</button>
+      </div>
+      <div class="bgmTiny">※ iPhoneでは最初の1回だけタップが必要です</div>
+    </div>
+  </div>
+  
+</body>
+</html>
