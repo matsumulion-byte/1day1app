@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
+<title>煙突サンタ捕獲（松村）</title>
+
+<style>
+:root{
+  --bg1:#0b1020;
+  --bg2:#070a14;
+  --ink:#f3f6ff;
+  --muted:rgba(243,246,255,.7);
+  --line:rgba(255,255,255,.14);
+  --rare:#facc15;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+html,body{
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:linear-gradient(180deg,var(--bg1),var(--bg2));
+  color:var(--ink);
+  font-family:system-ui,"Noto Sans JP",sans-serif;
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
+  touch-action:manipulation;
+}
+
+.wrap{
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:14px;
+}
+
+.app{
+  width:min(520px,100%);
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+/* ---------- UI ---------- */
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 14px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:rgba(255,255,255,.08);
+}
+
+.top b{font-size:14px;}
+.pill{font-weight:800;font-size:13px;}
+
+.stage{
+  flex:1;
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  position:relative;
+}
+
+.grid{
+  flex:1;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  grid-template-rows:repeat(2,1fr);
+  gap:12px;
+}
+
+/* ---------- HOLE ---------- */
+
+.hole{
+  position:relative;
+  border-radius:16px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.06);
+  overflow:hidden;
+}
+
+/* サンタ（奥） */
+.pop{
+  position:absolute;
+  left:50%;
+  bottom:58%;
+  width:70%;
+  transform:translate(-50%,120%);
+  transition:transform .12s ease;
+  pointer-events:none;
+  z-index:1;
+}
+.hole.up .pop{
+  transform:translate(-50%,-8%);
+}
+.pop img{
+  width:100%;
+  display:block;
+}
+
+/* 煙突：奥（画像） */
+.chimney-back{
+  position:absolute;
+  left:50%;
+  bottom:0;
+  transform:translateX(-50%);
+  width:78%;
+  height:62%;
+  background: center bottom / cover no-repeat;
+  z-index:2;
+}
+
+/* 煙突：手前（縁・隠す） */
+.chimney-front{
+  position:absolute;
+  left:50%;
+  bottom:58%;
+  transform:translateX(-50%);
+  width:86%;
+  height:24%;
+  border-radius:14px;
+  z-index:3;
+}
+
+/* レア */
+.hole.rare{
+  box-shadow:0 0 18px rgba(250,204,21,.45);
+}
+
+/* ---------- Overlay ---------- */
+
+.overlay{
+  position:absolute;
+  inset:0;
+  z-index:999;          /* ★最前面 */
+  background:rgba(0,0,0,.55);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.card{
+  background:rgba(255,255,255,.12);
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:18px;
+  text-align:center;
+  position:relative;
+  z-index:1000;
+}
+
+.btn{
+  margin-top:12px;
+  padding:10px 18px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.12);
+  color:var(--ink);
+  font-weight:900;
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="app">
+    <div class="top">
+      <div>
+        <b>煙突サンタ捕獲</b><br/>
+        <span class="pill">TIME <span id="time">30.0</span></span>
+      </div>
+      <div class="pill">SCORE <span id="score">0</span></div>
+    </div>
+
+    <div class="stage">
+      <div class="grid" id="grid"></div>
+
+      <div class="overlay" id="overlay">
+        <div class="card">
+            <h2 id="result-title">30秒で捕まえろ</h2>
+            <p id="result-text">金サンタはレア（+3）</p>
+          
+            <div id="result-score" style="display:none; margin:14px 0;">
+              <div style="font-size:14px; opacity:.7;">SCORE</div>
+              <div id="final-score" style="font-size:40px; font-weight:900;">0</div>
+            </div>
+          
+            <button class="btn" id="start">START</button>
+          </div>
+          
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+/* Vercel / ローカル両対応のパス解決 */
+const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+const asset = (p) => {
+  const clean = String(p || "").replace(/^\.?\//, "");
+  return `${DATE_BASE}${clean}`;
+};
+
+const ASSET = {
+  normal: asset('./assets/matsu_santa.png'),
+  rare: asset('./assets/matsu_santa_rare.png'),
+  bgm: asset('./assets/bgm_30s.mp3'),
+  chimney: asset('./assets/chimney_top.png'),
+};
+
+const grid = document.getElementById('grid');
+const timeEl = document.getElementById('time');
+const scoreEl = document.getElementById('score');
+const overlay = document.getElementById('overlay');
+const startBtn = document.getElementById('start');
+const resultTitle = document.getElementById('result-title');
+const resultText  = document.getElementById('result-text');
+const resultBox   = document.getElementById('result-score');
+const finalScore  = document.getElementById('final-score');
+
+
+const HOLES = 6;
+const GAME_TIME = 30000;
+
+let holes = [];
+let active = -1;
+let until = 0;
+let cool = 0;
+let score = 0;
+let running = false;
+let startT = 0;
+let raf = 0;
+
+/* BGM（30秒ワンショット） */
+const bgm = new Audio(ASSET.bgm);
+bgm.loop = false;
+bgm.volume = 0.6;
+
+/* HOLE生成 */
+for(let i=0;i<HOLES;i++){
+  const h = document.createElement('div');
+  h.className = 'hole';
+
+  const pop = document.createElement('div');
+  pop.className = 'pop';
+  const img = document.createElement('img');
+  pop.appendChild(img);
+
+  const back = document.createElement('div');
+  back.className = 'chimney-back';
+  back.style.backgroundImage = `url("${ASSET.chimney}")`;
+
+  const front = document.createElement('div');
+  front.className = 'chimney-front';
+
+  h.append(pop, back, front);
+
+  h.addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    if(!running || i !== active) return;
+    const rare = h.classList.contains('rare');
+    score += rare ? 3 : 1;
+    scoreEl.textContent = score;
+    hide();
+    cool = performance.now() + 80;
+  }, { passive:false });
+
+  holes.push(h);
+  grid.appendChild(h);
+}
+
+/* 表示制御 */
+function hide(){
+  if(active < 0) return;
+  holes[active].classList.remove('up','rare');
+  active = -1;
+  until = 0;
+}
+
+function show(i, rare){
+  hide();
+  const h = holes[i];
+  h.querySelector('.pop img').src = rare ? ASSET.rare : ASSET.normal;
+  h.classList.toggle('rare', rare);
+  h.classList.add('up');
+  active = i;
+}
+
+function tick(t){
+  if(!running) return;
+
+  const elapsed = t - startT;
+  const left = Math.max(0, GAME_TIME - elapsed);
+  timeEl.textContent = (left/1000).toFixed(1);
+
+  const p = elapsed / GAME_TIME;
+  const up = 900 - 400*p;
+  const gap = 260 - 180*p;
+  const rareRate = 0.12 + 0.06*p;
+
+  if(active >= 0){
+    if(t >= until){
+      hide();
+      cool = t + gap;
+    }
+  }else if(t >= cool){
+    const i = Math.floor(Math.random() * HOLES);
+    const isRare = Math.random() < rareRate;
+    show(i, isRare);
+    until = t + (isRare ? up*0.8 : up);
+  }
+
+  if(left <= 0){
+    end();
+    return;
+  }
+  raf = requestAnimationFrame(tick);
+}
+
+function start(){
+  overlay.style.display = 'none';
+
+  // リザルト非表示に戻す
+  resultBox.style.display = 'none';
+  resultTitle.textContent = '30秒で捕まえろ';
+  resultText.textContent  = '金サンタはレア（+3)';
+  startBtn.textContent    = 'START';
+
+  score = 0;
+  scoreEl.textContent = 0;
+
+  running = true;
+  startT = performance.now();
+
+  bgm.currentTime = 0;
+  bgm.play().catch(()=>{});
+
+  raf = requestAnimationFrame(tick);
+}
+
+
+function end(){
+  running = false;
+  hide();
+  bgm.pause();
+
+  // リザルト表示
+  finalScore.textContent = score;
+  resultBox.style.display = 'block';
+  resultTitle.textContent = 'RESULT';
+  resultText.textContent  = 'おつかれさまでした';
+  startBtn.textContent    = 'もう一回';
+
+  overlay.style.display = 'flex';
+}
+
+startBtn.addEventListener('pointerdown', e=>{
+  e.preventDefault();
+  start();
+},{passive:false});
+</script>
+</body>
+</html>
