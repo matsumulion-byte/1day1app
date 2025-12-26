@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>仕事納めBOX 〜松村を納めろ〜</title>
+  <meta name="theme-color" content="#0b1020" />
+  <style>
+    :root{
+      --bg1:#070a14;
+      --bg2:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.70);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.07);
+      --panel2:rgba(255,255,255,.11);
+      --good:#34d399;
+      --bad:#fb7185;
+      --r:18px;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+    }
+
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    html,body{ width:100%; height:100%; overflow:hidden; background: radial-gradient(1200px 900px at 50% 15%, #101a3a 0%, var(--bg2) 40%, var(--bg1) 100%); color:var(--ink); }
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none; /* スクロール/拡大/ダブルタップを抑止 */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    .app{
+      position:relative;
+      width:100%;
+      height:100%;
+    }
+
+    /* HUD */
+    .hud{
+      position:absolute;
+      left:12px; right:12px; top:10px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      z-index:50;
+      pointer-events:none;
+    }
+    .hud .pill{
+      pointer-events:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border:1px solid var(--line);
+      border-radius:999px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-weight:700;
+      letter-spacing:.02em;
+    }
+    .hud .pill small{ font-weight:700; color:var(--muted); }
+    .hud .pill .num{ font-variant-numeric: tabular-nums; }
+
+    /* Stage */
+    #stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      rgba(7,10,20,.35),
+      rgba(7,10,20,.55)
+    ),
+    url("./assets/bg.png") center / cover no-repeat;
+}
+
+
+    /* Box area */
+    .boxWrap{
+      position:absolute;
+      left:50%;
+      bottom:14px;
+      transform:translateX(-50%);
+      width:min(420px, 92vw);
+      height:min(240px, 30vh);
+      border-radius: calc(var(--r) + 6px);
+      z-index:30;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      pointer-events:none;
+    }
+    .box{
+      position:relative;
+      width:100%;
+      height:100%;
+      border-radius: calc(var(--r) + 6px);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      transform: translateY(0) scale(1);
+      transition: transform 120ms ease;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+    }
+
+    /* 箱画像（あれば差し替え） */
+    .box .img{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      padding:14px;
+    }
+    .box .img img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      filter: drop-shadow(0 12px 22px rgba(0,0,0,.35));
+      opacity:.95;
+    }
+
+    /* 箱の中に吸い込むターゲット（当たり判定の可視化にも使える） */
+    .box .mouth{
+      position:absolute;
+      left:10%;
+      right:10%;
+      top:28%;
+      bottom:18%;
+      border-radius: 18px;
+      background: radial-gradient(600px 240px at 50% 70%, rgba(0,0,0,.35), rgba(0,0,0,.08) 55%, rgba(255,255,255,.06) 100%);
+      border:1px dashed rgba(255,255,255,.16);
+      opacity:.35;
+      pointer-events:none;
+    }
+    .box .label{
+      position:absolute;
+      left:12px;
+      top:10px;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:8px 10px;
+      border-radius:999px;
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.14);
+      color:rgba(243,246,255,.92);
+      font-weight:800;
+      letter-spacing:.03em;
+      font-size:12px;
+    }
+    .box .label b{ color:#fff; }
+    .box .fill{
+      position:absolute;
+      left:0; right:0; bottom:0;
+      height:0%;
+      background: linear-gradient(180deg, rgba(52,211,153,.00), rgba(52,211,153,.18));
+      transition: height 180ms ease;
+      pointer-events:none;
+    }
+
+    /* Matsumura items */
+    .matsu{
+      position:absolute;
+      width:70px;
+      height:70px;
+      border-radius:16px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      transform: translate3d(0,0,0);
+      touch-action:none;
+      will-change: transform, left, top;
+    }
+    .matsu img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      pointer-events:none;
+      -webkit-user-drag:none;
+      user-drag:none;
+    }
+    .matsu::after{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      border-radius:16px;
+      background: radial-gradient(120px 90px at 30% 15%, rgba(255,255,255,.16), rgba(255,255,255,0) 60%);
+      pointer-events:none;
+    }
+    .matsu.grab{
+      box-shadow: 0 18px 48px rgba(0,0,0,.55);
+      transform: translate3d(0,0,0) scale(1.04);
+      border-color: rgba(255,255,255,.22);
+    }
+    .matsu.snap{
+      transition: transform 140ms ease, opacity 140ms ease;
+    }
+
+    /* Start / End overlay */
+    .overlay{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:100;
+      background: radial-gradient(900px 700px at 50% 20%, rgba(16,26,58,.78), rgba(7,10,20,.92));
+      padding:22px;
+    }
+    .card{
+      width:min(520px, 92vw);
+      border-radius: calc(var(--r) + 10px);
+      border:1px solid rgba(255,255,255,.16);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      padding:18px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .title{
+      font-size:20px;
+      font-weight:900;
+      letter-spacing:.03em;
+      margin-bottom:10px;
+    }
+    .desc{
+      font-size:13px;
+      line-height:1.55;
+      color:var(--muted);
+      margin-bottom:14px;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      appearance:none;
+      border:none;
+      border-radius: 999px;
+      padding:12px 14px;
+      font-weight:900;
+      letter-spacing:.03em;
+      cursor:pointer;
+      background: rgba(255,255,255,.10);
+      color:var(--ink);
+      border:1px solid rgba(255,255,255,.16);
+    }
+    .btn.primary{
+      background: linear-gradient(180deg, rgba(52,211,153,.95), rgba(52,211,153,.78));
+      color:#062015;
+      border:1px solid rgba(52,211,153,.35);
+    }
+    .hint{
+      margin-top:10px;
+      font-size:12px;
+      color:rgba(243,246,255,.62);
+    }
+    .result{
+      margin-top:10px;
+      padding:12px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      color:rgba(243,246,255,.9);
+      line-height:1.6;
+      font-size:13px;
+    }
+
+    /* Small screens */
+    @media (max-width: 420px){
+      .matsu{ width:62px; height:62px; border-radius:14px; }
+      .matsu::after{ border-radius:14px; }
+      .title{ font-size:18px; }
+    }
+
+    /* Prevent iOS long-press image save / selection */
+    img{ -webkit-touch-callout:none; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="hud">
+      <div class="pill"><small>残り</small><span class="num" id="time">30.0</span></div>
+      <div class="pill"><small>納品数</small><span class="num" id="score">0</span><small>/</small><span class="num" id="total">30</span></div>
+    </div>
+
+    <div id="stage" aria-label="game stage">
+      <div class="boxWrap">
+        <div class="box" id="box">
+          <div class="fill" id="fill"></div>
+          <div class="label">📦 <b>仕事納めBOX</b></div>
+          <div class="mouth" id="mouth" aria-hidden="true"></div>
+          <div class="img" aria-hidden="true">
+            <!-- 箱画像を用意してるなら差し替え -->
+            <img id="boxImg" alt="箱" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Start / End overlay -->
+    <div class="overlay" id="overlay">
+      <div class="card">
+        <div class="title">仕事納めBOX 〜松村を納めろ〜</div>
+        <div class="desc">
+          30秒で、散らばった松村たち（30体）を箱に納めてください。<br>
+          操作は <b>タップ＆ドラッグ</b> だけ。
+        </div>
+        <div class="row">
+          <button class="btn primary" id="startBtn">はじめる</button>
+          <button class="btn" id="howBtn">操作</button>
+        </div>
+        <div class="hint" id="hint">
+          ※ 音を鳴らすため、開始はタップ操作が必要です。
+        </div>
+        <div class="result" id="help" style="display:none;">
+          ・松村を掴んで、箱の中へドラッグすると納品。<br>
+          ・箱の口（点線エリア）に入ればOK。<br>
+          ・全部納めると即クリア。
+        </div>
+      </div>
+    </div>
+
+    <audio id="bgm" preload="auto"></audio>
+  </div>
+
+  <script type="module">
+    // 1日1アプリ ルール：動的アセットは import.meta.url を使う
+    // Vercel用：現在のURLパスをベースにする
+    const asset = (p) => {
+      const basePath = window.location.pathname.replace(/\/$/, '') || '';
+      return basePath + '/' + p.replace(/^\.\//, '');
+    };
+
+    // ===== アセット（要：ファイル名を合わせる） =====
+    // 松村10種（例）。手元の名前に合わせて書き換えてOK。
+    const MATSU_VARIANTS = [
+      "./assets/matsu_01.png",
+      "./assets/matsu_02.png",
+      "./assets/matsu_03.png",
+      "./assets/matsu_04.png",
+      "./assets/matsu_05.png",
+      "./assets/matsu_06.png",
+      "./assets/matsu_07.png",
+      "./assets/matsu_08.png",
+      "./assets/matsu_09.png",
+      "./assets/matsu_10.png",
+    ];
+
+    // 箱画像（無ければ透明になるので、用意してるなら入れて）
+    const BOX_IMAGE = "./assets/box.png";
+
+    // BGM（30秒・ループなし）
+    const BGM_FILE = "./assets/bgm.mp3";
+
+    // ===== 設定 =====
+    const GAME_SECONDS = 30.0;
+    const TOTAL = 30;              // 松村総数
+    const PER_VARIANT = 3;         // 10種類×3体＝30体
+    const DROP_TIGHTNESS = 0.88;   // 箱の口判定を少し厳しめに（0.8〜1.0）
+
+    // ===== DOM =====
+    const stage = document.querySelector("#stage");
+    const overlay = document.querySelector("#overlay");
+    const startBtn = document.querySelector("#startBtn");
+    const howBtn = document.querySelector("#howBtn");
+    const help = document.querySelector("#help");
+
+    const timeEl = document.querySelector("#time");
+    const scoreEl = document.querySelector("#score");
+    const totalEl = document.querySelector("#total");
+
+    const boxEl = document.querySelector("#box");
+    const mouthEl = document.querySelector("#mouth");
+    const fillEl = document.querySelector("#fill");
+
+    const bgm = document.querySelector("#bgm");
+    const boxImg = document.querySelector("#boxImg");
+
+    totalEl.textContent = String(TOTAL);
+
+    // 画像セット
+    boxImg.src = asset(BOX_IMAGE);
+    bgm.src = asset(BGM_FILE);
+    bgm.loop = false;
+
+    // iOS Safari 対策：ダブルタップ拡大/スクロール抑止補強
+    document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive:false });
+
+    // ===== ゲーム状態 =====
+    let running = false;
+    let tLeft = GAME_SECONDS;
+    let startAt = 0;
+    let rafId = 0;
+
+    let delivered = 0;
+    let items = []; // {el, alive}
+
+    // ドラッグ状態
+    let drag = null; // {id, el, offsetX, offsetY}
+
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+    function setHUD(){
+      timeEl.textContent = tLeft.toFixed(1);
+      scoreEl.textContent = String(delivered);
+      // fill
+      const pct = (delivered / TOTAL) * 100;
+      fillEl.style.height = `${pct}%`;
+    }
+
+    function clearStageItems(){
+      for(const it of items){
+        it.el.remove();
+      }
+      items = [];
+      drag = null;
+    }
+
+    // ランダム配置（軽めの衝突回避）
+    function spawnItems(){
+      const stageRect = stage.getBoundingClientRect();
+      const boxRect = boxEl.getBoundingClientRect();
+
+      const safeTop = 56; // HUD避け
+      const safeBottom = Math.max(120, (window.innerHeight - boxRect.top) + 18); // 箱エリア避け
+      const W = stageRect.width;
+      const H = stageRect.height;
+
+      // 生成する画像リスト：10種×PER_VARIANT
+      const sources = [];
+      for(let i=0;i<MATSU_VARIANTS.length;i++){
+        for(let k=0;k<PER_VARIANT;k++) sources.push(MATSU_VARIANTS[i]);
+      }
+      // シャッフル
+      for(let i=sources.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [sources[i], sources[j]] = [sources[j], sources[i]];
+      }
+
+      // サイズはCSS基準の実寸に合わせる
+      const probe = document.createElement("div");
+      probe.className = "matsu";
+      probe.style.left = "-9999px";
+      probe.style.top = "-9999px";
+      stage.appendChild(probe);
+      const itemSize = probe.getBoundingClientRect().width;
+      probe.remove();
+
+      const placed = []; // {x,y}
+
+      for(let n=0;n<TOTAL;n++){
+        const el = document.createElement("div");
+        el.className = "matsu";
+        el.setAttribute("role","button");
+        el.setAttribute("aria-label","松村");
+        el.dataset.id = String(n);
+
+        const img = document.createElement("img");
+        img.alt = "松村";
+        img.src = asset(sources[n % sources.length]);
+        el.appendChild(img);
+
+        // 位置決め：箱の上側に散らばらせる
+        let x=0,y=0;
+        let tries = 0;
+        while(true){
+          tries++;
+          x = Math.random()*(W - itemSize - 16) + 8;
+          y = Math.random()*(H - safeTop - safeBottom - itemSize - 16) + safeTop + 8;
+
+          // 近すぎ回避（雑）
+          let ok = true;
+          for(const p of placed){
+            const dx = (p.x - x);
+            const dy = (p.y - y);
+            if(dx*dx + dy*dy < (itemSize*0.78)*(itemSize*0.78)){
+              ok = false; break;
+            }
+          }
+          if(ok || tries > 40) break;
+        }
+        placed.push({x,y});
+
+        el.style.left = `${x}px`;
+        el.style.top  = `${y}px`;
+
+        stage.appendChild(el);
+        items.push({el, alive:true});
+      }
+    }
+
+    function mouthRectTight(){
+      const r = mouthEl.getBoundingClientRect();
+      // 少し判定を絞る（厳しめ）
+      const cx = (r.left + r.right)/2;
+      const cy = (r.top + r.bottom)/2;
+      const w = (r.width * DROP_TIGHTNESS);
+      const h = (r.height * DROP_TIGHTNESS);
+      return {
+        left: cx - w/2,
+        right: cx + w/2,
+        top: cy - h/2,
+        bottom: cy + h/2,
+        cx, cy
+      };
+    }
+
+    function pointInRect(x,y, r){
+      return (x>=r.left && x<=r.right && y>=r.top && y<=r.bottom);
+    }
+
+    function shakeBox(){
+      // 箱が重くなる感じ（少し沈ませる）
+      boxEl.style.transform = "translateY(3px) scale(0.998)";
+      setTimeout(()=> boxEl.style.transform = "translateY(0) scale(1)", 120);
+    }
+
+    function endGame(){
+      running = false;
+      cancelAnimationFrame(rafId);
+
+      // 結果文
+      const card = overlay.querySelector(".card");
+      const old = card.querySelector(".result.end");
+      if(old) old.remove();
+
+      const res = document.createElement("div");
+      res.className = "result end";
+
+      if(delivered >= TOTAL){
+        res.innerHTML =
+          `今年の松村は<br><b style="color:var(--good)">きれいに納まりました。</b><br>本日、仕事納め。`;
+      } else {
+        res.innerHTML =
+          `<b>${delivered}</b>体の松村を納めました。<br>残りは来年に持ち越しです。`;
+      }
+
+      card.appendChild(res);
+
+      // ボタンを「もう一回」に変更
+      startBtn.textContent = "もう一回";
+      overlay.style.display = "flex";
+
+      // BGM停止（自然終了でもOKだが念のため）
+      try{
+        bgm.pause();
+        bgm.currentTime = 0;
+      }catch(_){}
+
+      // アイテム残りはそのままでもいいが、再スタート時に生成し直す
+    }
+
+    function tick(now){
+      if(!running) return;
+      const elapsed = (now - startAt) / 1000;
+      tLeft = clamp(GAME_SECONDS - elapsed, 0, GAME_SECONDS);
+      setHUD();
+
+      if(delivered >= TOTAL){
+        endGame();
+        return;
+      }
+      if(tLeft <= 0){
+        endGame();
+        return;
+      }
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function startGame(){
+      // 初期化
+      clearStageItems();
+      delivered = 0;
+      tLeft = GAME_SECONDS;
+      setHUD();
+
+      // 生成
+      spawnItems();
+
+      // 開始
+      overlay.style.display = "none";
+      running = true;
+      startAt = performance.now();
+      rafId = requestAnimationFrame(tick);
+
+      // BGM（ユーザー操作起点で再生）
+      bgm.currentTime = 0;
+      bgm.play().catch(()=>{ /* サイレント */ });
+    }
+
+    // ===== Pointer drag =====
+    function onPointerDown(e){
+      if(!running) return;
+
+      const target = e.target.closest(".matsu");
+      if(!target) return;
+
+      // 右クリック等を抑止
+      e.preventDefault();
+
+      // キャプチャ
+      target.setPointerCapture(e.pointerId);
+
+      // 一番上へ
+      target.style.zIndex = "80";
+
+      const rect = target.getBoundingClientRect();
+      const ox = e.clientX - rect.left;
+      const oy = e.clientY - rect.top;
+
+      drag = {
+        pid: e.pointerId,
+        el: target,
+        offsetX: ox,
+        offsetY: oy
+      };
+
+      target.classList.add("grab");
+    }
+
+    function onPointerMove(e){
+      if(!running) return;
+      if(!drag || drag.pid !== e.pointerId) return;
+
+      e.preventDefault();
+
+      const el = drag.el;
+      const stageRect = stage.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+
+      let x = e.clientX - stageRect.left - drag.offsetX;
+      let y = e.clientY - stageRect.top  - drag.offsetY;
+
+      // 画面外に出しすぎない
+      x = clamp(x, -10, stageRect.width - r.width + 10);
+      y = clamp(y,  40, stageRect.height - r.height + 10);
+
+      el.style.left = `${x}px`;
+      el.style.top  = `${y}px`;
+    }
+
+    function deliver(el){
+      // もう操作できない
+      el.style.pointerEvents = "none";
+      el.classList.remove("grab");
+      el.classList.add("snap");
+
+      const mr = mouthRectTight();
+      const stageRect = stage.getBoundingClientRect();
+      const rect = el.getBoundingClientRect();
+
+      // 口の中心へ吸い込み
+      const centerX = mr.cx - stageRect.left - rect.width/2;
+      const centerY = mr.cy - stageRect.top  - rect.height/2;
+
+      el.style.left = `${centerX}px`;
+      el.style.top  = `${centerY}px`;
+      el.style.transform = "scale(0.35)";
+      el.style.opacity = "0.0";
+
+      delivered++;
+      setHUD();
+      shakeBox();
+
+      // 少し待って削除
+      setTimeout(()=> el.remove(), 160);
+    }
+
+    function onPointerUp(e){
+      if(!running) return;
+      if(!drag || drag.pid !== e.pointerId) return;
+
+      e.preventDefault();
+
+      const el = drag.el;
+      drag = null;
+
+      el.classList.remove("grab");
+      el.releasePointerCapture?.(e.pointerId);
+
+      // 落とし判定：要素の中心点が箱口に入っていたら納品
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width/2;
+      const cy = rect.top  + rect.height/2;
+      const mr = mouthRectTight();
+
+      if(pointInRect(cx, cy, mr)){
+        deliver(el);
+      } else {
+        // 戻し演出（軽く）
+        el.classList.add("snap");
+        el.style.transform = "scale(1)";
+        el.style.opacity = "1";
+        // しばらくして snap を外す
+        setTimeout(()=> el.classList.remove("snap"), 160);
+        el.style.zIndex = "10";
+      }
+    }
+
+    function onPointerCancel(e){
+      if(!drag || drag.pid !== e.pointerId) return;
+      drag.el.classList.remove("grab");
+      drag = null;
+    }
+
+    stage.addEventListener("pointerdown", onPointerDown, { passive:false });
+    stage.addEventListener("pointermove", onPointerMove, { passive:false });
+    stage.addEventListener("pointerup", onPointerUp, { passive:false });
+    stage.addEventListener("pointercancel", onPointerCancel, { passive:false });
+
+    // ===== UI =====
+    howBtn.addEventListener("click", ()=>{
+      help.style.display = (help.style.display === "none") ? "block" : "none";
+    });
+
+    startBtn.addEventListener("click", ()=>{
+      startGame();
+    });
+
+    // 初期HUD
+    setHUD();
+
+    // 画面回転/リサイズ時：ゲーム中は不利なので、当たり判定がズレないように終了扱いにする
+    let resizeTimer = 0;
+    window.addEventListener("resize", ()=>{
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(()=>{
+        if(running){
+          endGame();
+        }
+      }, 120);
+    }, { passive:true });
+  </script>
+</body>
+</html>
