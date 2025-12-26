@@ -77,7 +77,7 @@
       rgba(7,10,20,.35),
       rgba(7,10,20,.55)
     ),
-    url("./assets/bg.png") center / cover no-repeat;
+    /* background-image set by JS */
 }
 
 
@@ -399,6 +399,9 @@
     bgm.src = asset(BGM_FILE);
     bgm.loop = false;
 
+    // 背景画像を動的に設定（Vercel用パス調整）
+    const bgImage = asset("./assets/bg.png");
+    stage.style.backgroundImage = `linear-gradient(rgba(7,10,20,.35), rgba(7,10,20,.55)), url("${bgImage}")`;
     // iOS Safari 対策：ダブルタップ拡大/スクロール抑止補強
     document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive:false });
 
