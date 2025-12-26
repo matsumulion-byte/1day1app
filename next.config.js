@@ -3,8 +3,6 @@ const nextConfig = {
   experimental: {
     outputFileTracing: false,
   },
-  // Vercelビルドエラー回避のため、静的エクスポートを明示的に指定
-  output: 'standalone',
   async headers() {
     return [
       {
