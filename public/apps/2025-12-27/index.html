@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>ふわふわ、スクイーズ</title>
+  <meta name="theme-color" content="#ffe8f3" />
+  <style>
+    :root{
+      --ink:rgba(35,18,44,.86);
+      --muted:rgba(35,18,44,.54);
+      --glass:rgba(255,255,255,.48);
+      --line:rgba(255,255,255,.55);
+      --shadow: rgba(52, 25, 70, .12);
+    }
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout:none;
+      -webkit-user-select:none;
+      user-select:none;
+    }
+    html,body{
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:#fff2f8;
+      color:var(--ink);
+      font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    }
+    #wrap{ position:fixed; inset:0; overflow:hidden; touch-action:none; }
+    canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+
+    .hud{
+      position:absolute; left:12px; right:12px; top:12px;
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      pointer-events:none; opacity:0; transform: translateY(-6px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .hud.show{ opacity:1; transform: translateY(0); }
+    .pill{
+      pointer-events:auto;
+      display:inline-flex; align-items:center; gap:10px;
+      padding:10px 12px; border-radius:999px;
+      background:var(--glass); border:1px solid var(--line);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 12px 30px var(--shadow);
+      font-size:13px; color:var(--ink); max-width:100%;
+    }
+    .pill .sub{
+      color:var(--muted); font-size:12px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .btn{
+      pointer-events:auto;
+      width:42px; height:42px; border-radius:999px;
+      display:grid; place-items:center;
+      background:var(--glass); border:1px solid var(--line);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 12px 30px var(--shadow);
+      cursor:pointer;
+    }
+    .btn:active{ transform: scale(.98); }
+    .btn svg{ width:20px; height:20px; opacity:.9; }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="c"></canvas>
+
+    <div id="hud" class="hud show">
+      <div id="startPill" class="pill" role="button" aria-label="再生">
+        <span>▶︎</span>
+        <div style="min-width:0">
+          <div style="font-weight:700; letter-spacing:.02em;">ふわふわ、スクイーズ</div>
+          <div class="sub">押すと“ぷにっ”／うごき、ちゃんと見える版</div>
+        </div>
+      </div>
+
+      <div id="muteBtn" class="btn" role="button" aria-label="ミュート切替" title="ミュート">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 5 6 9H3v6h3l5 4V5z"/>
+          <path id="wave1" d="M15.5 8.5a5 5 0 0 1 0 7"/>
+          <path id="wave2" d="M18 6a8 8 0 0 1 0 12"/>
+          <path id="slash" d="M4 4l16 16" style="display:none"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Vercel用のパス解決
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    const wrap = document.getElementById('wrap');
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d', { alpha:false });
+
+    const hud = document.getElementById('hud');
+    const startPill = document.getElementById('startPill');
+    const muteBtn = document.getElementById('muteBtn');
+    const slash = document.getElementById('slash');
+    const wave1 = document.getElementById('wave1');
+    const wave2 = document.getElementById('wave2');
+
+    // ---- Audio (./assets/bgm.mp3)
+    const audio = new Audio(asset('./assets/bgm.mp3'));
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.volume = 0.9;
+
+    let firstGesture = true;
+    let isMuted = false;
+
+    function setMuted(m){
+      isMuted = m;
+      audio.muted = isMuted;
+      slash.style.display = isMuted ? 'block' : 'none';
+      wave1.style.display = isMuted ? 'none' : 'block';
+      wave2.style.display = isMuted ? 'none' : 'block';
+      muteBtn.setAttribute('title', isMuted ? 'ミュート解除' : 'ミュート');
+    }
+    setMuted(false);
+
+    async function tryStartAudio(){
+      try{
+        await audio.play();
+        startPill.style.display = 'none';
+      } catch {}
+    }
+
+    // HUD show/hide
+    let hudTimer = 0;
+    function showHud(){
+      hud.classList.add('show');
+      clearTimeout(hudTimer);
+      hudTimer = setTimeout(()=>hud.classList.remove('show'), 1600);
+    }
+    setTimeout(()=>hud.classList.remove('show'), 2200);
+
+    // ---- Size
+    let W=0,H=0,DPR=1;
+    function resize(){
+      DPR = Math.min(2, window.devicePixelRatio || 1);
+      W = Math.floor(innerWidth * DPR);
+      H = Math.floor(innerHeight * DPR);
+      canvas.width = W;
+      canvas.height = H;
+      ctx.imageSmoothingEnabled = true;
+    }
+    addEventListener('resize', resize, { passive:true });
+    resize();
+
+    // ---- Helpers
+    const clamp01 = (v)=>Math.max(0,Math.min(1,v));
+    const lerp = (a,b,t)=>a+(b-a)*t;
+    const rand = (a,b)=>a+Math.random()*(b-a);
+
+    // ---- Pastel palette
+    const palette = [
+      { r: 255, g: 205, b: 231 }, // cotton candy
+      { r: 223, g: 210, b: 255 }, // lavender
+      { r: 198, g: 246, b: 226 }, // mint
+      { r: 255, g: 242, b: 201 }, // vanilla
+      { r: 196, g: 232, b: 255 }, // baby blue
+    ];
+
+    // ---- Dents (squeeze points)
+    const dents = []; // {x,y,amp,target,rad,vel,t}
+    const MAX_DENTS = 18;
+
+    function addDent(x,y,amp=1){
+      dents.push({
+        x,y,
+        amp: 0,
+        target: 1.0*amp,
+        rad: (150 + 130*amp) * DPR, // 少し広くして分かりやすく
+        vel: 0,
+        t: 0
+      });
+      if(dents.length > MAX_DENTS) dents.splice(0, dents.length - MAX_DENTS);
+    }
+
+    // ---- Big jelly blobs + moving “current lines” (動きが見える要)
+    const blobs = [];
+    const BASE_N = 8;
+
+    function makeBlob(i){
+      const p = (Math.random()*palette.length)|0;
+      const rr = rand(170, 320)*DPR;
+      return {
+        x: Math.random()*W,
+        y: Math.random()*H,
+        r: rr,
+        a: rand(0.12, 0.20), // slightly stronger
+        p,
+        phase: Math.random()*Math.PI*2,
+        drift: rand(0.35, 0.85), // ↑動き見える
+        sq: 0,
+        sqv: 0,
+        idx: i
+      };
+    }
+    for(let i=0;i<BASE_N;i++) blobs.push(makeBlob(i));
+
+    // ---- Float particles (more + slightly smaller blur)
+    const floats = [];
+    const FLOAT_N = 120;
+    const MAX_FLOAT = 180;
+
+    function makeFloat(x,y,burst=false){
+      return {
+        x, y,
+        r: rand(18, 70)*DPR*(burst? rand(0.55,0.95):1),
+        a: rand(0.030, 0.080)*(burst?1.35:1.0), // more visible
+        p: (Math.random()*palette.length)|0,
+        phase: Math.random()*Math.PI*2,
+        drift: rand(0.9, 2.0),
+        life: burst ? rand(0.50, 1.0) : 1.0,
+        burst: !!burst
+      };
+    }
+    for(let i=0;i<FLOAT_N;i++) floats.push(makeFloat(Math.random()*W, Math.random()*H, false));
+
+    // ---- Flow “ribbons” (見てて動きがわかる)
+    // 背景の上に、薄い流れの帯を流す（触ると歪む）
+    const ribbons = [];
+    const RIB_N = 16;
+
+    function seedRibbons(){
+      ribbons.length = 0;
+      for(let i=0;i<RIB_N;i++){
+        ribbons.push({
+          t: Math.random()*10000,
+          y: Math.random()*H,
+          speed: rand(0.12,0.28)*DPR,
+          amp: rand(18, 42)*DPR,
+          w: rand(120, 220)*DPR,
+          p: (Math.random()*palette.length)|0,
+          phase: Math.random()*Math.PI*2
+        });
+      }
+    }
+    seedRibbons();
+
+    // ---- Touch + rings
+    const touches = new Map();
+    const rings = [];
+
+    function addRing(x,y,amp){
+      rings.push({ x,y, r: 8*DPR, a: 0.26*amp, amp, life: 1 });
+      if (rings.length > 26) rings.splice(0, rings.length-26);
+    }
+
+    function clientToCanvas(e){
+      const x = (e.clientX ?? innerWidth/2) * DPR;
+      const y = (e.clientY ?? innerHeight/2) * DPR;
+      return {x,y};
+    }
+
+    document.addEventListener('gesturestart', (e)=>e.preventDefault(), { passive:false });
+
+    wrap.addEventListener('pointerdown', async (e)=>{
+      e.preventDefault();
+      showHud();
+      if(firstGesture){
+        firstGesture = false;
+        await tryStartAudio();
+      }
+      const pt = clientToCanvas(e);
+      touches.set(e.pointerId, { x:pt.x, y:pt.y, px:pt.x, py:pt.y, age:0, releasing:false });
+
+      const isMouse = e.pointerType === 'mouse';
+      const amp = isMouse ? 1.55 : 1.25;
+
+      addDent(pt.x, pt.y, amp);
+      addRing(pt.x, pt.y, amp);
+      setTimeout(()=>addDent(pt.x, pt.y, amp*0.65), 70);
+
+      for(let i=0;i<10;i++){
+        if (floats.length < MAX_FLOAT) floats.push(makeFloat(pt.x+rand(-34,34)*DPR, pt.y+rand(-34,34)*DPR, true));
+      }
+    }, { passive:false });
+
+    wrap.addEventListener('pointermove', (e)=>{
+      const t = touches.get(e.pointerId);
+      if(!t) return;
+      e.preventDefault();
+      const pt = clientToCanvas(e);
+      t.px = t.x; t.py = t.y;
+      t.x = pt.x; t.y = pt.y;
+      t.age = 0;
+
+      const dx = t.x - t.px, dy = t.y - t.py;
+      const sp = Math.hypot(dx,dy);
+
+      if (sp > 7*DPR){
+        const amp = clamp01(sp/(50*DPR))*1.10;
+        addDent(t.x, t.y, amp);
+        if (Math.random() < 0.55 && floats.length < MAX_FLOAT){
+          floats.push(makeFloat(t.x+rand(-22,22)*DPR, t.y+rand(-22,22)*DPR, true));
+        }
+      }
+    }, { passive:false });
+
+    function endPointer(e){
+      const t = touches.get(e.pointerId);
+      if(!t) return;
+      e.preventDefault();
+      t.releasing = true;
+      const pt = clientToCanvas(e);
+      addRing(pt.x, pt.y, 0.85);
+      addDent(pt.x, pt.y, 0.85);
+    }
+    wrap.addEventListener('pointerup', endPointer, { passive:false });
+    wrap.addEventListener('pointercancel', endPointer, { passive:false });
+
+    startPill.addEventListener('click', async (e)=>{
+      e.preventDefault();
+      showHud();
+      await tryStartAudio();
+    }, { passive:false });
+
+    muteBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      showHud();
+      setMuted(!isMuted);
+    }, { passive:false });
+
+    // ---- Flow field (stronger + clearer)
+    function flow(x,y,t){
+      const nx = x / Math.max(1,W);
+      const ny = y / Math.max(1,H);
+      const a = Math.sin(t*0.000055 + ny*6.2) + Math.sin(t*0.000038 + (nx+ny)*4.6)*0.7;
+      const b = Math.cos(t*0.000050 + nx*6.1) + Math.sin(t*0.000034 + (nx-ny)*5.3)*0.7;
+      return { dx:a, dy:b };
+    }
+
+    // ---- Background (cute + breathing)
+    function drawBg(t){
+      const s1 = (Math.sin(t*0.000030)*0.5+0.5);
+      const s2 = (Math.cos(t*0.000024)*0.5+0.5);
+      const s3 = (Math.sin(t*0.000017 + 1.4)*0.5+0.5);
+
+      const mix = (c1,c2,k)=>({
+        r: (c1.r + (c2.r-c1.r)*k)|0,
+        g: (c1.g + (c2.g-c1.g)*k)|0,
+        b: (c1.b + (c2.b-c1.b)*k)|0,
+      });
+
+      const top = mix(palette[0], palette[1], s1);
+      const mid = mix(palette[4], palette[2], s2);
+      const bot = mix(palette[3], palette[0], s3);
+
+      const g = ctx.createLinearGradient(0,0,W,H);
+      g.addColorStop(0.00, `rgb(${top.r},${top.g},${top.b})`);
+      g.addColorStop(0.52, `rgb(${mid.r},${mid.g},${mid.b})`);
+      g.addColorStop(1.00, `rgb(${bot.r},${bot.g},${bot.b})`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,W,H);
+
+      const cx = W*(0.30 + 0.22*Math.sin(t*0.000012));
+      const cy = H*(0.35 + 0.22*Math.cos(t*0.000011));
+      const rad = Math.max(W,H)* (0.60 + 0.07*Math.sin(t*0.000013));
+      const rg = ctx.createRadialGradient(cx,cy,0,cx,cy,rad);
+      rg.addColorStop(0,'rgba(255,255,255,.18)');
+      rg.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle = rg;
+      ctx.fillRect(0,0,W,H);
+
+      ctx.fillStyle = 'rgba(255,255,255,.06)';
+      ctx.fillRect(0,0,W,H);
+
+      const vg = ctx.createRadialGradient(W*0.5,H*0.45,Math.min(W,H)*0.18,W*0.5,H*0.5,Math.max(W,H)*0.95);
+      vg.addColorStop(0,'rgba(255,255,255,0)');
+      vg.addColorStop(1,'rgba(80,40,90,.10)');
+      ctx.fillStyle = vg;
+      ctx.fillRect(0,0,W,H);
+    }
+
+    // ---- Ribbons (key for readability)
+    function drawRibbons(t){
+      ctx.save();
+      ctx.globalCompositeOperation = 'soft-light';
+      ctx.filter = `blur(${1.4*DPR}px)`;
+
+      for(const r of ribbons){
+        const col = palette[r.p];
+
+        // x runs with time
+        const x = ((t*0.02*r.speed) % (W + r.w*2)) - r.w;
+        const y0 = r.y + Math.sin(t*0.0006 + r.phase)*r.amp;
+
+        // dent warp: ribbon bends near dents (visible “move”)
+        let bend = 0;
+        for(const d of dents){
+          const dx = (x + r.w*0.5) - d.x;
+          const dy = y0 - d.y;
+          const dist = Math.hypot(dx,dy) + 0.0001;
+          const w = clamp01(1 - dist/(d.rad*1.05));
+          bend += w*w * d.amp * 36 * DPR;
+        }
+
+        const y = y0 + bend * 0.25;
+
+        const grad = ctx.createLinearGradient(x, y, x+r.w, y);
+        grad.addColorStop(0, `rgba(${col.r},${col.g},${col.b},0)`);
+        grad.addColorStop(0.35, `rgba(${col.r},${col.g},${col.b},0.16)`);
+        grad.addColorStop(0.65, `rgba(${col.r},${col.g},${col.b},0.16)`);
+        grad.addColorStop(1, `rgba(${col.r},${col.g},${col.b},0)`);
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.roundRect(x, y - r.amp*0.20, r.w, r.amp*0.40, 999);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    // ---- Jelly (more readable motion + squish)
+    function drawJelly(t){
+      // trails: slightly darker so motion leaves visible path
+      ctx.fillStyle = 'rgba(255,255,255,.020)';
+      ctx.fillRect(0,0,W,H);
+
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.filter = `blur(${22*DPR}px)`; // a bit less blur => clearer edges
+
+      for(const b of blobs){
+        const col = palette[b.p];
+
+        const wob = Math.sin(t*0.0010 + b.phase*0.9) * 0.6 + Math.cos(t*0.0008 + b.phase*1.1)*0.4;
+
+        let squeeze = 0;
+        let dirx = 0, diry = 0;
+        let sx = 0, sy = 0;
+
+        for(const d of dents){
+          const dx = b.x - d.x;
+          const dy = b.y - d.y;
+          const dist = Math.hypot(dx,dy) + 0.0001;
+          const w = clamp01(1 - dist / d.rad);
+          if (w > 0){
+            const w2 = w*w;
+            squeeze += w2 * d.amp * 1.15;
+            dirx += (dx/dist) * w2 * d.amp;
+            diry += (dy/dist) * w2 * d.amp;
+
+            const pull = w2 * d.amp * 0.70;
+            sx += (-dx/dist) * pull * 26 * DPR;
+            sy += (-dy/dist) * pull * 26 * DPR;
+          }
+        }
+        squeeze = clamp01(squeeze);
+
+        // more obvious squish spring
+        b.sqv += squeeze * 0.28;
+        const k = 0.13, damp = 0.80;
+        b.sqv = (b.sqv - b.sq * k) * damp;
+        b.sq += b.sqv;
+
+        const sq = clamp01(Math.abs(b.sq) + squeeze*0.70);
+
+        const ang = Math.atan2(diry, dirx) + Math.PI/2;
+
+        const sxScale = 1 + 0.30*sq;
+        const syScale = 1 - 0.34*sq;
+
+        const rr = b.r * (1 + 0.07*wob) * (1 - 0.08*squeeze);
+        const alpha = b.a * (1 + 0.65*squeeze);
+
+        ctx.save();
+        ctx.translate(b.x+sx, b.y+sy);
+        ctx.rotate(ang);
+        ctx.scale(sxScale, syScale);
+
+        const grad = ctx.createRadialGradient(0,0,0, 0,0, rr);
+        grad.addColorStop(0.00, `rgba(${col.r},${col.g},${col.b},${alpha})`);
+        grad.addColorStop(0.58, `rgba(${col.r},${col.g},${col.b},${alpha*0.55})`);
+        grad.addColorStop(1.00, `rgba(${col.r},${col.g},${col.b},0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(0,0, rr, 0, Math.PI*2);
+        ctx.fill();
+
+        // brighter highlight => motion readable
+        ctx.save();
+        ctx.filter = `blur(${9*DPR}px)`;
+        ctx.globalCompositeOperation = 'soft-light';
+        ctx.fillStyle = `rgba(255,255,255,${0.14 + 0.10*squeeze})`;
+        ctx.beginPath();
+        ctx.arc(-rr*0.18, -rr*0.22, rr*0.22, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    // ---- Floats
+    function drawFloats(){
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.filter = `blur(${11*DPR}px)`; // less blur => visible motion
+
+      for(const m of floats){
+        const col = palette[m.p];
+        const rr = m.r;
+        const grad = ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,rr);
+        grad.addColorStop(0.00, `rgba(${col.r},${col.g},${col.b},${m.a})`);
+        grad.addColorStop(0.65, `rgba(${col.r},${col.g},${col.b},${m.a*0.48})`);
+        grad.addColorStop(1.00, `rgba(${col.r},${col.g},${col.b},0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(m.x,m.y,rr,0,Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawRings(){
+      if(!rings.length) return;
+      ctx.save();
+      ctx.globalCompositeOperation = 'soft-light';
+      ctx.lineWidth = 2.6*DPR; // slightly thicker
+      ctx.filter = `blur(${1.0*DPR}px)`;
+      for(const r of rings){
+        const alpha = r.a * clamp01(r.life);
+        const col = palette[(Math.floor(r.amp*10) % palette.length)];
+        ctx.strokeStyle = `rgba(${col.r},${col.g},${col.b},${alpha})`;
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, r.r, 0, Math.PI*2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ---- Main loop
+    function step(t){
+      // touches
+      for(const [id,tt] of touches){
+        tt.age += 1;
+        if(tt.releasing && tt.age > 55) touches.delete(id);
+      }
+
+      // dents (stronger spring)
+      for(let i=dents.length-1;i>=0;i--){
+        const d = dents[i];
+        d.t += 1;
+
+        const stiffness = 0.20;
+        const damping = 0.80;
+
+        const force = (d.target - d.amp) * stiffness;
+        d.vel = (d.vel + force) * damping;
+        d.amp += d.vel;
+
+        d.target *= 0.986;
+        d.rad *= 0.9987;
+
+        if(d.target < 0.06 && Math.abs(d.vel) < 0.01) dents.splice(i,1);
+      }
+
+      // rings
+      for(let i=rings.length-1;i>=0;i--){
+        const r = rings[i];
+        r.r += (10 + 26*r.amp) * DPR * 0.33; // larger => visible
+        r.a *= 0.970;
+        r.life *= 0.984;
+        if(r.a < 0.006 || r.life < 0.25) rings.splice(i,1);
+      }
+
+      // ribbons update
+      for(const rb of ribbons){
+        rb.y += Math.sin(t*0.00022 + rb.phase) * 0.03 * DPR;
+        // gentle wrap
+        if(rb.y < -80*DPR) rb.y = H + 80*DPR;
+        if(rb.y > H + 80*DPR) rb.y = -80*DPR;
+      }
+
+      // blobs update (more obvious drift)
+      for(const b of blobs){
+        const f = flow(b.x, b.y, t);
+        const baseSpeed = 0.15 * DPR * b.drift; // ↑
+
+        let vx = f.dx * baseSpeed;
+        let vy = f.dy * baseSpeed;
+
+        const orb = 0.00016 * (1 + b.idx*0.08);
+        vx += Math.cos(t*orb + b.phase) * 0.18 * DPR;
+        vy += Math.sin(t*orb + b.phase) * 0.18 * DPR;
+
+        b.phase += 0.0048 * (0.8 + b.drift);
+
+        for(const d of dents){
+          const dx = b.x - d.x;
+          const dy = b.y - d.y;
+          const dist = Math.hypot(dx,dy) + 0.0001;
+          const w = clamp01(1 - dist / (d.rad*1.35));
+          if(w>0){
+            vx += (-dx/dist) * w*w * d.amp * 1.10 * DPR;
+            vy += (-dy/dist) * w*w * d.amp * 1.10 * DPR;
+          }
+        }
+
+        b.x += vx;
+        b.y += vy;
+
+        const pad = 380*DPR;
+        if(b.x < -pad) b.x = W + pad;
+        if(b.x > W + pad) b.x = -pad;
+        if(b.y < -pad) b.y = H + pad;
+        if(b.y > H + pad) b.y = -pad;
+      }
+
+      // floats update (faster + clearer)
+      for(let i=floats.length-1;i>=0;i--){
+        const m = floats[i];
+        const f = flow(m.x, m.y, t);
+        const baseSpeed = 0.34 * DPR * m.drift; // ↑
+
+        let vx = f.dx * baseSpeed;
+        let vy = f.dy * baseSpeed;
+
+        m.phase += 0.0095 * m.drift;
+        vx += Math.cos(m.phase) * 0.12 * DPR;
+        vy += Math.sin(m.phase) * 0.12 * DPR;
+
+        for(const d of dents){
+          const dx = m.x - d.x;
+          const dy = m.y - d.y;
+          const dist = Math.hypot(dx,dy) + 0.0001;
+          const R = d.rad * 1.25;
+          if(dist < R){
+            const w = clamp01(1 - dist/R);
+            const tx = -dy/dist;
+            const ty =  dx/dist;
+            vx += tx * w*w * d.amp * 1.60 * DPR;
+            vy += ty * w*w * d.amp * 1.60 * DPR;
+            vx += (-dx/dist) * w * d.amp * 0.36 * DPR;
+            vy += (-dy/dist) * w * d.amp * 0.36 * DPR;
+            m.a = Math.min(0.12, m.a + w*0.018*d.amp);
+          }
+        }
+
+        m.x += vx;
+        m.y += vy;
+
+        const pad = 240*DPR;
+        if(m.x < -pad) m.x = W + pad;
+        if(m.x > W + pad) m.x = -pad;
+        if(m.y < -pad) m.y = H + pad;
+        if(m.y > H + pad) m.y = -pad;
+
+        const breathe = (Math.sin(m.phase*0.55) * 0.5 + 0.5);
+        const baseA = lerp(0.030, 0.090, breathe);
+        m.a = Math.max(m.a * 0.985, baseA);
+
+        if(m.burst){
+          m.life *= 0.982;
+          m.r *= 0.9982;
+          m.a *= 0.990;
+          if(m.life < 0.22 || m.a < 0.012){
+            floats.splice(i,1);
+            continue;
+          }
+        }
+      }
+
+      // draw
+      drawBg(t);
+      drawRibbons(t);   // ← “動きが見える”帯
+      drawJelly(t);
+      drawFloats();
+      drawRings();
+
+      requestAnimationFrame(step);
+    }
+
+    // resize reseed
+    let resizeTO=0;
+    addEventListener('resize', ()=>{
+      clearTimeout(resizeTO);
+      resizeTO = setTimeout(()=>{
+        resize();
+        // rebuild
+        blobs.length = 0;
+        floats.length = 0;
+        for(let i=0;i<BASE_N;i++) blobs.push(makeBlob(i));
+        for(let i=0;i<FLOAT_N;i++) floats.push(makeFloat(Math.random()*W, Math.random()*H, false));
+        seedRibbons();
+      }, 120);
+    }, { passive:true });
+
+    requestAnimationFrame(step);
+  </script>
+</body>
+</html>
