@@ -157,10 +157,11 @@
 
 <script type="module">
   // assets helper (project rule)
+  const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+  const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
   const asset = (p) => {
-    // Vercel用: 現在のページパスを基準にした相対パス
-    const basePath = window.location.pathname.replace(/\/$/, '') || window.location.pathname;
-    return basePath + '/' + p.replace(/^\.\//, '');
+    const clean = String(p || "").replace(/^\.?\//, "");
+    return `${DATE_BASE}${clean}`;
   };
 
   const app = document.getElementById('app');
