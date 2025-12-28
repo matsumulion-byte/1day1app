@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>一コマダンジョン</title>
+  <meta name="theme-color" content="#0b1020" />
+  <style>
+    :root{
+      --bg:#060814;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.7);
+      --line:rgba(255,255,255,.14);
+      --good:#34d399;
+      --r:18px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+    html,body{
+      width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+      touch-action: manipulation; /* ボタン操作を安定させる */
+    }
+    #app{position:relative;width:100%;height:100%;}
+    canvas{position:absolute;inset:0;width:100%;height:100%;}
+    .hud{
+      position:absolute;left:12px;right:12px;top:60px;
+      display:flex;gap:10px;align-items:stretch;justify-content:space-between;
+      pointer-events:none;
+    }
+    .card{
+      flex:1;min-width:0;
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      padding:10px 12px;
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    .row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+    .label{font-size:12px;color:var(--muted);letter-spacing:.02em;white-space:nowrap;}
+    .value{font-size:16px;font-weight:800;}
+    .value small{font-size:12px;color:var(--muted);font-weight:700}
+
+    .controls{
+      position:absolute;left:12px;right:12px;bottom:12px;
+      display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .btn{
+      border:none;border-radius:20px;
+      padding:14px 12px;
+      background:rgba(255,255,255,.10);
+      border:1px solid var(--line);
+      color:var(--ink);
+      font-weight:900;
+      box-shadow:0 12px 30px rgba(0,0,0,.35);
+      cursor:pointer;
+      touch-action: manipulation;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{background:rgba(52,211,153,.16);border-color:rgba(52,211,153,.35);}
+    .btn.ghost{background:rgba(0,0,0,.22);}
+
+    .overlay{
+      position:absolute;inset:0;display:grid;place-items:center;
+      background:radial-gradient(900px 700px at 50% 30%, rgba(0,0,0,.45), rgba(0,0,0,.78));
+      padding:16px;
+    }
+    .modal{
+      width:min(520px, 100%);
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border:1px solid var(--line);
+      border-radius:24px;
+      padding:16px;
+      box-shadow:0 20px 60px rgba(0,0,0,.45);
+    }
+    .modal h1{font-size:18px;margin-bottom:6px;}
+    .modal .desc{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:12px;}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+    .big{
+      width:100%;padding:12px 14px;border-radius:16px;
+      font-weight:900;border:1px solid var(--line);
+      cursor:pointer;background:rgba(255,255,255,.10);color:var(--ink);
+      touch-action: manipulation;
+    }
+    .big.primary{background:rgba(96,165,250,.16);border-color:rgba(96,165,250,.35);}
+    .big:active{transform:translateY(1px)}
+
+    .hint{position:absolute;left:12px;right:12px;top:70px;display:flex;justify-content:center;pointer-events:none;}
+    .toast{
+      padding:8px 10px;border-radius:14px;
+      background:rgba(0,0,0,.32);
+      border:1px solid var(--line);
+      color:var(--muted);
+      font-size:12px;
+      backdrop-filter: blur(8px);
+      transition: opacity .2s ease;
+    }
+    .soundBtn{
+      position:absolute;left:12px;top:12px;
+      width:44px;height:44px;
+      border:none;border-radius:12px;
+      background:rgba(0,0,0,.28);
+      border:1px solid var(--line);
+      color:var(--ink);
+      font-size:18px;
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;
+      box-shadow:0 8px 20px rgba(0,0,0,.25);
+      touch-action: manipulation;
+      z-index:10;
+    }
+    .soundBtn:active{transform:translateY(1px)}
+    .soundBtn.muted{opacity:0.5;}
+  </style>
+</head>
+<body>
+<div id="app">
+  <canvas id="c"></canvas>
+
+  <div class="hud" aria-hidden="true">
+    <div class="card">
+      <div class="row"><div class="label">階層</div><div class="value"><span id="lvl">1</span> <small>/ 迷路</small></div></div>
+    </div>
+    <div class="card">
+      <div class="row"><div class="label">歩数</div><div class="value"><span id="steps">0</span></div></div>
+    </div>
+    <div class="card">
+      <div class="row"><div class="label">向き</div><div class="value" id="dir">E</div></div>
+    </div>
+  </div>
+
+  <button class="soundBtn" id="soundBtn" type="button" title="サウンドON/OFF">🔊</button>
+
+  <div class="hint"><div class="toast" id="toast">← 回転 / 前進 / 回転 →</div></div>
+
+  <div class="controls">
+    <button class="btn ghost" id="leftBtn" type="button">左回転</button>
+    <button class="btn primary" id="fwdBtn" type="button">前進</button>
+    <button class="btn ghost" id="rightBtn" type="button">右回転</button>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h1>一コマダンジョン</h1>
+      <div class="desc">
+        3Dっぽい迷路を、<b>1マスずつ</b>進む。<br>
+        左右は回転、前進は壁がなければ移動。<br>
+        ゴールに着いたら次の迷路へ。
+      </div>
+      <div class="grid">
+        <button class="big primary" id="startBtn" type="button">スタート</button>
+        <button class="big" id="regenBtn" type="button">迷路を作り直す</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  // assets helper (project rule)
+  const asset = (p) => {
+    // Vercel用: 現在のページパスを基準にした相対パス
+    const basePath = window.location.pathname.replace(/\/$/, '') || window.location.pathname;
+    return basePath + '/' + p.replace(/^\.\//, '');
+  };
+
+  const app = document.getElementById('app');
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+
+  const overlay = document.getElementById('overlay');
+  const startBtn = document.getElementById('startBtn');
+  const regenBtn = document.getElementById('regenBtn');
+
+  const leftBtn = document.getElementById('leftBtn');
+  const rightBtn = document.getElementById('rightBtn');
+  const fwdBtn = document.getElementById('fwdBtn');
+
+  const elLvl = document.getElementById('lvl');
+  const elSteps = document.getElementById('steps');
+  const elDir = document.getElementById('dir');
+  const toast = document.getElementById('toast');
+  const soundBtn = document.getElementById('soundBtn');
+
+  // BGMの設定
+  const bgm = new Audio(asset('./assets/bgm.mp3'));
+  bgm.loop = true;
+  bgm.volume = 0.6;
+  let soundEnabled = true;
+  
+  // サウンドON/OFFボタンの処理
+  soundBtn.addEventListener('click', ()=>{
+    soundEnabled = !soundEnabled;
+    if(soundEnabled){
+      bgm.play().catch(e => console.log('BGM再生エラー:', e));
+      soundBtn.textContent = '🔊';
+      soundBtn.classList.remove('muted');
+    }else{
+      bgm.pause();
+      soundBtn.textContent = '🔇';
+      soundBtn.classList.add('muted');
+    }
+  });
+
+
+  // dblclick zoom抑止（clickは殺さない）
+  app.addEventListener('dblclick', (e)=>e.preventDefault(), {passive:false});
+
+  // Resize
+  let W=0,H=0,dpr=1;
+  function resize(){
+    dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    W = Math.floor(window.innerWidth);
+    H = Math.floor(window.innerHeight);
+    canvas.width = Math.floor(W*dpr);
+    canvas.height = Math.floor(H*dpr);
+    canvas.style.width = W+'px';
+    canvas.style.height = H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resize, {passive:true});
+  resize();
+
+  // --- Maze generation (perfect maze)
+  function makeMaze(wCells, hCells, opts={}){
+  const {
+    loopChance = 0.14,   // ループ追加量（0.10〜0.18）
+    braidChance = 0.7,   // 行き止まり潰し（0.6〜0.8）
+  } = opts;
+
+  const gw = wCells*2 + 1;
+  const gh = hCells*2 + 1;
+  const g = Array.from({length:gh}, ()=>Array.from({length:gw}, ()=>1));
+  const visited = Array.from({length:hCells}, ()=>Array.from({length:wCells}, ()=>false));
+
+  const dirs = [
+    {dx:0, dy:-1}, // N
+    {dx:1, dy:0},  // E
+    {dx:0, dy:1},  // S
+    {dx:-1,dy:0},  // W
+  ];
+
+  const shuffle = (a)=>{
+    for(let i=a.length-1;i>0;i--){
+      const j = (Math.random()*(i+1))|0;
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  };
+
+  // --- 1. perfect maze（DFS）
+  function carve(cx, cy){
+    visited[cy][cx] = true;
+    const gx = cx*2+1, gy = cy*2+1;
+    g[gy][gx] = 0;
+
+    for(const d of shuffle(dirs.slice())){
+      const nx = cx + d.dx, ny = cy + d.dy;
+      if(nx<0||ny<0||nx>=wCells||ny>=hCells) continue;
+      if(visited[ny][nx]) continue;
+
+      g[gy + d.dy][gx + d.dx] = 0;
+      carve(nx, ny);
+    }
+  }
+  carve(0,0);
+
+  // --- 入口 / 出口
+  g[1][0] = 0;
+  g[gh-2][gw-1] = 0;
+  g[gh-2][gw-2] = 0;
+
+  const isPath = (x,y)=> x>=0&&y>=0&&x<gw&&y<gh&&g[y][x]===0;
+  const neighCount = (x,y)=>{
+    let c=0;
+    if(isPath(x+1,y)) c++;
+    if(isPath(x-1,y)) c++;
+    if(isPath(x,y+1)) c++;
+    if(isPath(x,y-1)) c++;
+    return c;
+  };
+
+  // --- 2. braid（行き止まり潰し）
+  for(let y=1;y<gh-1;y+=2){
+    for(let x=1;x<gw-1;x+=2){
+      if(g[y][x]!==0) continue;
+      if(neighCount(x,y)!==1) continue;
+      if(Math.random()>braidChance) continue;
+
+      const cand=[];
+      for(const d of dirs){
+        const wx=x+d.dx, wy=y+d.dy;
+        const nx=x+d.dx*2, ny=y+d.dy*2;
+        if(nx<=0||ny<=0||nx>=gw-1||ny>=gh-1) continue;
+        if(g[ny][nx]!==0) continue;
+        if(g[wy][wx]===0) continue;
+        cand.push({wx,wy});
+      }
+      if(cand.length){
+        const p=cand[(Math.random()*cand.length)|0];
+        g[p.wy][p.wx]=0;
+      }
+    }
+  }
+
+  // --- 3. loop（ランダムに壁を壊す）
+  const breakables=[];
+  for(let y=1;y<gh-1;y++){
+    for(let x=1;x<gw-1;x++){
+      if(g[y][x]!==1) continue;
+      const lr=isPath(x-1,y)&&isPath(x+1,y);
+      const ud=isPath(x,y-1)&&isPath(x,y+1);
+      if(lr||ud) breakables.push({x,y});
+    }
+  }
+  shuffle(breakables);
+  const breaks=Math.floor(breakables.length*loopChance);
+  for(let i=0;i<breaks;i++){
+    const b=breakables[i];
+    g[b.y][b.x]=0;
+  }
+
+  return {grid:g, gw, gh};
+  }
+
+  // --- State
+  let level = 1, steps = 0;
+  const DIRS = [
+    {x:0, y:-1, name:'N'},
+    {x:1, y:0,  name:'E'},
+    {x:0, y:1,  name:'S'},
+    {x:-1,y:0,  name:'W'},
+  ];
+
+  let grid=null, GW=0, GH=0;
+  let seen = null; // 0/1: 発見済み
+
+
+  const player = {
+    x:1.5, y:1.5, dir:1,
+    moving:false, ax:0,ay:0,bx:0,by:0,t:0, moveDur:0.14,
+    turning:false, tt:0, turnDur:0.09
+  };
+
+  // --- Raycasting constants (needed by revealAt)
+  const FOV = Math.PI/3;
+  const MAX_DIST = 20;
+  const RAYS_MIN = 220;
+  const RAYS_MAX = 420;
+
+  function syncDirUI(){ elDir.textContent = DIRS[player.dir].name; }
+  function say(msg){
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    clearTimeout(say._t);
+    say._t = setTimeout(()=>{ toast.style.opacity = '0.85'; }, 700);
+  }
+
+  function resetLevel(){
+    steps = 0;
+    elSteps.textContent = '0';
+    elLvl.textContent = '1';
+
+    const cells = 14;
+    const world = makeMaze(cells, cells, { loopChance: 0.14, braidChance: 0.7 });
+
+    grid = world.grid;
+    GW = world.gw;
+    GH = world.gh;
+
+    // playerを先に初期化
+    player.x = 1.5;
+    player.y = 1.5;
+    player.dir = 1;
+    player.moving = false;
+    player.turning = false;
+
+    // seenを作ってから reveal
+    seen = Array.from({length: GH}, ()=>Array.from({length: GW}, ()=>0));
+    revealAt(player.x, player.y, 1);
+
+    syncDirUI();
+    say('← 回転 / 前進 / 回転 →');
+
+    // 開始前は操作不可にしたいなら overlay 表示を明示
+    overlay.style.display = 'grid';
+    startBtn.textContent = 'スタート';
+    overlay.querySelector('h1').textContent = '一コマダンジョン';
+    overlay.querySelector('.desc').innerHTML =
+      `3Dっぽい迷路を、<b>1マスずつ</b>進む。<br>左右は回転、前進は壁がなければ移動。<br>ゴールに着いたら次の迷路へ。`;
+  }
+
+  function isWall(tx, ty){
+    if(tx<0||ty<0||tx>=GW||ty>=GH) return true;
+    return grid[ty][tx] === 1;
+  }
+
+  function castRay(x, y, a){
+    const dx = Math.cos(a);
+    const dy = Math.sin(a);
+
+    let mapX = Math.floor(x);
+    let mapY = Math.floor(y);
+
+    const deltaDistX = Math.abs(1 / (dx || 1e-9));
+    const deltaDistY = Math.abs(1 / (dy || 1e-9));
+
+    let stepX, stepY;
+    let sideDistX, sideDistY;
+
+    if(dx < 0){
+      stepX = -1;
+      sideDistX = (x - mapX) * deltaDistX;
+    }else{
+      stepX = 1;
+      sideDistX = (mapX + 1.0 - x) * deltaDistX;
+    }
+    if(dy < 0){
+      stepY = -1;
+      sideDistY = (y - mapY) * deltaDistY;
+    }else{
+      stepY = 1;
+      sideDistY = (mapY + 1.0 - y) * deltaDistY;
+    }
+
+    let side = 0;
+    let dist = MAX_DIST;
+
+    for(let i=0;i<MAX_DIST*4;i++){
+      if(sideDistX < sideDistY){
+        sideDistX += deltaDistX;
+        mapX += stepX;
+        side = 0;
+      }else{
+        sideDistY += deltaDistY;
+        mapY += stepY;
+        side = 1;
+      }
+      if(isWall(mapX, mapY)){
+        if(side === 0){
+          dist = (mapX - x + (1 - stepX)/2) / (dx || 1e-9);
+        }else{
+          dist = (mapY - y + (1 - stepY)/2) / (dy || 1e-9);
+        }
+        break;
+      }
+    }
+
+    let tex = 0.0;
+    if(side === 0){
+      const hitY = y + dist * dy;
+      tex = hitY - Math.floor(hitY);
+    }else{
+      const hitX = x + dist * dx;
+      tex = hitX - Math.floor(hitX);
+    }
+
+    return {dist: Math.max(0.0001, dist), side, tex};
+  }
+
+  function revealAt(x, y, r=1){
+  const cx = Math.floor(x);
+  const cy = Math.floor(y);
+  for(let yy=cy-r; yy<=cy+r; yy++){
+    for(let xx=cx-r; xx<=cx+r; xx++){
+      if(xx<0||yy<0||xx>=GW||yy>=GH) continue;
+      // 壁も「見つかった」として塗ると地図が作りやすい
+      seen[yy][xx] = 1;
+    }
+  }
+
+  // ついでに "視線"で少し先も見える（任意：雰囲気良くなる）
+  // 前方を短距離だけレイでなぞって、通路と壁を発見扱いにする
+  const DIR_ANGLE = [-Math.PI/2, 0, Math.PI/2, Math.PI];
+  const a = DIR_ANGLE[player.dir];
+  for(let k=0;k<9;k++){
+    const ra = a - 0.28 + (k/8)*0.56; // 前方扇状
+    const hit = castRay(x, y, ra);
+    const dist = Math.min(hit.dist, 6.0); // 見える距離
+    for(let t=0.2;t<=dist;t+=0.35){
+      const sx = Math.floor(x + Math.cos(ra)*t);
+      const sy = Math.floor(y + Math.sin(ra)*t);
+      if(sx<0||sy<0||sx>=GW||sy>=GH) break;
+      seen[sy][sx] = 1;
+      if(grid[sy][sx] === 1) break; // 壁に当たったら止める
+    }
+  }
+}
+
+  function isGoal(x,y){
+    const px = Math.floor(x), py = Math.floor(y);
+    return (px===GW-1 && py===GH-2) || (px===GW-2 && py===GH-2);
+  }
+  function canAct(){
+    return overlay.style.display === 'none' && !player.moving && !player.turning;
+  }
+
+  // input
+  function turn(delta){
+    if(!canAct()) return;
+    player.turning = true;
+    player.tt = 0;
+    player.dir = (player.dir + delta + 4) % 4;
+    syncDirUI();
+  }
+  function startMove(){
+    if(!canAct()) return;
+    const d = DIRS[player.dir];
+    const nx = player.x + d.x;
+    const ny = player.y + d.y;
+    const tx = Math.floor(nx), ty = Math.floor(ny);
+    if(isWall(tx, ty)){
+      say('壁');
+      screenShake(6);
+      return;
+    }
+    player.moving = true;
+    player.ax = player.x; player.ay = player.y;
+    player.bx = nx; player.by = ny;
+    player.t = 0;
+
+    steps++;
+    elSteps.textContent = String(steps);
+  }
+
+  leftBtn.addEventListener('click', ()=>turn(-1));
+  rightBtn.addEventListener('click', ()=>turn(1));
+  fwdBtn.addEventListener('click', startMove);
+
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'ArrowLeft') turn(-1);
+    else if(e.key === 'ArrowRight') turn(1);
+    else if(e.key === 'ArrowUp' || e.key === ' ') startMove();
+  }, {passive:true});
+
+  // overlay
+  startBtn.addEventListener('click', ()=>{ 
+    overlay.style.display = 'none';
+    // ゲーム開始時にBGMを再生
+    if(soundEnabled){
+      bgm.play().catch(e => console.log('BGM再生エラー:', e));
+    }
+  });
+  regenBtn.addEventListener('click', ()=>{ resetLevel(); });
+
+  resetLevel();
+
+  function wallColor(dist, side){
+    const base = side ? 0.85 : 1.0;
+    const fog = Math.max(0, 1 - dist/10);
+    const v = base * (0.25 + 0.75*fog);
+    return `rgba(${Math.floor(120*v)},${Math.floor(150*v)},${Math.floor(255*v)},1)`;
+  }
+  function floorColor(yNorm){
+    const v = 0.18 + 0.38*(1-yNorm);
+    return `rgba(${Math.floor(20+50*v)},${Math.floor(24+60*v)},${Math.floor(50+90*v)},1)`;
+  }
+  function ceilColor(yNorm){
+    const v = 0.10 + 0.22*yNorm;
+    return `rgba(${Math.floor(10+40*v)},${Math.floor(12+45*v)},${Math.floor(30+70*v)},1)`;
+  }
+
+  let shakeT=0, shakeMag=0;
+  function screenShake(mag){ shakeT = 0.12; shakeMag = mag; }
+
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min(0.033, (now-last)/1000);
+    last = now;
+
+    if(player.moving){
+      player.t += dt / player.moveDur;
+      const t = Math.min(1, player.t);
+      const e = t<0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
+      player.x = player.ax + (player.bx - player.ax) * e;
+      player.y = player.ay + (player.by - player.ay) * e;
+      if(t >= 1){
+        player.moving = false;
+        player.x = player.bx; player.y = player.by;
+
+        revealAt(player.x, player.y, 1); // ★追加：進んだら発見
+
+        if(isGoal(player.x, player.y)){
+          say('もう一回');
+          overlay.style.display = 'grid';
+          overlay.querySelector('h1').textContent = 'クリア';
+          overlay.querySelector('.desc').innerHTML =
+            `歩数：<b>${steps}</b><br>クリア`;
+
+          startBtn.textContent = 'もう一回';
+          // 既存clickを壊さないため、1回だけ処理
+          const once = ()=>{
+            startBtn.removeEventListener('click', once);
+            startBtn.textContent = 'スタート';
+            overlay.querySelector('h1').textContent = '一コマダンジョン';
+            overlay.querySelector('.desc').innerHTML =
+              `3Dっぽい迷路を、<b>1マスずつ</b>進む。<br>左右は回転、前進は壁がなければ移動。<br>ゴールに着いたら次の迷路へ。`;
+            resetLevel();
+            overlay.style.display = 'none';
+            // 元のstart動作を復活させる
+            startBtn.addEventListener('click', ()=>{ 
+              overlay.style.display='none';
+              if(soundEnabled){
+                bgm.play().catch(e => console.log('BGM再生エラー:', e));
+              }
+            }, {once:true});
+          };
+          startBtn.addEventListener('click', once, {once:true});
+        }
+      }
+    }
+
+    if(player.turning){
+      player.tt += dt / player.turnDur;
+      if(player.tt >= 1) player.turning = false;
+    }
+
+    if(shakeT > 0){
+      shakeT -= dt;
+      if(shakeT <= 0) shakeMag = 0;
+    }
+
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  function draw(){
+    if(!grid || GW === 0 || GH === 0) return;
+    
+    const rays = Math.floor(Math.min(RAYS_MAX, Math.max(RAYS_MIN, W * 0.55)));
+    const colW = W / rays;
+
+    let ox=0, oy=0;
+    if(shakeMag > 0){
+      const s = (shakeT/0.12);
+      ox = (Math.random()*2-1) * shakeMag * s;
+      oy = (Math.random()*2-1) * shakeMag * s;
+    }
+
+    for(let y=0;y<Math.floor(H*0.5);y+=3){
+      const yn = y/(H*0.5);
+      ctx.fillStyle = ceilColor(yn);
+      ctx.fillRect(0, y, W, 3);
+    }
+    for(let y=Math.floor(H*0.5);y<H;y+=3){
+      const yn = (y - H*0.5)/(H*0.5);
+      ctx.fillStyle = floorColor(yn);
+      ctx.fillRect(0, y, W, 3);
+    }
+
+    const DIR_ANGLE = [-Math.PI/2, 0, Math.PI/2, Math.PI]; // N, E, S, W
+    const angle = DIR_ANGLE[player.dir];
+    
+    // 深度バッファ（各レイの距離を保存）
+    const depthBuffer = new Array(rays);
+    
+    for(let i=0;i<rays;i++){
+      const rayAngle = angle - FOV/2 + (i/(rays-1))*FOV;
+      const hit = castRay(player.x, player.y, rayAngle);
+      const dist = hit.dist * Math.cos(rayAngle - angle);
+      depthBuffer[i] = dist;
+
+      const wallH = Math.min(H, (H * 0.92) / Math.max(0.0001, dist));
+      const x = i * colW + ox;
+      const yTop = (H/2 - wallH/2) + oy;
+
+      const stripe = ((hit.tex * 12) | 0) % 2;
+      ctx.globalAlpha = stripe ? 0.92 : 1.0;
+      ctx.fillStyle = wallColor(hit.dist, hit.side);
+      ctx.fillRect(x, yTop, colW+1, wallH);
+
+      ctx.globalAlpha = 0.08;
+      ctx.fillStyle = 'rgba(255,255,255,1)';
+      ctx.fillRect(x, yTop, 1, wallH);
+
+      const fog = Math.min(0.72, hit.dist/12);
+      ctx.globalAlpha = fog;
+      ctx.fillStyle = 'rgba(6,8,20,1)';
+      ctx.fillRect(x, yTop, colW+1, wallH);
+
+      ctx.globalAlpha = 1;
+    }
+    
+    ctx.globalAlpha = 0.25;
+    ctx.beginPath();
+    ctx.arc(W/2, H/2, 2.2, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,255,255,1)';
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    const goalDist = Math.hypot((GW-1.5)-player.x, (GH-2.5)-player.y);
+    if(goalDist < 6){
+      const p = 0.08 + 0.10*Math.sin(performance.now()/220);
+      ctx.globalAlpha = p;
+      ctx.fillStyle = 'rgba(52,211,153,1)';
+      ctx.fillRect(0, H*0.48, W, 2);
+      ctx.globalAlpha = 1;
+    }
+
+    drawMinimap();
+  }
+
+  function drawMinimap(){
+    if(!seen || !grid || GW === 0 || GH === 0) return;
+
+    const pad = 12;
+    const size = Math.min(190, Math.floor(Math.min(W,H)*0.30));
+    const x0 = W - pad - size;
+    const y0 = pad + 62;
+
+    const radius = 10; // 表示半径（大きいほど広い）
+    const px = Math.floor(player.x);
+    const py = Math.floor(player.y);
+
+    const view = radius*2 + 1;
+    const cell = Math.max(4, Math.floor(size / view));
+    const mapW = cell * view;
+    const mapH = cell * view;
+
+    // panel
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = 'rgba(0,0,0,.28)';
+    ctx.strokeStyle = 'rgba(255,255,255,.14)';
+    roundRect(x0, y0, mapW+14, mapH+14, 14);
+    ctx.fill();
+    ctx.stroke();
+
+    const ox = x0 + 7;
+    const oy = y0 + 7;
+
+    for(let dy=-radius; dy<=radius; dy++){
+      for(let dx=-radius; dx<=radius; dx++){
+        const tx = px + dx;
+        const ty = py + dy;
+        const sx = ox + (dx+radius)*cell;
+        const sy = oy + (dy+radius)*cell;
+
+        if(tx<0||ty<0||tx>=GW||ty>=GH){
+          ctx.fillStyle = 'rgba(0,0,0,.40)';
+          ctx.fillRect(sx, sy, cell, cell);
+          continue;
+        }
+
+        if(!seen[ty][tx]){
+          ctx.fillStyle = 'rgba(0,0,0,.58)'; // fog
+          ctx.fillRect(sx, sy, cell, cell);
+          continue;
+        }
+
+        if(grid[ty][tx]===1){
+          ctx.fillStyle = 'rgba(243,246,255,.16)'; // wall
+        }else{
+          ctx.fillStyle = 'rgba(52,211,153,.16)';  // floor
+        }
+        ctx.fillRect(sx, sy, cell, cell);
+      }
+    }
+
+    // player
+    const cx = ox + radius*cell + cell/2;
+    const cy = oy + radius*cell + cell/2;
+    ctx.fillStyle = 'rgba(243,246,255,.95)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, Math.max(2.2, cell*0.22), 0, Math.PI*2);
+    ctx.fill();
+
+    // facing
+    const DIR_ANGLE = [-Math.PI/2, 0, Math.PI/2, Math.PI];
+    const a = DIR_ANGLE[player.dir];
+    const r = Math.max(7, cell*0.62);
+    ctx.fillStyle = 'rgba(243,246,255,.85)';
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a)*r, cy + Math.sin(a)*r);
+    ctx.lineTo(cx + Math.cos(a+2.4)*r*0.55, cy + Math.sin(a+2.4)*r*0.55);
+    ctx.lineTo(cx + Math.cos(a-2.4)*r*0.55, cy + Math.sin(a-2.4)*r*0.55);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function roundRect(x,y,w,h,r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+</script>
+</body>
+</html>
