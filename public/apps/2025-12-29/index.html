@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>松村ミサイルコマンド</title>
+<meta name="theme-color" content="#000000" />
+
+<style>
+html,body{
+  margin:0;
+  padding:0;
+  width:100%;
+  height:100%;
+  background:#000;
+  color:#fff;
+  overflow:hidden;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont;
+  touch-action:manipulation;
+}
+canvas{ display:block; }
+
+#overlay{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#000;
+  z-index:10;
+  font-size:18px;
+}
+
+#result{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  background:rgba(0,0,0,.7);
+  z-index:20;
+  padding:24px;
+  text-align:center;
+}
+
+#resultText{
+  font-size:22px;
+  margin-bottom:10px;
+  line-height:1.25;
+}
+
+#resultSub{
+  font-size:14px;
+  opacity:.85;
+  margin-bottom:18px;
+  line-height:1.5;
+}
+
+#replay{
+  padding:10px 18px;
+  font-size:16px;
+  border-radius:8px;
+  border:none;
+  background:#fff;
+  color:#000;
+}
+
+#hud{
+  position:fixed;
+  left:10px;
+  top:10px;
+  z-index:5;
+  font-size:14px;
+  opacity:.9;
+  user-select:none;
+  pointer-events:none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="overlay">TAP TO START</div>
+
+<div id="hud"></div>
+
+<div id="result">
+  <div id="resultText"></div>
+  <div id="resultSub"></div>
+  <button id="replay">REPLAY</button>
+</div>
+
+<canvas id="c"></canvas>
+
+<script type="module">
+// Vercel用のパス解決
+const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+const asset = (p) => {
+  const clean = String(p || "").replace(/^\.?\//, "");
+  return `${DATE_BASE}${clean}`;
+};
+
+/* ========= canvas ========= */
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+function resize(){
+  canvas.width = innerWidth * devicePixelRatio;
+  canvas.height = innerHeight * devicePixelRatio;
+  canvas.style.width = innerWidth + 'px';
+  canvas.style.height = innerHeight + 'px';
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+addEventListener('resize', resize);
+resize();
+
+/* ========= BGM ========= */
+const bgm = new Audio(asset('./assets/bgm.mp3'));
+bgm.loop = false;
+bgm.volume = 0.6;
+
+/* ========= assets ========= */
+const matsuImg = new Image();
+matsuImg.src = asset('./assets/matsumura.png');
+
+/* ========= game params ========= */
+const GAME_TIME = 30_000;
+const MATSUMURA_COUNT = 4;
+let MATSUMURA_SIZE = innerWidth * 0.1;
+
+/* ========= state ========= */
+let started = false;
+let gameStart = 0;
+let lastTime = 0;
+let nextSpawn = 0;
+let ended = false;
+
+let missiles = [];
+let explosions = [];
+let matsumuras = [];
+
+/* ========= matsumura ========= */
+function initMatsumura(){
+  matsumuras = [];
+  const bandH = innerHeight * 0.14;
+  const y = innerHeight - bandH/2;
+  const w = innerWidth / MATSUMURA_COUNT;
+  MATSUMURA_SIZE = innerWidth * 0.1;
+
+  for(let i=0;i<MATSUMURA_COUNT;i++){
+    matsumuras.push({
+      x: w*i + w/2,
+      y,
+      alive: true
+    });
+  }
+}
+
+/* ========= phase ========= */
+function phase(t){
+  if(t < 8000)  return { interval:[1200,1500], max:2, speed:0.55 };
+  if(t < 18000) return { interval:[800,1000], max:3, speed:0.7 };
+  if(t < 26000) return { interval:[450,600], max:4, speed:0.88 };
+  return             { interval:[800,800],  max:3, speed:0.72 };
+}
+
+/* ========= missile spawn ========= */
+function spawnMissile(now){
+  const t = now - gameStart;
+  const p = phase(t);
+  if(missiles.length >= p.max) return;
+  if(now < nextSpawn) return;
+
+  const margin = innerWidth * 0.06;
+  const x = margin + Math.random()*(innerWidth - margin*2);
+
+  const alive = matsumuras.filter(m=>m.alive);
+  const targetX = (alive.length && Math.random()<0.7)
+    ? alive[Math.floor(Math.random()*alive.length)].x
+    : Math.random()*innerWidth;
+
+  missiles.push({
+    x,
+    y:-20,
+    tx:targetX,
+    speed:p.speed * innerHeight,
+    alive:true
+  });
+
+  const [a,b] = p.interval;
+  nextSpawn = now + (a + Math.random()*(b-a)) + 120;
+}
+
+/* ========= input ========= */
+canvas.addEventListener('pointerdown', (e)=>{
+  if(!started || ended) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  if(y > innerHeight*0.86) return;
+  explosions.push({ x,y,r:0,life:0 });
+});
+
+/* ========= start / restart ========= */
+document.getElementById('overlay').addEventListener('pointerdown', ()=>{
+  startGame();
+},{once:true});
+
+function startGame(){
+  started = true;
+  ended = false;
+
+  document.getElementById('overlay').style.display='none';
+  document.getElementById('result').style.display='none';
+
+  initMatsumura();
+  missiles = [];
+  explosions = [];
+  nextSpawn = 0;
+
+  gameStart = performance.now();
+  lastTime = gameStart;
+
+  bgm.currentTime = 0;
+  bgm.play().catch(()=>{});
+
+  requestAnimationFrame(loop);
+}
+
+/* ========= loop ========= */
+function loop(now){
+  if(ended) return;
+
+  const dt = (now-lastTime)/1000;
+  lastTime = now;
+  const t = now - gameStart;
+
+  if(t >= GAME_TIME){
+    finish(false);
+    return;
+  }
+
+  spawnMissile(now);
+  update(dt);
+  draw(t);
+  hud(t);
+
+  requestAnimationFrame(loop);
+}
+
+/* ========= update ========= */
+function update(dt){
+  missiles.forEach(m=>{
+    if(!m.alive) return;
+
+    m.y += m.speed * dt;
+    m.x += (m.tx - m.x) * 0.006;
+
+    /* ---- 追加：画面外に抜けたミサイルは消す（詰まり防止） ---- */
+    if(m.y > innerHeight + 80){
+      m.alive = false;
+      return;
+    }
+
+    matsumuras.forEach(mu=>{
+      if(!mu.alive || !m.alive) return;
+      const dx = m.x - mu.x;
+      const dy = m.y - mu.y;
+      const hitR = MATSUMURA_SIZE * 0.35;
+      if(Math.hypot(dx,dy) < hitR){
+        mu.alive = false;
+        m.alive = false;
+
+        if(matsumuras.every(mm=>!mm.alive)){
+          finish(true);
+        }
+      }
+    });
+  });
+
+  explosions.forEach(e=>{
+    e.life += dt;
+    if(e.life < 0.18){
+      e.r = (e.life/0.18) * (Math.min(innerWidth,innerHeight)*0.12);
+    }
+  });
+
+  explosions.forEach(e=>{
+    if(e.life > 0.34) return;
+    missiles.forEach(m=>{
+      if(!m.alive) return;
+      if(Math.hypot(m.x-e.x,m.y-e.y) <= e.r){
+        m.alive = false;
+      }
+    });
+  });
+
+  missiles = missiles.filter(m=>m.alive);
+  explosions = explosions.filter(e=>e.life < 0.34);
+}
+
+/* ========= draw ========= */
+function draw(t){
+  ctx.clearRect(0,0,innerWidth,innerHeight);
+
+  ctx.strokeStyle='#fff';
+  missiles.forEach(m=>{
+    ctx.beginPath();
+    ctx.moveTo(m.x, m.y-10);
+    ctx.lineTo(m.x, m.y);
+    ctx.stroke();
+  });
+
+  explosions.forEach(e=>{
+    ctx.strokeStyle=`rgba(255,255,255,${1-e.life/0.34})`;
+    ctx.beginPath();
+    ctx.arc(e.x,e.y,e.r,0,Math.PI*2);
+    ctx.stroke();
+  });
+
+  matsumuras.forEach(m=>{
+    if(!m.alive) return;
+    ctx.drawImage(
+      matsuImg,
+      m.x-MATSUMURA_SIZE/2,
+      m.y-MATSUMURA_SIZE/2,
+      MATSUMURA_SIZE,
+      MATSUMURA_SIZE
+    );
+  });
+
+  ctx.fillStyle='#fff';
+  ctx.font='14px system-ui';
+  ctx.fillText(Math.ceil((GAME_TIME-t)/1000),10,20);
+}
+
+/* ========= HUD ========= */
+function hud(){
+  const alive = matsumuras.filter(m=>m.alive).length;
+  document.getElementById('hud').textContent = `生存 ${alive}/4`;
+}
+
+/* ========= result text mapping ========= */
+function resultCopy(alive, immediateGameOver){
+  if(alive === 4) return { title:'PERFECT', sub:'1分のヒーロー。守り切った。' };
+  if(alive === 3) return { title:'ALMOST', sub:'あと一息。来年はもっと楽に終われる。' };
+  if(alive === 2) return { title:'HALF', sub:'守ったものはある。持ち越しもある。' };
+  if(alive === 1) return { title:'GIRI', sub:'最後の1体で耐えた。えらい。' };
+  return immediateGameOver
+    ? { title:'GAME OVER', sub:'全滅。来年へ持ち越し。' }
+    : { title:'来年へ持ち越し', sub:'タイムアップまでに守れなかった。' };
+}
+
+/* ========= finish ========= */
+function finish(immediateGameOver){
+  if(ended) return;
+  ended = true;
+
+  const alive = matsumuras.filter(m=>m.alive).length;
+  const { title, sub } = resultCopy(alive, immediateGameOver);
+
+  document.getElementById('resultText').textContent = title;
+  document.getElementById('resultSub').textContent = sub;
+  document.getElementById('result').style.display='flex';
+
+  if(alive === 0 && immediateGameOver){
+    bgm.pause();
+  }
+}
+
+/* ========= replay ========= */
+document.getElementById('replay').addEventListener('pointerdown', ()=>{
+  startGame();
+});
+</script>
+
+</body>
+</html>
