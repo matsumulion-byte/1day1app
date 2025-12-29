@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>2025年の思い出</title>
+  <meta name="theme-color" content="#070a14" />
+  <style>
+    :root{
+      --bg:#070a14;
+      --bg2:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --accent:#60a5fa;
+      --good:#34d399;
+      --bad:#fb7185;
+      --r:18px;
+    }
+
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+      -webkit-user-select:none;
+      user-select:none;
+      -webkit-touch-callout:none;
+    }
+
+    html,body{
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background: radial-gradient(1200px 900px at 20% 10%, #121842 0%, var(--bg) 55%, #050611 100%);
+      color:var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
+    }
+
+    /* prevent double-tap zoom-ish */
+    body{ touch-action: manipulation; }
+    body{
+  background:
+    radial-gradient(
+      600px 400px at 80% 20%,
+      rgba(255, 200, 120, 0.18),
+      transparent 60%
+    ),
+    radial-gradient(
+      1200px 900px at 20% 10%,
+      #121842 0%,
+      var(--bg) 55%,
+      #050611 100%
+    );
+}
+
+body.year-end{
+  filter: saturate(1.05) brightness(1.02);
+}
+
+
+    .wrap{
+      position:relative;
+      width:100%;
+      height:100%;
+      padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .card{
+      width:min(560px, 92vw);
+      border:1px solid var(--line);
+      border-radius:calc(var(--r) + 6px);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .top{
+      padding:18px 18px 12px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .title{
+      font-size:14px;
+      letter-spacing:.08em;
+      color:var(--muted);
+    }
+
+    .badge{
+      font-size:12px;
+      color:rgba(255,255,255,.85);
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.25);
+      padding:6px 10px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+
+    .stage{
+      padding: 8px 18px 18px;
+    }
+
+    .slots{
+      display:grid;
+      gap:10px;
+    }
+
+    .slot{
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      background: rgba(0,0,0,.18);
+      padding:14px 14px;
+      position:relative;
+      overflow:hidden;
+      min-height:64px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .slot:before{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
+      transform: translateX(-60%);
+      opacity:0;
+      pointer-events:none;
+    }
+
+    .slot.spin:before{
+      opacity:1;
+      animation: sheen 700ms linear infinite;
+    }
+
+    @keyframes sheen{
+      0%{ transform: translateX(-60%); }
+      100%{ transform: translateX(60%); }
+    }
+
+    .label{
+      position:absolute;
+      left:12px;
+      top:10px;
+      font-size:12px;
+      color:rgba(243,246,255,.60);
+      letter-spacing:.08em;
+    }
+
+    .text{
+      font-size:22px;
+      line-height:1.15;
+      font-weight:800;
+      letter-spacing:.02em;
+      text-align:center;
+      padding: 0 10px;
+      text-wrap:balance;
+    }
+
+    .hint{
+      margin-top:12px;
+      font-size:12px;
+      color:rgba(243,246,255,.62);
+      line-height:1.6;
+    }
+
+    .controls{
+      margin-top:14px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+
+    button{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.10);
+      color:var(--ink);
+      border-radius: 999px;
+      padding:12px 16px;
+      font-weight:800;
+      letter-spacing:.02em;
+      cursor:pointer;
+      min-height:44px;
+    }
+    button:active{ transform: translateY(1px); }
+    button[disabled]{ opacity:.55; cursor:default; }
+
+    .sub{
+      font-size:12px;
+      color:rgba(243,246,255,.60);
+    }
+
+    /* confirm phase visuals */
+    .card.confirmed{
+      transition: filter 900ms ease, transform 900ms ease;
+      filter: brightness(.92) saturate(.95);
+    }
+
+    .roulette-ui{
+      position:absolute;
+      inset:auto 0 0 0;
+      height:64px;
+      border-top:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.28));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      padding: 10px 14px;
+      transition: opacity 400ms ease;
+    }
+
+    .rail{
+      width: 10px;
+      height: 10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.18);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.10) inset;
+    }
+
+    .roulette-ui.off{
+      opacity:0;
+      pointer-events:none;
+    }
+
+    /* final drift (very subtle) */
+    .drift{
+      animation: drift 10s ease-out forwards;
+    }
+    @keyframes drift{
+      0%{ transform: translateY(0); letter-spacing:.02em; }
+      100%{ transform: translateY(2px); letter-spacing:.03em; }
+    }
+
+    .spacer{
+      height:64px; /* to avoid bottom bar overlap */
+    }
+
+    /* Matsumura cameo */
+    .matsu{
+      position:absolute;
+      right: 14px;
+      bottom: calc(14px + 64px);
+      width: 120px;
+      height:auto;
+      opacity:0;
+      transform: translateX(18px);
+      filter: drop-shadow(0 16px 22px rgba(0,0,0,.55));
+      transition: opacity 600ms ease, transform 600ms ease;
+      pointer-events:none;
+    }
+    .matsu.show{
+      opacity:1;
+      transform: translateX(0);
+    }
+
+    /* subtle grain */
+    .grain{
+      position:absolute; inset:0;
+      pointer-events:none;
+      opacity:.10;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,.08) 0 1px, transparent 2px),
+        radial-gradient(circle at 80% 60%, rgba(255,255,255,.06) 0 1px, transparent 2px),
+        radial-gradient(circle at 50% 80%, rgba(255,255,255,.05) 0 1px, transparent 2px);
+      background-size: 180px 180px, 220px 220px, 260px 260px;
+      mix-blend-mode: overlay;
+    }
+
+    /* small screens */
+    @media (max-width:420px){
+      .text{ font-size:20px; }
+      .matsu{ width:108px; }
+      .slot{ min-height:62px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="wrap">
+    <div class="card" id="card">
+      <div class="grain"></div>
+
+      <div class="top">
+        <div>
+          <div class="title">2025年の思い出</div>
+        </div>
+        <div class="badge" id="status">READY</div>
+      </div>
+
+      <div class="stage">
+        <div class="slots" aria-live="polite">
+          <div class="slot" id="slot1">
+            <div class="label">いつ</div>
+            <div class="text" id="t1">—</div>
+          </div>
+          <div class="slot" id="slot2">
+            <div class="label">だれと</div>
+            <div class="text" id="t2">—</div>
+          </div>
+          <div class="slot" id="slot3">
+            <div class="label">なにを</div>
+            <div class="text" id="t3">—</div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="go">回す</button>
+          <div class="sub" id="sub">タップで開始（確定したらBGMが流れます）</div>
+        </div>
+
+        <div class="spacer"></div>
+      </div>
+
+      <div class="roulette-ui" id="rouletteUi" aria-hidden="true">
+        <div class="rail"></div><div class="rail"></div><div class="rail"></div><div class="rail"></div><div class="rail"></div>
+        <div class="rail"></div><div class="rail"></div><div class="rail"></div><div class="rail"></div><div class="rail"></div>
+      </div>
+
+      <img id="matsu" class="matsu" alt="松村" />
+      <audio id="bgm" preload="auto"></audio>
+    </div>
+  </div>
+
+  <script type="module">
+    // 1日1アプリ: 動的アセット参照ヘルパー（Vercel対応）
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    const el = (id) => document.getElementById(id);
+    const card = el('card');
+    const status = el('status');
+    const goBtn = el('go');
+    const sub = el('sub');
+
+    const slot1 = el('slot1'), slot2 = el('slot2'), slot3 = el('slot3');
+    const t1 = el('t1'), t2 = el('t2'), t3 = el('t3');
+    const rouletteUi = el('rouletteUi');
+
+    const matsu = el('matsu');
+    const bgm = el('bgm');
+
+    // assets（差し替えてOK）
+    matsu.src = asset('./assets/matsumura.png');
+    bgm.src  = asset('./assets/bgm.mp3'); // 14秒想定（ループなし）
+
+    const lists = {
+      when: [
+        '年始に','冬のどこかで','春先に','新年度に','GWに','梅雨に','夏休みに','お盆に',
+        '秋のはじめに','秋の終わりに','よく覚えてない頃に','年末に'
+      ],
+      who: [
+        '松村と','友達と','同僚と','親友と','両親と','家族と','子供と','犬と',
+        '偶然会った誰かと','目が合った人と','気になる人と'
+      ],
+      what: [
+        'ランデブー','何もしなかった','旅に出た','ランチした','カフェで過ごした',
+        'スパーリングした','散歩した','ダブルスで優勝',
+        'チョメチョメ','世界の危機を救った','地球に迫る小惑星を破壊しにいった'
+      ]
+    };
+
+    // 松村は「必ず入る」仕様：whoが松村以外で確定しそうなら、最終確定で差し替える
+    function ensureMatsumura(whoText){
+      return (whoText === '松村と') ? whoText : '松村と';
+    }
+
+    // ルーレット（加速→減速して止める簡易版）
+    async function spinToPick(slotEl, textEl, items, pickIndex, totalMs=2100){
+      slotEl.classList.add('spin');
+      let idx = 0;
+
+      const start = performance.now();
+      const end = start + totalMs;
+
+      // 速度カーブ：最初速く、最後遅く
+      // 0..1 の進捗に応じて更新間隔を変える
+      return new Promise((resolve) => {
+        let lastTick = start;
+        function frame(now){
+          const p = Math.min(1, (now - start) / totalMs);
+          // interval: 40ms -> 220ms へ
+          const interval = 40 + (220 - 40) * (p*p);
+
+          if (now - lastTick >= interval){
+            // 終盤は最終indexへ寄せる
+            if (p > 0.82){
+              idx = pickIndex;
+            } else {
+              idx = (idx + 1) % items.length;
+            }
+            textEl.textContent = items[idx];
+            lastTick = now;
+          }
+
+          if (now < end){
+            requestAnimationFrame(frame);
+          } else {
+            textEl.textContent = items[pickIndex];
+            slotEl.classList.remove('spin');
+            resolve(items[pickIndex]);
+          }
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+    function softenAndDrift(){
+  card.classList.add('confirmed');
+  rouletteUi.classList.add('off');
+
+  t1.classList.add('drift');
+  t2.classList.add('drift');
+  t3.classList.add('drift');
+
+  t1.style.opacity = '0.96';
+  t2.style.opacity = '0.96';
+  t3.style.opacity = '0.96';
+
+  sub.style.opacity = '0.55';
+}
+
+
+    function setState(s){
+      status.textContent = s;
+    }
+
+    function lockUI(){
+      // 以降、触らせない
+      document.body.style.pointerEvents = 'none';
+      // ただし表示上の変化は続ける
+      card.style.pointerEvents = 'auto';
+      // card内部のボタンだけは無効化済みなのでOK
+    }
+    
+    async function run(){
+      goBtn.disabled = true;
+      setState('SPINNING');
+      sub.textContent = '確定中…';
+
+      // ピック（ランダム）
+      const iWhen = Math.floor(Math.random() * lists.when.length);
+      const iWho  = Math.floor(Math.random() * lists.who.length);
+      const iWhat = Math.floor(Math.random() * lists.what.length);
+
+      // それっぽいテンポ（順番に止める）
+      t1.textContent = '—'; t2.textContent = '—'; t3.textContent = '—';
+
+      const whenText = await spinToPick(slot1, t1, lists.when, iWhen, 2100);
+      await new Promise(r => setTimeout(r, 180));
+
+      let whoText = await spinToPick(slot2, t2, lists.who, iWho, 2100);
+      // 必ず松村を入れる（仕様）
+      whoText = ensureMatsumura(whoText);
+      t2.textContent = whoText;
+
+      await new Promise(r => setTimeout(r, 180));
+
+      const whatText = await spinToPick(slot3, t3, lists.what, iWhat, 2100);
+
+      // 確定
+      setState('CONFIRMED');
+      sub.textContent = '（確定）';
+      softenAndDrift();
+
+      // ここでBGM開始
+      // ※ユーザー操作起点なので再生できる想定
+      try{
+        bgm.currentTime = 0;
+        await bgm.play();
+        document.body.classList.add('year-end');
+      }catch(e){
+        // 再生できない場合でも演出は続行
+      }
+
+      // 確定直後にUI無効化（以降タップしても何も起きない）
+      lockUI();
+
+      // 最後の5秒（14秒曲 → 9秒で松村登場）
+      const cameoAtMs = 9000;
+      setTimeout(() => {
+        matsu.classList.add('show');
+      }, cameoAtMs);
+
+      // 曲が終わっても何もしない（何も起きないのが正）
+    }
+
+    // 初期表示をランダムでうっすら入れておく（回す前の気配）
+    (function seed(){
+      t1.textContent = lists.when[Math.floor(Math.random()*lists.when.length)];
+      t2.textContent = '—';
+      t3.textContent = lists.what[Math.floor(Math.random()*lists.what.length)];
+    })();
+
+    goBtn.addEventListener('click', run, {passive:true});
+
+    // iOSの長押し選択など抑制（できる範囲）
+    document.addEventListener('contextmenu', (e)=>e.preventDefault());
+  </script>
+</body>
+</html>
