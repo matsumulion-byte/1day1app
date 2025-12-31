@@ -28,7 +28,7 @@
       touch-action: manipulation;
       background:
         linear-gradient(rgba(0,0,0,.25), rgba(0,0,0,.45)),
-        url("./assets/bg_joya_matsumura.png") center / cover no-repeat;
+        var(--bg-image, url("./assets/bg_joya_matsumura.png")) center / cover no-repeat;
     }
     button{font:inherit;border:0;background:none;color:inherit}
 
@@ -210,6 +210,9 @@
       const clean = String(p || "").replace(/^\.?\//, "");
       return `${DATE_BASE}${clean}`;
     };
+
+    // 背景画像パスを動的に設定
+    document.documentElement.style.setProperty('--bg-image', `url("${asset('./assets/bg_joya_matsumura.png')}")`);
 
     const MAX = 108;
 
