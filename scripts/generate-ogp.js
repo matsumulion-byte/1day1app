@@ -5,6 +5,20 @@
   - Falls back to <title> and heuristics for description and image
   - Inserts or replaces a marked OGP block inside <head>
 */
+import fs from "fs";
+import path from "path";
+
+const candidates = [
+  path.join(process.cwd(), ".next/server/pages/index.html"),
+  path.join(process.cwd(), ".next/server/app/page.html"),
+];
+
+const htmlPath = candidates.find(p => fs.existsSync(p));
+
+if (!htmlPath) {
+  console.log("[OGP] index page not found. skip OGP generation.");
+  process.exit(0);
+}
 
 const fs = require('fs');
 const path = require('path');
