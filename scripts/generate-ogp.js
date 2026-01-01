@@ -4,39 +4,35 @@
   - Reads optional ogp.json in each app dir
   - Falls back to <title> and heuristics for description and image
   - Inserts or replaces a marked OGP block inside <head>
+
+  NOTE:
+  - Do NOT depend on .next build outputs (they differ by router/output mode).
 */
+
 import fs from "fs";
 import path from "path";
 
-const candidates = [
-  path.join(process.cwd(), ".next/server/pages/index.html"),
-  path.join(process.cwd(), ".next/server/app/page.html"),
-];
-
-const htmlPath = candidates.find(p => fs.existsSync(p));
-
-if (!htmlPath) {
-  console.log("[OGP] index page not found. skip OGP generation.");
-  process.exit(0);
-}
-
-const fs = require('fs');
-const path = require('path');
-
 const ROOT = process.cwd();
-const PUBLIC_APPS_DIR = path.join(ROOT, 'public', 'apps');
+const PUBLIC_APPS_DIR = path.join(ROOT, "public", "apps");
 
 function toAbsoluteUrl(maybePath, baseUrl) {
-  if (!maybePath) return '';
+  if (!maybePath) return "";
   if (/^https?:\/\//i.test(maybePath)) return maybePath;
   if (!baseUrl) return maybePath; // leave as path if no baseUrl provided
-  return baseUrl.replace(/\/$/, '') + '/' + maybePath.replace(/^\//, '');
+  return baseUrl.replace(/\/$/, "") + "/" + maybePath.replace(/^\//, "");
+}
+
+function escapeAttr(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 function extractTitle(html) {
   const m = html.match(/<title>([\s\S]*?)<\/title>/i);
-  if (m) return m[1].trim();
-  return '';
+  return m ? m[1].trim() : "";
 }
 
 function extractDescription(html) {
@@ -49,122 +45,144 @@ function extractDescription(html) {
   const bodyMatch = html.match(/<body[\s\S]*?>([\s\S]*?)<\/body>/i);
   if (bodyMatch) {
     const tmp = bodyMatch[1]
-      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s+/g, ' ')
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
       .trim();
     return tmp.slice(0, 140);
   }
-  return '';
+  return "";
 }
 
 function findImage(appDir) {
   // Prefer ogp.(png|jpg|jpeg|webp)
-  const candidates = [
-    'ogp.png', 'ogp.jpg', 'ogp.jpeg', 'ogp.webp',
-  ];
-  for (const name of candidates) {
+  const prefer = ["ogp.png", "ogp.jpg", "ogp.jpeg", "ogp.webp"];
+  for (const name of prefer) {
     const p = path.join(appDir, name);
     if (fs.existsSync(p)) return name;
   }
   // Look into assets/* for first image
-  const assetsDir = path.join(appDir, 'assets');
+  const assetsDir = path.join(appDir, "assets");
   if (fs.existsSync(assetsDir) && fs.statSync(assetsDir).isDirectory()) {
     const files = fs.readdirSync(assetsDir);
-    const img = files.find(f => /\.(png|jpg|jpeg|webp|gif)$/i.test(f));
-    if (img) return path.join('assets', img);
+    const img = files.find((f) => /\.(png|jpg|jpeg|webp|gif)$/i.test(f));
+    if (img) return path.join("assets", img);
   }
-  return '';
+  return "";
 }
 
 function buildOgpBlock({ title, description, imageAbsUrl, pageUrl }) {
+  const t = escapeAttr(title);
+  const d = escapeAttr(description);
+  const img = escapeAttr(imageAbsUrl);
+  const url = escapeAttr(pageUrl);
+
   const lines = [];
-  lines.push('  <!-- OGP AUTO-GENERATED START (do not edit by hand) -->');
-  if (title) {
-    lines.push(`  <meta property="og:title" content="${title}">`);
-    lines.push(`  <meta name="twitter:title" content="${title}">`);
+  lines.push("  <!-- OGP AUTO-GENERATED START (do not edit by hand) -->");
+  if (t) {
+    lines.push(`  <meta property="og:title" content="${t}">`);
+    lines.push(`  <meta name="twitter:title" content="${t}">`);
   }
-  if (description) {
-    lines.push(`  <meta property="og:description" content="${description}">`);
-    lines.push(`  <meta name="twitter:description" content="${description}">`);
+  if (d) {
+    lines.push(`  <meta property="og:description" content="${d}">`);
+    lines.push(`  <meta name="twitter:description" content="${d}">`);
   }
-  if (imageAbsUrl) {
-    lines.push(`  <meta property="og:image" content="${imageAbsUrl}">`);
-    lines.push(`  <meta name="twitter:image" content="${imageAbsUrl}">`);
+  if (img) {
+    lines.push(`  <meta property="og:image" content="${img}">`);
+    lines.push(`  <meta name="twitter:image" content="${img}">`);
   }
-  if (pageUrl) {
-    lines.push(`  <meta property="og:url" content="${pageUrl}">`);
+  if (url) {
+    lines.push(`  <meta property="og:url" content="${url}">`);
   }
   lines.push('  <meta property="og:type" content="website">');
   lines.push('  <meta name="twitter:card" content="summary_large_image">');
-  lines.push('  <!-- OGP AUTO-GENERATED END -->');
-  return lines.join('\n');
+  lines.push("  <!-- OGP AUTO-GENERATED END -->");
+  return lines.join("\n");
 }
 
 function injectIntoHead(html, ogpBlock) {
   // Remove existing auto block if any
-  html = html.replace(/\n?\s*<!-- OGP AUTO-GENERATED START[\s\S]*?OGP AUTO-GENERATED END -->\s*\n?/i, '\n');
+  html = html.replace(
+    /\n?\s*<!-- OGP AUTO-GENERATED START[\s\S]*?OGP AUTO-GENERATED END -->\s*\n?/i,
+    "\n"
+  );
   // Insert after opening <head>
   const headOpen = html.match(/<head[^>]*>/i);
-  if (!headOpen) return html; // do nothing
+  if (!headOpen) return html;
   const idx = html.indexOf(headOpen[0]) + headOpen[0].length;
-  return html.slice(0, idx) + '\n' + ogpBlock + '\n' + html.slice(idx);
+  return html.slice(0, idx) + "\n" + ogpBlock + "\n" + html.slice(idx);
 }
 
 function loadJsonIfExists(filePath) {
   if (!fs.existsSync(filePath)) return null;
   try {
-    const raw = fs.readFileSync(filePath, 'utf8');
+    const raw = fs.readFileSync(filePath, "utf8");
     return JSON.parse(raw);
   } catch (e) {
-    console.warn(`WARN: Failed to parse ${filePath}:`, e.message);
+    console.warn(`WARN: Failed to parse ${filePath}: ${e.message}`);
     return null;
   }
 }
 
 function main() {
-  const baseUrl = process.env.SITE_BASE_URL || '';
+  const baseUrl = process.env.SITE_BASE_URL || "";
+
   if (!fs.existsSync(PUBLIC_APPS_DIR)) {
     console.error(`Not found: ${PUBLIC_APPS_DIR}`);
     process.exit(1);
   }
-  const appDirs = fs.readdirSync(PUBLIC_APPS_DIR)
-    .map(name => path.join(PUBLIC_APPS_DIR, name))
-    .filter(p => fs.statSync(p).isDirectory());
 
-  appDirs.forEach(appDir => {
-    const indexHtmlPath = path.join(appDir, 'index.html');
-    if (!fs.existsSync(indexHtmlPath)) return;
-    const relAppPath = path.relative(path.join(ROOT, 'public'), appDir).replace(/\\/g, '/');
-    const ogpJson = loadJsonIfExists(path.join(appDir, 'ogp.json')) || {};
-    let html = fs.readFileSync(indexHtmlPath, 'utf8');
+  const appDirs = fs
+    .readdirSync(PUBLIC_APPS_DIR)
+    .map((name) => path.join(PUBLIC_APPS_DIR, name))
+    .filter((p) => fs.statSync(p).isDirectory());
 
-    const title = ogpJson.title || extractTitle(html) || '';
-    const description = ogpJson.description || extractDescription(html) || '';
-    const imageRel = ogpJson.image || findImage(appDir) || '';
-    const imageAbs = imageRel ? toAbsoluteUrl('/' + relAppPath + '/' + imageRel, baseUrl) : '';
-    const pageUrl = toAbsoluteUrl('/' + relAppPath + '/index.html', baseUrl);
+  for (const appDir of appDirs) {
+    const indexHtmlPath = path.join(appDir, "index.html");
+    if (!fs.existsSync(indexHtmlPath)) continue;
 
-    const ogpBlock = buildOgpBlock({ title, description, imageAbsUrl: imageAbs, pageUrl });
+    const relAppPath = path
+      .relative(path.join(ROOT, "public"), appDir)
+      .replace(/\\/g, "/")
+      .replace(/^apps\//, ""); // Remove "apps/" prefix to match vercel.json routing
+
+    const ogpJson = loadJsonIfExists(path.join(appDir, "ogp.json")) || {};
+    const html = fs.readFileSync(indexHtmlPath, "utf8");
+
+    const title = ogpJson.title || extractTitle(html) || "";
+    const description = ogpJson.description || extractDescription(html) || "";
+    const imageRel = ogpJson.image || findImage(appDir) || "";
+
+    const imageAbs = imageRel
+      ? toAbsoluteUrl("/" + relAppPath + "/" + imageRel, baseUrl)
+      : "";
+
+    // Match vercel.json routing: /YYYY-MM-DD/ (without /index.html)
+    const pageUrl = toAbsoluteUrl("/" + relAppPath + "/", baseUrl);
+
+    const ogpBlock = buildOgpBlock({
+      title,
+      description,
+      imageAbsUrl: imageAbs,
+      pageUrl,
+    });
+
     const updated = injectIntoHead(html, ogpBlock);
+
     if (updated !== html) {
-      fs.writeFileSync(indexHtmlPath, updated, 'utf8');
+      fs.writeFileSync(indexHtmlPath, updated, "utf8");
       console.log(`Injected OGP: ${indexHtmlPath}`);
     } else {
       console.log(`No changes: ${indexHtmlPath}`);
     }
-  });
-}
-
-if (require.main === module) {
-  try {
-    main();
-  } catch (e) {
-    console.error('OGP generation failed:', e);
-    console.error('Continuing build...');
-    process.exit(0); // エラーでもビルドを続行
   }
 }
 
-
+try {
+  main();
+} catch (e) {
+  console.error("OGP generation failed:", e);
+  console.error("Continuing build...");
+  process.exit(0); // エラーでもビルドを続行
+}
