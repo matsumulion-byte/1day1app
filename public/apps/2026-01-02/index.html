@@ -312,12 +312,79 @@ async function ensureOverlays(){
 async function startCamera(){
   standby.classList.add('hide');
   setStatus('起動中…');
-  await ensureOverlays();
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
-  video.srcObject=stream;
-  await video.play();
-  btnShot.disabled=false;
-  setStatus('準備OK');
+
+  // iOS対策：属性を明示
+  video.setAttribute('playsinline', '');
+  video.setAttribute('muted', '');
+  video.setAttribute('autoplay', '');
+
+  try{
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      throw new Error('getUserMedia_not_supported');
+    }
+
+    await ensureOverlays();
+
+    // まずは user（自撮り）を試す
+    const tryConstraints = async (constraints) => {
+      const s = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = s;
+
+      // iOSは play() が落ちることがあるので握って再試行
+      try { await video.play(); } catch {}
+      // 次フレーム待つ（videoWidthが入るまで）
+      await new Promise(r => requestAnimationFrame(r));
+
+      if (!video.videoWidth || !video.videoHeight){
+        // もう1フレーム
+        await new Promise(r => requestAnimationFrame(r));
+      }
+      return s;
+    };
+
+    try{
+      stream = await tryConstraints({
+        video: { facingMode: { ideal: 'user' } },
+        audio: false
+      });
+    }catch(e1){
+      // user がダメなら environment を試す（端末によって逆に通る）
+      stream = await tryConstraints({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false
+      });
+    }
+
+    btnShot.disabled = false;
+    btnRetry.disabled = true;
+    btnSave.disabled = true;
+    result.classList.remove('show');
+
+    setStatus('準備OK');
+
+  }catch(e){
+    console.error(e);
+    setStatus('カメラ不可');
+
+    // 失敗理由を画面に出す（ユーザーが判断できるように）
+    const msg = String(e?.name || e?.message || e);
+
+    // よくある原因をテキスト化
+    let hint = 'カメラが起動できませんでした。';
+    if (msg.includes('NotAllowedError') || msg.includes('Permission')) {
+      hint = 'カメラ権限が拒否されています。Safariの「設定 > Safari > カメラ」またはサイト設定を確認してください。';
+    } else if (msg.includes('NotFoundError') || msg.includes('Overconstrained')) {
+      hint = 'カメラが見つからない/制約が合いません。別ブラウザや端末で試してください。';
+    } else if (msg.includes('getUserMedia_not_supported')) {
+      hint = 'このブラウザはカメラに対応していません。Safariで開いてください（アプリ内ブラウザ不可のことがあります）。';
+    } else {
+      hint = 'HTTPSで開いているか、アプリ内ブラウザではなくSafariで開いているか確認してください。';
+    }
+
+    // あなたの既存UIに合わせて status/hint を出す
+    // hintElがあるならここで出す（今の全文にはhintEl無いのでalertでもOK）
+    alert(hint);
+  }
 }
 
 function draw(){
