@@ -299,6 +299,32 @@ footer{
   gap:10px;
 }
 .hint{ grid-column: 1 / -1; }
+.footer{
+  position:sticky;
+  bottom:0;
+  z-index:10;
+  transition: opacity .25s ease, transform .25s ease;
+}
+
+/* 一時的に隠す */
+.footer.hide{
+  opacity:0;
+  pointer-events:none;
+  transform: translateY(12px);
+}
+
+/* 撮る前 */
+.footer.mode-shoot .btn-save,
+.footer.mode-shoot .btn-retry{
+  display:none;
+}
+
+/* 撮影後 */
+.footer.mode-result .btn-shot,
+.footer.mode-result .btn-start{
+  display:none;
+}
+
 
 
     /* hidden canvas */
@@ -336,11 +362,12 @@ footer{
       <canvas id="canvas"></canvas>
     </main>
 
-    <footer>
-      <button class="btn primary" id="btnStart">カメラ起動</button>
-      <button class="btn primary" id="btnShot" disabled>撮る</button>
-      <button class="btn" id="btnRetry" disabled>撮り直す</button>
-      <button class="btn" id="btnSave" disabled>保存</button>
+    <footer id="footer" class="footer mode-shoot">
+        <button class="btn primary btn-start" id="btnStart">カメラ起動</button>
+        <button class="btn primary btn-shot" id="btnShot">撮る</button>
+        <button class="btn btn-retry" id="btnRetry">撮り直す</button>
+        <button class="btn btn-save" id="btnSave">保存</button>
+        
       <div class="hint" id="hint">
         iPhoneは「カメラ起動」を押して許可 → 「撮る」で合成 → 「保存」で画像を保存できます。
       </div>
@@ -606,39 +633,57 @@ footer{
   await new Promise(r => requestAnimationFrame(r));
 }
 
-    async function takeShot(){
-      if (!stream) return;
-      await waitVideoReady(); // ←これ
-  
-// これに固定
-const W = 1080;
-const H = 1920;
+async function takeShot(){
+  if (!stream) return;
+  await waitVideoReady();
 
-  
-      canvas.width = W;
-      canvas.height = H;
-  
-      const imgs = await ensureOverlays();
-  
-      flashOnce();
-      chantOnce();
-  
-      ctx.clearRect(0,0,W,H);
-      drawOverlayComposite(W, H, imgs);
-  
-      const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.92));
-      if (!blob) return;
-  
-      if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
-      lastBlobUrl = URL.createObjectURL(blob);
-  
-      resultImg.src = lastBlobUrl;
-      result.classList.add('show');
-  
-      btnSave.disabled = false;
-      btnRetry.disabled = false;
-      setStatus('完成');
-    }
+  const W = 1080;
+  const H = 1920;
+
+  canvas.width = W;
+  canvas.height = H;
+
+  const imgs = await ensureOverlays();
+
+  // 連打対策（任意）
+  btnShot.disabled = true;
+
+  flashOnce();
+  chantOnce();
+
+  ctx.clearRect(0,0,W,H);
+  drawOverlayComposite(W, H, imgs);
+
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.92));
+  if (!blob){
+    btnShot.disabled = false;
+    return;
+  }
+
+  if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+  lastBlobUrl = URL.createObjectURL(blob);
+
+  resultImg.src = lastBlobUrl;
+  result.classList.add('show');
+
+  // --- ここから追加：フッターを一旦消す → 結果モードで戻す ---
+  if (footer){
+    footer.classList.add('hide');
+
+    if (footerTimer) clearTimeout(footerTimer);
+    footerTimer = setTimeout(() => {
+      footer.classList.remove('hide');
+      footer.classList.remove('mode-shoot');
+      footer.classList.add('mode-result');
+    }, 700);
+  }
+  // --- 追加ここまで ---
+
+  btnSave.disabled = false;
+  btnRetry.disabled = false;
+  setStatus('完成');
+}
+
   
     function downloadResult(){
       if (!lastBlobUrl) return;
@@ -651,11 +696,20 @@ const H = 1920;
     }
   
     function retry(){
-      result.classList.remove('show');
-      btnSave.disabled = true;
-      btnRetry.disabled = true;
-      setStatus('準備OK');
-    }
+  result.classList.remove('show');
+  btnSave.disabled = true;
+  btnRetry.disabled = true;
+  btnShot.disabled = false;
+
+  if (footer){
+    footer.classList.remove('hide');
+    footer.classList.remove('mode-result');
+    footer.classList.add('mode-shoot');
+  }
+
+  setStatus('準備OK');
+}
+
   
     btnStart.addEventListener('click', startCamera);
     btnShot.addEventListener('click', takeShot);
