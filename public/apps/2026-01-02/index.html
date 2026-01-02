@@ -193,6 +193,92 @@ video, .result img{ object-fit: cover; }
       border:1px dashed rgba(255,255,255,.18);
       background:rgba(255,255,255,.04);
     }
+    /* ---- standby（撮る前のめでたい画面） ---- */
+.standby{
+  position:absolute;
+  inset:0;
+  z-index:6;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+
+  /* 金×紺の縦グラデ */
+  background:
+    radial-gradient(
+      120% 60% at 50% 100%,
+      rgba(255,215,160,.35),
+      rgba(0,0,0,0) 60%
+    ),
+    linear-gradient(
+      180deg,
+      #3a2a00 0%,
+      #6b4a00 25%,
+      #b58a00 55%,
+      #2a1c00 100%
+    );
+}
+
+.standby::before{
+  content:"";
+  position:absolute;
+  inset:-20%;
+  background:
+    radial-gradient(
+      circle at 50% 80%,
+      rgba(255,255,255,.25),
+      rgba(255,255,255,0) 60%
+    );
+  transform:rotate(-8deg);
+}
+
+.standby::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255,255,255,.03) 0 2px,
+      rgba(255,255,255,0) 2px 6px
+    );
+  mix-blend-mode:overlay;
+}
+
+.standby-inner{
+  position:relative;
+  text-align:center;
+  padding:28px 22px;
+  border-radius:18px;
+  background:rgba(0,0,0,.45);
+  border:1px solid rgba(255,255,255,.25);
+  backdrop-filter: blur(6px);
+}
+
+.standby-title{
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:.12em;
+  color:#fff;
+}
+
+.standby-sub{
+  margin-top:10px;
+  font-size:14px;
+  letter-spacing:.18em;
+  color:rgba(255,255,255,.85);
+}
+
+.standby-note{
+  margin-top:18px;
+  font-size:12px;
+  color:rgba(255,255,255,.7);
+}
+
+/* カメラ起動後に消す */
+.standby.hide{
+  display:none;
+}
+
 
     /* hidden canvas */
     canvas{display:none}
@@ -203,12 +289,17 @@ video, .result img{ object-fit: cover; }
     <header>
       <div class="title">
         <h1>初夢フィルター</h1>
-        <p>一富士 二鷹 三松村（撮ったら完成）</p>
       </div>
       <div class="badge" id="status">カメラ準備中</div>
     </header>
 
     <main class="stage" id="stage">
+        <div class="standby" id="standby">
+            <div class="standby-inner">
+              <div class="standby-title">初夢フィルター</div>
+              <div class="standby-note">カメラ起動で撮影</div>
+            </div>
+          </div>
       <video id="video" playsinline muted></video>
 
       <div class="result" id="result">
@@ -301,6 +392,7 @@ video, .result img{ object-fit: cover; }
     }
   
     async function startCamera(){
+      standby.classList.add('hide');
       try{
         setStatus('カメラ起動中…');
         await ensureOverlays();
