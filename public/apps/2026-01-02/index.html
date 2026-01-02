@@ -310,31 +310,44 @@ async function ensureOverlays(){
 }
 
 async function startCamera(){
-  setStatus('起動中…');
+  setStatus('カメラ起動中…');
 
   try{
-    await ensureOverlays();
-
+    // iOS Safari 対策：一切触らず即 getUserMedia
     const s = await navigator.mediaDevices.getUserMedia({
-  video: true,
-  audio: false
-});
-
+      video: {
+        facingMode: 'user'
+      },
+      audio: false
+    });
 
     video.setAttribute('playsinline', '');
+    video.setAttribute('muted', '');
     video.srcObject = s;
 
-    await video.play(); // ← ここが成功してから
+    // iOSは play() が失敗しても resolve することがあるので二段階
+    await video.play();
+    await new Promise(r => requestAnimationFrame(r));
+
+    if (!video.videoWidth) {
+      throw new Error('VIDEO_NOT_READY');
+    }
 
     stream = s;
-    standby.classList.add('hide'); // ← ここに移動
-
+    standby.classList.add('hide');
     btnShot.disabled = false;
     setStatus('準備OK');
+
   }catch(e){
     console.error(e);
     setStatus('カメラ不可');
-    alert('カメラが起動できませんでした。Safariの権限設定を確認してください。');
+
+    alert(
+      'カメラが起動できませんでした。\n\n' +
+      'Safariを完全に終了するか、\n' +
+      'iPhoneを再起動してから\n' +
+      'もう一度お試しください。'
+    );
   }
 }
 
