@@ -316,9 +316,10 @@ async function startCamera(){
     await ensureOverlays();
 
     const s = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user' },
-      audio: false
-    });
+  video: true,
+  audio: false
+});
+
 
     video.setAttribute('playsinline', '');
     video.srcObject = s;
