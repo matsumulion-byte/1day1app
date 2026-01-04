@@ -196,7 +196,7 @@
 
     // ====== AUDIO ======
     // このファイル名のまま assets に置くならこれでOK（文字化けするなら bgm.mp3 にリネーム推奨）
-    const AUDIO_SRC = asset("assets/みなさま悲しいお知らせです.mp3");
+    const AUDIO_SRC = asset("assets/bgm.mp3");
     const audio = new Audio(AUDIO_SRC);
     audio.preload = "auto";
     audio.loop = false;
@@ -586,18 +586,35 @@
       overlay.style.display = "none";
       running = true;
 
-      // iOS/Safari 対策：ユーザー操作内で play()
-      audio.currentTime = 0;
       audio.muted = muted;
 
+      // ★srcを確定させてロード
+      audio.load();
+
       try{
+        // ★metadataが来るまで待つ（遅い環境対策）
+        await new Promise((resolve, reject)=>{
+          const onOk = ()=>{ cleanup(); resolve(); };
+          const onErr = ()=>{ cleanup(); reject(audio.error || new Error("audio error")); };
+          const cleanup = ()=>{
+            audio.removeEventListener("loadedmetadata", onOk);
+            audio.removeEventListener("error", onErr);
+          };
+          if (audio.readyState >= 1) { resolve(); return; } // HAVE_METADATA
+          audio.addEventListener("loadedmetadata", onOk, { once:true });
+          audio.addEventListener("error", onErr, { once:true });
+        });
+
+        audio.currentTime = 0;  // ★metadata後なら安全
         await audio.play();
-      }catch(err){
-        // 再生できない場合はオーバーレイ戻す
+      } catch(err){
         running = false;
         overlay.style.display = "grid";
         ovTitle.textContent = "再生できませんでした";
-        ovDesc.textContent = "Safariの音声再生制限か、ファイルパスを確認してください。assets内のファイル名が合っているか見て。";
+        ovDesc.textContent =
+          `src: ${audio.src}\n` +
+          `readyState: ${audio.readyState}\n` +
+          `err: ${err?.name || "Error"}: ${err?.message || err}`;
         return;
       }
 
