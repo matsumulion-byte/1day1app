@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>仕事始めリズムゲーム</title>
+  <meta name="theme-color" content="#070a14" />
+  <style>
+    :root{
+      --bg:#070a14;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.68);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --good:#34d399;
+      --bad:#fb7185;
+      --accent:#60a5fa;
+      --r:18px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+    html,body{height:100%; background:var(--bg); color:var(--ink); font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif; overflow:hidden;}
+    button{font:inherit}
+
+    /* 9:16 stage */
+    .wrap{
+      height:100%;
+      display:grid;
+      place-items:center;
+      padding:12px;
+    }
+    .stage{
+      width:min(460px, 100%);
+      aspect-ratio: 9 / 16;
+      border-radius:24px;
+      overflow:hidden;
+      position:relative;
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(96,165,250,.10), transparent 60%),
+        radial-gradient(90% 60% at 10% 70%, rgba(52,211,153,.08), transparent 60%),
+        radial-gradient(80% 60% at 90% 80%, rgba(251,113,133,.07), transparent 60%),
+        #050814;
+      box-shadow: 0 20px 80px rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    canvas{width:100%; height:100%; display:block;}
+
+    .hud{
+      position:absolute; inset:0;
+      pointer-events:none;
+    }
+    .topbar{
+      position:absolute; left:14px; right:14px; top:12px;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+      pointer-events:none;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 12px;
+      border-radius:999px;
+      background:rgba(0,0,0,.42);
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      font-size:12px;
+      color:var(--muted);
+    }
+    .pill b{color:var(--ink); font-weight:700;}
+    .tiny{font-size:11px;color:rgba(243,246,255,.55);}
+
+    .centerToast{
+      position:absolute; left:50%; top:22%;
+      transform:translateX(-50%);
+      padding:10px 14px;
+      border-radius:999px;
+      background:rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.12);
+      color:rgba(243,246,255,.88);
+      font-weight:700;
+      letter-spacing:.02em;
+      opacity:0;
+      transition: opacity .12s linear, transform .12s linear;
+      pointer-events:none;
+      white-space:nowrap;
+    }
+    .centerToast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(-4px);
+    }
+    .overlay{
+  position:absolute; inset:0;
+  display:grid; place-items:center;
+  background:rgba(0,0,0,.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding:18px;
+
+  pointer-events:auto;   /* 追加：overlay自体はクリック可能 */
+}
+
+    .card{
+      width:min(360px, 100%);
+      border-radius:24px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      padding:18px 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+      pointer-events:auto;
+
+    }
+    .title{
+      font-size:16px;
+      font-weight:800;
+      letter-spacing:.02em;
+      margin-bottom:8px;
+    }
+    .desc{
+      font-size:12px; color:rgba(243,246,255,.72);
+      line-height:1.6;
+      margin-bottom:14px;
+    }
+    .row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+    .stat{
+      flex:1 1 140px;
+      padding:10px 12px;
+      border-radius:16px;
+      background:rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .stat .k{font-size:11px;color:rgba(243,246,255,.60)}
+    .stat .v{font-size:18px;font-weight:900;margin-top:4px}
+    .btns{display:flex; gap:10px; margin-top:10px;}
+    .btn{
+      flex:1;
+      padding:12px 14px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.10);
+      color:var(--ink);
+      font-weight:800;
+      cursor:pointer;
+      pointer-events:auto;
+    }
+    .btn.primary{
+      background:rgba(96,165,250,.18);
+      border-color:rgba(96,165,250,.35);
+    }
+    .footnote{margin-top:10px; font-size:11px; color:rgba(243,246,255,.55); line-height:1.5;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="stage" id="stage">
+      <canvas id="cv" width="900" height="1600" aria-label="rhythm game"></canvas>
+
+      <div class="hud">
+        <div class="topbar">
+          <div class="pill"><b id="score">0</b><span>score</span><span class="tiny">BPM 133</span></div>
+          <div class="pill"><span>combo</span><b id="combo">0</b></div>
+        </div>
+        <div class="centerToast" id="toast">PERFECT</div>
+      </div>
+
+      <div class="overlay" id="overlay">
+        <div class="card">
+          <div class="title" id="ovTitle">仕事始めの準備リズムゲーム</div>
+          <div class="desc" id="ovDesc">仕事が始まるまでの準備体操としてやりましょ</div>
+
+          <div class="row">
+            <div class="stat"><div class="k">PERFECT</div><div class="v" id="stP">0</div></div>
+            <div class="stat"><div class="k">GOOD</div><div class="v" id="stG">0</div></div>
+          </div>
+          <div class="row">
+            <div class="stat"><div class="k">MISS</div><div class="v" id="stM">0</div></div>
+            <div class="stat"><div class="k">MAX COMBO</div><div class="v" id="stC">0</div></div>
+          </div>
+
+          <div class="btns">
+            <button class="btn primary" id="btnStart">再生して始める</button>
+            <button class="btn" id="btnMute">BGM: ON</button>
+          </div>
+          <div class="footnote">
+            判定はゆるめ。のんびりやりましょ。<br/>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // 1日1アプリ規約：動的アセット参照ヘルパー
+    // Vercel対応：現在のパスから相対パスを構築
+    const asset = (p) => {
+      const base = window.location.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '') || '/';
+      return base + (p.startsWith('/') ? p : '/' + p);
+    };
+
+    // ====== AUDIO ======
+    // このファイル名のまま assets に置くならこれでOK（文字化けするなら bgm.mp3 にリネーム推奨）
+    const AUDIO_SRC = asset("assets/みなさま悲しいお知らせです.mp3");
+    const audio = new Audio(AUDIO_SRC);
+    audio.preload = "auto";
+    audio.loop = false;
+
+    // ====== GAME TUNING ======
+    const BPM = 133;
+    const BEAT = 60 / BPM;
+
+    // ★まずは4分だけ（四分音符）に固定
+    const SUBDIV = 1;          // 1=4分（2=8分、4=16分）
+    const STEP = BEAT / SUBDIV;
+
+    // 「見た目の落下」先読み（大きいほどゆっくり落ちる）
+    const TRAVEL = 1.35;
+    const HIT_Y = 0.83;
+
+    // 先読みして生成するstep数（落下時間TRAVELぶん + 余白）
+    const LOOKAHEAD_STEPS = Math.ceil(TRAVEL / STEP) + 4;
+    let lastScheduledStep = -1;
+
+    // ノーツ生成時間範囲
+    const START_SEC = 8.0;   // ノーツ開始
+    const END_SEC   = 55.0;  // ノーツ終了（この秒以降は出さない）
+
+    // ★落下開始を早める（8秒のノーツを上から降らせるため）
+    const SPAWN_BEGIN = Math.max(0, START_SEC - TRAVEL);
+
+    // 判定（ゆるめ）
+    const PERFECT = 0.070;              // 秒
+    const GOOD = 0.140;                 // 秒
+
+    // ランダム譜面生成（BPM同期）
+    // - downbeat(4分頭)は出やすい
+    // - 同レーン連打を抑制
+    // - ときどき休符
+    const PROB_STRONG = 0.78;           // 小節頭/強拍
+    const PROB_WEAK = 0.48;             // それ以外
+    const REST_CHANCE = 0.12;           // 休符（そのstepは出さない）
+
+    // 音源頭のズレ調整（合ってるなら0）
+    let startOffset = 0.00;             // 秒（0.02〜0.08あたりで微調整）
+
+    // ====== CANVAS ======
+    const cv = document.getElementById("cv");
+    const ctx = cv.getContext("2d");
+    const stage = document.getElementById("stage");
+
+    function fitCanvas(){
+      // CSSで伸縮してるので内部解像度だけDPR反映
+      const rect = stage.getBoundingClientRect();
+      const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+      cv.width = Math.round(rect.width * dpr);
+      cv.height = Math.round(rect.height * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    fitCanvas();
+    window.addEventListener("resize", fitCanvas);
+
+    // ====== UI ======
+    const overlay = document.getElementById("overlay");
+    const btnStart = document.getElementById("btnStart");
+    const btnMute = document.getElementById("btnMute");
+    const scoreEl = document.getElementById("score");
+    const comboEl = document.getElementById("combo");
+    const toast = document.getElementById("toast");
+
+    const stP = document.getElementById("stP");
+    const stG = document.getElementById("stG");
+    const stM = document.getElementById("stM");
+    const stC = document.getElementById("stC");
+    const ovTitle = document.getElementById("ovTitle");
+    const ovDesc = document.getElementById("ovDesc");
+
+    let muted = false;
+    btnMute.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      muted = !muted;
+      audio.muted = muted;
+      btnMute.textContent = muted ? "BGM: OFF" : "BGM: ON";
+    }, {passive:false});
+
+    // ====== GAME STATE ======
+    let running = false;
+    let notes = []; // {lane:0..3, hitTime:number, bornStep:int}
+    let lastStepIdx = -1;
+    let lastLane = -1;
+    let lastLane2 = -1;
+
+    let score = 0;
+    let combo = 0;
+    let maxCombo = 0;
+    let cPerfect = 0, cGood = 0, cMiss = 0;
+
+    // ====== INPUT ======
+    function laneFromX(clientX){
+      const rect = stage.getBoundingClientRect();
+      const x = (clientX - rect.left) / rect.width;
+      const lane = Math.max(0, Math.min(3, Math.floor(x * 4)));
+      return lane;
+    }
+
+    function hit(lane){
+      if (!running) return;
+
+      const t = audio.currentTime;
+      // そのレーンで最も近いノーツを探す（判定ライン到達時刻ベース）
+      let bestIdx = -1;
+      let bestAbs = 1e9;
+
+      for (let i=0;i<notes.length;i++){
+        const n = notes[i];
+        if (n.lane !== lane) continue;
+        const dt = n.hitTime - t;             // 未来:+ / 過去:-
+        const adt = Math.abs(dt);
+        if (adt < bestAbs){
+          bestAbs = adt;
+          bestIdx = i;
+        }
+      }
+
+      if (bestIdx === -1 || bestAbs > GOOD){
+        // 空振りはノーカン（1/4仕様：心を折らない）
+        flashToast("…", 70);
+        return;
+      }
+
+      // 判定
+      if (bestAbs <= PERFECT){
+        cPerfect++;
+        score += 100;
+        combo++;
+        flashToast("PERFECT", 120);
+      }else{
+        cGood++;
+        score += 60;
+        combo++;
+        flashToast("GOOD", 120);
+      }
+      maxCombo = Math.max(maxCombo, combo);
+
+      notes.splice(bestIdx, 1);
+
+      scoreEl.textContent = score;
+      comboEl.textContent = combo;
+    }
+
+    // pointer events
+    stage.addEventListener("pointerdown", (e)=>{
+  // オーバーレイ（開始画面/リザルト）上の操作はボタンに任せる
+  if (e.target.closest("#overlay")) return;
+
+  // ゲーム中だけレーン入力として扱う
+  if (!running) return;
+
+  e.preventDefault();
+  stage.setPointerCapture(e.pointerId);
+  hit(laneFromX(e.clientX));
+}, {passive:false});
+
+
+    // ====== RANDOM CHART (BPM-locked) ======
+    function isStrongStep(stepIdx){
+      // ★4分基準：1拍=1step、1小節=4step
+      const stepsPerBeat = SUBDIV;        // 1
+      const stepsPerBar = stepsPerBeat * 4; // 4
+      const inBar = ((stepIdx % stepsPerBar) + stepsPerBar) % stepsPerBar;
+
+      // ★「強拍」= 小節頭のみ（4分だけなので）
+      return inBar === 0;
+    }
+
+    function pickLane(){
+      // 直近の同レーン偏りを抑制
+      const candidates = [0,1,2,3].filter(l => l !== lastLane);
+      let pool = candidates;
+
+      // 2連続同方向（例えば 0->1->0 みたいなの）も少し抑制
+      if (lastLane2 !== -1){
+        pool = pool.filter(l => !(l === lastLane2 && lastLane !== -1));
+        if (pool.length === 0) pool = candidates;
+      }
+
+      const lane = pool[Math.floor(Math.random() * pool.length)];
+      lastLane2 = lastLane;
+      lastLane = lane;
+      return lane;
+    }
+
+    function maybeSpawn(stepIdx){
+      const lane = pickLane();
+
+      // ★ヒット時刻は START_SEC 基準（8秒から鳴る）
+      const hitTime = startOffset + START_SEC + stepIdx * STEP;
+
+      // ★55秒以降に到達するノーツは作らない
+      if (hitTime >= END_SEC) return;
+
+      notes.push({ lane, hitTime, bornStep: stepIdx });
+    }
+
+    // ====== RENDER ======
+    function flashToast(text, ms=120){
+      toast.textContent = text;
+      toast.classList.add("show");
+      window.clearTimeout(flashToast._t);
+      flashToast._t = window.setTimeout(()=>toast.classList.remove("show"), ms);
+    }
+
+    function draw(){
+      const rect = stage.getBoundingClientRect();
+      const W = rect.width;
+      const H = rect.height;
+
+      // background
+      ctx.clearRect(0,0,W,H);
+
+      // lanes
+      const laneW = W / 4;
+
+      // subtle grid
+      ctx.save();
+      ctx.globalAlpha = 1;
+
+      // lane panels
+      for (let i=0;i<4;i++){
+        ctx.fillStyle = (i%2===0) ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.10)";
+        ctx.fillRect(i*laneW, 0, laneW, H);
+      }
+
+      // lane lines
+      ctx.strokeStyle = "rgba(255,255,255,0.12)";
+      ctx.lineWidth = 1;
+      for (let i=1;i<4;i++){
+        ctx.beginPath();
+        ctx.moveTo(i*laneW, 0);
+        ctx.lineTo(i*laneW, H);
+        ctx.stroke();
+      }
+
+      // hit line
+      const hitY = H * HIT_Y;
+      ctx.strokeStyle = "rgba(96,165,250,0.35)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, hitY);
+      ctx.lineTo(W, hitY);
+      ctx.stroke();
+
+      // hit pads area (tap hint)
+      ctx.fillStyle = "rgba(0,0,0,0.22)";
+      ctx.fillRect(0, hitY, W, H-hitY);
+
+      // notes
+      const t = audio.currentTime;
+      // 画面に見えるノーツだけに絞る
+      // y = hitY - ((hitTime - t) / TRAVEL) * (hitY - topMargin)
+      const topMargin = H * 0.08;
+      const travelPx = (hitY - topMargin);
+
+      // 古すぎるノーツはMISSとして消す（でも厳しくしない）
+      // GOODを過ぎて 0.18s 以上経過で消す
+      const lateKill = GOOD + 0.18;
+
+      // sort for consistent draw
+      notes.sort((a,b)=>a.hitTime-b.hitTime);
+
+      for (let i=notes.length-1;i>=0;i--){
+        const n = notes[i];
+        const dt = n.hitTime - t; // +未来
+        if (dt < -lateKill){
+          notes.splice(i,1);
+          cMiss++;
+          combo = 0;
+          comboEl.textContent = combo;
+          continue;
+        }
+      }
+
+      for (const n of notes){
+        const dt = n.hitTime - t;
+        const progress = 1 - (dt / TRAVEL); // 0:上 / 1:判定
+        if (progress < -0.2 || progress > 1.35) continue;
+
+        const x = n.lane * laneW;
+        const cx = x + laneW/2;
+
+        const y = topMargin + progress * travelPx;
+
+        // ノーツ見た目（シンプル）
+        const w = laneW * 0.68;
+        const h = Math.max(10, laneW * 0.18);
+        const rx = cx - w/2;
+        const ry = y - h/2;
+
+        // 判定線付近は少し光る
+        const glow = Math.max(0, 1 - Math.abs(dt) / 0.18);
+
+        // base
+        ctx.fillStyle = `rgba(243,246,255,${0.85})`;
+        roundRect(ctx, rx, ry, w, h, 10);
+        ctx.fill();
+
+        // accent
+        ctx.fillStyle = `rgba(96,165,250,${0.20 + 0.35*glow})`;
+        roundRect(ctx, rx+2, ry+2, w-4, h-4, 9);
+        ctx.fill();
+
+        // tiny center line
+        ctx.fillStyle = `rgba(0,0,0,${0.18})`;
+        ctx.fillRect(cx-1, ry+3, 2, h-6);
+      }
+
+      // bottom caption (subtle)
+      ctx.fillStyle = "rgba(243,246,255,0.55)";
+      ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto";
+      ctx.textAlign = "center";
+      ctx.fillText("明日のために打つべし！", W/2, H - 18);
+
+      ctx.restore();
+
+      if (running){
+        requestAnimationFrame(draw);
+      }
+    }
+
+    function roundRect(ctx, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+    }
+
+    // ====== LOOP (SPAWN by STEP) ======
+    function tick(){
+  if (!running) return;
+
+  const now = audio.currentTime;
+
+  // 終了
+  if (audio.ended || now >= END_SEC + 0.5){
+    endGame();
+    return;
+  }
+
+  // ★生成は SPAWN_BEGIN 〜 END_SEC の間
+  if (now >= SPAWN_BEGIN && now < END_SEC){
+    // step計算は SPAWN_BEGIN を0として進める（生成タイミング用）
+    const t = (now - startOffset) - SPAWN_BEGIN;
+    const curStep = Math.floor(t / STEP);
+    const target = curStep + LOOKAHEAD_STEPS;
+
+    if (target > lastScheduledStep){
+      for (let s = lastScheduledStep + 1; s <= target; s++){
+        maybeSpawn(s);
+      }
+      lastScheduledStep = target;
+    }
+  }
+
+  requestAnimationFrame(tick);
+}
+
+    // ====== START/END ======
+    function resetGame(){
+      notes = [];
+      lastStepIdx = -1;
+      lastScheduledStep = -1; // 追加
+      lastLane = -1;
+      lastLane2 = -1;
+
+      score = 0;
+      combo = 0;
+      maxCombo = 0;
+      cPerfect = 0; cGood = 0; cMiss = 0;
+
+      scoreEl.textContent = score;
+      comboEl.textContent = combo;
+    }
+
+    async function startGame(){
+      resetGame();
+
+      overlay.style.display = "none";
+      running = true;
+
+      // iOS/Safari 対策：ユーザー操作内で play()
+      audio.currentTime = 0;
+      audio.muted = muted;
+
+      try{
+        await audio.play();
+      }catch(err){
+        // 再生できない場合はオーバーレイ戻す
+        running = false;
+        overlay.style.display = "grid";
+        ovTitle.textContent = "再生できませんでした";
+        ovDesc.textContent = "Safariの音声再生制限か、ファイルパスを確認してください。assets内のファイル名が合っているか見て。";
+        return;
+      }
+
+      // 描画開始
+      requestAnimationFrame(draw);
+      requestAnimationFrame(tick);
+    }
+
+    function endGame(){
+      running = false;
+      audio.pause();
+
+      maxCombo = Math.max(maxCombo, combo);
+
+      stP.textContent = cPerfect;
+      stG.textContent = cGood;
+      stM.textContent = cMiss;
+      stC.textContent = maxCombo;
+
+      const lines = [
+        "始まってしまった",
+        "明日からがんばろ",
+        "まぁなんとかなる",
+        "今日はリハーサル",
+        "これで十分"
+      ];
+      ovTitle.textContent = lines[Math.floor(Math.random()*lines.length)];
+      ovDesc.textContent = "いい感じ！";
+
+      btnStart.textContent = "もう一回";
+      overlay.style.display = "grid";
+    }
+
+    btnStart.addEventListener("click", (e)=>{
+      e.preventDefault();
+      startGame();
+    }, {passive:false});
+
+
+    // 初期表示はオーバーレイのまま（自動再生不可のため）
+
+    // iOSのダブルタップ拡大抑止（可能な範囲）
+    let lastTouchEnd = 0;
+    document.addEventListener("touchend", (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 250) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
+
+  </script>
+</body>
+</html>
