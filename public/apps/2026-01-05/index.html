@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>〇〇の〇〇 ルーレット（1/5）</title>
+  <meta name="theme-color" content="#0b1020" />
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --shadow:0 18px 60px rgba(0,0,0,.45);
+      --r:22px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+    html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;overflow:hidden;}
+    button{font:inherit}
+
+    .wrap{
+      height:100%;
+      display:grid;
+      place-items:center;
+      padding: calc(16px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));
+    }
+
+    .card{
+      width:min(720px, 94vw);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 14px;
+    }
+
+    .toprow{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: 14px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.28);
+      border:1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing:.08em;
+      text-transform: uppercase;
+      white-space:nowrap;
+    }
+    .hint{
+      font-size:12px;
+      color: var(--muted);
+      text-align:right;
+      line-height:1.4;
+    }
+
+    .slotArea{
+      background: rgba(0,0,0,.20);
+      border:1px solid var(--line);
+      border-radius: calc(var(--r) - 6px);
+      padding: 14px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .lane{
+      position:relative;
+      height: 76px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+    }
+    .lane + .lane{ margin-top: 12px; }
+
+    .windowShade{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(90deg, rgba(11,16,32,.95), rgba(11,16,32,0) 18%, rgba(11,16,32,0) 82%, rgba(11,16,32,.95));
+      opacity:.9;
+    }
+
+    .centerBand{
+      position:absolute;
+      top: 8px;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(280px, 58vw);
+      border-radius: 16px;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.18);
+      pointer-events:none;
+    }
+    .centerLine{
+      position:absolute;
+      top: 10px;
+      bottom: 10px;
+      left: 50%;
+      width: 2px;
+      transform: translateX(-50%);
+      background: linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,.35), rgba(255,255,255,0));
+      opacity:.7;
+      pointer-events:none;
+    }
+
+    .track{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      gap: 18px;
+      padding: 0 18px;
+      transform: translateX(0);
+      will-change: transform, filter;
+    }
+
+    /* 全チップ同幅で“止まり”を気持ちよくする */
+    .chip{
+      flex:0 0 auto;
+      height: 48px;
+      width: 240px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.16);
+      color: rgba(243,246,255,.92);
+      font-size: 24px;
+      letter-spacing:.02em;
+      white-space:nowrap;
+    }
+
+    .result{
+      margin-top: 14px;
+      padding: 14px 14px 12px;
+      border-radius: calc(var(--r) - 8px);
+      background: rgba(255,255,255,.06);
+      border:1px dashed rgba(255,255,255,.16);
+      text-align:center;
+    }
+    .title{
+      font-weight: 800;
+      font-size: clamp(26px, 5.6vw, 48px);
+      letter-spacing:.02em;
+      line-height:1.12;
+      word-break: keep-all;
+    }
+    .sub{
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .controls{
+      margin-top: 14px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      transition: opacity .35s ease, transform .35s ease;
+    }
+    .controls.fade{
+      opacity:.18;
+      transform: translateY(6px);
+    }
+
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.10);
+      color: var(--ink);
+      border-radius: 14px;
+      padding: 12px 14px;
+      min-width: 120px;
+      cursor:pointer;
+      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      background: rgba(255,255,255,.18);
+      border-color: rgba(255,255,255,.24);
+    }
+
+    .foot{
+      margin-top: 10px;
+      text-align:center;
+      font-size: 11px;
+      color: rgba(243,246,255,.55);
+    }
+
+    .tapNote{
+      position:absolute;
+      inset:auto 14px 14px 14px;
+      text-align:center;
+      font-size:12px;
+      color: rgba(243,246,255,.58);
+      pointer-events:none;
+      opacity:0;
+      transform: translateY(6px);
+      transition: opacity .25s ease, transform .25s ease;
+    }
+    .tapNote.show{opacity:1;transform: translateY(0);}
+
+    @media (max-width: 440px){
+      .chip{ width: 180px; font-size: 20px; height: 46px; }
+      .lane{ height: 72px; }
+      .centerBand{ width: min(230px, 66vw); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="toprow">
+        <div class="badge"><span>〇〇の〇〇</span></div>
+      </div>
+
+      <div class="slotArea" id="slotArea">
+        <div class="lane" aria-label="前半ルーレット">
+          <div class="centerBand" aria-hidden="true"></div>
+          <div class="centerLine" aria-hidden="true"></div>
+          <div class="track" id="trackA"></div>
+          <div class="windowShade" aria-hidden="true"></div>
+        </div>
+
+        <div class="lane" aria-label="後半ルーレット">
+          <div class="centerBand" aria-hidden="true"></div>
+          <div class="centerLine" aria-hidden="true"></div>
+          <div class="track" id="trackB"></div>
+          <div class="windowShade" aria-hidden="true"></div>
+        </div>
+
+        <div class="tapNote" id="tapNote">タップでボタン表示</div>
+      </div>
+
+      <div class="result">
+        <div class="title" id="title">回して決める</div>
+      </div>
+
+      <div class="controls" id="controls">
+        <button class="btn primary" id="spin">回す</button>
+        <button class="btn" id="again">もう一回</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module">
+    // 1日1アプリ：動的アセット用（今回は未使用だがルールとして常備）
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    const prefixes = [
+      "風の谷の",
+      "紅の",
+      "となりの",
+      "ハウルの",
+      "ものの",
+      "カリオストロの",
+      "魔女の",
+      "千と千尋の",
+      "崖の上の",
+    ];
+
+    // 松村率 ≒ 50%：7種類(松村以外) + 松村7個 → 7 / (7+7) = 0.5
+    const suffixWeighted = [
+      "ナウシカ",
+      "豚",
+      "トトロ",
+      "城",
+      "宅急便",
+      "神隠し",
+      "ポニョ",
+      "松村","松村","松村","松村","松村","松村","松村",
+    ];
+
+    const trackA = document.getElementById("trackA");
+    const trackB = document.getElementById("trackB");
+    const titleEl = document.getElementById("title");
+    const spinBtn = document.getElementById("spin");
+    const againBtn = document.getElementById("again");
+    const controls = document.getElementById("controls");
+    const slotArea = document.getElementById("slotArea");
+    const tapNote = document.getElementById("tapNote");
+
+    let isSpinning = false;
+    let fadeTimer = null;
+
+    function setControlsVisible(v){
+      controls.classList.toggle("fade", !v);
+      tapNote.classList.toggle("show", !v);
+      clearTimeout(fadeTimer);
+      if(!v){
+        fadeTimer = setTimeout(()=>tapNote.classList.add("show"), 600);
+      }
+    }
+
+    function pick(arr){
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function buildStrip(trackEl, baseList, targetText, total = 52){
+      trackEl.innerHTML = "";
+      const seq = [];
+      // だいたいランダム、最後にターゲットを置いて“収束”
+      for(let i=0;i<total-6;i++) seq.push(pick(baseList));
+      seq.push(pick(baseList));
+      seq.push(pick(baseList));
+      seq.push(pick(baseList));
+      seq.push(pick(baseList));
+      seq.push(pick(baseList));
+      seq.push(targetText);
+
+      for(const t of seq){
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.textContent = t;
+        trackEl.appendChild(chip);
+      }
+      return seq;
+    }
+
+    function chipStep(trackEl){
+      const first = trackEl.querySelector(".chip");
+      if(!first) return 220;
+      const w = first.getBoundingClientRect().width;
+      const style = getComputedStyle(trackEl);
+      const gap = parseFloat(style.gap || "0") || 0;
+      return w + gap;
+    }
+
+    function laneCenterX(trackEl){
+      return trackEl.parentElement.getBoundingClientRect().width / 2;
+    }
+
+    function xToCenterChip(trackEl, index){
+      const step = chipStep(trackEl);
+      const padLeft = 18; // .track padding-left
+      const chipW = trackEl.querySelector(".chip")?.getBoundingClientRect().width || (step);
+      const chipCenter = padLeft + index * step + chipW/2;
+      return laneCenterX(trackEl) - chipCenter;
+    }
+
+    function blurOn(trackEl){ trackEl.style.filter = "blur(1.5px)"; }
+    function blurOff(trackEl){ trackEl.style.filter = "blur(0px)"; }
+
+    async function spinOnce(){
+      if(isSpinning) return;
+      isSpinning = true;
+      setControlsVisible(true);
+
+      // ターゲット決定
+      const targetP = pick(prefixes);
+      const targetS = pick(suffixWeighted);
+
+      // 列生成（最後の方にターゲット）
+      const seqA = buildStrip(trackA, prefixes, targetP, 54);
+      const seqB = buildStrip(trackB, suffixWeighted, targetS, 54);
+      const idxA = seqA.lastIndexOf(targetP);
+      const idxB = seqB.lastIndexOf(targetS);
+
+      // 初期化
+      trackA.style.transition = "none";
+      trackB.style.transition = "none";
+      trackA.style.transform = "translateX(0px)";
+      trackB.style.transform = "translateX(0px)";
+      blurOn(trackA);
+      blurOn(trackB);
+
+      await new Promise(r => requestAnimationFrame(()=>r()));
+
+      // 別々に止める（＝別々の時間/別々の停止タイミング）
+      const finalXA = xToCenterChip(trackA, idxA);
+      const finalXB = xToCenterChip(trackB, idxB);
+
+      const durA = 1150 + Math.floor(Math.random()*220); // 上
+      const durB = 1450 + Math.floor(Math.random()*260); // 下（少し長め）
+      const delayB = 90 + Math.floor(Math.random()*140); // 下は少し遅れて止まり始める
+      const easing = "cubic-bezier(.10,.90,.08,1)";
+
+      const animA = trackA.animate(
+        [{ transform: "translateX(0px)" }, { transform: `translateX(${finalXA}px)` }],
+        { duration: durA, easing, fill: "forwards" }
+      );
+
+      const animB = trackB.animate(
+        [{ transform: "translateX(0px)" }, { transform: `translateX(${finalXB}px)` }],
+        { duration: durB, delay: delayB, easing, fill: "forwards" }
+      );
+
+      // ブラー解除（それぞれ終盤で）
+      setTimeout(()=>blurOff(trackA), Math.max(0, durA - 220));
+      setTimeout(()=>blurOff(trackB), Math.max(0, delayB + durB - 220));
+
+      // 上が止まったら一旦タイトル途中表示（演出）
+      animA.finished.then(()=>{
+        // 上だけ確定表示（下は“…”で待つ）
+        titleEl.textContent = `${targetP}…`;
+      });
+
+      await Promise.all([animA.finished, animB.finished]);
+
+      // アニメ状態をstyleに確定
+      trackA.getAnimations().forEach(a => a.cancel());
+      trackB.getAnimations().forEach(a => a.cancel());
+      trackA.style.transform = `translateX(${finalXA}px)`;
+      trackB.style.transform = `translateX(${finalXB}px)`;
+      blurOff(trackA);
+      blurOff(trackB);
+
+      // 最終結果
+      titleEl.textContent = `${targetP}${targetS}`;
+
+      // スクショしやすく：ボタンを薄く
+      setControlsVisible(false);
+      isSpinning = false;
+    }
+
+    function resetToIdle(){
+      if(isSpinning) return;
+      titleEl.textContent = "回して決める";
+      trackA.innerHTML = "";
+      trackB.innerHTML = "";
+      setControlsVisible(true);
+    }
+
+    // タップでボタン表示/非表示（スクショの邪魔を避ける）
+    slotArea.addEventListener("click", ()=>{
+      if(isSpinning) return;
+      const hidden = controls.classList.contains("fade");
+      setControlsVisible(hidden);
+    });
+
+    spinBtn.addEventListener("click", spinOnce);
+    againBtn.addEventListener("click", () => {
+      if(isSpinning) return;
+      spinOnce();
+    });
+
+    // リサイズで中心計算が変わるので安全にアイドルへ
+    let resizeTimer = null;
+    window.addEventListener("resize", ()=>{
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(()=>resetToIdle(), 120);
+    }, {passive:true});
+
+    // 初期
+    resetToIdle();
+  </script>
+</body>
+</html>
