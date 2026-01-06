@@ -250,7 +250,7 @@
 </head>
 <body>
   <div class="app" id="app">
-    <div class="card" aria-live="polite">
+    <div class="card" id="card" aria-live="polite">
       <div class="top">
         <div>
           <div class="badge">
@@ -398,6 +398,20 @@
       btnShare.disabled = !on;
     }
 
+    function refreshBackdrop(){
+      const card = el("card");
+      if (!card) return;
+
+      // iOS Safari対策：backdrop-filterを一瞬切って再適用
+      card.style.webkitBackdropFilter = "none";
+      card.style.backdropFilter = "none";
+
+      requestAnimationFrame(() => {
+        card.style.webkitBackdropFilter = "blur(10px)";
+        card.style.backdropFilter = "blur(10px)";
+      });
+    }
+
     function render(item, mode){
       const bg = item.hex;
       const ink = pickTextColor(bg);
@@ -448,6 +462,9 @@
       }
 
       if (metaTheme) metaTheme.setAttribute("content", bg);
+      
+      // iOS Safari対策：backdrop-filterをリフレッシュ
+      refreshBackdrop();
     }
 
     function getTodayItem(){
