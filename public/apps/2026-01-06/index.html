@@ -37,11 +37,15 @@
       gap:14px;
       padding:18px;
       border-radius: calc(var(--r) + 8px);
-      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
-      border:1px solid rgba(255,255,255,.14);
-      box-shadow: 0 14px 46px rgba(0,0,0,.35);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      /* 疑似ガラス */
+      background:
+        radial-gradient(900px 420px at 20% 0%, rgba(255,255,255,.16), transparent 60%),
+        radial-gradient(700px 380px at 80% 100%, rgba(0,0,0,.14), transparent 60%),
+        rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow:
+        0 14px 46px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.10);
     }
 
     .top{
@@ -175,11 +179,11 @@
       gap:14px;
       padding:18px;
       border-radius: calc(var(--r) + 8px);
-      background: linear-gradient(180deg, rgba(0,0,0,.42), rgba(0,0,0,.30));
+      background:
+        radial-gradient(900px 420px at 20% 0%, rgba(255,255,255,.08), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,.46), rgba(0,0,0,.34));
       border:1px solid rgba(255,255,255,.16);
       box-shadow: 0 14px 46px rgba(0,0,0,.35);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
       pointer-events:auto;
       transform: translateY(0);
       transition: opacity 260ms ease, transform 260ms ease;
@@ -398,20 +402,6 @@
       btnShare.disabled = !on;
     }
 
-    function refreshBackdrop(){
-      const card = el("card");
-      if (!card) return;
-
-      // iOS Safari対策：backdrop-filterを一瞬切って再適用
-      card.style.webkitBackdropFilter = "none";
-      card.style.backdropFilter = "none";
-
-      requestAnimationFrame(() => {
-        card.style.webkitBackdropFilter = "blur(10px)";
-        card.style.backdropFilter = "blur(10px)";
-      });
-    }
-
     function render(item, mode){
       const bg = item.hex;
       const ink = pickTextColor(bg);
@@ -462,9 +452,6 @@
       }
 
       if (metaTheme) metaTheme.setAttribute("content", bg);
-      
-      // iOS Safari対策：backdrop-filterをリフレッシュ
-      refreshBackdrop();
     }
 
     function getTodayItem(){
