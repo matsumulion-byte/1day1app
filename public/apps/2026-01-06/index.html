@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <title>今日の色言葉</title>
+  <meta name="theme-color" content="#0b1020" />
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --r:18px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+    html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;}
+    button{font:inherit}
+
+    .app{
+      position:fixed; inset:0;
+      display:flex; align-items:stretch; justify-content:center;
+      padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+      background:
+        radial-gradient(1200px 800px at 30% 20%, rgba(255,255,255,.10), transparent 55%),
+        radial-gradient(900px 700px at 70% 80%, rgba(0,0,0,.18), transparent 60%),
+        var(--bg);
+      transition: background-color 520ms ease;
+    }
+
+    .card{
+      width:min(680px, 100%);
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      padding:18px;
+      border-radius: calc(var(--r) + 8px);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 14px 46px rgba(0,0,0,.35);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .top{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    }
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.14);
+      color:var(--muted);
+      font-size:12.5px;
+      letter-spacing:.02em;
+      white-space:nowrap;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: rgba(255,255,255,.9);
+      box-shadow: 0 0 0 3px rgba(255,255,255,.18);
+      flex:0 0 auto;
+    }
+    .title{
+      font-size:18px;
+      font-weight:700;
+      letter-spacing:.03em;
+      margin-top:10px;
+    }
+    .pill{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color:var(--muted);
+      font-size:12.5px;
+      white-space:nowrap;
+    }
+
+    .panel{
+      padding:12px;
+      border-radius: var(--r);
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+    }
+
+    .colorName{
+      font-size:38px;
+      line-height:1.06;
+      font-weight:800;
+      letter-spacing:.02em;
+      word-break:keep-all;
+    }
+    .metaRow{
+      margin-top:10px;
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .words{
+      padding:14px 12px;
+      border-radius: var(--r);
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.14);
+      display:flex; flex-direction:column; gap:10px;
+      min-height: 92px;
+    }
+    .words h2{
+      font-size:13px;
+      color:var(--muted);
+      font-weight:700;
+      letter-spacing:.08em;
+    }
+    .wordline{
+      font-size:22px;
+      font-weight:750;
+      letter-spacing:.02em;
+      line-height:1.3;
+      display:flex; flex-wrap:wrap; gap:10px;
+    }
+    .wordline span{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+    }
+
+    .controls{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top:2px;
+    }
+    .btn{
+      appearance:none; border:none;
+      border-radius: 14px;
+      padding:12px 14px;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.16);
+      color: var(--ink);
+      font-weight:800;
+      letter-spacing:.02em;
+      display:inline-flex; align-items:center; justify-content:center;
+      gap:8px;
+      cursor:pointer;
+      flex: 1 1 160px;
+      min-height:46px;
+      transition: transform 120ms ease, background 160ms ease, opacity 200ms ease;
+    }
+    .btn:active{ transform: translateY(1px) scale(.99); }
+    .btn.primary{ background: rgba(0,0,0,.22); }
+
+    .note{
+      margin-top:2px;
+      color: var(--muted);
+      font-size:12px;
+      line-height:1.5;
+    }
+    .tiny{ opacity:.9; font-size:11.5px; }
+
+    /* --- Fortune overlay --- */
+    .veil{
+      position:absolute; inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events:none;
+    }
+    .veilInner{
+      width:min(680px, 100%);
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      padding:18px;
+      border-radius: calc(var(--r) + 8px);
+      background: linear-gradient(180deg, rgba(0,0,0,.42), rgba(0,0,0,.30));
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow: 0 14px 46px rgba(0,0,0,.35);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      pointer-events:auto;
+      transform: translateY(0);
+      transition: opacity 260ms ease, transform 260ms ease;
+    }
+    .veilTitle{
+      font-size:20px;
+      font-weight:900;
+      letter-spacing:.04em;
+    }
+    .veilDesc{
+      color:var(--muted);
+      font-size:13.5px;
+      line-height:1.6;
+    }
+    .bigBtn{
+      width:100%;
+      border-radius: 16px;
+      min-height:56px;
+      font-size:16px;
+      font-weight:900;
+      background: rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.20);
+    }
+    .veil.hide{
+      opacity:0;
+      pointer-events:none;
+    }
+    .veil.hide .veilInner{
+      transform: translateY(8px);
+    }
+
+    /* reveal animation */
+    .revealPulse{
+      position:fixed; inset:0;
+      pointer-events:none;
+      opacity:0;
+    }
+    .revealPulse.on{
+      opacity:1;
+      animation: pulse 420ms ease-out forwards;
+    }
+    @keyframes pulse{
+      0%{ opacity:0; background: rgba(255,255,255,.00); }
+      30%{ opacity:.25; background: rgba(255,255,255,.20); }
+      100%{ opacity:0; background: rgba(255,255,255,.00); }
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      padding:10px 12px;
+      border-radius:999px;
+      background: rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.18);
+      color: rgba(255,255,255,.92);
+      font-size:12.5px;
+      pointer-events:none;
+      opacity:0;
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+    .toast.show{
+      opacity:1;
+      transform: translateX(-50%) translateY(-4px);
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="card" aria-live="polite">
+      <div class="top">
+        <div>
+          <div class="badge">
+            <span class="dot" id="dot"></span>
+            <span id="dateLabel">ラッキーカラー</span>
+          </div>
+          <div class="title">ラッキーカラーの色言葉</div>
+        </div>
+        <div class="pill" id="modePill">READY</div>
+      </div>
+
+      <div class="panel">
+        <div class="colorName" id="colorName">—</div>
+        <div class="metaRow">
+          <span class="pill" id="hexLabel">#------</span>
+          <span class="tiny" id="sourceLabel">DIC日本の伝統色（参考）</span>
+        </div>
+      </div>
+
+      <div class="words">
+        <h2>色言葉</h2>
+        <div class="wordline" id="wordsLine"></div>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="btnRandom" type="button" disabled>もう一色</button>
+        <button class="btn" id="btnShare" type="button" disabled>共有 / コピー</button>
+      </div>
+
+      <div class="note">
+        最初に「占う」を押すとラッキーカラーが出ます。
+      </div>
+    </div>
+
+    <!-- Fortune overlay -->
+    <div class="veil" id="veil">
+      <div class="veilInner">
+        <div class="veilTitle">ラッキーカラーを占う</div>
+        <div class="veilDesc">ボタンを押すと、ラッキーカラーと言葉が表示されます。</div>
+        <button class="btn bigBtn primary" id="btnFortune" type="button">占う</button>
+        <div class="tiny" style="color:var(--muted);line-height:1.5">
+          ※ もう一度占うと「別の色」を引けます
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="revealPulse" id="pulse"></div>
+  <div class="toast" id="toast">コピーしました</div>
+
+  <script type="module">
+    // 1日1アプリ共通: 動的アセット参照ヘルパー（今回は未使用だがルールとして同梱）
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    const COLORS = [
+      { name:"桜色",   hex:"#FDEEEF", words:["愛情","思いやり","健全"] },
+      { name:"紅",     hex:"#CB1B45", words:["開放的","単純明快","表現力"] },
+      { name:"朱色",   hex:"#FF5841", words:["社交的","人脈","緩急自在"] },
+      { name:"茜色",   hex:"#B13546", words:["厳格","可能性","積極性"] },
+      { name:"山吹色", hex:"#F8B500", words:["逞しさ","英知","解放"] },
+      { name:"若草色", hex:"#C8D921", words:["運動神経","知覚力","名誉"] },
+      { name:"空色",   hex:"#A0D8EF", words:["感性","可能性","芸術性"] },
+      { name:"紺色",   hex:"#2A305C", words:["大器","指導者","感性"] },
+      { name:"鶯色",   hex:"#706229", words:["家庭","几帳面","向上心"] },
+      { name:"若紫",   hex:"#9E77A1", words:["想像力","敬慕","直観力"] },
+    ];
+
+    const el = (id) => document.getElementById(id);
+
+    const dot = el("dot");
+    const colorName = el("colorName");
+    const hexLabel = el("hexLabel");
+    const wordsLine = el("wordsLine");
+    const dateLabel = el("dateLabel");
+    const modePill = el("modePill");
+    const toast = el("toast");
+    const veil = el("veil");
+    const pulse = el("pulse");
+
+    const btnFortune = el("btnFortune");
+    const btnRandom = el("btnRandom");
+    const btnShare = el("btnShare");
+
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+
+    function hexToRgb(hex){
+      const h = String(hex).replace("#","").trim();
+      if (h.length !== 6) return {r:0,g:0,b:0};
+      return {
+        r: parseInt(h.slice(0,2),16),
+        g: parseInt(h.slice(2,4),16),
+        b: parseInt(h.slice(4,6),16)
+      };
+    }
+
+    function luminance(hex){
+      const {r,g,b} = hexToRgb(hex);
+      const srgb = [r,g,b].map(v => {
+        const c = v/255;
+        return c <= 0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
+      });
+      return 0.2126*srgb[0] + 0.7152*srgb[1] + 0.0722*srgb[2];
+    }
+
+    function pickTextColor(bgHex){
+      const L = luminance(bgHex);
+      return (L > 0.52) ? "#0b1020" : "#f3f6ff";
+    }
+
+    function formatDateJP(d){
+      const y = d.getFullYear();
+      const m = d.getMonth()+1;
+      const day = d.getDate();
+      const w = ["日","月","火","水","木","金","土"][d.getDay()];
+      return `${y}/${String(m).padStart(2,"0")}/${String(day).padStart(2,"0")}（${w}）`;
+    }
+
+    function hashToIndex(str, mod){
+      let h = 0x811c9dc5; // FNV-1a
+      for (let i=0;i<str.length;i++){
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 0x01000193);
+      }
+      return (h >>> 0) % mod;
+    }
+
+    function setToast(msg){
+      toast.textContent = msg;
+      toast.classList.add("show");
+      clearTimeout(setToast._t);
+      setToast._t = setTimeout(()=>toast.classList.remove("show"), 1200);
+    }
+
+    function runPulse(){
+      pulse.classList.remove("on");
+      // reflow
+      void pulse.offsetWidth;
+      pulse.classList.add("on");
+      clearTimeout(runPulse._t);
+      runPulse._t = setTimeout(()=>pulse.classList.remove("on"), 520);
+    }
+
+    function setEnabled(on){
+      btnRandom.disabled = !on;
+      btnShare.disabled = !on;
+    }
+
+    function render(item, mode){
+      const bg = item.hex;
+      const ink = pickTextColor(bg);
+      const muted = (ink === "#0b1020") ? "rgba(11,16,32,.70)" : "rgba(243,246,255,.72)";
+      const line = (ink === "#0b1020") ? "rgba(11,16,32,.18)" : "rgba(255,255,255,.14)";
+
+      document.documentElement.style.setProperty("--bg", bg);
+      document.documentElement.style.setProperty("--ink", ink);
+      document.documentElement.style.setProperty("--muted", muted);
+      document.documentElement.style.setProperty("--line", line);
+
+      dot.style.background = ink;
+      dot.style.boxShadow = `0 0 0 3px ${ink === "#0b1020" ? "rgba(11,16,32,.16)" : "rgba(255,255,255,.18)"}`;
+
+      colorName.textContent = item.name;
+      hexLabel.textContent = item.hex.toUpperCase();
+
+      wordsLine.innerHTML = "";
+      for (const w of item.words){
+        const s = document.createElement("span");
+        s.textContent = w;
+        wordsLine.appendChild(s);
+      }
+
+      const todayStr = formatDateJP(new Date());
+      if (mode === "TODAY"){
+        dateLabel.textContent = `今日の色  ${todayStr}`;
+        modePill.textContent = "TODAY";
+      } else {
+        dateLabel.textContent = `別の色  ${todayStr}`;
+        modePill.textContent = "RANDOM";
+      }
+
+      if (metaTheme) metaTheme.setAttribute("content", bg);
+    }
+
+    function getTodayItem(){
+      const now = new Date();
+      const key = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+      const idx = hashToIndex(key, COLORS.length);
+      return COLORS[idx];
+    }
+
+    function getRandomItem(excludeHex){
+      let tries = 0;
+      while (tries++ < 20){
+        const it = COLORS[Math.floor(Math.random()*COLORS.length)];
+        if (!excludeHex || it.hex !== excludeHex) return it;
+      }
+      return COLORS[0];
+    }
+
+    function shareText(item){
+      const todayStr = formatDateJP(new Date());
+      return `今日の色：${item.name}（${item.hex.toUpperCase()}）\n色言葉：${item.words.join("・")}\n${todayStr}`;
+    }
+
+    async function doShare(item){
+      const text = shareText(item);
+      const title = "今日の色言葉";
+      try{
+        if (navigator.share){
+          await navigator.share({ title, text });
+          return;
+        }
+      }catch(e){
+        // canceled -> fallback to copy
+      }
+
+      try{
+        await navigator.clipboard.writeText(text);
+        setToast("コピーしました");
+      }catch(e){
+        window.prompt("コピーして使ってください", text);
+      }
+    }
+
+    // --- State ---
+    let revealed = false;
+    let currentMode = "READY"; // READY | TODAY | RANDOM
+    let currentItem = null;
+
+    // init: not revealed
+    colorName.textContent = "—";
+    hexLabel.textContent = "#------";
+    wordsLine.innerHTML = "";
+    dateLabel.textContent = "今日の色";
+    modePill.textContent = "READY";
+    setEnabled(false);
+
+    function revealToday(){
+      currentMode = "TODAY";
+      currentItem = getTodayItem();
+      render(currentItem, "TODAY");
+      revealed = true;
+      veil.classList.add("hide");
+      setEnabled(true);
+      runPulse();
+    }
+
+    btnFortune.addEventListener("click", () => {
+      if (!revealed){
+        revealToday();
+        return;
+      }
+      // 2回目以降は「別の色」も引ける仕様
+      currentMode = "RANDOM";
+      currentItem = getRandomItem(currentItem?.hex);
+      render(currentItem, "RANDOM");
+      runPulse();
+    });
+
+    btnRandom.addEventListener("click", () => {
+      currentMode = "RANDOM";
+      currentItem = getRandomItem(currentItem?.hex);
+      render(currentItem, "RANDOM");
+      runPulse();
+    });
+
+    btnShare.addEventListener("click", async () => {
+      if (!currentItem) return;
+      await doShare(currentItem);
+    });
+
+    // iOS: 長押し選択っぽい挙動を少し抑える
+    window.addEventListener("contextmenu", (e)=>e.preventDefault(), {passive:false});
+  </script>
+</body>
+</html>
