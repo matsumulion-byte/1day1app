@@ -21,10 +21,12 @@
       position:fixed; inset:0;
       display:flex; align-items:stretch; justify-content:center;
       padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-      background:
+      background-color: var(--bg);
+      background-image:
         radial-gradient(1200px 800px at 30% 20%, rgba(255,255,255,.10), transparent 55%),
-        radial-gradient(900px 700px at 70% 80%, rgba(0,0,0,.18), transparent 60%),
-        var(--bg);
+        radial-gradient(900px 700px at 70% 80%, rgba(0,0,0,.18), transparent 60%);
+      background-repeat: no-repeat;
+      background-size: cover;
       transition: background-color 520ms ease;
     }
 
@@ -401,51 +403,32 @@
       const ink = pickTextColor(bg);
       const muted = (ink === "#0b1020") ? "rgba(11,16,32,.70)" : "rgba(243,246,255,.72)";
       const line = (ink === "#0b1020") ? "rgba(11,16,32,.18)" : "rgba(255,255,255,.14)";
+      const isLight = luminance(bg) > 0.52;
 
       document.documentElement.style.setProperty("--bg", bg);
       document.documentElement.style.setProperty("--ink", ink);
       document.documentElement.style.setProperty("--muted", muted);
       document.documentElement.style.setProperty("--line", line);
 
-      // htmlとbodyの背景色も確実に更新（スマートフォンでの色のズレを防ぐ）
       document.documentElement.style.backgroundColor = bg;
       document.body.style.backgroundColor = bg;
 
-      // 背景色に応じてグラデーションを調整（色のズレを防ぐ）
+      // .app 背景更新（iOS対策）
       const appEl = el("app");
-      const isLight = luminance(bg) > 0.5;
-      // スマートフォンでの色のズレを防ぐため、グラデーションを最小限に
-      if (isLight) {
-        // 明るい色の場合はグラデーションをほぼ無効化
-        appEl.style.background = `
-          radial-gradient(1200px 800px at 30% 20%, rgba(255,255,255,.01), transparent 55%),
-          radial-gradient(900px 700px at 70% 80%, rgba(0,0,0,.02), transparent 60%),
-          ${bg}
-        `;
-      } else {
-        // 暗い色の場合はグラデーションをほぼ無効化
-        appEl.style.background = `
-          radial-gradient(1200px 800px at 30% 20%, rgba(255,255,255,.02), transparent 55%),
-          radial-gradient(900px 700px at 70% 80%, rgba(0,0,0,.03), transparent 60%),
-          ${bg}
-        `;
-      }
+      appEl.style.backgroundColor = bg;
+      appEl.style.transform = "translateZ(0)";
 
       dot.style.background = ink;
       dot.style.boxShadow = `0 0 0 3px ${ink === "#0b1020" ? "rgba(11,16,32,.16)" : "rgba(255,255,255,.18)"}`;
 
-      // 色名とhexラベルの色を明示的に設定
-      colorName.style.color = ink;
+      // テキスト
       colorName.textContent = item.name;
       hexLabel.textContent = item.hex.toUpperCase();
-      
-      // パネルの背景色を更新（背景色に合わせて半透明に）
+
+      // パネル背景だけ調整（任意）
       const panelEl = colorName.closest(".panel");
-      if (panelEl) {
-        const panelBg = isLight 
-          ? "rgba(255,255,255,.12)" 
-          : "rgba(0,0,0,.18)";
-        panelEl.style.backgroundColor = panelBg;
+      if (panelEl){
+        panelEl.style.backgroundColor = isLight ? "rgba(255,255,255,.12)" : "rgba(0,0,0,.18)";
       }
 
       wordsLine.innerHTML = "";
