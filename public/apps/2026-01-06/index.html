@@ -407,6 +407,26 @@
       document.documentElement.style.setProperty("--muted", muted);
       document.documentElement.style.setProperty("--line", line);
 
+      // 背景色に応じてグラデーションを調整（色のズレを防ぐ）
+      const appEl = el("app");
+      const isLight = luminance(bg) > 0.5;
+      // スマートフォンでの色のズレを防ぐため、グラデーションを最小限に
+      if (isLight) {
+        // 明るい色の場合はグラデーションをほぼ無効化
+        appEl.style.background = `
+          radial-gradient(1200px 800px at 30% 20%, rgba(255,255,255,.01), transparent 55%),
+          radial-gradient(900px 700px at 70% 80%, rgba(0,0,0,.02), transparent 60%),
+          ${bg}
+        `;
+      } else {
+        // 暗い色の場合はグラデーションをほぼ無効化
+        appEl.style.background = `
+          radial-gradient(1200px 800px at 30% 20%, rgba(255,255,255,.02), transparent 55%),
+          radial-gradient(900px 700px at 70% 80%, rgba(0,0,0,.03), transparent 60%),
+          ${bg}
+        `;
+      }
+
       dot.style.background = ink;
       dot.style.boxShadow = `0 0 0 3px ${ink === "#0b1020" ? "rgba(11,16,32,.16)" : "rgba(255,255,255,.18)"}`;
 
