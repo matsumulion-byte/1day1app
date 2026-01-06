@@ -434,8 +434,19 @@
       dot.style.background = ink;
       dot.style.boxShadow = `0 0 0 3px ${ink === "#0b1020" ? "rgba(11,16,32,.16)" : "rgba(255,255,255,.18)"}`;
 
+      // 色名とhexラベルの色を明示的に設定
+      colorName.style.color = ink;
       colorName.textContent = item.name;
       hexLabel.textContent = item.hex.toUpperCase();
+      
+      // パネルの背景色を更新（背景色に合わせて半透明に）
+      const panelEl = colorName.closest(".panel");
+      if (panelEl) {
+        const panelBg = isLight 
+          ? "rgba(255,255,255,.12)" 
+          : "rgba(0,0,0,.18)";
+        panelEl.style.backgroundColor = panelBg;
+      }
 
       wordsLine.innerHTML = "";
       for (const w of item.words){
