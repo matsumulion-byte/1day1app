@@ -407,6 +407,10 @@
       document.documentElement.style.setProperty("--muted", muted);
       document.documentElement.style.setProperty("--line", line);
 
+      // htmlとbodyの背景色も確実に更新（スマートフォンでの色のズレを防ぐ）
+      document.documentElement.style.backgroundColor = bg;
+      document.body.style.backgroundColor = bg;
+
       // 背景色に応じてグラデーションを調整（色のズレを防ぐ）
       const appEl = el("app");
       const isLight = luminance(bg) > 0.5;
@@ -460,12 +464,18 @@
     }
 
     function getRandomItem(excludeHex){
-      let tries = 0;
-      while (tries++ < 20){
-        const it = COLORS[Math.floor(Math.random()*COLORS.length)];
-        if (!excludeHex || it.hex !== excludeHex) return it;
+      // 除外する色以外の色のリストを作成
+      const available = excludeHex 
+        ? COLORS.filter(c => c.hex !== excludeHex)
+        : COLORS;
+      
+      // 利用可能な色がない場合は全色から選ぶ
+      if (available.length === 0) {
+        return COLORS[Math.floor(Math.random() * COLORS.length)];
       }
-      return COLORS[0];
+      
+      // 利用可能な色からランダムに選ぶ
+      return available[Math.floor(Math.random() * available.length)];
     }
 
     function shareText(item){
@@ -529,8 +539,14 @@
     });
 
     btnRandom.addEventListener("click", () => {
+      const previousHex = currentItem?.hex;
       currentMode = "RANDOM";
-      currentItem = getRandomItem(currentItem?.hex);
+      // 確実に異なる色を選ぶ
+      let newItem;
+      do {
+        newItem = getRandomItem(previousHex);
+      } while (newItem.hex === previousHex && COLORS.length > 1);
+      currentItem = newItem;
       render(currentItem, "RANDOM");
       runPulse();
     });
