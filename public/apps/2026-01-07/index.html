@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>七草クイズ</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --good:#34d399;
+      --bad:#fb7185;
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      background: radial-gradient(1200px 900px at 20% 10%, rgba(96,165,250,.18), transparent 55%),
+                  radial-gradient(900px 700px at 90% 30%, rgba(52,211,153,.14), transparent 55%),
+                  var(--bg);
+      color:var(--ink);
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;
+      overflow:hidden;
+      -webkit-user-select:none; user-select:none;
+      -webkit-touch-callout:none;
+      touch-action: manipulation;
+    }
+    button{font:inherit; color:inherit; background:none; border:0; cursor:pointer}
+    .app{
+      position:fixed; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      padding:16px;
+    }
+    .wrap{
+      width:min(520px, 100%);
+      display:flex; flex-direction:column; gap:12px;
+    }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+    }
+    .title{
+      font-weight:800;
+      letter-spacing:.02em;
+      font-size:18px;
+    }
+    .meta{
+      display:flex; gap:8px; align-items:center;
+      font-size:12px; color:var(--muted);
+    }
+    .pill{
+      padding:6px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      white-space:nowrap;
+    }
+
+    .card{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .prompt{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      color:var(--muted);
+      font-size:13px;
+      display:flex; gap:8px; align-items:center; justify-content:space-between;
+    }
+    .prompt strong{color:var(--ink); font-weight:700}
+    .imgbox{
+      display:grid;
+      place-items:center;
+      padding:16px;
+      background: radial-gradient(900px 500px at 50% 0%, rgba(255,255,255,.06), transparent 55%);
+    }
+    .imgframe{
+      width:min(340px, 78vw);
+      aspect-ratio:1/1;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.25);
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+      position:relative;
+    }
+    .imgframe img{
+      width:100%; height:100%;
+      object-fit:contain;
+      transform:scale(.98);
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.35));
+    }
+    .imgframe::after{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(180deg, rgba(255,255,255,.10), transparent 40%, rgba(0,0,0,.18));
+      pointer-events:none;
+    }
+
+    .choices{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap:10px;
+      padding:12px;
+      border-top:1px solid var(--line);
+      background:rgba(0,0,0,.12);
+    }
+    .btn{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.07);
+      border-radius:14px;
+      padding:12px 10px;
+      font-weight:700;
+      text-align:center;
+      transition: transform .06s ease, background .12s ease, border-color .12s ease;
+      min-height:46px;
+    }
+    .btn:active{ transform: translateY(1px) scale(.99); background:rgba(255,255,255,.10) }
+    .btn[disabled]{ opacity:.55; cursor:default; transform:none }
+    .btn.wide{
+      grid-column: 1 / -1;
+    }
+
+    .toast{
+      position:fixed;
+      left:50%; top:14px;
+      transform:translateX(-50%);
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.40);
+      color:var(--ink);
+      font-size:13px;
+      display:none;
+      box-shadow:0 10px 24px rgba(0,0,0,.35);
+      z-index:5;
+      max-width: min(560px, 92vw);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .toast.show{display:block; animation: pop .16s ease-out}
+    @keyframes pop{ from{transform:translateX(-50%) translateY(-6px); opacity:0} to{transform:translateX(-50%) translateY(0); opacity:1} }
+
+    .overlay{
+      position:fixed; inset:0;
+      display:none;
+      align-items:center; justify-content:center;
+      background:rgba(0,0,0,.55);
+      padding:16px;
+      z-index:10;
+    }
+    .overlay.show{display:flex}
+    .modal{
+      width:min(520px, 100%);
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.07));
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .modal .hd{
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .modal .hd .h{
+      font-weight:900; letter-spacing:.02em;
+    }
+    .modal .bd{
+      padding:16px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.6;
+    }
+    .modal .bd .big{
+      font-size:44px;
+      line-height:1;
+      color:var(--ink);
+      font-weight:900;
+      margin:10px 0 6px;
+    }
+    .modal .ft{
+      padding:14px 16px;
+      border-top:1px solid var(--line);
+      display:flex; gap:10px;
+    }
+    .action{
+      flex:1;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.08);
+      border-radius:14px;
+      padding:12px 10px;
+      font-weight:800;
+      text-align:center;
+    }
+    .action.primary{
+      border-color: rgba(96,165,250,.55);
+      background: rgba(96,165,250,.16);
+    }
+
+    .hint{
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    @media (min-width: 440px){
+      .choices{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .btn.wide{ grid-column:auto; }
+      .btn.lastWide{ grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="wrap">
+      <div class="topbar">
+        <div class="title">七草クイズ</div>
+        <div class="meta">
+          <div class="pill" id="qPill">Q 1 / 7</div>
+          <div class="pill" id="sPill">正解 0</div>
+          <button class="pill" id="soundBtn">🔇</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="prompt">
+          <div id="promptText"><strong>この草</strong>はどれ？</div>
+          <div class="hint" id="hintText"></div>
+        </div>
+
+        <div class="imgbox">
+          <div class="imgframe" id="imgFrame">
+            <img id="img" alt="" />
+          </div>
+        </div>
+
+        <div class="choices" id="choices"></div>
+      </div>
+
+      <div class="hint" style="padding:0 2px;">
+        ※ たまにキャラ問題があります（A案：七草のどれかに紐づいてるやつ）
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="overlay" id="overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+      <div class="hd">
+        <div class="h" id="resultTitle">結果</div>
+        <div class="pill" id="resultSub">7問</div>
+      </div>
+      <div class="bd" id="resultBody">
+        <div class="big" id="resultBig">0 / 7</div>
+        <div id="resultMsg">—</div>
+      </div>
+      <div class="ft">
+        <button class="action" id="btnClose">閉じる</button>
+        <button class="action primary" id="btnRetry">もう一回</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay show" id="soundOverlay">
+    <div class="modal">
+      <div class="hd">
+        <div class="h">サウンド設定</div>
+      </div>
+      <div class="bd">
+        <div class="big">BGM</div>
+        <p>サウンドをオンにしますか？</p>
+      </div>
+      <div class="ft">
+        <button class="action" id="soundOffStart">🔇 OFFで始める</button>
+        <button class="action primary" id="soundOnStart">🔊 ONで始める</button>
+      </div>
+    </div>
+  </div>
+
+  <audio id="bgm" preload="auto" loop>
+    <source id="bgmSource" src="" type="audio/mpeg">
+  </audio>
+
+  <script type="module">
+    // Vercel用のパス解決
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    // BGMのパスを設定
+    document.getElementById("bgmSource").src = asset("./assets/bgm.mp3");
+
+    // 七草（ひらがな統一）
+    const HERBS = [
+      { key:"せり",     file:"seri.png" },
+      { key:"なずな",   file:"nazuna.png" },
+      { key:"ごぎょう", file:"gogyou.png" },
+      { key:"はこべら", file:"hakobera.png" },
+      { key:"ほとけのざ", file:"hotokenoza.png" },
+      { key:"すずな",   file:"suzuna.png" },
+      { key:"すずしろ", file:"suzushiro.png" },
+    ];
+
+    const MATSUMURA = { key:"まつむら", file:"matsumura.png" };
+
+    // DOM
+    const $qPill = document.getElementById("qPill");
+    const $sPill = document.getElementById("sPill");
+    const $promptText = document.getElementById("promptText");
+    const $hintText = document.getElementById("hintText");
+    const $img = document.getElementById("img");
+    const $choices = document.getElementById("choices");
+    const $toast = document.getElementById("toast");
+    const $overlay = document.getElementById("overlay");
+    const $resultSub = document.getElementById("resultSub");
+    const $resultBig = document.getElementById("resultBig");
+    const $resultMsg = document.getElementById("resultMsg");
+    const $btnRetry = document.getElementById("btnRetry");
+    const $btnClose = document.getElementById("btnClose");
+
+    // util
+    const shuffle = (arr) => {
+      const a = arr.slice();
+      for (let i=a.length-1;i>0;i--){
+        const j = (Math.random()*(i+1))|0;
+        [a[i],a[j]] = [a[j],a[i]];
+      }
+      return a;
+    };
+
+    const toast = (msg, ok=null) => {
+      $toast.textContent = msg;
+      $toast.style.borderColor = ok===true ? "rgba(52,211,153,.55)" : ok===false ? "rgba(251,113,133,.55)" : "var(--line)";
+      $toast.style.background = ok===true ? "rgba(52,211,153,.14)" : ok===false ? "rgba(251,113,133,.14)" : "rgba(0,0,0,.40)";
+      $toast.classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(()=> $toast.classList.remove("show"), 650);
+    };
+
+    // quiz state
+    let questions = [];
+    let qi = 0;
+    let correct = 0;
+    let locked = false;
+
+    function buildQuestions(){
+      const herbs = shuffle(HERBS);
+      return herbs.map(h => {
+        const isMatsumura = Math.random() < 0.25; // 出現率25%
+        return {
+          correct: isMatsumura ? "まつむら" : h.key,
+          img: isMatsumura
+            ? asset("./assets/matsumura.png")
+            : asset(`./assets/nanakusa/${h.file}`),
+        };
+      });
+    }
+
+    function render(){
+      const q = questions[qi];
+      $qPill.textContent = `Q ${qi+1} / 7`;
+      $sPill.textContent = `正解 ${correct}`;
+
+      $img.src = q.img;
+      $img.alt = q.correct;
+
+      $choices.innerHTML = "";
+
+      let options = HERBS.map(h => h.key);
+
+      // 正解がまつむらの場合は必ず追加、それ以外は40%の確率で追加
+      if (q.correct === "まつむら" || Math.random() < 0.4) {
+        options.push("まつむら");
+      }
+
+      options = shuffle(options);
+
+      options.forEach(label => {
+        const b = document.createElement("button");
+        b.className = "btn";
+        b.textContent = label;
+        b.onclick = () => pick(label);
+        $choices.appendChild(b);
+      });
+    }
+
+    function setButtonsDisabled(v){
+      [...$choices.querySelectorAll("button")].forEach(b => b.disabled = v);
+    }
+
+    function pick(label){
+      if (locked) return;
+      locked = true;
+      setButtonsDisabled(true);
+
+      const q = questions[qi];
+      const ok = (label === q.correct);
+
+      if (ok){
+        correct++;
+        toast("正解", true);
+      }else{
+        toast(`ちがう（正解：${q.correct}）`, false);
+      }
+
+      // 0.6秒で次へ
+      setTimeout(() => {
+        qi++;
+        locked = false;
+        if (qi >= 7){
+          showResult();
+        }else{
+          setButtonsDisabled(false);
+          render();
+        }
+      }, 620);
+    }
+
+    function showResult(){
+      $overlay.classList.add("show");
+      $resultSub.textContent = "7問";
+      $resultBig.textContent = `${correct} / 7`;
+
+      if (correct === 7){
+        $resultMsg.textContent = "七草マスター";
+      }else if (correct >= 5){
+        $resultMsg.textContent = "惜しい。もう少しでマスター";
+      }else{
+        $resultMsg.textContent = "七草、意外とむずい";
+      }
+    }
+
+    function start(){
+      qi = 0;
+      correct = 0;
+      locked = false;
+      questions = buildQuestions();
+      $overlay.classList.remove("show");
+      render();
+      setButtonsDisabled(false);
+    }
+
+    $btnRetry.addEventListener("click", start);
+    $btnClose.addEventListener("click", () => {
+      $overlay.classList.remove("show");
+      start();
+    });
+
+    // ===== BGM =====
+    const bgm = document.getElementById("bgm");
+    const soundBtn = document.getElementById("soundBtn");
+    const $soundOverlay = document.getElementById("soundOverlay");
+    const $soundOnStart = document.getElementById("soundOnStart");
+    const $soundOffStart = document.getElementById("soundOffStart");
+
+    let soundOn = false;
+    let audioUnlocked = false;
+
+    function updateSoundUI(){
+      soundBtn.textContent = soundOn ? "🔊" : "🔇";
+    }
+
+    // iOS対策：最初のユーザー操作でアンロック
+    function unlockAudio(){
+      if (audioUnlocked) return;
+      bgm.play().then(()=>{
+        bgm.pause();
+        bgm.currentTime = 0;
+        audioUnlocked = true;
+        // アンロック後、保存された状態に応じてBGMを再生
+        if (soundOn) {
+          bgm.play().catch(()=>{});
+        }
+      }).catch(()=>{});
+    }
+
+    // ローカルストレージからBGM状態を読み込み
+    const savedSoundState = localStorage.getItem("bgmSoundOn");
+    
+    // 初期表示制御（保存状態チェック）
+    if (savedSoundState !== null) {
+      soundOn = savedSoundState === "true";
+      updateSoundUI();
+      $soundOverlay.classList.remove("show");
+    } else {
+      // 初回はクイズ開始を止める
+      $soundOverlay.classList.add("show");
+    }
+
+    soundBtn.addEventListener("click", async () => {
+      unlockAudio();
+
+      soundOn = !soundOn;
+      updateSoundUI();
+      // 状態をローカルストレージに保存
+      localStorage.setItem("bgmSoundOn", soundOn.toString());
+
+      if (soundOn){
+        try{
+          await bgm.play();
+        }catch(e){}
+      }else{
+        bgm.pause();
+      }
+    });
+
+    // 画面どこでも最初のタップでアンロック
+    document.addEventListener("pointerdown", unlockAudio, { once:true });
+
+    // ON / OFF ボタン処理
+    $soundOnStart.addEventListener("click", async () => {
+      soundOn = true;
+      localStorage.setItem("bgmSoundOn", "true");
+      updateSoundUI();
+      unlockAudio();
+      try { await bgm.play(); } catch(e){}
+      $soundOverlay.classList.remove("show");
+      start();
+    });
+
+    $soundOffStart.addEventListener("click", () => {
+      soundOn = false;
+      localStorage.setItem("bgmSoundOn", "false");
+      updateSoundUI();
+      bgm.pause();
+      $soundOverlay.classList.remove("show");
+      start();
+    });
+
+    // 起動処理を調整
+    if (savedSoundState !== null) {
+      start();
+    }
+  </script>
+</body>
+</html>
