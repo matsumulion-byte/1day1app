@@ -346,6 +346,8 @@
 
     // --- ENDROLL ---
     const $rollLayer = document.getElementById("rollLayer");
+    const $hostImg = document.getElementById("hostImg");
+    if($hostImg) $hostImg.src = asset("./assets/matsumura.png");
     const $rollClose = document.getElementById("rollClose");
     const $rollToggle = document.getElementById("rollToggle");
     const $rollNext = document.getElementById("rollNext");
@@ -462,7 +464,7 @@
     <div class="rollInner">
       <!-- 追加：ENDROLL中だけ表示される -->
       <div class="host">
-        <img src="./assets/matsumura.png" alt="松村" />
+        <img id="hostImg" src="" alt="松村" />
       </div>
 
       <div class="rollTop">
