@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>100</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow:0 18px 50px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif}
+    a{color:inherit;text-decoration:none}
+    button{font:inherit}
+    .app{min-height:100%;display:flex;align-items:center;justify-content:center;padding:20px}
+    .wrap{width:min(820px,100%);display:flex;flex-direction:column;gap:14px}
+    .top{
+      display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
+      padding:14px 14px;
+      background:linear-gradient(180deg, var(--panel2), var(--panel));
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+    }
+    .h{display:flex;flex-direction:column;gap:6px;}
+    .title{font-weight:800;letter-spacing:.08em;font-size:clamp(18px,3.4vw,22px);}
+    .sub{font-size:12px;color:var(--muted)}
+    .btn{
+      border:none;
+      background:rgba(96,165,250,.18);
+      color:var(--ink);
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(96,165,250,.35);
+      cursor:pointer;
+      font-weight:700;
+      white-space:nowrap;
+      transition:transform .08s ease, filter .15s ease;
+      touch-action:manipulation;
+    }
+    .btn:active{transform:translateY(1px);filter:brightness(1.1)}
+    .btn.secondary{
+      background:rgba(255,255,255,.08);
+      border-color:rgba(255,255,255,.16);
+    }
+    @media (max-width: 720px){
+      .top{align-items:flex-start}
+    }
+
+    .roll{
+      position:fixed; inset:0;
+      background:rgba(11,16,32,.92);
+      backdrop-filter: blur(6px);
+      display:none;
+      z-index:9999;
+    }
+    .roll.on{ display:block; }
+    .rollInner{
+      position:absolute; inset:0;
+      display:flex; flex-direction:column;
+      padding:22px;
+      gap:14px;
+    }
+    .rollTop{
+      display:flex; justify-content:flex-end; gap:10px; align-items:center;
+    }
+    .rollClose{
+      border:none; cursor:pointer;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.18);
+      color:var(--ink);
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      touch-action:manipulation;
+    }
+    .rollMain{
+      flex:1;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .rollCard{
+      width:min(760px,100%);
+      border-radius:var(--r);
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      box-shadow:var(--shadow);
+      padding:18px 18px 16px;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .rollTitle{
+      font-weight:900;
+      font-size:clamp(18px,4.6vw,28px);
+      line-height:1.2;
+    }
+    .rollMeta{
+      color:var(--muted);
+      font-size:12px;
+      letter-spacing:.06em;
+    }
+    .rollUrl{
+      font-size:12px;
+      color:rgba(243,246,255,.55);
+      word-break: break-all;
+    }
+    .rollDesc{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.6;
+      display:-webkit-box;
+      -webkit-line-clamp:4;
+      line-clamp:4;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+    .rollHint{
+      color:rgba(243,246,255,.55);
+      font-size:12px;
+      text-align:center;
+    }
+    .rollBottom{
+      display:flex; justify-content:center; gap:10px; flex-wrap:wrap;
+    }
+    .rollBtn{
+      border:none; cursor:pointer;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.18);
+      color:var(--ink);
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      touch-action:manipulation;
+    }
+
+    .host{
+      position:fixed;
+      left:12px;
+      bottom:12px;
+      width:120px;
+      max-width:32vw;
+      pointer-events:none;
+      opacity:.95;
+      z-index:10001; /* rollより上 */
+    }
+    .host img{
+      width:100%;
+      height:auto;
+      display:block;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,.35));
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:18px;
+      transform:translateX(-50%);
+      background:rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.16);
+      color:rgba(243,246,255,.86);
+      padding:10px 12px;
+      border-radius:14px;
+      font-size:12px;
+      letter-spacing:.04em;
+      z-index:10000;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .25s ease;
+      max-width:min(520px, calc(100% - 40px));
+      text-align:center;
+    }
+    .toast.on{ opacity:1; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="wrap">
+      <div class="top">
+        <div class="h">
+          <div class="title">100</div>
+          <div class="sub">1日1アプリ 100回目記念！</div>
+        </div>
+        <div class="topActions">
+          <button id="start" class="btn" type="button">
+            これまでのアプリを振り返る
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // 1日1アプリ用: 動的アセット参照ヘルパー
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    // BGM（ここに置く）
+    // /app/2026-01-08/assets/bgm.mp3
+    const BGM_PATH = "./assets/bgm.mp3";
+
+    const CSV_FILES = [
+      "./assets/202510.csv",
+      "./assets/202511.csv",
+      "./assets/202512.csv",
+      "./assets/202601.csv",
+    ];
+
+    const $start = document.getElementById("start");
+
+    const $toast = (() => {
+      const t = document.createElement("div");
+      t.className = "toast";
+      t.id = "toast";
+      document.body.appendChild(t);
+      return t;
+    })();
+    function toast(msg, ms=1400){
+      $toast.textContent = msg;
+      $toast.classList.add("on");
+      window.clearTimeout(toast._t);
+      toast._t = window.setTimeout(()=> $toast.classList.remove("on"), ms);
+    }
+
+    function jpDateToIso(s){
+      s = String(s ?? "").trim();
+      const m = s.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日$/);
+      if(!m) return "";
+      const y = m[1];
+      const mo = String(+m[2]).padStart(2,"0");
+      const d = String(+m[3]).padStart(2,"0");
+      return `${y}-${mo}-${d}`;
+    }
+    function fmtDate(iso){
+      return String(iso || "").replaceAll("-", "/");
+    }
+    function hrefFor(dateIso){
+      return `/${dateIso}/`;
+    }
+
+    function parseCSV(text){
+      const lines = text.replace(/\r/g,"").split("\n").filter(l=>l.trim().length);
+      if(!lines.length) return [];
+
+      const split = (line) => {
+        const out = [];
+        let cur = "", q = false;
+        for(let i=0;i<line.length;i++){
+          const ch = line[i];
+          if(ch === '"'){ q = !q; continue; }
+          if(ch === "," && !q){ out.push(cur); cur=""; continue; }
+          cur += ch;
+        }
+        out.push(cur);
+        return out.map(s=>s.trim());
+      };
+
+      const header = split(lines[0]);
+      const idxName = header.indexOf("名前");
+      const idxDate = header.indexOf("Date");
+      const idxText = header.indexOf("テキスト");
+
+      const rows = [];
+      for(const line of lines.slice(1)){
+        const cols = split(line);
+        const name = cols[idxName] ?? "";
+        const dateJp = cols[idxDate] ?? "";
+        const text = cols[idxText] ?? "";
+        const dateIso = jpDateToIso(dateJp);
+        if(!dateIso) continue;
+        rows.push({ date: dateIso, title: name || fmtDate(dateIso), text });
+      }
+      return rows;
+    }
+
+    let apps = [];
+
+    async function loadAll(){
+      const texts = await Promise.all(
+        CSV_FILES.map(async (p) => {
+          const res = await fetch(asset(p), { cache: "no-store" });
+          if(!res.ok) throw new Error(`CSV load failed: ${p}`);
+          return await res.text();
+        })
+      );
+
+      const merged = texts.flatMap(parseCSV);
+
+      const map = new Map();
+      for(const x of merged){
+        if(!map.has(x.date)) map.set(x.date, x);
+      }
+      apps = Array.from(map.values()).sort((a,b)=>a.date.localeCompare(b.date));
+    }
+
+    loadAll().catch((e)=>{
+      toast(e?.message || "読み込みに失敗しました");
+    });
+
+    // --- BGM (startボタンで再生) ---
+    const audio = new Audio(asset(BGM_PATH));
+    audio.loop = true;
+    audio.preload = "auto";
+    audio.volume = 0;
+
+    let bgmWanted = false;
+    function fadeTo(target, ms=900){
+      const from = audio.volume;
+      const start = performance.now();
+      const tick = (now) => {
+        const t = Math.min(1, (now - start) / ms);
+        audio.volume = from + (target - from) * t;
+        if(t < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+    async function playBgm(){
+      bgmWanted = true;
+      try{
+        await audio.play(); // ユーザー操作内なら通る
+        fadeTo(0.85, 900);
+      }catch{
+        toast("音が再生できませんでした（もう一度タップしてください）");
+      }
+    }
+    function stopBgm(){
+      bgmWanted = false;
+      fadeTo(0, 500);
+      setTimeout(()=>{
+        if(!bgmWanted){
+          audio.pause();
+          audio.currentTime = 0;
+        }
+      }, 520);
+    }
+
+    // --- ENDROLL ---
+    const $rollLayer = document.getElementById("rollLayer");
+    const $rollClose = document.getElementById("rollClose");
+    const $rollToggle = document.getElementById("rollToggle");
+    const $rollNext = document.getElementById("rollNext");
+
+    const $rTitle = document.getElementById("rollTitle");
+    const $rMeta  = document.getElementById("rollMeta");
+    const $rUrl   = document.getElementById("rollUrl");
+    const $rDesc  = document.getElementById("rollDesc");
+    const $rCard  = document.getElementById("rollCard");
+
+    let rollOn = false;
+    let rollPaused = false;
+    let rollIdx = 0;
+    let rollTimer = null;
+
+    const ROLL_MS = 1150;
+
+    function openRoll({ startFromZero = true } = {}){
+      if(!apps.length) return;
+
+      rollOn = true;
+      rollPaused = false;
+      $rollToggle.textContent = "PAUSE";
+      $rollLayer.classList.add("on");
+      $rollLayer.setAttribute("aria-hidden","false");
+
+      rollIdx = startFromZero ? 0 : rollIdx;
+      renderRoll();
+      startRoll();
+    }
+
+    function closeRoll(){
+      rollOn = false;
+      stopRoll();
+      $rollLayer.classList.remove("on");
+      $rollLayer.setAttribute("aria-hidden","true");
+    }
+
+    function startRoll(){
+      stopRoll();
+      rollTimer = setInterval(()=>{
+        if(!rollOn || rollPaused) return;
+        rollIdx = (rollIdx + 1) % apps.length;
+        renderRoll();
+      }, ROLL_MS);
+    }
+
+    function stopRoll(){
+      if(rollTimer){
+        clearInterval(rollTimer);
+        rollTimer = null;
+      }
+    }
+
+    function renderRoll(){
+      const it = apps[rollIdx];
+      if(!it) return;
+      const url = hrefFor(it.date);
+      $rTitle.textContent = it.title?.trim() ? it.title : fmtDate(it.date);
+      $rMeta.textContent  = fmtDate(it.date);
+      $rUrl.textContent   = url;
+      $rDesc.textContent  = (it.text || "").trim();
+    }
+
+    function openCurrent(){
+      const it = apps[rollIdx];
+      if(!it) return;
+      window.open(hrefFor(it.date), "_blank", "noopener");
+    }
+
+    // これまでのアプリをみる → エンドロール + BGM
+    $start.addEventListener("click", async ()=>{
+      if(!apps.length){
+        toast("読み込み中です…");
+        return;
+      }
+      await playBgm();
+      openRoll({ startFromZero: true });
+    }, { passive:true });
+
+    $rollClose.addEventListener("click", ()=>{
+      closeRoll();
+      stopBgm(); // 閉じたらBGMも止める（止めたくないならこの行を消す）
+    }, { passive:true });
+
+    $rollToggle.addEventListener("click", ()=>{
+      rollPaused = !rollPaused;
+      $rollToggle.textContent = rollPaused ? "PLAY" : "PAUSE";
+    }, { passive:true });
+
+    $rollNext.addEventListener("click", ()=>{
+      if(!apps.length) return;
+      rollIdx = (rollIdx + 1) % apps.length;
+      renderRoll();
+    }, { passive:true });
+
+    $rCard.addEventListener("click", openCurrent, { passive:true });
+    $rCard.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        openCurrent();
+      }
+    });
+
+    window.addEventListener("keydown", (e)=>{
+      if(e.key === "Escape" && rollOn){
+        closeRoll();
+        stopBgm();
+      }
+    });
+  </script>
+
+  <div id="rollLayer" class="roll" aria-hidden="true">
+    <div class="rollInner">
+      <!-- 追加：ENDROLL中だけ表示される -->
+      <div class="host">
+        <img src="./assets/matsumura.png" alt="松村" />
+      </div>
+
+      <div class="rollTop">
+        <button id="rollClose" class="rollClose" type="button">閉じる</button>
+      </div>
+
+      <div class="rollMain">
+        <div class="rollCard" id="rollCard" role="button" tabindex="0">
+          <div class="rollTitle" id="rollTitle">—</div>
+          <div class="rollMeta" id="rollMeta">—</div>
+          <div class="rollUrl" id="rollUrl">—</div>
+          <div class="rollDesc" id="rollDesc"></div>
+        </div>
+      </div>
+
+      <div class="rollHint">タップでその日のアプリを開く（別タブ）</div>
+
+      <div class="rollBottom">
+        <button id="rollToggle" class="rollBtn" type="button">PAUSE</button>
+        <button id="rollNext" class="rollBtn" type="button">NEXT</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
