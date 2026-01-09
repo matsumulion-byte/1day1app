@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>101回目の松村です。</title>
+  <style>
+    :root{
+      --bg:#070a14;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --good:#34d399;
+      --bad:#fb7185;
+      --r:18px;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;}
+    button{font:inherit}
+    .app{
+      position:fixed;inset:0;
+      display:flex;align-items:stretch;justify-content:center;
+      -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+    }
+    .scene{
+      position:relative;
+      width:min(520px, 100vw);
+      height:100vh;
+      overflow:hidden;
+      background:
+        radial-gradient(1200px 800px at 50% -100px, rgba(96,165,250,.16), transparent 55%),
+        linear-gradient(#0b1020, #060814);
+      touch-action:manipulation;
+    }
+
+    /* road lane */
+    .road{
+      position:absolute;inset:0;
+      background:
+        linear-gradient(to bottom, rgba(255,255,255,.06), rgba(255,255,255,.02) 35%, rgba(0,0,0,.12)),
+        repeating-linear-gradient(to bottom, rgba(255,255,255,.0) 0 18px, rgba(255,255,255,.10) 18px 26px),
+        linear-gradient(to right, rgba(255,255,255,.06), rgba(255,255,255,0) 12%, rgba(255,255,255,0) 88%, rgba(255,255,255,.06));
+      opacity:.55;
+      mix-blend-mode:screen;
+      pointer-events:none;
+    }
+    .vignette{
+      position:absolute;inset:-10%;
+      background:radial-gradient(closest-side at 50% 35%, transparent 0 55%, rgba(0,0,0,.55) 80%, rgba(0,0,0,.8));
+      pointer-events:none;
+    }
+
+    .hud{
+      position:absolute;left:14px;right:14px;top:14px;
+      display:flex;gap:10px;align-items:flex-start;justify-content:space-between;
+      z-index:10;
+      pointer-events:none;
+    }
+    .badge{
+      pointer-events:none;
+      display:inline-flex;align-items:center;gap:8px;
+      padding:10px 12px;border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid var(--line);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      font-weight:700;
+      letter-spacing:.02em;
+    }
+    .badge small{font-weight:600;color:var(--muted)}
+    .msg{
+      pointer-events:none;
+      padding:10px 12px;border-radius:14px;
+      background:rgba(0,0,0,.38);
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(10px);
+      max-width:70%;
+      box-shadow: var(--shadow);
+    }
+    .msg .t{font-weight:800}
+    .msg .s{margin-top:4px;color:var(--muted);font-size:12px;line-height:1.35}
+
+    .truck{
+      position:absolute;left:50%;
+      transform:translateX(-50%);
+      will-change: transform, top, opacity, filter;
+      image-rendering:auto;
+      pointer-events:none;
+      filter: drop-shadow(0 18px 28px rgba(0,0,0,.35));
+    }
+    .matsu{
+      position:absolute;
+      left:0;
+      transform:translateX(-50%); /* 中心アンカー */
+      will-change: transform, top, opacity, filter;
+      pointer-events:none;
+      filter: drop-shadow(0 18px 28px rgba(0,0,0,.35));
+    }
+
+    .brakeFlash{
+      position:absolute;left:50%;
+      transform:translateX(-50%);
+      width:64%;height:18px;
+      border-radius:999px;
+      background:linear-gradient(to right, transparent, rgba(255,255,255,.28), transparent);
+      opacity:0;
+      pointer-events:none;
+      z-index:6;
+      filter: blur(0.2px);
+    }
+
+    .overlay{
+      position:absolute;inset:0;
+      display:flex;align-items:center;justify-content:center;
+      padding:22px;
+      z-index:20;
+      background:linear-gradient(to bottom, rgba(0,0,0,.45), rgba(0,0,0,.20));
+    }
+    .card{
+      width:min(420px, 100%);
+      border-radius:22px;
+      padding:18px 16px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      text-align:center;
+    }
+    .card h1{font-size:18px;letter-spacing:.02em}
+    .card p{margin-top:10px;color:var(--muted);font-size:13px;line-height:1.55}
+    .row{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+    .btn{
+      pointer-events:auto;
+      border:0;border-radius:16px;
+      padding:12px 14px;
+      background:rgba(96,165,250,.22);
+      border:1px solid rgba(96,165,250,.38);
+      color:var(--ink);
+      font-weight:800;
+      min-width:140px;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.secondary{
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.16);
+      color:var(--ink);
+      min-width:140px;
+    }
+
+    .hint{
+      position:absolute;left:0;right:0;bottom:18px;
+      display:flex;justify-content:center;
+      z-index:12;
+      pointer-events:none;
+    }
+    .hint .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:10px 14px;border-radius:999px;
+      background:rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(10px);
+      color:rgba(243,246,255,.92);
+      font-weight:800;
+      box-shadow: var(--shadow);
+    }
+    .hint .pill span{color:rgba(243,246,255,.7);font-weight:700}
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="scene" id="scene">
+    <div class="road"></div>
+    <div class="vignette"></div>
+
+    <div class="hud">
+      <div class="badge"><small>1/9</small> 101回目の松村です。</div>
+      <div class="msg" id="msg">
+        <div class="t">タイミング勝負</div>
+        <div class="s">ギリギリで止まったらOK。遠すぎても失敗。</div>
+      </div>
+    </div>
+
+    <img class="truck" id="truck" alt="truck" />
+    <div class="brakeFlash" id="brakeFlash"></div>
+    <img class="matsu" id="matsu" alt="matsu" />
+
+    <div class="hint" id="hint">
+      <div class="pill">画面タップで飛び出す <span>（1回だけ）</span></div>
+    </div>
+
+    <div class="overlay" id="overlay">
+      <div class="card">
+        <h1>101回目の松村です。</h1>
+        <p>
+          上からトラックが来る。<br/>
+          いいタイミングで飛び出せ。<br/>
+          鼻先で止まればOK。遠すぎてもNG。
+        </p>
+        <div class="row">
+          <button class="btn" id="startBtn">スタート</button>
+          <button class="btn secondary" id="muteBtn">BGM: ON</button>
+        </div>
+        <p style="margin-top:10px;font-size:12px;color:rgba(243,246,255,.64)">
+          ※ 成功したときだけサビが鳴る（10〜15秒想定）
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  // Vercel用のパス解決
+  const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+  const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+  const asset = (p) => {
+    const clean = String(p || "").replace(/^\.?\//, "");
+    return `${DATE_BASE}${clean}`;
+  };
+
+  // ---- assets (place these under /app/2026-01-09/assets/) ----
+  const ASSETS = {
+    truck: asset("./assets/track.png"),
+    wait:  asset("./assets/matsu_pose_0.png"),
+    open:  asset("./assets/matsu_pose_5.png"),
+    fail:  asset("./assets/matsu_pose_4.png"),
+    // Replace filename to your chorus audio (mp3/ogg). Keep short.
+    bgm:   asset("./assets/bgm.mp3"),
+  };
+
+  const scene = document.getElementById("scene");
+  const truckEl = document.getElementById("truck");
+  const matsuEl = document.getElementById("matsu");
+  const overlay = document.getElementById("overlay");
+  const startBtn = document.getElementById("startBtn");
+  const hint = document.getElementById("hint");
+  const msg = document.getElementById("msg");
+  const brakeFlash = document.getElementById("brakeFlash");
+
+  // preload images
+  const preloadImg = (src) => new Promise((res, rej) => {
+    const im = new Image();
+    im.onload = () => res(im);
+    im.onerror = rej;
+    im.src = src;
+  });
+
+  const bgm = new Audio();
+  bgm.src = ASSETS.bgm;
+  bgm.preload = "auto";
+
+  let muted = false;
+  const getMuteBtn = () => document.getElementById("muteBtn");
+  const setMuteUI = () => {
+    const mb = getMuteBtn();
+    if (mb) mb.textContent = `BGM: ${muted ? "OFF" : "ON"}`;
+    bgm.muted = muted;
+  };
+  setMuteUI();
+
+  // ---- game state ----
+  let raf = 0;
+  let lastT = 0;
+
+  const State = {
+    IDLE: "idle",
+    READY: "ready",
+    BRAKING: "braking",
+    RESOLVING: "resolving",
+    END: "end",
+  };
+  let state = State.IDLE;
+
+  // geometry (computed on start / resize)
+  let W = 0, H = 0;
+  let truckW = 0, truckH = 0;
+  let matsuW = 0, matsuH = 0;
+
+  // motion
+  let truckY = 0;
+  let v = 0;           // px/s
+  let a = 0;           // px/s^2 (decel)
+  let brakeDist = 0;   // px
+  let tol = 0;         // px
+  let dashDist = 0;    // px
+  let dashT = 0;       // 0..1
+  let dashDur = 0.12;  // seconds
+  let matsuBaseY = 0;
+  let matsuY = 0;
+  let outcome = null;  // "success" | "fail_late" | "fail_early"
+
+  // lanes
+  let matsuX = 0;       // px
+  let matsuX0 = 0;      // left lane px
+  let matsuX1 = 0;      // center lane px
+  let laneBlend = 0;    // 0..1
+  let laneDur = 0.12;   // seconds
+
+  const FRONT_FACTOR = 0.93; // where the truck "nose" is (bottom-ish)
+
+  function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+  function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+
+  function stopAllAudio(){
+    try{
+      bgm.pause();
+      bgm.currentTime = 0;
+    }catch(e){}
+  }
+
+  function setMsg(title, sub){
+    msg.querySelector(".t").textContent = title;
+    msg.querySelector(".s").textContent = sub;
+  }
+
+  function layout(){
+    W = scene.clientWidth;
+    H = scene.clientHeight;
+
+    // 実寸比（あなたの画像の実サイズ）
+    const TRUCK_RATIO = 1428 / 420; // track.png (h/w)
+    // 松村は「高さ固定」にして幅はauto（ポーズ差で崩れない）
+    const matsuH_ = Math.min(H * 0.30, 300);
+
+    // truck: 高さ基準でフィットさせる（W基準にすると縦長が破綻する）
+    const truckH_ = H * 0.86;
+    const truckW_ = Math.min(W * 0.62, truckH_ / TRUCK_RATIO);
+
+    truckW = truckW_;
+    truckH = truckH_;
+    matsuH = matsuH_;
+
+    truckEl.style.width = `${truckW}px`;
+    truckEl.style.height = `${truckH}px`;
+
+    matsuEl.style.height = `${matsuH}px`;
+    matsuEl.style.width = "auto";
+
+    // matsu at bottom
+    matsuBaseY = H - matsuH - 18;
+    matsuY = matsuBaseY;
+
+    // truck start (off-screen)
+    truckY = -truckH * 0.92;
+
+    // difficulty scaling
+    const scale = W / 390;
+    v = 860 * scale;
+    brakeDist = (290 + (Math.random()*120 - 60)) * scale;
+    tol = 44 * scale;
+    dashDist = 86 * scale;
+    dashDur = 0.12;
+
+    dashT = 0;
+
+    // lanes: Xは「中心座標」で扱う（translateX(-50%)前提）
+    matsuX0 = W * 0.20; // 左待機（もっと左に寄せる）
+    matsuX1 = W * 0.50; // 中央
+    matsuX = matsuX0;
+    laneBlend = 0;
+
+    brakeFlash.style.top = `${H * 0.52}px`;
+  }
+
+  function setPose(src){
+    matsuEl.src = src;
+  }
+
+  function render(){
+    truckEl.style.top = `${truckY}px`;
+    matsuEl.style.top = `${matsuY}px`;
+    matsuEl.style.left = `${matsuX}px`;
+  }
+
+  function resetRun(){
+    cancelAnimationFrame(raf);
+    raf = 0;
+    lastT = 0;
+    stopAllAudio();
+    outcome = null;
+
+    hint.style.opacity = "1";
+    hint.style.transform = "translateY(0)";
+    brakeFlash.style.opacity = "0";
+    brakeFlash.style.transform = "translateX(-50%) scaleX(1)";
+
+    setMsg("タイミング勝負", "ギリギリで止まったらOK。遠すぎても失敗。");
+
+    layout();
+
+    truckEl.src = ASSETS.truck;
+    setPose(ASSETS.wait);
+
+    matsuEl.style.opacity = "1";
+    matsuEl.style.transform = "";
+    truckEl.style.transform = "translateX(-50%)";
+
+    state = State.READY;
+    render();
+  }
+
+  function endScreen(title, sub){
+    state = State.END;
+    hint.style.opacity = "0";
+    setMsg(title, sub);
+
+    overlay.innerHTML = `
+      <div class="card">
+        <h1>${title}</h1>
+        <p>${sub}</p>
+        <div class="row">
+          <button class="btn" id="retryBtn">もう一回</button>
+          <button class="btn secondary" id="closeBtn">とじる</button>
+        </div>
+      </div>
+    `;
+    overlay.style.display = "flex";
+
+    overlay.querySelector("#retryBtn").addEventListener("click", () => {
+      overlay.style.display = "none";
+      overlay.innerHTML = ""; // restore later by startScreen()
+      buildStartScreenMini(); // keep mute toggle on start screen not needed; we'll just restart directly
+      resetRun();
+      loop(performance.now());
+    }, { passive:true });
+
+    overlay.querySelector("#closeBtn").addEventListener("click", () => {
+      overlay.style.display = "none";
+      // go idle
+      state = State.IDLE;
+      stopAllAudio();
+      // show original start overlay again
+      restoreStartOverlay();
+    }, { passive:true });
+  }
+
+  function restoreStartOverlay(){
+    overlay.style.display = "flex";
+    overlay.innerHTML = `
+      <div class="card">
+        <h1>101回目の松村です。</h1>
+        <p>
+          上からトラックが来る。<br/>
+          いいタイミングで飛び出せ。<br/>
+          鼻先で止まればOK。遠すぎてもNG。
+        </p>
+        <div class="row">
+          <button class="btn" id="startBtn">スタート</button>
+          <button class="btn secondary" id="muteBtn">BGM: ${muted ? "OFF" : "ON"}</button>
+        </div>
+        <p style="margin-top:10px;font-size:12px;color:rgba(243,246,255,.64)">
+          ※ 成功したときだけ音楽が鳴るよ
+        </p>
+      </div>
+    `;
+    wireStartOverlayButtons();
+  }
+
+  // helper for retry flow to keep overlay valid
+  function buildStartScreenMini(){
+    overlay.innerHTML = `
+      <div class="card">
+        <h1>101回目の松村です。</h1>
+        <p>準備中…</p>
+      </div>
+    `;
+    overlay.style.display = "none";
+  }
+
+  function playChorus(){
+    if (muted) return;
+    try{
+      bgm.currentTime = 0;
+      bgm.play().catch(()=>{});
+      // stop after 15s (chorus)
+      setTimeout(() => {
+        try{ bgm.pause(); }catch(e){}
+      }, 30000);
+    }catch(e){}
+  }
+
+  function success(){
+    // brake flash
+    brakeFlash.style.top = `${truckY + truckH*FRONT_FACTOR - 10}px`;
+    brakeFlash.style.opacity = "1";
+    brakeFlash.style.transform = "translateX(-50%) scaleX(1.2)";
+    setTimeout(()=>{ brakeFlash.style.opacity = "0"; }, 160);
+
+    hint.style.opacity = "0";
+
+    // one beat of silence then chorus
+    setTimeout(() => playChorus(), 120);
+
+    endScreen("成功！", "僕は死にましぇん。松村です！");
+  }
+
+  function failEarly(){
+    hint.style.opacity = "0";
+    endScreen("失敗", "ちょっと手前すぎるかも");
+  }
+
+  function flyAway(){
+    // swap to flip pose and launch upward fast
+    setPose(ASSETS.fail);
+    const startY = matsuY;
+    const dur = 0.35;
+    let t0 = performance.now();
+
+    const step = (now) => {
+      const t = (now - t0) / 1000;
+      const p = clamp(t / dur, 0, 1);
+      const e = easeOutCubic(p);
+      matsuY = startY - (H * 0.55) * e;
+      matsuEl.style.opacity = String(1 - p);
+      matsuEl.style.transform = `scale(${1.08 + 0.06*e})`;
+      render();
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  function failLate(){
+    hint.style.opacity = "0";
+    // quick dark beat (implicit) via msg only; do a tiny pause then fly
+    setTimeout(() => {
+      flyAway();
+      endScreen("失敗", "遅かった。飛ばされた。");
+    }, 120);
+  }
+
+  function decideOutcomeAtTap(){
+    // distance from truck nose to "line" (near matsu)
+    const lineY = matsuBaseY + matsuH * 0.18; // where impact feels right (upper body)
+    const noseY = truckY + truckH * FRONT_FACTOR;
+    const dist = lineY - noseY;
+
+    if (dist <= 0){
+      return "fail_late";
+    }
+    if (Math.abs(dist - brakeDist) <= tol){
+      return "success";
+    }
+    if (dist < brakeDist - tol){
+      return "fail_late"; // too close (won't stop in time)
+    }
+    return "fail_early"; // too far (stops too soon / too safely)
+  }
+
+  function onTap(){
+    if (state !== State.READY) return;
+
+    // lock input
+    state = State.BRAKING;
+
+    // pose change immediately
+    setPose(ASSETS.open);
+
+    // decide outcome based on timing
+    outcome = decideOutcomeAtTap();
+
+    // compute deceleration so it stops after brakeDist
+    // a = v^2 / (2*s)
+    a = (v*v) / (2 * Math.max(40, brakeDist));
+
+    // dash starts
+    dashT = 0;
+    laneBlend = 0;        // 横移動開始
+
+    // UI
+    setMsg("……", ""); // remove guidance at the moment
+  }
+
+  function loop(now){
+    if (!lastT) lastT = now;
+    const dt = Math.min(0.033, (now - lastT) / 1000);
+    lastT = now;
+
+    if (state === State.READY){
+      // truck constant speed
+      truckY += v * dt;
+
+      // if it passes beyond screen bottom without tap, just reset run
+      if (truckY > H + 40){
+        resetRun();
+      }
+    }
+
+    if (state === State.BRAKING){
+      // matsu dash (up a bit)
+      dashT = clamp(dashT + dt / dashDur, 0, 1);
+      matsuY = matsuBaseY - dashDist * easeOutCubic(dashT);
+
+      // matsu lane slide (left -> center)
+      laneBlend = clamp(laneBlend + dt / laneDur, 0, 1);
+      matsuX = matsuX0 + (matsuX1 - matsuX0) * easeOutCubic(laneBlend);
+
+      // brake motion
+      const dv = a * dt;
+      v = Math.max(0, v - dv);
+      truckY += v * dt;
+
+      if (outcome === "fail_late"){
+        // if nose reaches line -> trigger fail immediately
+        const lineY = matsuBaseY + matsuH * 0.18;
+        const noseY = truckY + truckH * FRONT_FACTOR;
+        if (noseY >= lineY){
+          state = State.RESOLVING;
+          failLate();
+        }
+      }
+
+      if (v <= 0.5){
+        // truck fully stopped
+        v = 0;
+        state = State.RESOLVING;
+
+        if (outcome === "success"){
+          // keep open pose
+          matsuY = matsuBaseY - dashDist; // fully out
+          render();
+          success();
+        }else if (outcome === "fail_early"){
+          // truck stopped too far; matsu stays open (as specified)
+          matsuY = matsuBaseY - dashDist;
+          render();
+          failEarly();
+        }else{
+          // fail_late handled earlier; if not yet, treat as late
+          failLate();
+        }
+      }
+    }
+
+    render();
+    if (state !== State.END && state !== State.IDLE){
+      raf = requestAnimationFrame(loop);
+    }
+  }
+
+  function startGame(){
+    overlay.style.display = "none";
+    overlay.innerHTML = "";
+    resetRun();
+    lastT = 0;
+    raf = requestAnimationFrame(loop);
+  }
+
+  // click / touch
+  scene.addEventListener("pointerdown", (e) => {
+    if (overlay.style.display !== "none") return; // ignore when overlay open
+    // prevent selection / double-tap zoom-ish behavior
+    e.preventDefault?.();
+    onTap();
+  }, { passive: false });
+
+  // prevent iOS long-press callout
+  window.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  // init
+  (async () => {
+    // preload images (ignore failures gracefully)
+    try{
+      await Promise.all([
+        preloadImg(ASSETS.truck),
+        preloadImg(ASSETS.wait),
+        preloadImg(ASSETS.open),
+        preloadImg(ASSETS.fail),
+      ]);
+    }catch(e){}
+    truckEl.src = ASSETS.truck;
+    setPose(ASSETS.wait);
+    layout();
+    render();
+  })();
+
+  // resize
+  window.addEventListener("resize", () => {
+    if (state === State.READY || state === State.BRAKING){
+      // keep gameplay consistent by restarting on resize
+      resetRun();
+    }else{
+      layout(); render();
+    }
+  });
+
+  // start overlay buttons (initial DOM)
+  function wireStartOverlayButtons(){
+    const sb = document.getElementById("startBtn");
+    const mb = document.getElementById("muteBtn");
+    if (sb) sb.addEventListener("click", startGame, { passive:true });
+    if (mb) mb.addEventListener("click", () => {
+      muted = !muted;
+      setMuteUI();
+    }, { passive:true });
+  }
+  wireStartOverlayButtons();
+
+</script>
+</body>
+</html>
