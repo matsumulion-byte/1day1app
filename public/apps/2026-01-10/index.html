@@ -861,19 +861,6 @@
       ctx.restore();
     }
 
-    // pause / restart
-    function togglePause(){
-      if (!state.running) return;
-      state.paused = !state.paused;
-      btnPause.textContent = state.paused ? 'RESUME' : 'PAUSE';
-      popToast(state.paused ? 'pause' : 'go');
-      if (bgmState.enabled && bgmState.unlocked){
-        if (state.paused) fadeTo(0.18, 160);
-        else fadeTo(bgmState.targetVol, 220);
-      }
-    }
-    btnPause.addEventListener('click', togglePause);
-
     btnRestart.addEventListener('click', async ()=>{
       resetAll();
       overlay.style.display = 'none';
