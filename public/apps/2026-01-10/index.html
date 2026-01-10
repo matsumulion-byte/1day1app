@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#070a14" />
+  <title>ASTERO-MATSUMURA（レトロ）</title>
+  <style>
+    :root{
+      --bg:#070a14;
+      --ink:#eaf0ff;
+      --muted:rgba(234,240,255,.72);
+      --line:rgba(234,240,255,.18);
+      --good:#34d399;
+      --bad:#fb7185;
+      --accent:#60a5fa;
+      --panel:rgba(255,255,255,.06);
+      --panel2:rgba(255,255,255,.10);
+      --r:18px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+    html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;}
+    button{font:inherit;color:inherit}
+    .app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto;}
+    .top{
+      display:flex;gap:10px;align-items:center;justify-content:space-between;
+      padding:12px 12px calc(10px + env(safe-area-inset-top));
+      border-bottom:1px solid var(--line);
+      background:linear-gradient(to bottom, rgba(255,255,255,.06), rgba(255,255,255,0));
+    }
+    .hud{
+      display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;
+      font-variant-numeric:tabular-nums;
+      letter-spacing:.04em;
+    }
+    .hud b{font-weight:800}
+    .hud .pill{
+      padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--panel);
+    }
+    .actions{display:flex;gap:8px;align-items:center;}
+    .btn{
+      padding:10px 12px;border-radius:12px;border:1px solid var(--line);
+      background:linear-gradient(180deg,var(--panel2),var(--panel));
+      box-shadow:0 12px 30px rgba(0,0,0,.35);
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{
+      border-color:rgba(96,165,250,.45);
+      background:linear-gradient(180deg, rgba(96,165,250,.22), rgba(255,255,255,.06));
+    }
+    .mid{position:relative}
+    canvas{position:absolute;inset:0;width:100%;height:100%;}
+    .overlay{
+      position:absolute;inset:0;display:grid;place-items:center;
+      padding:18px;pointer-events:none;
+    }
+    .card{
+      width:min(560px,92vw);
+      border:1px solid var(--line);border-radius:var(--r);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      box-shadow:0 18px 60px rgba(0,0,0,.55);
+      padding:16px 16px 14px;
+    }
+    .title{font-size:18px;font-weight:900;letter-spacing:.06em}
+    .desc{margin-top:8px;color:var(--muted);line-height:1.6;font-size:13px}
+    .desc .k{color:var(--ink)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .chip{
+      font-size:12px;color:var(--muted);
+      border:1px solid var(--line);border-radius:999px;padding:7px 10px;background:rgba(0,0,0,.18);
+    }
+    .chip b{color:var(--ink)}
+    .card .row2{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+    .card .row2 .btn{pointer-events:auto}
+    .bottom{
+      display:grid;grid-template-columns:1fr 1fr 1fr;
+      gap:10px;
+      padding:10px 12px calc(12px + env(safe-area-inset-bottom));
+      border-top:1px solid var(--line);
+      background:linear-gradient(to top, rgba(255,255,255,.06), rgba(255,255,255,0));
+    }
+    .pad{
+      min-height:64px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(255,255,255,.04);
+      display:flex;flex-direction:column;justify-content:center;align-items:center;
+      gap:4px;
+      position:relative;
+      touch-action:none;
+    }
+    .pad .label{font-size:12px;color:var(--muted);letter-spacing:.05em}
+    .pad .big{font-weight:900;letter-spacing:.08em}
+    .pad.shoot{
+      background:linear-gradient(180deg, rgba(96,165,250,.18), rgba(255,255,255,.04));
+      border-color:rgba(96,165,250,.35);
+    }
+    .pad .sub{font-size:11px;color:var(--muted)}
+    .hint{
+      position:absolute;left:12px;bottom:10px;color:rgba(234,240,255,.55);
+      font-size:11px;letter-spacing:.04em;pointer-events:none;
+      text-shadow:0 2px 10px rgba(0,0,0,.6);
+    }
+    .toast{
+      position:absolute;right:12px;bottom:10px;
+      font-size:11px;color:rgba(234,240,255,.65);
+      pointer-events:none;
+      opacity:0;
+      transition:opacity .12s ease;
+    }
+    @media (min-width: 860px){
+      .bottom{grid-template-columns:1fr auto 1fr}
+      .pad{min-height:56px}
+      .pad.centerOnly{max-width:240px;justify-self:center}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="top">
+      <div class="hud">
+        <span class="pill">SCORE <b id="score">0</b></span>
+        <span class="pill">LIVES <b id="lives">3</b></span>
+        <span class="pill">WAVE <b id="wave">1</b></span>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="btnBgm" type="button">BGM: OFF</button>
+        <button class="btn" id="btnPause" type="button">PAUSE</button>
+        <button class="btn" id="btnRestart" type="button">RESTART</button>
+      </div>
+    </div>
+
+    <div class="mid" id="stage">
+      <canvas id="cv"></canvas>
+      <div class="hint" id="hint">←/→ 回転 / ↑ 推進 / Space 発射（PC）・下のパッドでも操作可（SP）</div>
+      <div class="toast" id="toast"></div>
+
+      <div class="overlay" id="overlay">
+        <div class="card" id="card">
+          <div class="title">ASTERO-MATSUMURA</div>
+          <div class="desc">
+            1画面レトロ。慣性＋端ワープ。隕石（線）を撃って割れ。<br/>
+            <span class="k">操作：</span> 左=回転 / 中=推進 / 右=SHOT（スマホ）<br/>
+            <span class="k">PC：</span> ←→ 回転 / ↑ 推進 / Space 発射
+          </div>
+          <div class="row">
+            <span class="chip"><b>弾</b> 最大6発</span>
+            <span class="chip"><b>割れる</b> 大→中→小</span>
+            <span class="chip"><b>無敵</b> 被弾後1.2秒</span>
+          </div>
+          <div class="row2">
+            <button class="btn primary" id="btnStartBgmOn" type="button">BGM ONでSTART</button>
+            <button class="btn" id="btnStartBgmOff" type="button">BGM OFFでSTART</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom" id="pads">
+      <div class="pad" id="padTurn">
+        <div class="label">TURN</div>
+        <div class="big">← →</div>
+        <div class="sub">ドラッグ/左右タップ</div>
+      </div>
+      <div class="pad centerOnly" id="padThrust">
+        <div class="label">THRUST</div>
+        <div class="big">▲</div>
+        <div class="sub">押してる間加速</div>
+      </div>
+      <div class="pad shoot" id="padShoot">
+        <div class="label">SHOT</div>
+        <div class="big">●</div>
+        <div class="sub">タップ</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Vercel用のパス解決ヘルパー
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    // matsumura texture (optional)
+    const tex = {
+      img: new Image(),
+      ready: false
+    };
+    tex.img.decoding = 'async';
+    tex.img.onload = () => { tex.ready = true; };
+    tex.img.onerror = () => { tex.ready = false; };
+    tex.img.src = asset('./assets/matsumura.png');
+
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+
+    const $ = (id)=>document.getElementById(id);
+    const uiScore = $('score');
+    const uiLives = $('lives');
+    const uiWave = $('wave');
+    const toast = $('toast');
+    const overlay = $('overlay');
+
+    const btnStartBgmOn = $('btnStartBgmOn');
+    const btnStartBgmOff = $('btnStartBgmOff');
+    const btnPause = $('btnPause');
+    const btnRestart = $('btnRestart');
+    const btnBgm = $('btnBgm');
+
+    const padTurn = $('padTurn');
+    const padThrust = $('padThrust');
+    const padShoot = $('padShoot');
+
+    // ===== BGM =====
+    // ファイル名はここで変えてOK（例: './assets/astero.mp3'）
+    const BGM_SRC = asset('./assets/bgm.mp3');
+    const bgm = new Audio();
+    bgm.src = BGM_SRC;
+    bgm.loop = true;
+    bgm.preload = 'auto';
+
+    const bgmState = {
+      enabled: false,
+      unlocked: false,
+      targetVol: 0.65,
+      fading: null,
+    };
+
+    function setBgmButton(){
+      btnBgm.textContent = `BGM: ${bgmState.enabled ? 'ON' : 'OFF'}`;
+      btnBgm.classList.toggle('primary', bgmState.enabled);
+    }
+
+    async function unlockAudioOnce(){
+      if (bgmState.unlocked) return true;
+      try{
+        // iOS対策：ユーザー操作内でplay→即pauseでアンロック
+        bgm.volume = 0.001;
+        await bgm.play();
+        bgm.pause();
+        bgm.currentTime = 0;
+        bgmState.unlocked = true;
+        return true;
+      }catch(e){
+        // まだブロックされてる
+        return false;
+      }
+    }
+
+    function fadeTo(vol, ms=400){
+      if (bgmState.fading) cancelAnimationFrame(bgmState.fading);
+      const start = bgm.volume || 0;
+      const t0 = performance.now();
+      const tick = (t)=>{
+        const k = Math.min(1, (t - t0)/ms);
+        const v = start + (vol - start)*k;
+        bgm.volume = Math.max(0, Math.min(1, v));
+        if (k < 1){
+          bgmState.fading = requestAnimationFrame(tick);
+        }else{
+          bgmState.fading = null;
+          if (vol <= 0.0001){
+            bgm.pause();
+          }
+        }
+      };
+      bgmState.fading = requestAnimationFrame(tick);
+    }
+
+    async function ensureBgmPlaying(){
+      if (!bgmState.enabled) return;
+      const ok = await unlockAudioOnce();
+      if (!ok) return;
+
+      try{
+        if (bgm.paused){
+          bgm.volume = 0.001;
+          await bgm.play();
+        }
+        fadeTo(bgmState.targetVol, 380);
+      }catch(e){
+        // ignore
+      }
+    }
+
+    function stopBgmSoft(){
+      if (!bgmState.unlocked) return;
+      fadeTo(0, 220);
+    }
+
+    btnBgm.addEventListener('click', async ()=>{
+      bgmState.enabled = !bgmState.enabled;
+      setBgmButton();
+      if (bgmState.enabled){
+        await ensureBgmPlaying();
+      } else {
+        stopBgmSoft();
+      }
+    });
+
+    // ユーザーがどこか触った最初のタイミングでもアンロックを試す
+    window.addEventListener('pointerdown', async ()=>{
+      if (bgmState.enabled) await ensureBgmPlaying();
+      else await unlockAudioOnce(); // ONにした時すぐ鳴るように先にアンロックだけしておく
+    }, {passive:true, once:false});
+
+    // --- utilities
+    const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+    const rand = (a,b)=>a+Math.random()*(b-a);
+    const TAU = Math.PI*2;
+
+    function wrapPos(p, w, h){
+      if (p.x < 0) p.x += w;
+      if (p.x >= w) p.x -= w;
+      if (p.y < 0) p.y += h;
+      if (p.y >= h) p.y -= h;
+    }
+
+    // --- game state
+    const state = {
+      w: 0, h: 0, dpr: 1,
+      running: false,
+      paused: false,
+      t: 0,
+      score: 0,
+      lives: 3,
+      wave: 1,
+      invuln: 0,
+      shake: 0,
+      ship: null,
+      bullets: [],
+      rocks: [],
+      particles: [],
+      keys: { left:false, right:false, up:false, shoot:false },
+      lastShot: 0,
+    };
+
+    function resize(){
+      const rect = cv.getBoundingClientRect();
+      state.dpr = Math.min(2.25, window.devicePixelRatio || 1);
+      state.w = Math.max(320, Math.floor(rect.width));
+      state.h = Math.max(420, Math.floor(rect.height));
+      cv.width = Math.floor(state.w * state.dpr);
+      cv.height = Math.floor(state.h * state.dpr);
+      ctx.setTransform(state.dpr,0,0,state.dpr,0,0);
+    }
+    window.addEventListener('resize', resize, {passive:true});
+
+    function newShip(){
+      return {
+        x: state.w/2,
+        y: state.h/2,
+        vx: 0,
+        vy: 0,
+        a: -Math.PI/2,
+        r: 11,
+      };
+    }
+
+    function spawnWave(nBig){
+      state.rocks.length = 0;
+      const minDist = Math.min(state.w, state.h) * 0.22;
+      for(let i=0;i<nBig;i++){
+        let x,y;
+        for(let tries=0;tries<50;tries++){
+          x = rand(0,state.w);
+          y = rand(0,state.h);
+          const dx = x - state.ship.x;
+          const dy = y - state.ship.y;
+          if (dx*dx+dy*dy > minDist*minDist) break;
+        }
+        state.rocks.push(makeRock(x,y,3));
+      }
+    }
+
+    function makeRock(x,y,size){
+      const baseR = size===3? 44 : size===2? 26 : 16;
+      const speed = size===3? rand(22,52) : size===2? rand(38,78) : rand(60,110);
+      const ang = rand(0,TAU);
+      const rot = rand(-1.3,1.3);
+      const verts = [];
+      const points = size===3? 12 : size===2? 10 : 8;
+      for(let i=0;i<points;i++){
+        const t = (i/points)*TAU;
+        const jag = rand(0.72,1.18);
+        verts.push({ t, m: jag });
+      }
+      return {
+        x,y,
+        vx: Math.cos(ang)*speed,
+        vy: Math.sin(ang)*speed,
+        a: rand(0,TAU),
+        va: rot,
+        size,
+        r: baseR,
+        verts
+      };
+    }
+
+    function fire(){
+      const now = state.t;
+      if (now - state.lastShot < 0.11) return;
+      if (state.bullets.length >= 6) return;
+
+      state.lastShot = now;
+      const s = state.ship;
+      const spd = 360;
+      const bx = s.x + Math.cos(s.a)*16;
+      const by = s.y + Math.sin(s.a)*16;
+      state.bullets.push({
+        x: bx, y: by,
+        vx: s.vx + Math.cos(s.a)*spd,
+        vy: s.vy + Math.sin(s.a)*spd,
+        life: 0.95
+      });
+      popToast('pew');
+    }
+
+    function boom(x,y,amt){
+      for(let i=0;i<amt;i++){
+        const a = rand(0,TAU);
+        const sp = rand(40,220);
+        state.particles.push({
+          x,y,
+          vx: Math.cos(a)*sp,
+          vy: Math.sin(a)*sp,
+          life: rand(0.25,0.75),
+          w: rand(1,2.2)
+        });
+      }
+    }
+
+    function popToast(msg){
+      toast.textContent = msg;
+      toast.style.opacity = '1';
+      clearTimeout(popToast._t);
+      popToast._t = setTimeout(()=>toast.style.opacity='0', 160);
+    }
+
+    function resetAll(){
+      state.running = false;
+      state.paused = false;
+      state.t = 0;
+      state.score = 0;
+      state.lives = 3;
+      state.wave = 1;
+      state.invuln = 0;
+      state.shake = 0;
+      state.ship = newShip();
+      state.bullets = [];
+      state.rocks = [];
+      state.particles = [];
+      state.lastShot = -999;
+      uiScore.textContent = String(state.score);
+      uiLives.textContent = String(state.lives);
+      uiWave.textContent = String(state.wave);
+      overlay.style.display = 'grid';
+      btnPause.textContent = 'PAUSE';
+      resize();
+      spawnWave(4);
+      draw(0);
+
+      // BGMは“待機”に戻す（ONならタイトルで小さく鳴らすのもアリだが、ここでは止める）
+      stopBgmSoft();
+    }
+
+    async function startGame(){
+      state.running = true;
+      state.paused = false;
+      overlay.style.display = 'none';
+      btnPause.textContent = 'PAUSE';
+      if (bgmState.enabled) await ensureBgmPlaying();
+    }
+
+    function gameOver(){
+      state.running = false;
+      overlay.style.display = 'grid';
+      $('card').querySelector('.title').textContent = 'GAME OVER';
+      $('card').querySelector('.desc').innerHTML =
+        `SCORE: <b style="color:var(--ink)">${state.score}</b><br/>RESTARTで最初から。`;
+      popToast('rip');
+      stopBgmSoft();
+    }
+
+    function nextWave(){
+      state.wave++;
+      uiWave.textContent = String(state.wave);
+      state.score += 200;
+      uiScore.textContent = String(state.score);
+      const n = clamp(3 + state.wave, 4, 10);
+      spawnWave(n);
+      popToast('wave ' + state.wave);
+    }
+
+    function hitShip(){
+      if (state.invuln > 0) return;
+      state.lives--;
+      uiLives.textContent = String(state.lives);
+      state.invuln = 1.2;
+      state.shake = 0.25;
+      boom(state.ship.x, state.ship.y, 36);
+      popToast('hit');
+      state.ship.x = state.w/2; state.ship.y = state.h/2;
+      state.ship.vx = 0; state.ship.vy = 0;
+      state.ship.a = -Math.PI/2;
+
+      if (state.lives <= 0){
+        gameOver();
+      }
+    }
+
+    function splitRock(rock){
+      const {x,y,size} = rock;
+      if (size === 3){
+        state.score += 20;
+        state.rocks.push(makeRock(x,y,2));
+        state.rocks.push(makeRock(x,y,2));
+        boom(x,y,22);
+      } else if (size === 2){
+        state.score += 50;
+        state.rocks.push(makeRock(x,y,1));
+        state.rocks.push(makeRock(x,y,1));
+        boom(x,y,18);
+      } else {
+        state.score += 100;
+        boom(x,y,14);
+      }
+      uiScore.textContent = String(state.score);
+      state.shake = Math.max(state.shake, 0.08);
+    }
+
+    // --- input (keyboard)
+    window.addEventListener('keydown', (e)=>{
+      if (e.key === 'ArrowLeft') state.keys.left = true;
+      if (e.key === 'ArrowRight') state.keys.right = true;
+      if (e.key === 'ArrowUp') state.keys.up = true;
+      if (e.key === ' ') { state.keys.shoot = true; e.preventDefault(); }
+      if (e.key.toLowerCase() === 'p'){
+        togglePause();
+      }
+    }, {passive:false});
+
+    window.addEventListener('keyup', (e)=>{
+      if (e.key === 'ArrowLeft') state.keys.left = false;
+      if (e.key === 'ArrowRight') state.keys.right = false;
+      if (e.key === 'ArrowUp') state.keys.up = false;
+      if (e.key === ' ') { state.keys.shoot = false; e.preventDefault(); }
+    }, {passive:false});
+
+    // --- input (touch pads)
+    function bindPadTurn(){
+      let active = false;
+      const onDown = (ev)=>{
+        active = true;
+        handle(ev);
+      };
+      const onMove = (ev)=>{
+        if (!active) return;
+        handle(ev);
+      };
+      const onUp = ()=>{
+        active = false;
+        state.keys.left = false;
+        state.keys.right = false;
+      };
+      const handle = (ev)=>{
+        const r = padTurn.getBoundingClientRect();
+        const x = ('touches' in ev) ? ev.touches[0].clientX : ev.clientX;
+        const t = (x - r.left) / r.width;
+        state.keys.left = t < 0.38;
+        state.keys.right = t > 0.62;
+        ev.preventDefault();
+      };
+      padTurn.addEventListener('pointerdown', onDown);
+      padTurn.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onUp);
+    }
+
+    function bindPadHold(el, keyName){
+      const down = (ev)=>{ state.keys[keyName] = true; ev.preventDefault(); };
+      const up = ()=>{ state.keys[keyName] = false; };
+      el.addEventListener('pointerdown', down);
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+      el.addEventListener('pointerleave', ()=>{ state.keys[keyName] = false; });
+    }
+
+    function bindPadShoot(){
+      const down = (ev)=>{
+        state.keys.shoot = true;
+        ev.preventDefault();
+        if (state.running && !state.paused) fire();
+      };
+      const up = ()=>{ state.keys.shoot = false; };
+      padShoot.addEventListener('pointerdown', down);
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+    }
+
+    bindPadTurn();
+    bindPadHold(padThrust, 'up');
+    bindPadShoot();
+
+    // prevent scroll/zoom quirks
+    document.addEventListener('gesturestart', (e)=>e.preventDefault(), {passive:false});
+    document.addEventListener('touchmove', (e)=>e.preventDefault(), {passive:false});
+
+    // buttons
+    async function startWithBgm(flag){
+      bgmState.enabled = flag;
+      setBgmButton();
+
+      // ユーザー操作内で必ずアンロック
+      await unlockAudioOnce();
+
+      $('card').querySelector('.title').textContent = 'ASTERO-MATSUMURA';
+      $('card').querySelector('.desc').innerHTML =
+        `1画面レトロ。慣性＋端ワープ。隕石（線）を撃って割れ。<br/>
+         <span class="k">操作：</span> 左=回転 / 中=推進 / 右=SHOT（スマホ）<br/>
+         <span class="k">PC：</span> ←→ 回転 / ↑ 推進 / Space 発射`;
+
+      await startGame(); // ← ここでBGMがONなら鳴る
+    }
+
+    btnStartBgmOn.addEventListener('click', ()=>startWithBgm(true));
+    btnStartBgmOff.addEventListener('click', ()=>startWithBgm(false));
+
+    function togglePause(){
+      if (!state.running) return;
+      state.paused = !state.paused;
+      btnPause.textContent = state.paused ? 'RESUME' : 'PAUSE';
+      popToast(state.paused ? 'pause' : 'go');
+
+      // pause中はBGMを少し下げる（停止ではなく減衰）
+      if (bgmState.enabled && bgmState.unlocked){
+        if (state.paused) fadeTo(0.18, 160);
+        else fadeTo(bgmState.targetVol, 220);
+      }
+    }
+    btnPause.addEventListener('click', togglePause);
+
+    btnRestart.addEventListener('click', async ()=>{
+      resetAll();
+      await startGame();
+    });
+
+    // --- main loop
+    let last = performance.now();
+    function loop(now){
+      const dt = Math.min(0.033, (now - last)/1000);
+      last = now;
+
+      if (state.running && !state.paused){
+        update(dt);
+      }
+      draw(dt);
+
+      requestAnimationFrame(loop);
+    }
+
+    function update(dt){
+      state.t += dt;
+      state.invuln = Math.max(0, state.invuln - dt);
+      state.shake = Math.max(0, state.shake - dt);
+
+      const s = state.ship;
+
+      const rotSpd = 3.6;
+      if (state.keys.left) s.a -= rotSpd * dt;
+      if (state.keys.right) s.a += rotSpd * dt;
+
+      if (state.keys.up){
+        const acc = 260;
+        s.vx += Math.cos(s.a) * acc * dt;
+        s.vy += Math.sin(s.a) * acc * dt;
+        if (Math.random() < 0.35){
+          const ex = s.x - Math.cos(s.a)*10;
+          const ey = s.y - Math.sin(s.a)*10;
+          state.particles.push({
+            x: ex, y: ey,
+            vx: s.vx - Math.cos(s.a)*rand(40,160),
+            vy: s.vy - Math.sin(s.a)*rand(40,160),
+            life: rand(0.12,0.22),
+            w: rand(1.2,2.6)
+          });
+        }
+      }
+
+      const drag = 0.994;
+      s.vx *= Math.pow(drag, dt*60);
+      s.vy *= Math.pow(drag, dt*60);
+
+      const vmax = 340;
+      const sp2 = s.vx*s.vx + s.vy*s.vy;
+      if (sp2 > vmax*vmax){
+        const k = vmax / Math.sqrt(sp2);
+        s.vx *= k; s.vy *= k;
+      }
+
+      s.x += s.vx * dt;
+      s.y += s.vy * dt;
+      wrapPos(s, state.w, state.h);
+
+      if (state.keys.shoot){
+        fire();
+      }
+
+      for(let i=state.bullets.length-1;i>=0;i--){
+        const b = state.bullets[i];
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+        b.life -= dt;
+        wrapPos(b, state.w, state.h);
+        if (b.life <= 0) state.bullets.splice(i,1);
+      }
+
+      for (const r of state.rocks){
+        r.a += r.va * dt;
+        r.x += r.vx * dt;
+        r.y += r.vy * dt;
+        wrapPos(r, state.w, state.h);
+      }
+
+      for(let i=state.particles.length-1;i>=0;i--){
+        const p = state.particles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.life -= dt;
+        wrapPos(p, state.w, state.h);
+        if (p.life <= 0) state.particles.splice(i,1);
+      }
+
+      if (state.invuln <= 0){
+        for (const r of state.rocks){
+          const dx = r.x - s.x;
+          const dy = r.y - s.y;
+          const rr = r.r*0.72 + s.r;
+          if (dx*dx + dy*dy < rr*rr){
+            hitShip();
+            break;
+          }
+        }
+      }
+
+      for (let bi=state.bullets.length-1; bi>=0; bi--){
+        const b = state.bullets[bi];
+        let hitIdx = -1;
+        for (let ri=0; ri<state.rocks.length; ri++){
+          const r = state.rocks[ri];
+          const dx = r.x - b.x;
+          const dy = r.y - b.y;
+          const rr = r.r*0.80;
+          if (dx*dx + dy*dy < rr*rr){
+            hitIdx = ri;
+            break;
+          }
+        }
+        if (hitIdx >= 0){
+          const r = state.rocks[hitIdx];
+          state.bullets.splice(bi,1);
+          state.rocks.splice(hitIdx,1);
+          splitRock(r);
+        }
+      }
+
+      if (state.rocks.length === 0){
+        nextWave();
+      }
+
+      if (Math.random() < dt * 0.8){
+        state.score += 1;
+        uiScore.textContent = String(state.score);
+      }
+    }
+
+    function draw(dt){
+      const w = state.w, h = state.h;
+
+      let sx = 0, sy = 0;
+      if (state.shake > 0){
+        const m = state.shake * 10;
+        sx = rand(-m, m);
+        sy = rand(-m, m);
+      }
+
+      ctx.save();
+      ctx.translate(sx, sy);
+
+      ctx.clearRect(-sx, -sy, w, h);
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+      ctx.fillRect(-sx, -sy, w, h);
+
+      // subtle stars
+      ctx.globalAlpha = 0.16;
+      ctx.fillStyle = '#fff';
+      const starN = 70;
+      const tt = Math.floor(state.t*10);
+      for(let i=0;i<starN;i++){
+        const x = (Math.sin((i+1)*999 + tt*0.2)*0.5+0.5)*w;
+        const y = (Math.sin((i+1)*555 + tt*0.17)*0.5+0.5)*h;
+        ctx.fillRect(x, y, 1, 1);
+      }
+      ctx.globalAlpha = 1;
+
+      // draw rocks (vector line + matsumura texture clipped inside)
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(234,240,255,.72)';
+
+      for (const r of state.rocks){
+        ctx.save();
+        ctx.translate(r.x, r.y);
+        ctx.rotate(r.a);
+
+        // rock path
+        const verts = r.verts;
+        ctx.beginPath();
+        for(let i=0;i<verts.length;i++){
+          const v = verts[i];
+          const rr = r.r * v.m;
+          const px = Math.cos(v.t)*rr;
+          const py = Math.sin(v.t)*rr;
+          if (i===0) ctx.moveTo(px,py);
+          else ctx.lineTo(px,py);
+        }
+        ctx.closePath();
+
+        // texture fill (clipped)
+        if (tex.ready){
+          ctx.save();
+          ctx.clip();
+
+          // draw image centered, scaled to rock size
+          // 画像の縦横比は維持しつつ、隕石内に"やや大きめ"に収める
+          const img = tex.img;
+          const cover = r.r * 2.2; // ここで松村の見える大きさ調整（2.0〜2.5が目安）
+          const iw = img.naturalWidth || img.width;
+          const ih = img.naturalHeight || img.height;
+          const s = cover / Math.min(iw, ih);
+
+          const dw = iw * s;
+          const dh = ih * s;
+
+          // ちょいランダム回転＆オフセットで"同じ顔の並び"感を薄める
+          const jitter = r.size===3 ? 10 : r.size===2 ? 8 : 6;
+          const ox = (Math.sin(r.x*0.03 + r.y*0.02) * 0.5) * jitter;
+          const oy = (Math.cos(r.x*0.02 + r.y*0.03) * 0.5) * jitter;
+
+          ctx.globalAlpha = 0.92;
+          ctx.drawImage(img, -dw/2 + ox, -dh/2 + oy, dw, dh);
+
+          // うっすら暗幕で"レトロ筐体っぽさ"＋線画と馴染ませる
+          ctx.globalAlpha = 0.35;
+          ctx.fillStyle = 'rgba(0,0,0,.35)';
+          ctx.fillRect(-r.r*1.4, -r.r*1.4, r.r*2.8, r.r*2.8);
+
+          ctx.restore();
+        }
+
+        // outline stroke on top
+        ctx.globalAlpha = 1;
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      // bullets
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(96,165,250,.95)';
+      for (const b of state.bullets){
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, 2.2, 0, TAU);
+        ctx.stroke();
+      }
+
+      // ship
+      const s = state.ship;
+      const inv = state.invuln > 0;
+      const blink = inv ? (Math.sin(state.t*24) > 0) : true;
+      if (blink){
+        ctx.save();
+        ctx.translate(s.x, s.y);
+        ctx.rotate(s.a);
+
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = inv ? 'rgba(251,113,133,.95)' : 'rgba(234,240,255,.92)';
+        ctx.beginPath();
+        ctx.moveTo(14, 0);
+        ctx.lineTo(-10, -9);
+        ctx.lineTo(-6, 0);
+        ctx.lineTo(-10, 9);
+        ctx.closePath();
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.9;
+        ctx.beginPath();
+        ctx.moveTo(6,0);
+        ctx.lineTo(-4,0);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        ctx.restore();
+      }
+
+      // particles
+      ctx.strokeStyle = 'rgba(234,240,255,.75)';
+      for (const p of state.particles){
+        ctx.globalAlpha = clamp(p.life*1.6, 0, 1);
+        ctx.lineWidth = p.w;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - p.vx*0.02, p.y - p.vy*0.02);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      // vignette
+      const g = ctx.createRadialGradient(w/2, h/2, Math.min(w,h)*0.2, w/2, h/2, Math.max(w,h)*0.72);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(0,0,0,.55)');
+      ctx.fillStyle = g;
+      ctx.fillRect(-sx, -sy, w, h);
+
+      ctx.restore();
+
+      $('hint').style.opacity = state.running ? '0' : '1';
+    }
+
+    // init
+    function init(){
+      setBgmButton();
+      resize();
+      state.ship = newShip();
+      resetAll();
+      requestAnimationFrame(loop);
+    }
+    init();
+  </script>
+</body>
+</html>
