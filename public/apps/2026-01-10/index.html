@@ -12,19 +12,19 @@
       --muted:rgba(234,240,255,.72);
       --line:rgba(234,240,255,.16);
       --accent:#60a5fa;
-      --good:#34d399;
-      --bad:#fb7185;
       --panel:rgba(255,255,255,.06);
       --panel2:rgba(255,255,255,.10);
       --r:18px;
     }
-    *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
-    html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{
+      height:100%; overflow:hidden; background:var(--bg); color:var(--ink);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;
+      -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
+      touch-action:none; -ms-touch-action:none;
+    }
     button{font:inherit;color:inherit}
-
     .app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr;}
-
-    /* compact top bar for mobile */
     .top{
       display:flex;gap:10px;align-items:center;justify-content:space-between;
       padding:10px 10px calc(10px + env(safe-area-inset-top));
@@ -41,7 +41,6 @@
       font-size:12px;
     }
     .pill b{font-weight:900}
-
     .actions{display:flex;gap:6px;align-items:center;}
     .btn{
       padding:9px 10px;border-radius:12px;border:1px solid var(--line);
@@ -57,8 +56,8 @@
       background:linear-gradient(180deg, rgba(96,165,250,.22), rgba(255,255,255,.06));
     }
 
-    .mid{position:relative;min-height:0;}
-    canvas{position:absolute;inset:0;width:100%;height:100%;}
+    .mid{position:relative;min-height:0; touch-action:none;}
+    canvas{position:absolute;inset:0;width:100%;height:100%; touch-action:none;}
 
     /* overlay */
     .overlay{position:absolute;inset:0;display:grid;place-items:center;padding:18px;pointer-events:none;}
@@ -80,46 +79,6 @@
     .row2{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
     .row2 .btn{pointer-events:auto}
 
-    /* ---- Mobile controls: thumb zones + one big SHOT button ---- */
-    .controls{
-      position:absolute;inset:0;
-      pointer-events:none;
-    }
-    .zone{
-      position:absolute;top:0;bottom:0;
-      pointer-events:auto;
-      touch-action:none;
-    }
-    .zone.turn{left:0;width:52%;}
-    .zone.thrust{right:0;width:48%;}
-    /* subtle guide (only when help shown) */
-    .zone::before{
-      content:"";
-      position:absolute;inset:12px;
-      border:1px dashed rgba(234,240,255,.10);
-      border-radius:18px;
-      opacity:0;
-      transition:opacity .2s ease;
-    }
-    .showGuides .zone::before{opacity:1;}
-
-    .shotBtn{
-      position:absolute;
-      right:12px;
-      bottom:12px;
-      transform:translateZ(0);
-      pointer-events:auto;
-      touch-action:manipulation;
-      width:86px;height:86px;border-radius:999px;
-      border:1px solid rgba(96,165,250,.45);
-      background:radial-gradient(circle at 30% 30%, rgba(96,165,250,.28), rgba(255,255,255,.06));
-      box-shadow:0 18px 50px rgba(0,0,0,.55);
-      display:grid;place-items:center;
-      font-weight:900;letter-spacing:.06em;
-    }
-    .shotBtn:active{transform:translateY(1px)}
-    .shotBtn small{display:block;font-weight:700;color:rgba(234,240,255,.75);letter-spacing:.04em;margin-top:4px;font-size:11px}
-
     .toast{
       position:absolute;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));
       font-size:11px;color:rgba(234,240,255,.65);
@@ -127,22 +86,57 @@
       opacity:0;
       transition:opacity .12s ease;
     }
-    .helpTag{
-      position:absolute;left:10px;bottom:calc(10px + env(safe-area-inset-bottom));
-      font-size:11px;color:rgba(234,240,255,.55);
+
+    /* Controls: left virtual stick (rotate + thrust), right shoot zone (tap anywhere) */
+    .controls{position:absolute;inset:0;pointer-events:none;touch-action:none;}
+    .shootZone{
+      position:absolute;top:0;bottom:0;right:0;width:44%;
+      pointer-events:auto;touch-action:none;
+    }
+    .shootBadge{
+      position:absolute;right:12px;bottom:12px;
+      width:86px;height:86px;border-radius:999px;
+      border:1px solid rgba(96,165,250,.45);
+      background:radial-gradient(circle at 30% 30%, rgba(96,165,250,.28), rgba(255,255,255,.06));
+      box-shadow:0 18px 50px rgba(0,0,0,.55);
+      display:grid;place-items:center;
+      font-weight:900;letter-spacing:.06em;
       pointer-events:none;
-      text-shadow:0 2px 10px rgba(0,0,0,.6);
-      opacity:.9;
+      opacity:.92;
+    }
+    .shootBadge small{display:block;font-weight:700;color:rgba(234,240,255,.75);letter-spacing:.04em;margin-top:4px;font-size:11px}
+
+    .stickWrap{
+      position:absolute;left:12px;bottom:12px;
+      width:150px;height:150px;
+      pointer-events:auto;touch-action:none;
+      opacity:.95;
+    }
+    .stickBase{
+      position:absolute;inset:0;border-radius:999px;
+      border:1px solid rgba(234,240,255,.18);
+      background:rgba(255,255,255,.04);
+      box-shadow:0 18px 50px rgba(0,0,0,.45);
+    }
+    .stickKnob{
+      position:absolute;left:50%;top:50%;
+      width:62px;height:62px;border-radius:999px;
+      transform:translate(-50%,-50%);
+      border:1px solid rgba(234,240,255,.22);
+      background:rgba(255,255,255,.08);
+      box-shadow:0 10px 26px rgba(0,0,0,.35);
+    }
+    .stickLabel{
+      position:absolute;left:50%;top:-26px;transform:translateX(-50%);
+      font-size:11px;color:rgba(234,240,255,.62);letter-spacing:.04em;
+      white-space:nowrap;
+      pointer-events:none;
     }
 
-    /* desktop improvements */
     @media (min-width: 860px){
       .btn{font-size:13px;padding:10px 12px}
       .pill{font-size:13px}
-      .shotBtn{right:16px;bottom:16px;width:92px;height:92px}
-      .helpTag{opacity:0} /* desktopはヘルプ隠す */
-      .zone{display:none} /* desktopはゾーン不要（キー操作） */
-      .shotBtn{display:none}
+      .controls{display:none}
     }
   </style>
 </head>
@@ -155,7 +149,6 @@
         <span class="pill">WAVE <b id="wave">1</b></span>
       </div>
       <div class="actions">
-        <button class="btn" id="btnHelp" type="button">HELP</button>
         <button class="btn primary" id="btnBgm" type="button">BGM: OFF</button>
         <button class="btn" id="btnPause" type="button">PAUSE</button>
         <button class="btn" id="btnRestart" type="button">RESTART</button>
@@ -166,20 +159,24 @@
       <canvas id="cv"></canvas>
 
       <div class="controls" id="controls">
-        <div class="zone turn" id="zoneTurn" aria-label="turn zone"></div>
-        <div class="zone thrust" id="zoneThrust" aria-label="thrust zone"></div>
-        <button class="shotBtn" id="shotBtn" type="button">SHOT<small>tap</small></button>
+        <div class="stickWrap" id="stick">
+          <div class="stickLabel">回転＋推進</div>
+          <div class="stickBase"></div>
+          <div class="stickKnob" id="knob"></div>
+        </div>
+
+        <div class="shootZone" id="shootZone" aria-label="shoot zone"></div>
+        <div class="shootBadge">SHOT<small>tap</small></div>
       </div>
 
-      <div class="helpTag" id="helpTag">左：回転（ドラッグ）／右：推進（押しっぱ）／SHOT：右下</div>
       <div class="toast" id="toast"></div>
 
       <div class="overlay" id="overlay">
         <div class="card" id="card">
           <div class="title">ASTERO-MATSUMURA</div>
           <div class="desc">
-            1画面レトロ。慣性＋端ワープ。隕石（線）を撃って割れ。<br/>
-            <span style="color:var(--ink)">SP：</span> 左=回転 / 右=推進 / 右下SHOT<br/>
+            隕石は <b>matsumura.png</b> をクリップして貼る版。<br/>
+            <span style="color:var(--ink)">SP：</span> 左下スティック＝回転＋推進 / 右側タップ＝発射<br/>
             <span style="color:var(--ink)">PC：</span> ←→ 回転 / ↑ 推進 / Space 発射
           </div>
           <div class="row">
@@ -197,8 +194,13 @@
   </div>
 
   <script type="module">
-    // 1日1アプリ assets helper
-    const asset = (p) => new URL(p, import.meta.url).toString();
+    // Vercel用のパス解決ヘルパー
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
 
     const cv = document.getElementById('cv');
     const ctx = cv.getContext('2d');
@@ -213,31 +215,31 @@
     const btnPause = $('btnPause');
     const btnRestart = $('btnRestart');
     const btnBgm = $('btnBgm');
-    const btnHelp = $('btnHelp');
-
-    const controls = $('controls');
-    const zoneTurn = $('zoneTurn');
-    const zoneThrust = $('zoneThrust');
-    const shotBtn = $('shotBtn');
 
     const btnStartBgmOn = $('btnStartBgmOn');
     const btnStartBgmOff = $('btnStartBgmOff');
 
-    // ===== BGM =====
-    // ここをあなたのファイル名に合わせて変更
-    const BGM_SRC = asset('./assets/bgm.mp3');
+    // ====== 重要：ダブルタップ拡大を潰す（iOS Safari対策） ======
+    // 1) dblclick
+    document.addEventListener('dblclick', (e)=>e.preventDefault(), {passive:false});
+    // 2) touchend double-tap
+    let _lastTouchEnd = 0;
+    document.addEventListener('touchend', (e)=>{
+      const now = Date.now();
+      if (now - _lastTouchEnd <= 280){
+        e.preventDefault();
+      }
+      _lastTouchEnd = now;
+    }, {passive:false});
 
+    // ===== BGM =====
+    const BGM_SRC = asset('./assets/bgm.mp3'); // あなたのBGM名に合わせて変更
     const bgm = new Audio();
     bgm.src = BGM_SRC;
     bgm.loop = true;
     bgm.preload = 'auto';
 
-    const bgmState = {
-      enabled: false,
-      unlocked: false,
-      targetVol: 0.65,
-      fading: null,
-    };
+    const bgmState = { enabled:false, unlocked:false, targetVol:0.65, fading:null };
 
     function setBgmButton(){
       btnBgm.textContent = `BGM: ${bgmState.enabled ? 'ON' : 'OFF'}`;
@@ -253,22 +255,18 @@
         bgm.currentTime = 0;
         bgmState.unlocked = true;
         return true;
-      }catch(e){
-        return false;
-      }
+      }catch(e){ return false; }
     }
 
-    function fadeTo(vol, ms=400){
+    function fadeTo(vol, ms=380){
       if (bgmState.fading) cancelAnimationFrame(bgmState.fading);
       const start = isFinite(bgm.volume) ? bgm.volume : 0;
       const t0 = performance.now();
       const tick = (t)=>{
         const k = Math.min(1, (t - t0)/ms);
-        const v = start + (vol - start)*k;
-        bgm.volume = Math.max(0, Math.min(1, v));
-        if (k < 1){
-          bgmState.fading = requestAnimationFrame(tick);
-        }else{
+        bgm.volume = Math.max(0, Math.min(1, start + (vol - start)*k));
+        if (k < 1) bgmState.fading = requestAnimationFrame(tick);
+        else{
           bgmState.fading = null;
           if (vol <= 0.0001) bgm.pause();
         }
@@ -291,7 +289,7 @@
 
     function stopBgmSoft(){
       if (!bgmState.unlocked) return;
-      fadeTo(0, 220);
+      fadeTo(0, 200);
     }
 
     btnBgm.addEventListener('click', async ()=>{
@@ -300,6 +298,15 @@
       if (bgmState.enabled) await ensureBgmPlaying();
       else stopBgmSoft();
     });
+
+    // ===== Matsumura texture (matsumura.png) =====
+    // ユーザーの言い方が matumura.png になってたけど、ここは matsumura.png で読みに行く
+    // ファイル名が本当に matumura.png なら、↓を './assets/matumura.png' に変えて。
+    const tex = { img:new Image(), ready:false };
+    tex.img.decoding = 'async';
+    tex.img.onload = ()=>{ tex.ready = true; };
+    tex.img.onerror = ()=>{ tex.ready = false; };
+    tex.img.src = asset('./assets/matsumura.png');
 
     // --- utilities
     const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
@@ -315,22 +322,13 @@
 
     // --- game state
     const state = {
-      w: 0, h: 0, dpr: 1,
-      running: false,
-      paused: false,
-      t: 0,
-      score: 0,
-      lives: 3,
-      wave: 1,
-      invuln: 0,
-      shake: 0,
-      ship: null,
-      bullets: [],
-      rocks: [],
-      particles: [],
-      keys: { left:false, right:false, up:false, shoot:false },
-      lastShot: 0,
-      showGuides: false,
+      w:0,h:0,dpr:1,
+      running:false, paused:false,
+      t:0, score:0, lives:3, wave:1,
+      invuln:0, shake:0,
+      ship:null, bullets:[], rocks:[], particles:[],
+      keys:{ left:false, right:false, up:false, shoot:false },
+      lastShot:0,
     };
 
     function resize(){
@@ -345,14 +343,7 @@
     window.addEventListener('resize', resize, {passive:true});
 
     function newShip(){
-      return {
-        x: state.w/2,
-        y: state.h/2,
-        vx: 0,
-        vy: 0,
-        a: -Math.PI/2,
-        r: 11,
-      };
+      return { x:state.w/2, y:state.h/2, vx:0, vy:0, a:-Math.PI/2, r:11 };
     }
 
     function spawnWave(nBig){
@@ -361,10 +352,8 @@
       for(let i=0;i<nBig;i++){
         let x,y;
         for(let tries=0;tries<50;tries++){
-          x = rand(0,state.w);
-          y = rand(0,state.h);
-          const dx = x - state.ship.x;
-          const dy = y - state.ship.y;
+          x = rand(0,state.w); y = rand(0,state.h);
+          const dx = x - state.ship.x, dy = y - state.ship.y;
           if (dx*dx+dy*dy > minDist*minDist) break;
         }
         state.rocks.push(makeRock(x,y,3));
@@ -380,8 +369,7 @@
       const points = size===3? 12 : size===2? 10 : 8;
       for(let i=0;i<points;i++){
         const t = (i/points)*TAU;
-        const jag = rand(0.72,1.18);
-        verts.push({ t, m: jag });
+        verts.push({ t, m: rand(0.72,1.18) });
       }
       return { x,y, vx:Math.cos(ang)*speed, vy:Math.sin(ang)*speed, a:rand(0,TAU), va:rot, size, r:baseR, verts };
     }
@@ -393,31 +381,28 @@
       popToast._t = setTimeout(()=>toast.style.opacity='0', 160);
     }
 
+    function boom(x,y,amt){
+      for(let i=0;i<amt;i++){
+        const a = rand(0,TAU), sp = rand(40,220);
+        state.particles.push({ x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:rand(0.25,0.75), w:rand(1,2.2) });
+      }
+    }
+
     function fire(){
       const now = state.t;
       if (now - state.lastShot < 0.11) return;
       if (state.bullets.length >= 6) return;
-
       state.lastShot = now;
-      const s = state.ship;
-      const spd = 360;
-      const bx = s.x + Math.cos(s.a)*16;
-      const by = s.y + Math.sin(s.a)*16;
+
+      const s = state.ship, spd = 360;
       state.bullets.push({
-        x: bx, y: by,
+        x: s.x + Math.cos(s.a)*16,
+        y: s.y + Math.sin(s.a)*16,
         vx: s.vx + Math.cos(s.a)*spd,
         vy: s.vy + Math.sin(s.a)*spd,
         life: 0.95
       });
       popToast('pew');
-    }
-
-    function boom(x,y,amt){
-      for(let i=0;i<amt;i++){
-        const a = rand(0,TAU);
-        const sp = rand(40,220);
-        state.particles.push({ x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:rand(0.25,0.75), w:rand(1,2.2) });
-      }
     }
 
     function splitRock(rock){
@@ -439,18 +424,11 @@
     }
 
     function resetAll(){
-      state.running = false;
-      state.paused = false;
-      state.t = 0;
-      state.score = 0;
-      state.lives = 3;
-      state.wave = 1;
-      state.invuln = 0;
-      state.shake = 0;
+      state.running = false; state.paused = false;
+      state.t = 0; state.score = 0; state.lives = 3; state.wave = 1;
+      state.invuln = 0; state.shake = 0;
       state.ship = newShip();
-      state.bullets = [];
-      state.rocks = [];
-      state.particles = [];
+      state.bullets = []; state.rocks = []; state.particles = [];
       state.lastShot = -999;
 
       uiScore.textContent = String(state.score);
@@ -467,8 +445,7 @@
     }
 
     async function startGame(){
-      state.running = true;
-      state.paused = false;
+      state.running = true; state.paused = false;
       overlay.style.display = 'none';
       btnPause.textContent = 'PAUSE';
       if (bgmState.enabled) await ensureBgmPlaying();
@@ -489,8 +466,7 @@
       uiWave.textContent = String(state.wave);
       state.score += 200;
       uiScore.textContent = String(state.score);
-      const n = clamp(3 + state.wave, 4, 10);
-      spawnWave(n);
+      spawnWave(clamp(3 + state.wave, 4, 10));
       popToast('wave ' + state.wave);
     }
 
@@ -510,62 +486,76 @@
       if (state.lives <= 0) gameOver();
     }
 
-    // ===== Controls (mobile zones) =====
-    // turn zone: horizontal drag -> left/right
-    let turnActive = false;
-    let turnStartX = 0;
-    function setTurnFromDelta(dx){
-      const dead = 10; // px
-      state.keys.left = dx < -dead;
-      state.keys.right = dx > dead;
-      if (Math.abs(dx) <= dead){ state.keys.left = false; state.keys.right = false; }
+    // ===== Mobile UI: virtual stick =====
+    const stick = $('stick');
+    const knob = $('knob');
+    const shootZone = $('shootZone');
+
+    const stickState = { active:false, id:null, cx:0, cy:0, dx:0, dy:0, max:52 };
+
+    function setKnob(dx, dy){
+      const m = stickState.max;
+      const x = clamp(dx, -m, m);
+      const y = clamp(dy, -m, m);
+      knob.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
     }
-    zoneTurn.addEventListener('pointerdown', (e)=>{
-      turnActive = true;
-      turnStartX = e.clientX;
-      setTurnFromDelta(0);
-      e.preventDefault();
-    });
-    zoneTurn.addEventListener('pointermove', (e)=>{
-      if (!turnActive) return;
-      setTurnFromDelta(e.clientX - turnStartX);
-      e.preventDefault();
-    });
-    window.addEventListener('pointerup', ()=>{
-      turnActive = false;
-      state.keys.left = false;
-      state.keys.right = false;
-    }, {passive:true});
-    window.addEventListener('pointercancel', ()=>{
-      turnActive = false;
-      state.keys.left = false;
-      state.keys.right = false;
-    }, {passive:true});
 
-    // thrust zone: hold = up
-    zoneThrust.addEventListener('pointerdown', (e)=>{
-      state.keys.up = true;
+    function stickDown(e){
+      stickState.active = true;
+      stickState.id = e.pointerId;
+      const r = stick.getBoundingClientRect();
+      stickState.cx = r.left + r.width/2;
+      stickState.cy = r.top + r.height/2;
+      stick.setPointerCapture(e.pointerId);
+      stickMove(e);
       e.preventDefault();
-    });
-    zoneThrust.addEventListener('pointerup', ()=> state.keys.up = false);
-    zoneThrust.addEventListener('pointerleave', ()=> state.keys.up = false);
-    window.addEventListener('pointerup', ()=> state.keys.up = false, {passive:true});
-    window.addEventListener('pointercancel', ()=> state.keys.up = false, {passive:true});
+    }
+    function stickMove(e){
+      if (!stickState.active || e.pointerId !== stickState.id) return;
+      stickState.dx = e.clientX - stickState.cx;
+      stickState.dy = e.clientY - stickState.cy;
 
-    // shot button: tap = fire (also allow hold)
-    shotBtn.addEventListener('pointerdown', (e)=>{
+      const dist = Math.hypot(stickState.dx, stickState.dy);
+      const m = stickState.max;
+      if (dist > m){
+        const k = m / dist;
+        stickState.dx *= k; stickState.dy *= k;
+      }
+      setKnob(stickState.dx, stickState.dy);
+
+      // mapping:
+      //  - rotate: dx (左右で回転)
+      //  - thrust: 上方向に倒したら推進（dyがマイナス）
+      state.keys.left = stickState.dx < -8;
+      state.keys.right = stickState.dx > 8;
+      state.keys.up = stickState.dy < -10;
+
+      e.preventDefault();
+    }
+    function stickUp(e){
+      if (e.pointerId !== stickState.id) return;
+      stickState.active = false;
+      stickState.id = null;
+      stickState.dx = stickState.dy = 0;
+      setKnob(0,0);
+      state.keys.left = state.keys.right = state.keys.up = false;
+    }
+
+    stick.addEventListener('pointerdown', stickDown, {passive:false});
+    stick.addEventListener('pointermove', stickMove, {passive:false});
+    stick.addEventListener('pointerup', stickUp, {passive:true});
+    stick.addEventListener('pointercancel', stickUp, {passive:true});
+
+    // shoot: tap anywhere on right zone
+    shootZone.addEventListener('pointerdown', (e)=>{
       state.keys.shoot = true;
-      e.preventDefault();
       if (state.running && !state.paused) fire();
-    });
-    window.addEventListener('pointerup', ()=> state.keys.shoot = false, {passive:true});
-    window.addEventListener('pointercancel', ()=> state.keys.shoot = false, {passive:true});
+      e.preventDefault();
+    }, {passive:false});
+    window.addEventListener('pointerup', ()=>state.keys.shoot=false, {passive:true});
+    window.addEventListener('pointercancel', ()=>state.keys.shoot=false, {passive:true});
 
-    // prevent scroll/zoom quirks
-    document.addEventListener('gesturestart', (e)=>e.preventDefault(), {passive:false});
-    document.addEventListener('touchmove', (e)=>e.preventDefault(), {passive:false});
-
-    // ===== Keyboard (desktop) =====
+    // ===== Desktop keyboard =====
     window.addEventListener('keydown', (e)=>{
       if (e.key === 'ArrowLeft') state.keys.left = true;
       if (e.key === 'ArrowRight') state.keys.right = true;
@@ -573,7 +563,6 @@
       if (e.key === ' ') { state.keys.shoot = true; e.preventDefault(); }
       if (e.key.toLowerCase() === 'p') togglePause();
     }, {passive:false});
-
     window.addEventListener('keyup', (e)=>{
       if (e.key === 'ArrowLeft') state.keys.left = false;
       if (e.key === 'ArrowRight') state.keys.right = false;
@@ -605,27 +594,13 @@
 
     btnRestart.addEventListener('click', async ()=>{
       resetAll();
-      // リスタートは「直ちに開始」。BGMは現在のON/OFFに従う
       overlay.style.display = 'none';
       state.running = true;
       state.paused = false;
       if (bgmState.enabled) await ensureBgmPlaying();
     });
 
-    // HELP: show dashed guides for zones (mobile)
-    btnHelp.addEventListener('click', ()=>{
-      state.showGuides = !state.showGuides;
-      controls.classList.toggle('showGuides', state.showGuides);
-      popToast(state.showGuides ? 'help on' : 'help off');
-    });
-
-    // top-level pointerdown: audio unlock hint
-    window.addEventListener('pointerdown', async ()=>{
-      if (bgmState.enabled) await ensureBgmPlaying();
-      else await unlockAudioOnce();
-    }, {passive:true});
-
-    // ===== Main loop =====
+    // --- main loop
     let last = performance.now();
     function loop(now){
       const dt = Math.min(0.033, (now - last)/1000);
@@ -725,10 +700,7 @@
           const dx = r.x - b.x;
           const dy = r.y - b.y;
           const rr = r.r*0.80;
-          if (dx*dx + dy*dy < rr*rr){
-            hitIdx = ri;
-            break;
-          }
+          if (dx*dx + dy*dy < rr*rr){ hitIdx = ri; break; }
         }
         if (hitIdx >= 0){
           const r = state.rocks[hitIdx];
@@ -775,24 +747,56 @@
       }
       ctx.globalAlpha = 1;
 
-      // rocks
+      // rocks: outline + matsumura.png clipped inside
       ctx.lineWidth = 2;
       ctx.strokeStyle = 'rgba(234,240,255,.72)';
       for (const r of state.rocks){
         ctx.save();
         ctx.translate(r.x, r.y);
         ctx.rotate(r.a);
-        ctx.beginPath();
+
+        // rock path
         const verts = r.verts;
+        ctx.beginPath();
         for(let i=0;i<verts.length;i++){
           const v = verts[i];
           const rr = r.r * v.m;
           const px = Math.cos(v.t)*rr;
           const py = Math.sin(v.t)*rr;
-          if (i===0) ctx.moveTo(px,py);
-          else ctx.lineTo(px,py);
+          if (i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
         }
         ctx.closePath();
+
+        if (tex.ready){
+          ctx.save();
+          ctx.clip();
+
+          const img = tex.img;
+          const iw = img.naturalWidth || img.width;
+          const ih = img.naturalHeight || img.height;
+
+          const cover = r.r * 2.25; // 顔の大きさ（好みで 2.0〜2.6）
+          const s = cover / Math.min(iw, ih);
+          const dw = iw * s;
+          const dh = ih * s;
+
+          const jitter = r.size===3 ? 10 : r.size===2 ? 8 : 6;
+          const ox = (Math.sin(r.x*0.03 + r.y*0.02) * 0.5) * jitter;
+          const oy = (Math.cos(r.x*0.02 + r.y*0.03) * 0.5) * jitter;
+
+          ctx.globalAlpha = 0.92;
+          ctx.drawImage(img, -dw/2 + ox, -dh/2 + oy, dw, dh);
+
+          // 馴染ませ暗幕
+          ctx.globalAlpha = 0.30;
+          ctx.fillStyle = 'rgba(0,0,0,.35)';
+          ctx.fillRect(-r.r*1.4, -r.r*1.4, r.r*2.8, r.r*2.8);
+
+          ctx.restore();
+        }
+
+        // outline on top
+        ctx.globalAlpha = 1;
         ctx.stroke();
         ctx.restore();
       }
@@ -856,6 +860,27 @@
 
       ctx.restore();
     }
+
+    // pause / restart
+    function togglePause(){
+      if (!state.running) return;
+      state.paused = !state.paused;
+      btnPause.textContent = state.paused ? 'RESUME' : 'PAUSE';
+      popToast(state.paused ? 'pause' : 'go');
+      if (bgmState.enabled && bgmState.unlocked){
+        if (state.paused) fadeTo(0.18, 160);
+        else fadeTo(bgmState.targetVol, 220);
+      }
+    }
+    btnPause.addEventListener('click', togglePause);
+
+    btnRestart.addEventListener('click', async ()=>{
+      resetAll();
+      overlay.style.display = 'none';
+      state.running = true;
+      state.paused = false;
+      if (bgmState.enabled) await ensureBgmPlaying();
+    });
 
     // init
     function init(){
