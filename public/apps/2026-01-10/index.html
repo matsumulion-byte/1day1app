@@ -575,6 +575,16 @@
       bgmState.enabled = flag;
       setBgmButton();
       await unlockAudioOnce();
+
+      // カードのタイトルと説明を復元
+      $('card').querySelector('.title').textContent = 'ASTERO-MATSUMURA';
+      $('card').querySelector('.desc').innerHTML =
+        `1画面レトロ。慣性＋端ワープ。隕石（線）を撃って割れ。<br/>
+         <span class="k">操作：</span> 左=回転 / 中=推進 / 右=SHOT（スマホ）<br/>
+         <span class="k">PC：</span> ←→ 回転 / ↑ 推進 / Space 発射`;
+
+      // ゲームオーバー後も含めて、全部リセットしてから開始
+      resetAll();
       await startGame();
     }
     btnStartBgmOn.addEventListener('click', ()=>startWithBgm(true));
