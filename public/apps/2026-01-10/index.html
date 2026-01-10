@@ -10,10 +10,10 @@
       --bg:#070a14;
       --ink:#eaf0ff;
       --muted:rgba(234,240,255,.72);
-      --line:rgba(234,240,255,.18);
+      --line:rgba(234,240,255,.16);
+      --accent:#60a5fa;
       --good:#34d399;
       --bad:#fb7185;
-      --accent:#60a5fa;
       --panel:rgba(255,255,255,.06);
       --panel2:rgba(255,255,255,.10);
       --r:18px;
@@ -21,41 +21,47 @@
     *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
     html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;}
     button{font:inherit;color:inherit}
-    .app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto;}
+
+    .app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr;}
+
+    /* compact top bar for mobile */
     .top{
       display:flex;gap:10px;align-items:center;justify-content:space-between;
-      padding:12px 12px calc(10px + env(safe-area-inset-top));
+      padding:10px 10px calc(10px + env(safe-area-inset-top));
       border-bottom:1px solid var(--line);
       background:linear-gradient(to bottom, rgba(255,255,255,.06), rgba(255,255,255,0));
     }
     .hud{
-      display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;
+      display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;
       font-variant-numeric:tabular-nums;
       letter-spacing:.04em;
     }
-    .hud b{font-weight:800}
-    .hud .pill{
-      padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--panel);
+    .pill{
+      padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.05);
+      font-size:12px;
     }
-    .actions{display:flex;gap:8px;align-items:center;}
+    .pill b{font-weight:900}
+
+    .actions{display:flex;gap:6px;align-items:center;}
     .btn{
-      padding:10px 12px;border-radius:12px;border:1px solid var(--line);
+      padding:9px 10px;border-radius:12px;border:1px solid var(--line);
       background:linear-gradient(180deg,var(--panel2),var(--panel));
-      box-shadow:0 12px 30px rgba(0,0,0,.35);
+      box-shadow:0 10px 28px rgba(0,0,0,.35);
       cursor:pointer;
       white-space:nowrap;
+      font-size:12px;
     }
     .btn:active{transform:translateY(1px)}
     .btn.primary{
       border-color:rgba(96,165,250,.45);
       background:linear-gradient(180deg, rgba(96,165,250,.22), rgba(255,255,255,.06));
     }
-    .mid{position:relative}
+
+    .mid{position:relative;min-height:0;}
     canvas{position:absolute;inset:0;width:100%;height:100%;}
-    .overlay{
-      position:absolute;inset:0;display:grid;place-items:center;
-      padding:18px;pointer-events:none;
-    }
+
+    /* overlay */
+    .overlay{position:absolute;inset:0;display:grid;place-items:center;padding:18px;pointer-events:none;}
     .card{
       width:min(560px,92vw);
       border:1px solid var(--line);border-radius:var(--r);
@@ -65,55 +71,78 @@
     }
     .title{font-size:18px;font-weight:900;letter-spacing:.06em}
     .desc{margin-top:8px;color:var(--muted);line-height:1.6;font-size:13px}
-    .desc .k{color:var(--ink)}
     .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
     .chip{
       font-size:12px;color:var(--muted);
       border:1px solid var(--line);border-radius:999px;padding:7px 10px;background:rgba(0,0,0,.18);
     }
     .chip b{color:var(--ink)}
-    .card .row2{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
-    .card .row2 .btn{pointer-events:auto}
-    .bottom{
-      display:grid;grid-template-columns:1fr 1fr 1fr;
-      gap:10px;
-      padding:10px 12px calc(12px + env(safe-area-inset-bottom));
-      border-top:1px solid var(--line);
-      background:linear-gradient(to top, rgba(255,255,255,.06), rgba(255,255,255,0));
+    .row2{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+    .row2 .btn{pointer-events:auto}
+
+    /* ---- Mobile controls: thumb zones + one big SHOT button ---- */
+    .controls{
+      position:absolute;inset:0;
+      pointer-events:none;
     }
-    .pad{
-      min-height:64px;
-      border:1px solid var(--line);
-      border-radius:16px;
-      background:rgba(255,255,255,.04);
-      display:flex;flex-direction:column;justify-content:center;align-items:center;
-      gap:4px;
-      position:relative;
+    .zone{
+      position:absolute;top:0;bottom:0;
+      pointer-events:auto;
       touch-action:none;
     }
-    .pad .label{font-size:12px;color:var(--muted);letter-spacing:.05em}
-    .pad .big{font-weight:900;letter-spacing:.08em}
-    .pad.shoot{
-      background:linear-gradient(180deg, rgba(96,165,250,.18), rgba(255,255,255,.04));
-      border-color:rgba(96,165,250,.35);
+    .zone.turn{left:0;width:52%;}
+    .zone.thrust{right:0;width:48%;}
+    /* subtle guide (only when help shown) */
+    .zone::before{
+      content:"";
+      position:absolute;inset:12px;
+      border:1px dashed rgba(234,240,255,.10);
+      border-radius:18px;
+      opacity:0;
+      transition:opacity .2s ease;
     }
-    .pad .sub{font-size:11px;color:var(--muted)}
-    .hint{
-      position:absolute;left:12px;bottom:10px;color:rgba(234,240,255,.55);
-      font-size:11px;letter-spacing:.04em;pointer-events:none;
-      text-shadow:0 2px 10px rgba(0,0,0,.6);
+    .showGuides .zone::before{opacity:1;}
+
+    .shotBtn{
+      position:absolute;
+      right:12px;
+      bottom:12px;
+      transform:translateZ(0);
+      pointer-events:auto;
+      touch-action:manipulation;
+      width:86px;height:86px;border-radius:999px;
+      border:1px solid rgba(96,165,250,.45);
+      background:radial-gradient(circle at 30% 30%, rgba(96,165,250,.28), rgba(255,255,255,.06));
+      box-shadow:0 18px 50px rgba(0,0,0,.55);
+      display:grid;place-items:center;
+      font-weight:900;letter-spacing:.06em;
     }
+    .shotBtn:active{transform:translateY(1px)}
+    .shotBtn small{display:block;font-weight:700;color:rgba(234,240,255,.75);letter-spacing:.04em;margin-top:4px;font-size:11px}
+
     .toast{
-      position:absolute;right:12px;bottom:10px;
+      position:absolute;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));
       font-size:11px;color:rgba(234,240,255,.65);
       pointer-events:none;
       opacity:0;
       transition:opacity .12s ease;
     }
+    .helpTag{
+      position:absolute;left:10px;bottom:calc(10px + env(safe-area-inset-bottom));
+      font-size:11px;color:rgba(234,240,255,.55);
+      pointer-events:none;
+      text-shadow:0 2px 10px rgba(0,0,0,.6);
+      opacity:.9;
+    }
+
+    /* desktop improvements */
     @media (min-width: 860px){
-      .bottom{grid-template-columns:1fr auto 1fr}
-      .pad{min-height:56px}
-      .pad.centerOnly{max-width:240px;justify-self:center}
+      .btn{font-size:13px;padding:10px 12px}
+      .pill{font-size:13px}
+      .shotBtn{right:16px;bottom:16px;width:92px;height:92px}
+      .helpTag{opacity:0} /* desktopはヘルプ隠す */
+      .zone{display:none} /* desktopはゾーン不要（キー操作） */
+      .shotBtn{display:none}
     }
   </style>
 </head>
@@ -126,6 +155,7 @@
         <span class="pill">WAVE <b id="wave">1</b></span>
       </div>
       <div class="actions">
+        <button class="btn" id="btnHelp" type="button">HELP</button>
         <button class="btn primary" id="btnBgm" type="button">BGM: OFF</button>
         <button class="btn" id="btnPause" type="button">PAUSE</button>
         <button class="btn" id="btnRestart" type="button">RESTART</button>
@@ -134,7 +164,14 @@
 
     <div class="mid" id="stage">
       <canvas id="cv"></canvas>
-      <div class="hint" id="hint">←/→ 回転 / ↑ 推進 / Space 発射（PC）・下のパッドでも操作可（SP）</div>
+
+      <div class="controls" id="controls">
+        <div class="zone turn" id="zoneTurn" aria-label="turn zone"></div>
+        <div class="zone thrust" id="zoneThrust" aria-label="thrust zone"></div>
+        <button class="shotBtn" id="shotBtn" type="button">SHOT<small>tap</small></button>
+      </div>
+
+      <div class="helpTag" id="helpTag">左：回転（ドラッグ）／右：推進（押しっぱ）／SHOT：右下</div>
       <div class="toast" id="toast"></div>
 
       <div class="overlay" id="overlay">
@@ -142,8 +179,8 @@
           <div class="title">ASTERO-MATSUMURA</div>
           <div class="desc">
             1画面レトロ。慣性＋端ワープ。隕石（線）を撃って割れ。<br/>
-            <span class="k">操作：</span> 左=回転 / 中=推進 / 右=SHOT（スマホ）<br/>
-            <span class="k">PC：</span> ←→ 回転 / ↑ 推進 / Space 発射
+            <span style="color:var(--ink)">SP：</span> 左=回転 / 右=推進 / 右下SHOT<br/>
+            <span style="color:var(--ink)">PC：</span> ←→ 回転 / ↑ 推進 / Space 発射
           </div>
           <div class="row">
             <span class="chip"><b>弾</b> 最大6発</span>
@@ -157,44 +194,11 @@
         </div>
       </div>
     </div>
-
-    <div class="bottom" id="pads">
-      <div class="pad" id="padTurn">
-        <div class="label">TURN</div>
-        <div class="big">← →</div>
-        <div class="sub">ドラッグ/左右タップ</div>
-      </div>
-      <div class="pad centerOnly" id="padThrust">
-        <div class="label">THRUST</div>
-        <div class="big">▲</div>
-        <div class="sub">押してる間加速</div>
-      </div>
-      <div class="pad shoot" id="padShoot">
-        <div class="label">SHOT</div>
-        <div class="big">●</div>
-        <div class="sub">タップ</div>
-      </div>
-    </div>
   </div>
 
   <script type="module">
-    // Vercel用のパス解決ヘルパー
-    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
-    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
-    const asset = (p) => {
-      const clean = String(p || "").replace(/^\.?\//, "");
-      return `${DATE_BASE}${clean}`;
-    };
-
-    // matsumura texture (optional)
-    const tex = {
-      img: new Image(),
-      ready: false
-    };
-    tex.img.decoding = 'async';
-    tex.img.onload = () => { tex.ready = true; };
-    tex.img.onerror = () => { tex.ready = false; };
-    tex.img.src = asset('./assets/matsumura.png');
+    // 1日1アプリ assets helper
+    const asset = (p) => new URL(p, import.meta.url).toString();
 
     const cv = document.getElementById('cv');
     const ctx = cv.getContext('2d');
@@ -206,19 +210,23 @@
     const toast = $('toast');
     const overlay = $('overlay');
 
-    const btnStartBgmOn = $('btnStartBgmOn');
-    const btnStartBgmOff = $('btnStartBgmOff');
     const btnPause = $('btnPause');
     const btnRestart = $('btnRestart');
     const btnBgm = $('btnBgm');
+    const btnHelp = $('btnHelp');
 
-    const padTurn = $('padTurn');
-    const padThrust = $('padThrust');
-    const padShoot = $('padShoot');
+    const controls = $('controls');
+    const zoneTurn = $('zoneTurn');
+    const zoneThrust = $('zoneThrust');
+    const shotBtn = $('shotBtn');
+
+    const btnStartBgmOn = $('btnStartBgmOn');
+    const btnStartBgmOff = $('btnStartBgmOff');
 
     // ===== BGM =====
-    // ファイル名はここで変えてOK（例: './assets/astero.mp3'）
+    // ここをあなたのファイル名に合わせて変更
     const BGM_SRC = asset('./assets/bgm.mp3');
+
     const bgm = new Audio();
     bgm.src = BGM_SRC;
     bgm.loop = true;
@@ -239,7 +247,6 @@
     async function unlockAudioOnce(){
       if (bgmState.unlocked) return true;
       try{
-        // iOS対策：ユーザー操作内でplay→即pauseでアンロック
         bgm.volume = 0.001;
         await bgm.play();
         bgm.pause();
@@ -247,14 +254,13 @@
         bgmState.unlocked = true;
         return true;
       }catch(e){
-        // まだブロックされてる
         return false;
       }
     }
 
     function fadeTo(vol, ms=400){
       if (bgmState.fading) cancelAnimationFrame(bgmState.fading);
-      const start = bgm.volume || 0;
+      const start = isFinite(bgm.volume) ? bgm.volume : 0;
       const t0 = performance.now();
       const tick = (t)=>{
         const k = Math.min(1, (t - t0)/ms);
@@ -264,9 +270,7 @@
           bgmState.fading = requestAnimationFrame(tick);
         }else{
           bgmState.fading = null;
-          if (vol <= 0.0001){
-            bgm.pause();
-          }
+          if (vol <= 0.0001) bgm.pause();
         }
       };
       bgmState.fading = requestAnimationFrame(tick);
@@ -276,16 +280,13 @@
       if (!bgmState.enabled) return;
       const ok = await unlockAudioOnce();
       if (!ok) return;
-
       try{
         if (bgm.paused){
           bgm.volume = 0.001;
           await bgm.play();
         }
         fadeTo(bgmState.targetVol, 380);
-      }catch(e){
-        // ignore
-      }
+      }catch(e){}
     }
 
     function stopBgmSoft(){
@@ -296,18 +297,9 @@
     btnBgm.addEventListener('click', async ()=>{
       bgmState.enabled = !bgmState.enabled;
       setBgmButton();
-      if (bgmState.enabled){
-        await ensureBgmPlaying();
-      } else {
-        stopBgmSoft();
-      }
-    });
-
-    // ユーザーがどこか触った最初のタイミングでもアンロックを試す
-    window.addEventListener('pointerdown', async ()=>{
       if (bgmState.enabled) await ensureBgmPlaying();
-      else await unlockAudioOnce(); // ONにした時すぐ鳴るように先にアンロックだけしておく
-    }, {passive:true, once:false});
+      else stopBgmSoft();
+    });
 
     // --- utilities
     const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
@@ -338,6 +330,7 @@
       particles: [],
       keys: { left:false, right:false, up:false, shoot:false },
       lastShot: 0,
+      showGuides: false,
     };
 
     function resize(){
@@ -390,16 +383,14 @@
         const jag = rand(0.72,1.18);
         verts.push({ t, m: jag });
       }
-      return {
-        x,y,
-        vx: Math.cos(ang)*speed,
-        vy: Math.sin(ang)*speed,
-        a: rand(0,TAU),
-        va: rot,
-        size,
-        r: baseR,
-        verts
-      };
+      return { x,y, vx:Math.cos(ang)*speed, vy:Math.sin(ang)*speed, a:rand(0,TAU), va:rot, size, r:baseR, verts };
+    }
+
+    function popToast(msg){
+      toast.textContent = msg;
+      toast.style.opacity = '1';
+      clearTimeout(popToast._t);
+      popToast._t = setTimeout(()=>toast.style.opacity='0', 160);
     }
 
     function fire(){
@@ -425,21 +416,26 @@
       for(let i=0;i<amt;i++){
         const a = rand(0,TAU);
         const sp = rand(40,220);
-        state.particles.push({
-          x,y,
-          vx: Math.cos(a)*sp,
-          vy: Math.sin(a)*sp,
-          life: rand(0.25,0.75),
-          w: rand(1,2.2)
-        });
+        state.particles.push({ x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:rand(0.25,0.75), w:rand(1,2.2) });
       }
     }
 
-    function popToast(msg){
-      toast.textContent = msg;
-      toast.style.opacity = '1';
-      clearTimeout(popToast._t);
-      popToast._t = setTimeout(()=>toast.style.opacity='0', 160);
+    function splitRock(rock){
+      const {x,y,size} = rock;
+      if (size === 3){
+        state.score += 20;
+        state.rocks.push(makeRock(x,y,2), makeRock(x,y,2));
+        boom(x,y,22);
+      } else if (size === 2){
+        state.score += 50;
+        state.rocks.push(makeRock(x,y,1), makeRock(x,y,1));
+        boom(x,y,18);
+      } else {
+        state.score += 100;
+        boom(x,y,14);
+      }
+      uiScore.textContent = String(state.score);
+      state.shake = Math.max(state.shake, 0.08);
     }
 
     function resetAll(){
@@ -456,16 +452,17 @@
       state.rocks = [];
       state.particles = [];
       state.lastShot = -999;
+
       uiScore.textContent = String(state.score);
       uiLives.textContent = String(state.lives);
       uiWave.textContent = String(state.wave);
+
       overlay.style.display = 'grid';
       btnPause.textContent = 'PAUSE';
+
       resize();
       spawnWave(4);
       draw(0);
-
-      // BGMは“待機”に戻す（ONならタイトルで小さく鳴らすのもアリだが、ここでは止める）
       stopBgmSoft();
     }
 
@@ -505,44 +502,76 @@
       state.shake = 0.25;
       boom(state.ship.x, state.ship.y, 36);
       popToast('hit');
+
       state.ship.x = state.w/2; state.ship.y = state.h/2;
       state.ship.vx = 0; state.ship.vy = 0;
       state.ship.a = -Math.PI/2;
 
-      if (state.lives <= 0){
-        gameOver();
-      }
+      if (state.lives <= 0) gameOver();
     }
 
-    function splitRock(rock){
-      const {x,y,size} = rock;
-      if (size === 3){
-        state.score += 20;
-        state.rocks.push(makeRock(x,y,2));
-        state.rocks.push(makeRock(x,y,2));
-        boom(x,y,22);
-      } else if (size === 2){
-        state.score += 50;
-        state.rocks.push(makeRock(x,y,1));
-        state.rocks.push(makeRock(x,y,1));
-        boom(x,y,18);
-      } else {
-        state.score += 100;
-        boom(x,y,14);
-      }
-      uiScore.textContent = String(state.score);
-      state.shake = Math.max(state.shake, 0.08);
+    // ===== Controls (mobile zones) =====
+    // turn zone: horizontal drag -> left/right
+    let turnActive = false;
+    let turnStartX = 0;
+    function setTurnFromDelta(dx){
+      const dead = 10; // px
+      state.keys.left = dx < -dead;
+      state.keys.right = dx > dead;
+      if (Math.abs(dx) <= dead){ state.keys.left = false; state.keys.right = false; }
     }
+    zoneTurn.addEventListener('pointerdown', (e)=>{
+      turnActive = true;
+      turnStartX = e.clientX;
+      setTurnFromDelta(0);
+      e.preventDefault();
+    });
+    zoneTurn.addEventListener('pointermove', (e)=>{
+      if (!turnActive) return;
+      setTurnFromDelta(e.clientX - turnStartX);
+      e.preventDefault();
+    });
+    window.addEventListener('pointerup', ()=>{
+      turnActive = false;
+      state.keys.left = false;
+      state.keys.right = false;
+    }, {passive:true});
+    window.addEventListener('pointercancel', ()=>{
+      turnActive = false;
+      state.keys.left = false;
+      state.keys.right = false;
+    }, {passive:true});
 
-    // --- input (keyboard)
+    // thrust zone: hold = up
+    zoneThrust.addEventListener('pointerdown', (e)=>{
+      state.keys.up = true;
+      e.preventDefault();
+    });
+    zoneThrust.addEventListener('pointerup', ()=> state.keys.up = false);
+    zoneThrust.addEventListener('pointerleave', ()=> state.keys.up = false);
+    window.addEventListener('pointerup', ()=> state.keys.up = false, {passive:true});
+    window.addEventListener('pointercancel', ()=> state.keys.up = false, {passive:true});
+
+    // shot button: tap = fire (also allow hold)
+    shotBtn.addEventListener('pointerdown', (e)=>{
+      state.keys.shoot = true;
+      e.preventDefault();
+      if (state.running && !state.paused) fire();
+    });
+    window.addEventListener('pointerup', ()=> state.keys.shoot = false, {passive:true});
+    window.addEventListener('pointercancel', ()=> state.keys.shoot = false, {passive:true});
+
+    // prevent scroll/zoom quirks
+    document.addEventListener('gesturestart', (e)=>e.preventDefault(), {passive:false});
+    document.addEventListener('touchmove', (e)=>e.preventDefault(), {passive:false});
+
+    // ===== Keyboard (desktop) =====
     window.addEventListener('keydown', (e)=>{
       if (e.key === 'ArrowLeft') state.keys.left = true;
       if (e.key === 'ArrowRight') state.keys.right = true;
       if (e.key === 'ArrowUp') state.keys.up = true;
       if (e.key === ' ') { state.keys.shoot = true; e.preventDefault(); }
-      if (e.key.toLowerCase() === 'p'){
-        togglePause();
-      }
+      if (e.key.toLowerCase() === 'p') togglePause();
     }, {passive:false});
 
     window.addEventListener('keyup', (e)=>{
@@ -552,82 +581,13 @@
       if (e.key === ' ') { state.keys.shoot = false; e.preventDefault(); }
     }, {passive:false});
 
-    // --- input (touch pads)
-    function bindPadTurn(){
-      let active = false;
-      const onDown = (ev)=>{
-        active = true;
-        handle(ev);
-      };
-      const onMove = (ev)=>{
-        if (!active) return;
-        handle(ev);
-      };
-      const onUp = ()=>{
-        active = false;
-        state.keys.left = false;
-        state.keys.right = false;
-      };
-      const handle = (ev)=>{
-        const r = padTurn.getBoundingClientRect();
-        const x = ('touches' in ev) ? ev.touches[0].clientX : ev.clientX;
-        const t = (x - r.left) / r.width;
-        state.keys.left = t < 0.38;
-        state.keys.right = t > 0.62;
-        ev.preventDefault();
-      };
-      padTurn.addEventListener('pointerdown', onDown);
-      padTurn.addEventListener('pointermove', onMove);
-      window.addEventListener('pointerup', onUp);
-      window.addEventListener('pointercancel', onUp);
-    }
-
-    function bindPadHold(el, keyName){
-      const down = (ev)=>{ state.keys[keyName] = true; ev.preventDefault(); };
-      const up = ()=>{ state.keys[keyName] = false; };
-      el.addEventListener('pointerdown', down);
-      window.addEventListener('pointerup', up);
-      window.addEventListener('pointercancel', up);
-      el.addEventListener('pointerleave', ()=>{ state.keys[keyName] = false; });
-    }
-
-    function bindPadShoot(){
-      const down = (ev)=>{
-        state.keys.shoot = true;
-        ev.preventDefault();
-        if (state.running && !state.paused) fire();
-      };
-      const up = ()=>{ state.keys.shoot = false; };
-      padShoot.addEventListener('pointerdown', down);
-      window.addEventListener('pointerup', up);
-      window.addEventListener('pointercancel', up);
-    }
-
-    bindPadTurn();
-    bindPadHold(padThrust, 'up');
-    bindPadShoot();
-
-    // prevent scroll/zoom quirks
-    document.addEventListener('gesturestart', (e)=>e.preventDefault(), {passive:false});
-    document.addEventListener('touchmove', (e)=>e.preventDefault(), {passive:false});
-
-    // buttons
+    // ===== Start with BGM confirm =====
     async function startWithBgm(flag){
       bgmState.enabled = flag;
       setBgmButton();
-
-      // ユーザー操作内で必ずアンロック
       await unlockAudioOnce();
-
-      $('card').querySelector('.title').textContent = 'ASTERO-MATSUMURA';
-      $('card').querySelector('.desc').innerHTML =
-        `1画面レトロ。慣性＋端ワープ。隕石（線）を撃って割れ。<br/>
-         <span class="k">操作：</span> 左=回転 / 中=推進 / 右=SHOT（スマホ）<br/>
-         <span class="k">PC：</span> ←→ 回転 / ↑ 推進 / Space 発射`;
-
-      await startGame(); // ← ここでBGMがONなら鳴る
+      await startGame();
     }
-
     btnStartBgmOn.addEventListener('click', ()=>startWithBgm(true));
     btnStartBgmOff.addEventListener('click', ()=>startWithBgm(false));
 
@@ -636,8 +596,6 @@
       state.paused = !state.paused;
       btnPause.textContent = state.paused ? 'RESUME' : 'PAUSE';
       popToast(state.paused ? 'pause' : 'go');
-
-      // pause中はBGMを少し下げる（停止ではなく減衰）
       if (bgmState.enabled && bgmState.unlocked){
         if (state.paused) fadeTo(0.18, 160);
         else fadeTo(bgmState.targetVol, 220);
@@ -647,20 +605,33 @@
 
     btnRestart.addEventListener('click', async ()=>{
       resetAll();
-      await startGame();
+      // リスタートは「直ちに開始」。BGMは現在のON/OFFに従う
+      overlay.style.display = 'none';
+      state.running = true;
+      state.paused = false;
+      if (bgmState.enabled) await ensureBgmPlaying();
     });
 
-    // --- main loop
+    // HELP: show dashed guides for zones (mobile)
+    btnHelp.addEventListener('click', ()=>{
+      state.showGuides = !state.showGuides;
+      controls.classList.toggle('showGuides', state.showGuides);
+      popToast(state.showGuides ? 'help on' : 'help off');
+    });
+
+    // top-level pointerdown: audio unlock hint
+    window.addEventListener('pointerdown', async ()=>{
+      if (bgmState.enabled) await ensureBgmPlaying();
+      else await unlockAudioOnce();
+    }, {passive:true});
+
+    // ===== Main loop =====
     let last = performance.now();
     function loop(now){
       const dt = Math.min(0.033, (now - last)/1000);
       last = now;
-
-      if (state.running && !state.paused){
-        update(dt);
-      }
+      if (state.running && !state.paused) update(dt);
       draw(dt);
-
       requestAnimationFrame(loop);
     }
 
@@ -707,9 +678,7 @@
       s.y += s.vy * dt;
       wrapPos(s, state.w, state.h);
 
-      if (state.keys.shoot){
-        fire();
-      }
+      if (state.keys.shoot) fire();
 
       for(let i=state.bullets.length-1;i>=0;i--){
         const b = state.bullets[i];
@@ -769,9 +738,7 @@
         }
       }
 
-      if (state.rocks.length === 0){
-        nextWave();
-      }
+      if (state.rocks.length === 0) nextWave();
 
       if (Math.random() < dt * 0.8){
         state.score += 1;
@@ -796,7 +763,7 @@
       ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
       ctx.fillRect(-sx, -sy, w, h);
 
-      // subtle stars
+      // stars
       ctx.globalAlpha = 0.16;
       ctx.fillStyle = '#fff';
       const starN = 70;
@@ -808,18 +775,15 @@
       }
       ctx.globalAlpha = 1;
 
-      // draw rocks (vector line + matsumura texture clipped inside)
+      // rocks
       ctx.lineWidth = 2;
       ctx.strokeStyle = 'rgba(234,240,255,.72)';
-
       for (const r of state.rocks){
         ctx.save();
         ctx.translate(r.x, r.y);
         ctx.rotate(r.a);
-
-        // rock path
-        const verts = r.verts;
         ctx.beginPath();
+        const verts = r.verts;
         for(let i=0;i<verts.length;i++){
           const v = verts[i];
           const rr = r.r * v.m;
@@ -829,43 +793,7 @@
           else ctx.lineTo(px,py);
         }
         ctx.closePath();
-
-        // texture fill (clipped)
-        if (tex.ready){
-          ctx.save();
-          ctx.clip();
-
-          // draw image centered, scaled to rock size
-          // 画像の縦横比は維持しつつ、隕石内に"やや大きめ"に収める
-          const img = tex.img;
-          const cover = r.r * 2.2; // ここで松村の見える大きさ調整（2.0〜2.5が目安）
-          const iw = img.naturalWidth || img.width;
-          const ih = img.naturalHeight || img.height;
-          const s = cover / Math.min(iw, ih);
-
-          const dw = iw * s;
-          const dh = ih * s;
-
-          // ちょいランダム回転＆オフセットで"同じ顔の並び"感を薄める
-          const jitter = r.size===3 ? 10 : r.size===2 ? 8 : 6;
-          const ox = (Math.sin(r.x*0.03 + r.y*0.02) * 0.5) * jitter;
-          const oy = (Math.cos(r.x*0.02 + r.y*0.03) * 0.5) * jitter;
-
-          ctx.globalAlpha = 0.92;
-          ctx.drawImage(img, -dw/2 + ox, -dh/2 + oy, dw, dh);
-
-          // うっすら暗幕で"レトロ筐体っぽさ"＋線画と馴染ませる
-          ctx.globalAlpha = 0.35;
-          ctx.fillStyle = 'rgba(0,0,0,.35)';
-          ctx.fillRect(-r.r*1.4, -r.r*1.4, r.r*2.8, r.r*2.8);
-
-          ctx.restore();
-        }
-
-        // outline stroke on top
-        ctx.globalAlpha = 1;
         ctx.stroke();
-
         ctx.restore();
       }
 
@@ -927,8 +855,6 @@
       ctx.fillRect(-sx, -sy, w, h);
 
       ctx.restore();
-
-      $('hint').style.opacity = state.running ? '0' : '1';
     }
 
     // init
