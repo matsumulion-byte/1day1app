@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>鏡開き｜叩いて割る</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --ink:#111;
+      --muted:rgba(0,0,0,.55);
+      --line:rgba(0,0,0,.12);
+      --panel:rgba(0,0,0,.04);
+      --panel2:rgba(0,0,0,.08);
+      --good:#34d399;
+      --bad:#fb7185;
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; overflow:hidden; background:var(--bg); color:var(--ink);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;}
+    button{font:inherit}
+    .app{
+      position:fixed; inset:0;
+      display:flex; flex-direction:column;
+      padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+      gap:12px;
+    }
+
+    header{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:6px;
+      min-width:0;
+    }
+    .title h1{
+      font-size:16px; letter-spacing:.02em; font-weight:700;
+    }
+    .title p{
+      font-size:12px; color:var(--muted); line-height:1.4;
+    }
+    .hud{
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .badge{
+      font-size:12px; color:var(--muted);
+      padding:8px 10px; border-radius:999px;
+      background:var(--panel);
+      border:1px solid var(--line);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      white-space:nowrap;
+    }
+    .badge strong{color:var(--ink); font-weight:800;}
+    .btn{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      color:var(--ink);
+      padding:10px 12px; border-radius:12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.secondary{background:rgba(255,255,255,.06)}
+    .btn.accent{
+      border-color: rgba(96,165,250,.55);
+      background:linear-gradient(180deg, rgba(96,165,250,.25), rgba(96,165,250,.10));
+    }
+
+    .stage{
+      position:relative;
+      flex:1;
+      display:grid;
+      place-items:center;
+      border-radius: var(--r);
+      background:#fff;
+      border:1px solid var(--line);
+      box-shadow: none;
+      overflow:hidden;
+      user-select:none;
+      -webkit-user-select:none;
+      -webkit-touch-callout:none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .hint{
+      position:absolute; left:14px; top:14px;
+      z-index:10;
+      padding:10px 12px; border-radius:14px;
+      background:rgba(0,0,0,.30);
+      border:1px solid rgba(255,255,255,.10);
+      color:var(--muted);
+      font-size:12px;
+      display:flex; flex-direction:column; gap:2px;
+      max-width:min(340px, calc(100% - 28px));
+    }
+    .hint b{color:var(--ink)}
+    .progress{
+      position:absolute; left:14px; bottom:14px; right:14px;
+      z-index:10;
+      height:10px; border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      overflow:hidden;
+    }
+    .bar{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg, rgba(96,165,250,.15), rgba(96,165,250,.55));
+    }
+
+    .kagamiWrap{
+      position:relative;
+      width:min(640px, 86vw);
+      aspect-ratio: 16/9;
+      display:grid;
+      place-items:center;
+    }
+    .kagami{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      filter: drop-shadow(0 26px 40px rgba(0,0,0,.45));
+      transform-origin: 50% 70%;
+      will-change: transform, opacity;
+    }
+
+    /* タップ反応 */
+    .tapPulse{ animation: tapPulse .11s ease-out; }
+    @keyframes tapPulse{
+      from{ transform: translateY(0) scale(1); }
+      to{ transform: translateY(1px) scale(.985); }
+    }
+
+    /* 割れ演出 */
+    .breakFlash{
+      position:absolute; inset:0;
+      background:rgba(255,255,255,.85);
+      opacity:0;
+      pointer-events:none;
+      mix-blend-mode: screen;
+    }
+    .flashOn{ animation: flash .28s ease-out; }
+    @keyframes flash{
+      0%{opacity:0}
+      15%{opacity:.85}
+      100%{opacity:0}
+    }
+
+    canvas.fx{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      pointer-events:none;
+    }
+
+    .reveal{
+      position:absolute;
+      inset:0;
+      z-index:100;
+      display:flex;
+      justify-content:flex-start;
+      align-items:center;
+      padding: max(14px, env(safe-area-inset-top)) 14px 14px;
+      pointer-events:none;
+      opacity:0;
+      transform: translateY(10px) scale(.98);
+    }
+    .reveal.on{
+      opacity:1;
+      transform: translateY(0) scale(1);
+      transition: opacity .35s ease, transform .35s cubic-bezier(.2,.9,.2,1);
+    }
+
+    .confirmDialog{
+      position:absolute;
+      inset:0;
+      z-index:1000;
+      display:grid;
+      place-items:center;
+      padding: max(14px, env(safe-area-inset-top)) 14px 14px;
+      pointer-events:auto;
+      background:rgba(0,0,0,.3);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    .confirmDialog.hidden{
+      display:none;
+    }
+
+    .card{
+      pointer-events:auto;
+      width:min(520px, 88vw);
+      border-radius: 18px;
+      background:rgba(0,0,0,.45);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 24px 70px rgba(0,0,0,.55);
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color:#fff;
+    }
+    .card .btn{
+      color:#fff;
+      border-color:rgba(255,255,255,.25);
+    }
+    .card .btn.accent{
+      border-color:rgba(96,165,250,.55);
+      background:linear-gradient(180deg, rgba(96,165,250,.35), rgba(96,165,250,.20));
+    }
+    .cardTop{
+      padding:14px 14px 10px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+    }
+    .cardTop .left{
+      display:flex; flex-direction:column; gap:4px;
+      min-width:0;
+    }
+    .cardTop .left .big{
+      font-weight:900; letter-spacing:.02em;
+      font-size:14px;
+      color:#fff;
+    }
+    .cardTop .left .sub{
+      color:rgba(255,255,255,.85);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .pill{
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .cardBody{
+      padding:14px;
+      display:flex; flex-direction:column; align-items:center; gap:10px;
+    }
+    .matsu{
+      width:min(360px, 70vw);
+      max-height:42vh;
+      object-fit:contain;
+      filter: drop-shadow(0 18px 36px rgba(0,0,0,.55));
+    }
+    .cardActions{
+      width:100%;
+      display:flex; gap:10px;
+      margin-top:6px;
+    }
+    .cardActions .btn{flex:1}
+    footer{
+      display:flex; justify-content:center;
+      color:rgba(243,246,255,.40);
+      font-size:11px;
+      padding:2px 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="title">
+        <h1>鏡開き</h1>
+      </div>
+      <div class="hud">
+        <button class="btn secondary" id="soundBtn" type="button">🔊 ON</button>
+        <button class="btn secondary" id="resetBtn" type="button">リセット</button>
+      </div>
+    </header>
+
+    <main class="stage" id="stage" aria-label="鏡餅を叩くエリア">
+      <div class="confirmDialog" id="confirmDialog">
+        <div class="card">
+          <div class="cardTop">
+            <div class="left">
+              <div class="big">サウンド設定</div>
+              <div class="sub">サウンドありで始めますか？</div>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="cardActions">
+              <button class="btn accent" id="soundOnBtn" type="button">サウンドありで始める</button>
+              <button class="btn" id="soundOffBtn" type="button">サウンドなしで始める</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint" id="hint">
+        <b>叩いて割れ。</b>
+        <span>割れたら中から松村がランダムで出ます。</span>
+      </div>
+
+      <div class="kagamiWrap" id="kagamiWrap">
+        <img class="kagami" id="kagami" alt="鏡餅" />
+      </div>
+
+      <div class="breakFlash" id="flash"></div>
+      <canvas class="fx" id="fx"></canvas>
+
+      <div class="reveal" id="reveal">
+        <div class="card">
+          <div class="cardTop">
+            <div class="left">
+              <div class="big" id="resultTitle">開いた。</div>
+              <div class="sub" id="resultSub">今年もよろしくお願いします。</div>
+            </div>
+            <div class="pill" id="rarityPill">NORMAL</div>
+          </div>
+          <div class="cardBody">
+            <img id="matsuImg" class="matsu" alt="松村" />
+            <div class="cardActions">
+              <button class="btn accent" id="againBtn" type="button">もう一回割る</button>
+              <button class="btn" id="closeBtn" type="button">とじる</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="progress" aria-hidden="true">
+        <div class="bar" id="bar"></div>
+      </div>
+    </main>
+
+    <footer>※ 長押し選択/ダブルタップ拡大は抑制しています</footer>
+  </div>
+
+  <script type="module">
+    // Vercel用のパス解決
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    // 爆破サウンド
+    const explosionSE = new Audio(asset("./assets/explosion.mp3"));
+    explosionSE.preload = "auto";
+    explosionSE.volume = 0.7;
+
+    // BGM
+    const bgm = new Audio(asset("./assets/bgm.mp3"));
+    bgm.preload = "auto";
+    bgm.volume = 0.5;
+    bgm.loop = true;
+
+    // ====== ここだけ assets のファイル名を合わせてください ======
+    // 鏡餅4段階（あなたの4枚をこの名前で /assets に置くのがラク）
+    // 0:無傷, 1:ヒビ, 2:ヒビ増, 3:割れ
+    const KAGAMI_STAGES = [
+      asset("./assets/kagami_0.png"),
+      asset("./assets/kagami_1.png"),
+      asset("./assets/kagami_2.png"),
+      asset("./assets/kagami_3.png"),
+    ];
+
+    // 松村たち（好きなだけ追加OK）
+    // 例：/assets/matsumura_furukawa.png など
+    const MATSUMURA_NORMAL = [
+      asset("./assets/matsumura_1.png"),
+      asset("./assets/matsumura_2.png"),
+      asset("./assets/matsumura_3.png"),
+      asset("./assets/matsumura_4.png"),
+      asset("./assets/matsumura_5.png"),
+      asset("./assets/matsumura_6.png"),
+      asset("./assets/matsumura_7.png"),
+    ];
+    const MATSUMURA_RARE = [
+      asset("./assets/matsumura_rare.png"),
+    ];
+    // ============================================================
+
+    // 叩く回数のしきい値（おすすめ）
+    const BREAK_AT = 18; // この回数で割れる
+    const STAGE_AT = [0, 6, 12, BREAK_AT]; // stage0,1,2,3
+
+    const $ = (id) => document.getElementById(id);
+    const stageEl = $("stage");
+    const kagamiEl = $("kagami");
+    const kagamiWrap = $("kagamiWrap");
+    const soundBtn = $("soundBtn");
+    const resetBtn = $("resetBtn");
+    const confirmDialog = $("confirmDialog");
+    const soundOnBtn = $("soundOnBtn");
+    const soundOffBtn = $("soundOffBtn");
+    const barEl = $("bar");
+    const flashEl = $("flash");
+    const fx = $("fx");
+    const reveal = $("reveal");
+    const matsuImg = $("matsuImg");
+    const againBtn = $("againBtn");
+    const closeBtn = $("closeBtn");
+    const resultTitle = $("resultTitle");
+    const resultSub = $("resultSub");
+    const rarityPill = $("rarityPill");
+
+    // canvas setup
+    const ctx = fx.getContext("2d");
+    function resizeFx(){
+      const r = window.devicePixelRatio || 1;
+      fx.width = Math.floor(stageEl.clientWidth * r);
+      fx.height = Math.floor(stageEl.clientHeight * r);
+      ctx.setTransform(r,0,0,r,0,0);
+    }
+    window.addEventListener("resize", resizeFx, {passive:true});
+
+    // prevent iOS double-tap zoom side effects (extra)
+    let lastTouchEnd = 0;
+    document.addEventListener("touchend", (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 280) e.preventDefault();
+      lastTouchEnd = now;
+    }, {passive:false});
+
+    // state
+    let taps = 0;
+    let broken = false;
+    let particles = [];
+    let raf = 0;
+    let bgmStarted = false;
+    let soundOn = true;
+    let dialogClosed = false;
+
+    function setStageByTaps(){
+      let s = 0;
+      if (taps >= STAGE_AT[3]) s = 3;
+      else if (taps >= STAGE_AT[2]) s = 2;
+      else if (taps >= STAGE_AT[1]) s = 1;
+
+      kagamiEl.src = KAGAMI_STAGES[s];
+      const pct = Math.min(1, taps / BREAK_AT) * 100;
+      barEl.style.width = pct.toFixed(1) + "%";
+    }
+
+    function tapFeedback(){
+      kagamiEl.classList.remove("tapPulse");
+      // reflow
+      void kagamiEl.offsetWidth;
+      kagamiEl.classList.add("tapPulse");
+
+      // tiny random wiggle
+      const deg = (Math.random()*2 - 1) * 1.2;
+      kagamiEl.style.transform = `rotate(${deg}deg)`;
+      clearTimeout(tapFeedback._t);
+      tapFeedback._t = setTimeout(()=>{ kagamiEl.style.transform = ""; }, 90);
+    }
+
+    function flash(){
+      flashEl.classList.remove("flashOn");
+      void flashEl.offsetWidth;
+      flashEl.classList.add("flashOn");
+    }
+
+    function pickMatsumura(){
+      const isRare = Math.random() < 0.07 && MATSUMURA_RARE.length; // 7%くらい
+      if (isRare){
+        return { src: MATSUMURA_RARE[Math.floor(Math.random()*MATSUMURA_RARE.length)], rare:true };
+      }
+      return { src: MATSUMURA_NORMAL[Math.floor(Math.random()*MATSUMURA_NORMAL.length)], rare:false };
+    }
+
+    function burstParticles(){
+      particles = [];
+      const w = stageEl.clientWidth;
+      const h = stageEl.clientHeight;
+      const cx = w * 0.5;
+      const cy = h * 0.52;
+
+      const n = 42;
+      for (let i=0;i<n;i++){
+        const a = Math.random()*Math.PI*2;
+        const sp = 2.2 + Math.random()*5.8;
+        particles.push({
+          x: cx + (Math.random()*20-10),
+          y: cy + (Math.random()*20-10),
+          vx: Math.cos(a)*sp,
+          vy: Math.sin(a)*sp - (2.5 + Math.random()*2.0),
+          r: 2 + Math.random()*5,
+          life: 40 + Math.floor(Math.random()*25),
+          rot: Math.random()*Math.PI*2,
+          vr: (Math.random()*2-1)*0.25,
+          kind: Math.random() < 0.65 ? "mochi" : "paper"
+        });
+      }
+
+      cancelAnimationFrame(raf);
+      animateParticles();
+    }
+
+    function animateParticles(){
+      const w = stageEl.clientWidth;
+      const h = stageEl.clientHeight;
+      ctx.clearRect(0,0,w,h);
+
+      // simple draw (no fixed colors instruction not relevant here; but we do set fillStyle)
+      for (const p of particles){
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.22; // gravity
+        p.vx *= 0.985;
+        p.vy *= 0.985;
+        p.rot += p.vr;
+        p.life -= 1;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+
+        if (p.kind === "mochi"){
+          ctx.fillStyle = "rgba(255,255,255,.72)";
+          ctx.strokeStyle = "rgba(0,0,0,.18)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(-p.r, -p.r*0.7, p.r*2, p.r*1.4, p.r*0.5);
+          ctx.fill();
+          ctx.stroke();
+        }else{
+          const rw = p.r*2.0, rh = p.r*1.4;
+          ctx.fillStyle = Math.random() < 0.5 ? "rgba(255,255,255,.85)" : "rgba(255,90,120,.75)";
+          ctx.beginPath();
+          ctx.roundRect(-rw/2, -rh/2, rw, rh, 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      particles = particles.filter(p => p.life > 0 && p.y < h + 60);
+
+      if (particles.length){
+        raf = requestAnimationFrame(animateParticles);
+      }else{
+        ctx.clearRect(0,0,w,h);
+      }
+    }
+
+    function showReveal(){
+      const {src, rare} = pickMatsumura();
+      matsuImg.src = src;
+
+      rarityPill.textContent = rare ? "RARE" : "NORMAL";
+      rarityPill.style.color = rare ? "rgba(52,211,153,.95)" : "rgba(243,246,255,.72)";
+      rarityPill.style.borderColor = rare ? "rgba(52,211,153,.35)" : "rgba(255,255,255,.12)";
+      rarityPill.style.background = rare ? "rgba(52,211,153,.12)" : "rgba(255,255,255,.08)";
+
+      resultTitle.textContent = rare ? "レア松村、開帳。" : "開いた。";
+      resultSub.textContent = rare ? "今年はいいことある。" : "今年もよろしくお願いします。";
+
+      reveal.classList.add("on");
+      reveal.style.pointerEvents = "auto";
+    }
+
+    function hideReveal(){
+      reveal.classList.remove("on");
+      reveal.style.pointerEvents = "none";
+    }
+
+    function doBreak(){
+      broken = true;
+      setStageByTaps(); // stage3へ
+
+      try{
+        if (soundOn) {
+          explosionSE.currentTime = 0;
+          explosionSE.play();
+        }
+      }catch(e){}
+
+      flash();
+      burstParticles();
+      try{ navigator.vibrate?.(35); }catch(_){}
+      setTimeout(showReveal, 220);
+    }
+
+    function onHit(){
+      if (broken) return;
+
+      taps += 1;
+      tapFeedback();
+      setStageByTaps();
+
+      if (taps >= BREAK_AT){
+        doBreak();
+      }
+    }
+
+    function reset(){
+      cancelAnimationFrame(raf);
+      particles = [];
+      ctx.clearRect(0,0,stageEl.clientWidth, stageEl.clientHeight);
+
+      taps = 0;
+      broken = false;
+      hideReveal();
+      setStageByTaps();
+    }
+
+    // events
+    stageEl.addEventListener("pointerdown", (e) => {
+      // ボタン押下は除外
+      if (e.target.closest("button")) return;
+      
+      // 確認ダイアログが表示されている間は操作不可
+      if (!dialogClosed) return;
+      
+      // 最初のタップでBGM開始（iOS対応）
+      if (!bgmStarted && soundOn) {
+        try {
+          bgm.play().catch(() => {});
+          bgmStarted = true;
+        } catch (err) {}
+      }
+      
+      onHit();
+    }, {passive:true});
+
+    resetBtn.addEventListener("click", reset);
+    againBtn.addEventListener("click", reset);
+    closeBtn.addEventListener("click", hideReveal);
+
+    function updateSoundUI(){
+      soundBtn.textContent = soundOn ? "🔊 ON" : "🔇 OFF";
+    }
+
+    soundBtn.addEventListener("click", () => {
+      soundOn = !soundOn;
+
+      if (!soundOn) {
+        bgm.pause();
+        bgmStarted = false;
+      } else {
+        // 再ON時は次の操作で再生（自動再生回避）
+        bgmStarted = false;
+      }
+
+      updateSoundUI();
+    });
+
+    soundOnBtn.addEventListener("click", () => {
+      soundOn = true;
+      dialogClosed = true;
+      confirmDialog.classList.add("hidden");
+      updateSoundUI();
+      // ユーザー操作起点でBGM開始
+      try {
+        bgm.play().then(() => {
+          bgmStarted = true;
+        }).catch(() => {});
+      } catch (err) {}
+    });
+
+    soundOffBtn.addEventListener("click", () => {
+      soundOn = false;
+      dialogClosed = true;
+      confirmDialog.classList.add("hidden");
+      updateSoundUI();
+    });
+
+    // init
+    resizeFx();
+    kagamiEl.src = KAGAMI_STAGES[0];
+    setStageByTaps();
+    updateSoundUI();
+
+    // ensure roundRect exists (Safari 16+ ok, but fallback)
+    if (!CanvasRenderingContext2D.prototype.roundRect){
+      CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+        const rr = Math.min(r, w/2, h/2);
+        this.beginPath();
+        this.moveTo(x+rr, y);
+        this.arcTo(x+w, y, x+w, y+h, rr);
+        this.arcTo(x+w, y+h, x, y+h, rr);
+        this.arcTo(x, y+h, x, y, rr);
+        this.arcTo(x, y, x+w, y, rr);
+        this.closePath();
+        return this;
+      };
+    }
+  </script>
+</body>
+</html>
