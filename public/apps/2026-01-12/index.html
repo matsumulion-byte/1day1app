@@ -184,13 +184,13 @@
   const getAssetPath = (p) => {
     let path = window.location.pathname;
     // 末尾のファイル名を削除（index.htmlなど）
-    path = path.replace(/\/[^/]*$/, '');
-    // 末尾が / でない場合は / を追加
-    if (!path.endsWith('/')) {
-      path += '/';
+    path = path.replace(/\/[^/]*\.html?$/, '').replace(/\/$/, '');
+    // パスが空の場合は /2026-01-12 を想定（フォールバック）
+    if (!path || path === '/') {
+      path = '/2026-01-12';
     }
-    // 先頭の / を削除してから結合（p は /assets/... なので）
-    return path + p.substring(1);
+    // assetsパスを結合
+    return path + p;
   };
 
   // 画像読み込み
