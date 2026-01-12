@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>スキーの日｜松村スキージャンプ</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --good:#34d399;
+      --bad:#fb7185;
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;}
+    button{font:inherit}
+    .app{
+      position:fixed; inset:0;
+      display:grid; grid-template-rows:auto 1fr auto;
+      gap:10px;
+      padding:14px;
+      padding-top:calc(14px + env(safe-area-inset-top));
+      padding-bottom:calc(14px + env(safe-area-inset-bottom));
+    }
+    header{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    }
+    .title{display:flex; flex-direction:column; gap:4px}
+    .title h1{font-size:14px; letter-spacing:.02em}
+    .title p{font-size:12px; color:var(--muted); line-height:1.35}
+    .hud{display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+    .chip{
+      background:var(--panel);
+      border:1px solid var(--line);
+      padding:7px 10px;
+      border-radius:999px;
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .chip b{color:var(--ink); font-weight:800}
+    .stage{
+      position:relative;
+      border-radius:var(--r);
+      overflow:hidden;
+      background:
+        radial-gradient(1200px 700px at 40% 10%, rgba(96,165,250,.18), transparent 60%),
+        radial-gradient(900px 600px at 70% 20%, rgba(52,211,153,.10), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      touch-action:none;
+    }
+    canvas{width:100%;height:100%;display:block}
+    footer{
+      display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    }
+    .note{
+      font-size:12px; color:var(--muted); line-height:1.35;
+      flex: 1 1 320px;
+    }
+    .btns{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .btn{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, var(--panel2), var(--panel));
+      color:var(--ink);
+      padding:10px 12px;
+      border-radius:12px;
+      font-size:13px;
+      min-width:120px;
+    }
+    .btn.primary{border-color:rgba(96,165,250,.45)}
+    .btn:active{transform:translateY(1px)}
+
+    .overlay{
+      position:absolute; inset:0;
+      display:none; place-items:center;
+      background:rgba(0,0,0,.55);
+      padding:16px;
+      z-index: 10;
+    }
+    .card{
+      width:min(560px, 100%);
+      background:rgba(10,14,30,.92);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:16px;
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .card h2{font-size:16px; margin-bottom:8px}
+    .card p{font-size:13px; color:var(--muted); line-height:1.55}
+    .row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap}
+    .kpi{
+      flex:1 1 150px;
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 12px;
+    }
+    .kpi .l{font-size:11px; color:var(--muted)}
+    .kpi .v{font-size:20px; font-weight:900; margin-top:4px}
+    .small{font-size:11px; color:var(--muted); margin-top:10px}
+    .hint{
+      position:absolute; left:12px; right:12px; top:12px;
+      display:flex; justify-content:space-between; gap:10px; align-items:flex-start; pointer-events:none;
+      font-size:12px; color:rgba(243,246,255,.78);
+      text-shadow: 0 2px 10px rgba(0,0,0,.45);
+      z-index: 2;
+    }
+    .hint .badge{
+      background:rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.16);
+      padding:6px 10px;
+      border-radius:999px;
+      backdrop-filter: blur(8px);
+      white-space:nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <h1>スキーの日｜松村スキージャンプ</h1>
+        <p>1回目タップ：踏切（タイミング） / 空中タップ：着地タイミング</p>
+      </div>
+      <div class="hud">
+        <div class="chip">K点 <b id="kpt">98</b>m</div>
+        <div class="chip">風 <b id="wind">→ 1.2</b>m/s</div>
+        <div class="chip">距離 <b id="dist">--.-</b>m</div>
+        <div class="chip">SCORE <b id="score">0</b></div>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c"></canvas>
+      <div class="hint">
+        <div class="badge" id="stateBadge">待機中</div>
+        <div class="badge" id="assistBadge">着地：未判定</div>
+      </div>
+
+      <div class="overlay" id="overlay">
+        <div class="card">
+          <h2 id="rTitle">結果</h2>
+          <p id="rText">—</p>
+          <div class="row">
+            <div class="kpi"><div class="l">飛距離</div><div class="v" id="rDist">--.-m</div></div>
+            <div class="kpi"><div class="l">踏切評価</div><div class="v" id="rTiming">--</div></div>
+            <div class="kpi"><div class="l">着地</div><div class="v" id="rLanding">--</div></div>
+          </div>
+          <div class="row">
+            <button class="btn primary" id="again" type="button">もう一回</button>
+            <button class="btn" id="close" type="button">とじる</button>
+          </div>
+          <div class="small">メモ：K点を超えても、記録は残りません。</div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="note" id="note">
+        操作：踏切は1回だけ。空中で着地タイミングにタップでスコア獲得。<br>
+      </div>
+      <div class="btns">
+        <button class="btn primary" id="start" type="button">開始</button>
+        <button class="btn" id="reset" type="button">リセット</button>
+      </div>
+    </footer>
+  </div>
+
+<script type="module">
+  // 1日1アプリ ルール: 動的アセットはこれ経由
+  // Vercel用: 現在のパスから相対的にassetsを参照
+  const getAssetPath = (p) => {
+    const basePath = window.location.pathname.replace(/\/[^/]*$/, '');
+    return basePath + p;
+  };
+
+  // 画像読み込み
+  const imgRun  = new Image();
+  const imgJump = new Image();
+  const imgLand = new Image();
+  imgRun.src  = getAssetPath('/assets/run.png');
+  imgJump.src = getAssetPath('/assets/jump.png');
+  imgLand.src = getAssetPath('/assets/land.png');
+
+  const stage = document.getElementById('stage');
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d', { alpha:true });
+
+  const $kpt = document.getElementById('kpt');
+  const $wind = document.getElementById('wind');
+  const $dist = document.getElementById('dist');
+  const $score = document.getElementById('score');
+  const $note = document.getElementById('note');
+  const $stateBadge = document.getElementById('stateBadge');
+  const $assistBadge = document.getElementById('assistBadge');
+
+  const overlay = document.getElementById('overlay');
+  const rTitle = document.getElementById('rTitle');
+  const rText  = document.getElementById('rText');
+  const rDist  = document.getElementById('rDist');
+  const rTiming= document.getElementById('rTiming');
+  const rLanding = document.getElementById('rLanding');
+
+  const again  = document.getElementById('again');
+  const close  = document.getElementById('close');
+
+  const startBtn = document.getElementById('start');
+  const resetBtn = document.getElementById('reset');
+
+  let score = 0;
+
+  // 着地判定
+  let landingWindowOpen = false;
+  let landingT = 0;              // window timer
+  let landingGrade = '—';        // 'PERFECT' | 'GOOD' | 'MISS' | '—'
+  let landingPts = 0;            // 120 / 60 / -40 / 0
+
+  const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  let W=1,H=1;
+  function resize(){
+    const r = stage.getBoundingClientRect();
+    W = Math.max(1, Math.floor(r.width));
+    H = Math.max(1, Math.floor(r.height));
+    canvas.width  = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener('resize', resize, {passive:true});
+  resize();
+
+  // ---- RNG
+  let seed = 1;
+  function rnd(){
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  }
+
+  // ---- Motion (optional)
+  let hasMotion = false;
+  let tilt = 0; // -1..1
+  async function enableMotion(){
+    try{
+      const DME = window.DeviceMotionEvent;
+      if(typeof DME?.requestPermission === 'function'){
+        const res = await DME.requestPermission();
+        if(res !== 'granted') throw new Error('permission denied');
+      }
+      hasMotion = true;
+      $note.textContent = '傾き操作：ON（空中で微調整）';
+    }catch(e){
+      hasMotion = false;
+      $note.textContent = '傾き操作：OFF';
+    }
+  }
+  window.addEventListener('deviceorientation', (ev)=>{
+    if(!hasMotion) return;
+    const g = (typeof ev.gamma === 'number') ? ev.gamma : 0;
+    tilt = Math.max(-1, Math.min(1, g / 25));
+  }, {passive:true});
+
+  // ---- Input
+  // overlay上のボタンが効かない原因：stageのpointerdownが常に走ってた
+  // => stageではなく「canvas」にだけゲームタップを付け、かつ overlay表示中は無視する
+  canvas.addEventListener('pointerdown', (e)=>{
+    if(overlay.style.display === 'grid') return;
+    canvas.setPointerCapture(e.pointerId);
+    onTap();
+  });
+
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === ' '){
+      if(overlay.style.display === 'grid') return;
+      onTap();
+    }
+    if(e.key === 'Enter'){
+      if(state==='result') { resetRun(); start(); }
+    }
+  });
+
+  // ---- Game params
+  const K_POINT = 98;
+  const RUN_LEN_M = 120;
+  const LAND_LEN_M = 160;
+  const SKIER_HEIGHT_M = 1.8;
+
+  const GRAV = 9.0;
+  const AIR_DRAG = 0.011;
+  const LIFT = 0.16;
+  const GROUND_FRICTION = 0.010;
+
+  const ANTI_K_BIAS = 0.92;
+  const RARE_OVERK_P = 0.08;
+
+  // ---- State machine
+  let state = 'idle';
+  let running = false;
+  let last = 0;
+
+  // Environment
+  let kPoint = K_POINT;
+  let wind = 0;
+  let windDir = 1;
+  let rareBoost = false;
+
+  // Runner physics
+  const p = {
+    x: 0,
+    y: 0,
+    vx: 0,
+    vy: 0,
+    t: 0,
+    jumped: false,
+    landed: false,
+    landX: 0,
+    posture: 0.55,
+    postureTarget: 0.55,
+    postureAuto: true,
+    timingScore: 0,
+  };
+
+  const geom = {
+    takeoffX: RUN_LEN_M,
+    takeoffY: 0,
+    slope: 0.18,
+    kx: RUN_LEN_M + kPoint,
+  };
+
+  function setState(s){
+    state = s;
+    if(s==='idle') $stateBadge.textContent = '待機中';
+    if(s==='inrun') $stateBadge.textContent = '助走中（タップで踏切）';
+    if(s==='flight') $stateBadge.textContent = '飛行中（着地タイミングをタップ）';
+    if(s==='landing') $stateBadge.textContent = '着地…';
+    if(s==='result') $stateBadge.textContent = '結果';
+  }
+
+  function setAssistText(){
+    // 長押し削除：着地状態を表示に使う
+    const t =
+      landingGrade === 'PERFECT' ? '着地：PERFECT' :
+      landingGrade === 'GOOD' ? '着地：GOOD' :
+      landingGrade === 'MISS' ? '着地：MISS' :
+      landingWindowOpen ? '着地：今！' : '着地：未判定';
+    $assistBadge.textContent = t;
+  }
+
+  function hud(){
+    $kpt.textContent = String(kPoint);
+    const arrow = (windDir===1) ? '→' : '←';
+    $wind.textContent = `${arrow} ${Math.abs(wind).toFixed(1)}`;
+    $score.textContent = String(score);
+    if(state==='result') $dist.textContent = (p.landed ? (p.landX - geom.takeoffX).toFixed(1) : '--.-');
+    else $dist.textContent = '--.-';
+  }
+
+  function showResult(){
+    overlay.style.display = 'grid';
+
+    const dist = Math.max(0, p.landX - geom.takeoffX);
+    rDist.textContent = `${dist.toFixed(1)}m`;
+
+    const timingLabel =
+      p.timingScore >= 0.92 ? '神' :
+      p.timingScore >= 0.80 ? '良' :
+      p.timingScore >= 0.62 ? '並' : '早/遅';
+    rTiming.textContent = timingLabel;
+
+    // 着地 KPI（点数込み）
+    const landingLabel =
+      landingGrade === 'PERFECT' ? `PERFECT (+${landingPts})` :
+      landingGrade === 'GOOD' ? `GOOD (+${landingPts})` :
+      landingGrade === 'MISS' ? `MISS (${landingPts})` :
+      `— (+0)`;
+    rLanding.textContent = landingLabel;
+
+    const overK = dist >= kPoint;
+    const gap = (kPoint - dist);
+
+    const msg =
+      overK ? '今日はここでやめよう。' :
+      gap <= 0.2 ? '惜しいとは言わせてほしい。' :
+      gap <= 1.0 ? 'だいたい届かない。だいたい大人。' :
+      gap <= 3.0 ? '風のせいにしていい。' :
+      '滑走路が短かったことにしよう。';
+
+    const landMsg =
+      landingGrade === 'PERFECT' ? 'テレマーク決まった。' :
+      landingGrade === 'GOOD' ? '着地はまあまあ。' :
+      landingGrade === 'MISS' ? '着地で崩れた。' : '着地は自己申告。';
+
+    rTitle.textContent = overK ? 'K点、超えた（レア）' : '今回も届かず';
+    rText.textContent = `${msg} ${landMsg}`;
+
+    setState('result');
+    hud();
+  }
+
+  function hideResult(){
+    overlay.style.display = 'none';
+  }
+
+  function resetRun(){
+    running = false;
+    last = 0;
+
+    seed = ((Date.now()>>>0) ^ 0x9e3779b9) >>> 0;
+    kPoint = 95 + Math.floor(rnd()*8);
+    geom.kx = RUN_LEN_M + kPoint;
+
+    wind = (rnd()*4.4 - 2.2);
+    windDir = (wind >= 0) ? 1 : -1;
+
+    rareBoost = (rnd() < RARE_OVERK_P);
+
+    p.x = 0;
+    p.y = inrunY(0);
+    p.vx = 0;
+    p.vy = 0;
+    p.t = 0;
+    p.jumped = false;
+    p.landed = false;
+    p.landX = 0;
+
+    p.posture = 0.55;
+    p.postureTarget = 0.55;
+    p.postureAuto = true;
+    p.timingScore = 0;
+
+    score = 0;
+    landingWindowOpen = false;
+    landingT = 0;
+    landingGrade = '—';
+    landingPts = 0;
+
+    hideResult();
+    setState('idle');
+    setAssistText();
+    hud();
+    draw(0);
+  }
+
+  function start(){
+    if(running) return;
+    running = true;
+    setState('inrun');
+    last = performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function loop(now){
+    if(!running) return;
+    const dt = Math.min(0.033, (now - last) / 1000);
+    last = now;
+    tick(dt);
+    draw(dt);
+    requestAnimationFrame(loop);
+  }
+
+  function inrunY(x){
+    const t = Math.max(0, Math.min(1, x / RUN_LEN_M));
+    const yTop = 18;
+    const e = 1 - Math.pow(1 - t, 2.2);
+    return yTop * (1 - e);
+  }
+  function landingY(x){
+    const dx = Math.max(0, x - RUN_LEN_M);
+    return -geom.slope * dx;
+  }
+
+  function currentSkierImage(){
+    if(state === 'inrun' || state === 'idle') return imgRun;
+    if(state === 'flight') return imgJump;
+    return imgLand;
+  }
+
+  function onTap(){
+    if(state === 'idle'){
+      start();
+      return;
+    }
+    if(state === 'inrun'){
+      doJump();
+      return;
+    }
+
+    // 着地タイミング（flight中のみ）
+    if(state === 'flight' && landingWindowOpen){
+      const center = 0.10;
+      const diff = Math.abs(landingT - center);
+
+      if(diff <= 0.035){
+        landingGrade = 'PERFECT';
+        landingPts = 120;
+      }else if(diff <= 0.085){
+        landingGrade = 'GOOD';
+        landingPts = 60;
+      }else{
+        landingGrade = 'MISS';
+        landingPts = -40;
+      }
+
+      score += landingPts;
+      landingWindowOpen = false;
+      setAssistText();
+      hud();
+      return;
+    }
+  }
+
+  function doJump(){
+    if(p.jumped) return;
+    p.jumped = true;
+    setState('flight');
+
+    const t = Math.max(0, Math.min(1, p.x / RUN_LEN_M));
+    const ideal = 0.93;
+    const err = Math.abs(t - ideal);
+    p.timingScore = Math.max(0, 1 - (err / 0.28));
+
+    const vBase = 31.0 * (0.55 + 0.45*t);
+    const jumpUp = 7.5 * (0.45 + 0.55*p.timingScore);
+    const vPenalty = 1.0 - 0.10*(1 - p.timingScore);
+
+    p.vx = vBase * vPenalty;
+    p.vy = jumpUp;
+
+    p.x = RUN_LEN_M;
+    p.y = 0;
+
+    // 長押し削除済み：姿勢は固定（演出用）
+    p.posture = 0.60;
+    p.postureTarget = 0.60;
+    p.postureAuto = true;
+
+    // 初期化
+    landingWindowOpen = false;
+    landingT = 0;
+    landingGrade = '—';
+    landingPts = 0;
+    setAssistText();
+  }
+
+  function tick(dt){
+    p.t += dt;
+    if(landingWindowOpen) landingT += dt;
+
+    if(state === 'inrun'){
+      const a = 9.5;
+      p.vx = Math.min(30, p.vx + a*dt);
+      p.vx *= (1 - GROUND_FRICTION*dt*10);
+      p.x += p.vx * dt;
+
+      if(p.x >= RUN_LEN_M){
+        p.x = RUN_LEN_M;
+        doJump();
+      }
+      p.y = inrunY(p.x);
+    }
+
+    if(state === 'flight'){
+      // tiltは微小な追い風/向かい風補正として使う（任意）
+      const windAdj = hasMotion ? (tilt * 0.35) : 0;
+      const airVx = p.vx - (wind + windAdj);
+      const v = Math.max(1, Math.hypot(airVx, p.vy));
+
+      const dragK = AIR_DRAG * (1.22 - p.posture);
+      const dragAx = -dragK * airVx * v;
+      const dragAy = -dragK * p.vy * v;
+
+      const liftK = LIFT * (0.55 + 0.75*p.posture);
+      const liftAy = liftK * (airVx*airVx) * 0.060;
+
+      const bias = rareBoost ? 1.00 : ANTI_K_BIAS;
+      const lift = liftAy * bias;
+
+      const ay = -GRAV + lift + dragAy;
+      const ax = dragAx;
+
+      p.vx += ax * dt;
+      p.vy += ay * dt;
+      p.x  += p.vx * dt;
+      p.y  += p.vy * dt;
+
+      const groundY = landingY(p.x);
+      const gapY = p.y - groundY;
+
+      // 着地窓を開く
+      if(!landingWindowOpen && landingGrade==='—' && gapY < 1.2 && gapY > 0.25 && p.vy < 0){
+        landingWindowOpen = true;
+        landingT = 0;
+        setAssistText();
+      }
+
+      // 着地したら、窓が開いてたのに押してない場合はMISS扱いにする（ゲーム性）
+      if(p.y <= groundY){
+        p.y = groundY;
+        p.landed = true;
+        p.landX = p.x;
+
+        if(landingWindowOpen){
+          landingWindowOpen = false;
+          landingGrade = 'MISS';
+          landingPts = -40;
+          score += landingPts;
+        }
+
+        setAssistText();
+        setState('landing');
+        hud();
+      }
+    }
+
+    if(state === 'landing'){
+      p.vx *= 0.96;
+      p.x += p.vx * dt;
+      p.y = landingY(p.x);
+
+      if(p.vx < 0.15 || p.t > 12.0){
+        running = false;
+        showResult();
+      }
+    }
+
+    if(p.x > RUN_LEN_M + LAND_LEN_M + 80){
+      running = false;
+      if(!p.landed){
+        p.landed = true;
+        p.landX = RUN_LEN_M + LAND_LEN_M;
+      }
+      showResult();
+    }
+  }
+
+  function draw(dt){
+    ctx.clearRect(0,0,W,H);
+
+    ctx.fillStyle = 'rgba(255,255,255,.03)';
+    ctx.fillRect(0,0,W,H);
+
+    const pxPerM = Math.max(2.2, Math.min(5.4, W / 180));
+    const baseX = -20;
+    const camX = (state==='flight' || state==='landing' || state==='result') ? (p.x - 60) : (p.x - 40);
+    const viewX0 = Math.max(baseX, camX);
+    const viewX1 = viewX0 + (W / pxPerM);
+
+    const yScale = Math.max(8, Math.min(16, H / 40));
+
+    function sx(x){ return (x - viewX0) * pxPerM; }
+    function sy(y){
+      const horizon = H * 0.40;
+      return horizon - y * yScale;
+    }
+
+    // terrain fill
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255,255,255,.16)';
+    ctx.fillStyle = 'rgba(255,255,255,.06)';
+
+    ctx.beginPath();
+    ctx.moveTo(0, H);
+    const step = 2.0;
+    for(let x=viewX0; x<=viewX1+step; x+=step){
+      const gy = (x <= RUN_LEN_M) ? inrunY(Math.max(0,x)) : landingY(x);
+      ctx.lineTo(sx(x), sy(gy));
+    }
+    ctx.lineTo(W, H);
+    ctx.closePath();
+    ctx.fill();
+
+    // terrain stroke
+    ctx.beginPath();
+    for(let x=viewX0; x<=viewX1+step; x+=step){
+      const gy = (x <= RUN_LEN_M) ? inrunY(Math.max(0,x)) : landingY(x);
+      if(x===viewX0) ctx.moveTo(sx(x), sy(gy));
+      else ctx.lineTo(sx(x), sy(gy));
+    }
+    ctx.stroke();
+
+    // takeoff marker
+    const tx = sx(RUN_LEN_M), ty = sy(0);
+    ctx.strokeStyle = 'rgba(96,165,250,.35)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(tx, ty-24);
+    ctx.lineTo(tx, ty+24);
+    ctx.stroke();
+
+    // K line
+    const kx = sx(geom.kx);
+    const ky = sy(landingY(geom.kx));
+    ctx.strokeStyle = 'rgba(52,211,153,.35)';
+    ctx.setLineDash([6,6]);
+    ctx.beginPath();
+    ctx.moveTo(kx, ky-40);
+    ctx.lineTo(kx, ky+40);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = 'rgba(52,211,153,.85)';
+    ctx.font = '700 12px system-ui, -apple-system, Segoe UI, Roboto';
+    ctx.textAlign = 'left';
+    ctx.fillText(`K=${kPoint}m`, kx+6, ky-18);
+
+    // labels
+    ctx.fillStyle = 'rgba(243,246,255,.40)';
+    ctx.font = '600 11px system-ui, -apple-system, Segoe UI, Roboto';
+    for(let m=0;m<=LAND_LEN_M;m+=20){
+      const xx = RUN_LEN_M + m;
+      const yy = landingY(xx);
+      const xpx = sx(xx), ypx = sy(yy);
+      if(xpx<0 || xpx>W) continue;
+      ctx.fillText(`${m}m`, xpx-10, ypx+18);
+    }
+
+    // skier
+    const px = sx(p.x);
+    const py = sy(p.y);
+
+    if(state==='inrun'){
+      ctx.strokeStyle = 'rgba(255,255,255,.12)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(px-26, py+12);
+      ctx.lineTo(px-10, py+2);
+      ctx.stroke();
+    }
+
+    const skierImg = currentSkierImage();
+    if(skierImg.complete){
+      let sizeMul = 1.0;
+      if(state === 'flight') sizeMul = 0.95;
+      if(state === 'landing') sizeMul = 1.02;
+
+      const baseSize = 7.2;
+      const h = SKIER_HEIGHT_M * pxPerM * sizeMul * baseSize;
+      const aspect = skierImg.width / skierImg.height;
+      const w = h * aspect;
+
+      ctx.save();
+      ctx.translate(px, py);
+
+      let ang = 0;
+      if(state === 'flight'){
+        ang = Math.atan2(p.vy, p.vx) * 0.25;
+      }
+      ctx.rotate(ang);
+
+      ctx.drawImage(skierImg, -w*0.5, -h*0.85, w, h);
+      ctx.restore();
+    }
+
+    if(state==='idle'){
+      dimAndText('開始を押す（またはタップ）', '助走中に1回だけタップで踏切');
+    }
+
+    if(state==='inrun'){
+      const s = Math.max(0, Math.min(1, p.x / RUN_LEN_M));
+      if(s>0.78){
+        ctx.fillStyle = 'rgba(96,165,250,.18)';
+        ctx.beginPath(); ctx.arc(tx, ty-8, 26, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'rgba(243,246,255,.92)';
+        ctx.font = '800 14px system-ui, -apple-system, Segoe UI, Roboto';
+        ctx.textAlign = 'center';
+        ctx.fillText('今', tx, ty-42);
+      }
+    }
+
+    // 着地リング
+    if(state === 'flight' && landingWindowOpen){
+      const a = Math.max(0, 1 - Math.abs(landingT - 0.10) / 0.12);
+      ctx.save();
+      ctx.globalAlpha = 0.25 + 0.55*a;
+      ctx.strokeStyle = 'rgba(52,211,153,.95)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(px, py + 20, 26 + (1-a)*12, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(243,246,255,.9)';
+      ctx.font = '800 14px system-ui, -apple-system, Segoe UI, Roboto';
+      ctx.textAlign = 'center';
+      ctx.fillText('今', px, py - 26);
+      ctx.restore();
+    }
+
+    // vignette
+    const grd = ctx.createLinearGradient(0,0,0,H);
+    grd.addColorStop(0,'rgba(0,0,0,.18)');
+    grd.addColorStop(0.5,'rgba(0,0,0,0)');
+    grd.addColorStop(1,'rgba(0,0,0,.30)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0,0,W,H);
+  }
+
+  function dimAndText(h1, h2){
+    ctx.fillStyle = 'rgba(0,0,0,.32)';
+    ctx.fillRect(0,0,W,H);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(243,246,255,.92)';
+    ctx.font = '800 22px system-ui, -apple-system, Segoe UI, Roboto';
+    ctx.fillText('スキーの日', W/2, H*0.34);
+    ctx.font = '700 14px system-ui, -apple-system, Segoe UI, Roboto';
+    ctx.fillStyle = 'rgba(243,246,255,.80)';
+    ctx.fillText(h1, W/2, H*0.34 + 30);
+    ctx.font = '600 12px system-ui, -apple-system, Segoe UI, Roboto';
+    ctx.fillStyle = 'rgba(243,246,255,.55)';
+    ctx.fillText(h2, W/2, H*0.34 + 52);
+  }
+
+  // Buttons（overlay上でも確実に動くように propagation 停止）
+  again.addEventListener('pointerdown', (e)=>{ e.preventDefault(); e.stopPropagation(); });
+  close.addEventListener('pointerdown', (e)=>{ e.preventDefault(); e.stopPropagation(); });
+  again.addEventListener('click', (e)=>{
+    e.preventDefault(); e.stopPropagation();
+    resetRun(); start();
+  });
+  close.addEventListener('click', (e)=>{
+    e.preventDefault(); e.stopPropagation();
+    hideResult();
+    setState('idle');
+    setAssistText();
+    hud();
+    draw(0);
+  });
+
+  startBtn.addEventListener('click', async ()=>{
+    if(!hasMotion) await enableMotion();
+    if(state==='idle') start();
+    else if(state==='result'){ resetRun(); start(); }
+    else if(!running) start();
+  });
+
+  resetBtn.addEventListener('click', ()=>{
+    resetRun();
+  });
+
+  // Init
+  resetRun();
+</script>
+</body>
+</html>
