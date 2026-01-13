@@ -189,9 +189,9 @@
   // ---- game ----
   const S = { running:false, ended:false, win:false, thrustUp:false, thrustL:false, thrustR:false, shake:0 };
   const P = {
-    g: 0.085,
-    thrustUp: 0.125,
-    thrustSide: 0.060,
+    g: 5.1,
+    thrustUp: 7.5,
+    thrustSide: 3.6,
     fuelMax: 1000,
     safeVy: 1.15,
     safeVx: 0.70,
@@ -375,18 +375,18 @@
   let explodeT = 0;
 
   function tick(now){
-    const dtMs = Math.min(32, now-last);
+    const dtMs = now - last;
     last = now;
-    const dt = dtMs / 16.6667;
+    const dt = Math.min(0.033, dtMs / 1000); // 秒単位、最大33ms相当
 
     if (S.running) {
       L.vy += P.g * dt;
 
       if (L.fuel > 0) {
         let used = 0;
-        if (S.thrustUp) { L.vy -= P.thrustUp * dt; used += 2.2 * dt; }
-        if (S.thrustL) { L.vx += P.thrustSide * dt; used += 1.6 * dt; }
-        if (S.thrustR) { L.vx -= P.thrustSide * dt; used += 1.6 * dt; }
+        if (S.thrustUp) { L.vy -= P.thrustUp * dt; used += 132 * dt; }
+        if (S.thrustL) { L.vx += P.thrustSide * dt; used += 96 * dt; }
+        if (S.thrustR) { L.vx -= P.thrustSide * dt; used += 96 * dt; }
         if (used > 0) L.fuel = Math.max(0, L.fuel - used);
       } else {
         S.thrustUp=S.thrustL=S.thrustR=false;
@@ -413,7 +413,7 @@
 
       updateHUD();
     } else if (S.ended && !S.win) {
-      explodeT = Math.min(1, explodeT + 0.055 * dt);
+      explodeT = Math.min(1, explodeT + 3.3 * dt);
     }
 
     // render
@@ -421,7 +421,7 @@
     if (S.shake > 0) {
       const t = S.shake;
       ctx.translate((Math.random()*2-1)*t*0.35, (Math.random()*2-1)*t*0.35);
-      S.shake = Math.max(0, S.shake - 1*dt);
+      S.shake = Math.max(0, S.shake - 60*dt);
     }
     ctx.clearRect(0,0,W,H);
     drawStars();
