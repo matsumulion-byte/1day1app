@@ -192,7 +192,7 @@
     g: 5.1,
     thrustUp: 7.5,
     thrustSide: 3.6,
-    fuelMax: 1000,
+    fuelMax: 2000,
     safeVy: 1.15,
     safeVx: 0.70,
     dragX: 0.996
@@ -387,9 +387,9 @@
 
       if (L.fuel > 0) {
         let used = 0;
-        if (S.thrustUp) { L.vy -= P.thrustUp * dt; used += 132 * dt; }
-        if (S.thrustL) { L.vx += P.thrustSide * dt; used += 96 * dt; }
-        if (S.thrustR) { L.vx -= P.thrustSide * dt; used += 96 * dt; }
+        if (S.thrustUp) { L.vy -= P.thrustUp * dt; used += 80 * dt; }
+        if (S.thrustL) { L.vx += P.thrustSide * dt; used += 60 * dt; }
+        if (S.thrustR) { L.vx -= P.thrustSide * dt; used += 60 * dt; }
         if (used > 0) L.fuel = Math.max(0, L.fuel - used);
       } else {
         S.thrustUp=S.thrustL=S.thrustR=false;
