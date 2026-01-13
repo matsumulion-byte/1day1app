@@ -440,7 +440,12 @@
 
   function setUp(on){ if (!S.running || L.fuel<=0) { S.thrustUp=false; return; } S.thrustUp=!!on; }
 
-  stage.addEventListener('pointerdown', (e) => { if (!S.running) return; stage.setPointerCapture(e.pointerId); setUp(true); });
+  stage.addEventListener('pointerdown', (e) => { 
+    if (overlay.classList.contains('show')) return; // オーバーレイ表示中は無視
+    if (!S.running) { start(); return; } // ゲーム未開始時は開始
+    stage.setPointerCapture(e.pointerId); 
+    setUp(true); 
+  });
   stage.addEventListener('pointerup', () => setUp(false));
   stage.addEventListener('pointercancel', () => setUp(false));
 
@@ -468,22 +473,26 @@
   function bindSoundButtons(){
     const on = document.getElementById('soundOn');
     const off = document.getElementById('soundOff');
-    on.addEventListener('click', async () => {
+    const handleOn = async () => {
       soundEnabled = true;
       overlay.classList.remove('show');
       buildTerrain();
       reset(true);
       start();
       await playBGM();
-    }, { once:true });
-    off.addEventListener('click', () => {
+    };
+    const handleOff = () => {
       soundEnabled = false;
       stopBGM();
       overlay.classList.remove('show');
       buildTerrain();
       reset(true);
       start();
-    }, { once:true });
+    };
+    on.addEventListener('click', handleOn, { once:true });
+    on.addEventListener('touchstart', (e) => { e.preventDefault(); handleOn(); }, { once:true, passive:false });
+    off.addEventListener('click', handleOff, { once:true });
+    off.addEventListener('touchstart', (e) => { e.preventDefault(); handleOff(); }, { once:true, passive:false });
   }
   bindSoundButtons();
 
