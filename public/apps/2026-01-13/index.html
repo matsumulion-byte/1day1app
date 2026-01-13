@@ -263,11 +263,14 @@
     overlay.querySelector('.row').innerHTML = `<button class="choice" id="retry">RETRY</button>`;
     overlay.classList.add('show');
 
-    document.getElementById('retry').addEventListener('click', () => {
+    const retryBtn = document.getElementById('retry');
+    const handleRetry = () => {
       overlay.classList.remove('show');
       reset(true);
       start();
-    }, { once:true });
+    };
+    retryBtn.addEventListener('click', handleRetry, { once:true });
+    retryBtn.addEventListener('touchstart', (e) => { e.preventDefault(); handleRetry(); }, { once:true, passive:false });
   }
 
   function updateHUD() {
