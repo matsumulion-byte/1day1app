@@ -188,6 +188,10 @@
 
   // ---- game ----
   const S = { running:false, ended:false, win:false, thrustUp:false, thrustL:false, thrustR:false, shake:0 };
+  
+  // スマートフォン判定
+  const isSP = () => window.innerWidth <= 768 || 'ontouchstart' in window;
+  
   const P = {
     g: 5.1,
     thrustUp: 7.5,
@@ -195,7 +199,10 @@
     fuelMax: 2000,
     safeVy: 1.15,
     safeVx: 0.70,
-    dragX: 0.996
+    dragX: 0.996,
+    // スマートフォン用の緩い判定値
+    safeVySP: 2.0,
+    safeVxSP: 1.2
   };
 
   const L = { x:0, y:0, vx:0, vy:0, size:46, fuel:P.fuelMax, img:null, ready:false, iw:1, ih:1 };
@@ -409,8 +416,9 @@
       const bottom = L.y + half;
       if (bottom >= gy) {
         L.y -= (bottom - gy);
-        const okVy = Math.abs(L.vy) <= P.safeVy;
-        const okVx = Math.abs(L.vx) <= P.safeVx;
+        const sp = isSP();
+        const okVy = Math.abs(L.vy) <= (sp ? P.safeVySP : P.safeVy);
+        const okVx = Math.abs(L.vx) <= (sp ? P.safeVxSP : P.safeVx);
         end(okVy && okVx);
       }
 
