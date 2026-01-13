@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>Matsumura Lunar Lander</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.06);
+      --good:#34d399;
+      --bad:#fb7185;
+      --r:18px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; overflow:hidden; background:var(--bg); color:var(--ink)}
+    body{font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;}
+    #wrap{position:fixed; inset:0; padding:14px; padding-top:calc(14px + env(safe-area-inset-top)); padding-bottom:calc(14px + env(safe-area-inset-bottom));}
+    #stage{
+      position:absolute; inset:14px;
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      overflow:hidden;
+      background:radial-gradient(900px 600px at 20% 10%, rgba(96,165,250,.18), transparent 55%),
+                 radial-gradient(700px 500px at 80% 20%, rgba(52,211,153,.10), transparent 60%),
+                 rgba(255,255,255,.02);
+      touch-action:none;
+    }
+    canvas{display:block; width:100%; height:100%}
+    .hud{
+      position:absolute; left:12px; top:12px;
+      display:flex; gap:8px; align-items:center;
+      padding:8px 10px;
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:999px;
+      font-size:12px; color:var(--muted);
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .bar{width:110px; height:8px; border-radius:999px; overflow:hidden; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.10)}
+    .bar i{display:block; height:100%; width:50%; background:rgba(243,246,255,.9)}
+    .bar.low i{background:rgba(251,113,133,.95)}
+    .bar.blink{animation:blink .7s steps(2,end) infinite}
+    @keyframes blink{50%{opacity:.25}}
+
+    .controls{
+      position:absolute; left:0; right:0; bottom:0;
+      padding:12px; padding-bottom:calc(12px + env(safe-area-inset-bottom));
+      display:flex; justify-content:space-between; gap:12px;
+      pointer-events:none;
+    }
+    .btn{
+      pointer-events:auto;
+      width:64px; height:64px;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      display:grid; place-items:center;
+      box-shadow: 0 14px 40px rgba(0,0,0,.35);
+      user-select:none; -webkit-user-select:none;
+      touch-action:none;
+      font-weight:900;
+    }
+    .btn:active{transform:translateY(1px)}
+
+    .overlay{
+      position:absolute; inset:0;
+      display:none; place-items:center;
+      background:linear-gradient(to bottom, rgba(11,16,32,.55), rgba(11,16,32,.85));
+      backdrop-filter: blur(6px);
+    }
+    .overlay.show{display:grid}
+    .card{
+      width:min(460px, 92%);
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:16px;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .row{display:flex; gap:10px}
+    .choice{
+      flex:1;
+      padding:12px 10px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:var(--ink);
+      font-weight:900;
+      letter-spacing:.06em;
+      cursor:pointer;
+    }
+    .choice:active{transform:translateY(1px)}
+    .big{
+      text-align:center;
+      font-weight:1000;
+      letter-spacing:.12em;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      font-size:18px;
+    }
+    .big.good{color:var(--good)}
+    .big.bad{color:var(--bad)}
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="stage">
+      <canvas id="c"></canvas>
+
+      <div class="hud" id="hud">
+        <span>FUEL</span>
+        <span class="bar" id="fuelBar"><i id="fuelFill"></i></span>
+      </div>
+
+
+      <div class="overlay show" id="overlay">
+        <div class="card">
+          <div class="big" id="overlayTitle">SOUND?</div>
+          <div class="row">
+            <button class="choice" id="soundOn">ON</button>
+            <button class="choice" id="soundOff">OFF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+(() => {
+  // Vercel用のパス解決
+  const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+  const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+  const asset = (p) => {
+    const clean = String(p || "").replace(/^\.?\//, "");
+    return `${DATE_BASE}${clean}`;
+  };
+
+  const stage = document.getElementById('stage');
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+
+  const overlay = document.getElementById('overlay');
+  const overlayTitle = document.getElementById('overlayTitle');
+
+  const fuelBar = document.getElementById('fuelBar');
+  const fuelFill = document.getElementById('fuelFill');
+
+  // ---- audio ----
+  // ファイル名はここだけ変えればOK（例: bgm.mp3 / bgm.wav）
+  const bgm = new Audio(asset('./assets/bgm.mp3'));
+  bgm.loop = true;
+  bgm.preload = 'auto';
+  let soundEnabled = false;
+
+  async function playBGM() {
+    if (!soundEnabled) return;
+    try {
+      bgm.currentTime = 0;
+      await bgm.play();
+    } catch {}
+  }
+  function stopBGM() {
+    try { bgm.pause(); } catch {}
+  }
+
+  // ---- HiDPI ----
+  let W=0, H=0, DPR=1;
+  function resize() {
+    DPR = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+    const r = stage.getBoundingClientRect();
+    W = r.width; H = r.height;
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    buildTerrain();
+    reset(true);
+  }
+
+  // ---- game ----
+  const S = { running:false, ended:false, win:false, thrustUp:false, thrustL:false, thrustR:false, shake:0 };
+  const P = {
+    g: 0.085,
+    thrustUp: 0.125,
+    thrustSide: 0.060,
+    fuelMax: 1000,
+    safeVy: 1.15,
+    safeVx: 0.70,
+    dragX: 0.996
+  };
+
+  const L = { x:0, y:0, vx:0, vy:0, size:46, fuel:P.fuelMax, img:null, ready:false, iw:1, ih:1 };
+
+  let ground = [];
+  function buildTerrain() {
+    ground = [];
+    const baseY = H * 0.82;
+    const amp = Math.max(10, H * 0.035);
+    const step = 24;
+    for (let x = -step; x <= W + step; x += step) {
+      const y = baseY + (Math.sin(x * 0.018) * amp) + (Math.random()*0.7 - 0.35) * amp;
+      ground.push({x,y});
+    }
+  }
+  function groundYAt(x) {
+    for (let i=0; i<ground.length-1; i++) {
+      const a=ground[i], b=ground[i+1];
+      if (x>=a.x && x<=b.x) {
+        const t = (x-a.x)/(b.x-a.x);
+        return a.y + (b.y-a.y)*t;
+      }
+    }
+    return H*0.82;
+  }
+
+  function reset(keepOverlay=false) {
+    S.running=false; S.ended=false; S.win=false;
+    S.thrustUp=S.thrustL=S.thrustR=false;
+    S.shake=0;
+    explodeT = 0;
+
+    L.size = Math.min(56, Math.max(40, W * 0.11));
+    L.x = W*0.5;
+    L.y = H*0.18;
+    L.vx = (Math.random()*2-1)*0.15;
+    L.vy = 0.25 + Math.random()*0.25;
+    L.fuel = P.fuelMax;
+
+    updateHUD();
+
+    if (!keepOverlay) showSoundOverlay();
+  }
+
+  function start() {
+    if (S.running) return;
+    S.running = true;
+    S.ended = false;
+    S.win = false;
+  }
+
+  function end(win) {
+    S.running = false;
+    S.ended = true;
+    S.win = !!win;
+    S.thrustUp=S.thrustL=S.thrustR=false;
+    S.shake = win ? 0 : 18;
+    explodeT = 0;
+
+    overlayTitle.textContent = win ? 'SUCCESS' : 'CRASH';
+    overlayTitle.classList.remove('good','bad');
+    overlayTitle.classList.add(win ? 'good' : 'bad');
+
+    // リザルトは「RETRY」だけ
+    overlay.querySelector('.row').innerHTML = `<button class="choice" id="retry">RETRY</button>`;
+    overlay.classList.add('show');
+
+    document.getElementById('retry').addEventListener('click', () => {
+      overlay.classList.remove('show');
+      reset(true);
+      start();
+    }, { once:true });
+  }
+
+  function updateHUD() {
+    const pct = Math.max(0, Math.min(1, L.fuel / P.fuelMax));
+    fuelFill.style.width = (pct*100) + '%';
+    fuelBar.classList.remove('low','blink');
+    if (pct <= 0.3) fuelBar.classList.add('low');
+    if (pct <= 0.18 && S.running) fuelBar.classList.add('blink');
+  }
+
+  // ---- rendering ----
+  function drawStars() {
+    ctx.save();
+    ctx.globalAlpha = 0.35;
+    for (let i=0;i<60;i++){
+      const x=(i*97)%W;
+      const y=(i*53)%(H*0.6);
+      const s=(i%3)+1;
+      ctx.fillStyle='rgba(243,246,255,.8)';
+      ctx.fillRect(x,y, s===3?2:1,1);
+    }
+    ctx.restore();
+  }
+
+  function drawTerrain() {
+    if (ground.length === 0) return;
+    ctx.save();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255,255,255,.85)';
+    ctx.beginPath();
+    ctx.moveTo(ground[0].x, ground[0].y);
+    for (let i=1;i<ground.length;i++) ctx.lineTo(ground[i].x, ground[i].y);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawLander() {
+    const cx=L.x, cy=L.y, base=L.size;
+
+    // flames
+    if (S.running && L.fuel>0) {
+      if (S.thrustUp) {
+        ctx.save();
+        ctx.globalAlpha = 0.95;
+        ctx.fillStyle = 'rgba(251,191,36,.95)';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy + base*0.55);
+        ctx.lineTo(cx - base*0.14, cy + base*0.88);
+        ctx.lineTo(cx + base*0.14, cy + base*0.88);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      if (S.thrustL) {
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = 'rgba(251,191,36,.95)';
+        ctx.beginPath();
+        ctx.moveTo(cx - base*0.50, cy);
+        ctx.lineTo(cx - base*0.85, cy - base*0.10);
+        ctx.lineTo(cx - base*0.85, cy + base*0.10);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      if (S.thrustR) {
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = 'rgba(251,191,36,.95)';
+        ctx.beginPath();
+        ctx.moveTo(cx + base*0.50, cy);
+        ctx.lineTo(cx + base*0.85, cy - base*0.10);
+        ctx.lineTo(cx + base*0.85, cy + base*0.10);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // matsumura.png: keep aspect ratio
+    if (L.ready) {
+      const ratio = L.iw / L.ih;
+      let dw, dh;
+      if (ratio >= 1) { dw = base; dh = base / ratio; }
+      else { dh = base; dw = base * ratio; }
+      ctx.drawImage(L.img, cx - dw/2, cy - dh/2, dw, dh);
+    }
+  }
+
+  function drawExplosion(t) {
+    const r1 = 10 + t*52;
+    const r2 = 6 + t*32;
+    ctx.save();
+    ctx.globalAlpha = 1 - t;
+    ctx.fillStyle = 'rgba(251,113,133,.95)';
+    ctx.beginPath(); ctx.arc(L.x, L.y, r1, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = (1 - t) * 0.95;
+    ctx.fillStyle = 'rgba(251,191,36,.95)';
+    ctx.beginPath(); ctx.arc(L.x, L.y, r2, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  // ---- loop ----
+  let last = performance.now();
+  let explodeT = 0;
+
+  function tick(now){
+    const dtMs = Math.min(32, now-last);
+    last = now;
+    const dt = dtMs / 16.6667;
+
+    if (S.running) {
+      L.vy += P.g * dt;
+
+      if (L.fuel > 0) {
+        let used = 0;
+        if (S.thrustUp) { L.vy -= P.thrustUp * dt; used += 2.2 * dt; }
+        if (S.thrustL) { L.vx += P.thrustSide * dt; used += 1.6 * dt; }
+        if (S.thrustR) { L.vx -= P.thrustSide * dt; used += 1.6 * dt; }
+        if (used > 0) L.fuel = Math.max(0, L.fuel - used);
+      } else {
+        S.thrustUp=S.thrustL=S.thrustR=false;
+      }
+
+      L.vx *= Math.pow(P.dragX, dt);
+      L.x += L.vx * dt;
+      L.y += L.vy * dt;
+
+      const top = H * 0.06;
+      const half = L.size * 0.45;
+      if (L.y - half < top) { L.y = top + half; L.vy = Math.max(0, L.vy); }
+      if (L.x < half) { L.x = half; L.vx = 0; }
+      if (L.x > W - half) { L.x = W - half; L.vx = 0; }
+
+      const gy = groundYAt(L.x);
+      const bottom = L.y + half;
+      if (bottom >= gy) {
+        L.y -= (bottom - gy);
+        const okVy = Math.abs(L.vy) <= P.safeVy;
+        const okVx = Math.abs(L.vx) <= P.safeVx;
+        end(okVy && okVx);
+      }
+
+      updateHUD();
+    } else if (S.ended && !S.win) {
+      explodeT = Math.min(1, explodeT + 0.055 * dt);
+    }
+
+    // render
+    ctx.save();
+    if (S.shake > 0) {
+      const t = S.shake;
+      ctx.translate((Math.random()*2-1)*t*0.35, (Math.random()*2-1)*t*0.35);
+      S.shake = Math.max(0, S.shake - 1*dt);
+    }
+    ctx.clearRect(0,0,W,H);
+    drawStars();
+    drawTerrain();
+    if (S.ended && !S.win) drawExplosion(explodeT);
+    else drawLander();
+    ctx.restore();
+
+    requestAnimationFrame(tick);
+  }
+
+  // ---- input ----
+  ['touchstart','touchmove','touchend','gesturestart'].forEach(ev=>{
+    window.addEventListener(ev, (e)=>{ if(e.cancelable) e.preventDefault(); }, {passive:false});
+  });
+
+  function setUp(on){ if (!S.running || L.fuel<=0) { S.thrustUp=false; return; } S.thrustUp=!!on; }
+
+  stage.addEventListener('pointerdown', (e) => { if (!S.running) return; stage.setPointerCapture(e.pointerId); setUp(true); });
+  stage.addEventListener('pointerup', () => setUp(false));
+  stage.addEventListener('pointercancel', () => setUp(false));
+
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && S.running) {
+      e.preventDefault();
+      setUp(true);
+    }
+  });
+  window.addEventListener('keyup', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      setUp(false);
+    }
+  });
+
+
+  // ---- overlay: sound choice ----
+  function showSoundOverlay(){
+    overlayTitle.classList.remove('good','bad');
+    overlayTitle.textContent = 'SOUND?';
+    overlay.classList.add('show');
+  }
+
+  function bindSoundButtons(){
+    const on = document.getElementById('soundOn');
+    const off = document.getElementById('soundOff');
+    on.addEventListener('click', async () => {
+      soundEnabled = true;
+      overlay.classList.remove('show');
+      buildTerrain();
+      reset(true);
+      start();
+      await playBGM();
+    }, { once:true });
+    off.addEventListener('click', () => {
+      soundEnabled = false;
+      stopBGM();
+      overlay.classList.remove('show');
+      buildTerrain();
+      reset(true);
+      start();
+    }, { once:true });
+  }
+  bindSoundButtons();
+
+  // ---- assets ----
+  const img = new Image();
+  img.src = asset('./assets/matsumura.png');
+  img.onload = () => { L.img = img; L.ready = true; L.iw = img.naturalWidth||1; L.ih = img.naturalHeight||1; };
+  img.onerror = () => { L.ready = false; };
+
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
