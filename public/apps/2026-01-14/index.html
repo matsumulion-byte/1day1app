@@ -97,6 +97,8 @@
     .card.is-flipping{
       transform: rotateY(180deg);
     }
+    .card.is-flipping .front{opacity:0}
+    .card.is-flipping .back{opacity:1}
     .face{
       position:absolute;
       inset:0;
@@ -120,6 +122,8 @@
       gap:12px;
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
+      opacity:1;
+      transition: opacity 200ms ease;
     }
     .imgbox{
       width: 100%;
@@ -209,6 +213,8 @@
       padding:18px;
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
+      opacity:0;
+      transition: opacity 200ms ease;
 
       /* 裏面は派手にして「裏だ」と分かるように */
       background:
