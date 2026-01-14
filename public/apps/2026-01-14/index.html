@@ -358,7 +358,7 @@
           <!-- BACK (カード裏) -->
           <div class="face back" aria-hidden="true">
             <div class="back-inner">
-              <div class="back-title">褒め松です。</div>
+              <div class="back-title">褒め松カード</div>
               <div class="back-ring"></div>
               <div class="back-sub">MATSUMURA COMPLIMENT CARD</div>
             </div>
@@ -378,13 +378,17 @@
   </div>
 
   <script type="module">
-    // 1日1アプリのルール：動的アセットは import.meta.url で参照
-    const asset = (p) => new URL(p, import.meta.url).toString();
+    // Vercel対応：現在のパスから相対パスを構築
+    const getAssetPath = (relativePath) => {
+      const currentPath = window.location.pathname;
+      const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+      return basePath + relativePath;
+    };
 
     // ---- Assets (10種類) ----
     const IMAGES = Array.from({ length: 10 }, (_, i) => {
       const n = String(i + 1).padStart(2, "0");
-      return asset(`./assets/matsumura_${n}.png`);
+      return getAssetPath(`assets/matsumura_${n}.png`);
     });
 
     // ---- Compliments (①生活 ②身体 ③意味不明) ----
