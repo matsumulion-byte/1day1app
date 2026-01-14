@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>褒め松カード</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; overflow:hidden; background:var(--bg); color:var(--ink)}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP",
+                   "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+      -webkit-text-size-adjust:100%;
+      touch-action: manipulation; /* ダブルタップ拡大抑止 */
+    }
+    a,button{color:inherit}
+    .wrap{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding:18px;
+      padding-top: calc(18px + env(safe-area-inset-top));
+      padding-bottom: calc(18px + env(safe-area-inset-bottom));
+      gap:14px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    header{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      user-select:none;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    h1{
+      font-size:22px;
+      letter-spacing:.02em;
+      line-height:1.1;
+    }
+    .sub{
+      font-size:12.5px;
+      color:var(--muted);
+      line-height:1.3;
+    }
+    .pill{
+      font-size:12px;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+      border-radius:999px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+
+    /* ---- Card flip stage ---- */
+    .stage{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height: 320px;
+    }
+    .card-wrap{
+      width:min(420px, 100%);
+      aspect-ratio: 3 / 4;
+      perspective: 1200px;
+      -webkit-perspective: 1200px;
+    }
+    .card{
+      width:100%;
+      height:100%;
+      position:relative;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      transition: transform 700ms cubic-bezier(.2,.8,.2,1);
+      cursor: pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .card.is-flipping{
+      transform: rotateY(180deg);
+    }
+    .face{
+      position:absolute;
+      inset:0;
+      border-radius: var(--r);
+      border:1px solid var(--line);
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      background:
+        radial-gradient(1200px 700px at 20% 10%, rgba(96,165,250,.22), transparent 60%),
+        radial-gradient(900px 600px at 90% 0%, rgba(52,211,153,.14), transparent 55%),
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      overflow:hidden;
+    }
+
+    /* front */
+    .front{
+      display:flex;
+      flex-direction:column;
+      padding:16px;
+      gap:12px;
+    }
+    .imgbox{
+      width: 100%;
+      max-width: 360px;              /* カード幅の上限 */
+      aspect-ratio: 5 / 7;           /* 縦長カード比率（TCGっぽく） */
+      margin: 0 auto;                /* 中央寄せ */
+
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+
+      /* キラカード背景 */
+      background:
+        linear-gradient(
+          135deg,
+          #ffecd2,
+          #fcb69f,
+          #a1c4fd,
+          #c2e9fb,
+          #fbc2eb,
+          #a6c1ee
+        );
+      background-size: 400% 400%;
+      animation: holoMove 12s ease infinite;
+    }
+    .imgbox::before{
+      content:"";
+      position:absolute;
+      inset:-60%;
+      background:
+        linear-gradient(
+          120deg,
+          transparent 45%,
+          rgba(255,255,255,.35) 50%,
+          transparent 55%
+        );
+      animation: holoShine 7s linear infinite;
+      pointer-events:none;
+    }
+    .imgbox img{
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      z-index: 2;
+      transform: translateY(6%);     /* 少し下寄せでカード感UP */
+    }
+    .caption{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      padding:12px 12px 14px;
+      border-radius: calc(var(--r) - 6px);
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+    }
+    .compliment{
+      font-size:18px;
+      font-weight:800;
+      line-height:1.3;
+      letter-spacing:.01em;
+      word-break: break-word;
+    }
+    .hint{
+      font-size:12.5px;
+      color:var(--muted);
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .hint b{color:var(--ink); font-weight:700}
+
+    /* back（カード裏） */
+    .back{
+      transform: rotateY(180deg);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+
+      /* 裏面は派手にして「裏だ」と分かるように */
+      background:
+        radial-gradient(900px 520px at 20% 10%, rgba(255,255,255,.18), transparent 55%),
+        radial-gradient(800px 600px at 90% 90%, rgba(96,165,250,.22), transparent 60%),
+        linear-gradient(135deg, #0b1020, #1e1b4b, #0b1020);
+      background-size: 200% 200%;
+      animation: backGlow 6s ease-in-out infinite;
+
+      border-radius: var(--r);
+    }
+
+    @keyframes backGlow{
+      0%{background-position: 0% 50%}
+      50%{background-position: 100% 50%}
+      100%{background-position: 0% 50%}
+    }
+
+    .back-inner{
+      width: 100%;
+      text-align:center;
+      color: rgba(255,255,255,.92);
+      user-select:none;
+      position: relative;
+    }
+
+    .back-title{
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: .10em;
+      text-shadow: 0 10px 30px rgba(0,0,0,.55);
+    }
+
+    .back-sub{
+      margin-top: 14px;
+      font-size: 12px;
+      letter-spacing: .22em;
+      opacity: .75;
+    }
+
+    /* 裏面のリング（カード裏っぽさ） */
+    .back-ring{
+      width: min(240px, 70%);
+      aspect-ratio: 1 / 1;
+      margin: 18px auto 0;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.20);
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.20), transparent 45%),
+        conic-gradient(
+          from 90deg,
+          rgba(255,255,255,.00),
+          rgba(255,255,255,.26),
+          rgba(255,255,255,.00),
+          rgba(255,255,255,.20),
+          rgba(255,255,255,.00)
+        );
+      filter: drop-shadow(0 18px 40px rgba(0,0,0,.45));
+    }
+
+    /* controls */
+    .controls{
+      display:flex;
+      gap:10px;
+    }
+    .btn{
+      flex:1;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border-radius: 14px;
+      padding:14px 14px;
+      font-size:14px;
+      font-weight:800;
+      letter-spacing:.02em;
+      cursor:pointer;
+      box-shadow: 0 10px 26px rgba(0,0,0,.25);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active{transform: translateY(1px)}
+    .btn.secondary{
+      flex:0 0 auto;
+      width: 44px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      color:var(--muted);
+    }
+
+    footer{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.4;
+      user-select:none;
+    }
+
+    @keyframes holoMove {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes holoShine {
+      0%   { transform: translateX(-50%) rotate(25deg); }
+      100% { transform: translateX(50%) rotate(25deg); }
+    }
+
+    /* reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      .card{transition:none}
+      .btn:active{transform:none}
+      .imgbox{animation:none}
+      .imgbox::before{animation:none}
+      .imgbox img{transform:none}
+      .back{animation:none}
+    }
+
+    @media (max-width: 420px){
+      .imgbox{
+        max-width: 300px;
+      }
+      .compliment{
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap" id="app">
+    <header>
+      <div class="title">
+        <h1>褒め松カード</h1>
+        <div class="sub">カードを引くたび、<b>松村画像</b>と<b>褒め言葉</b>で出ます。</div>
+      </div>
+      <div class="pill" id="counter">0回引いた</div>
+    </header>
+
+    <main class="stage">
+      <div class="card-wrap" aria-label="褒めカード">
+        <div class="card" id="card" role="button" tabindex="0" aria-pressed="false">
+          <!-- FRONT -->
+          <div class="face front">
+            <div class="imgbox">
+              <img id="mImg" alt="松村" />
+            </div>
+            <div class="caption">
+              <div class="compliment" id="compliment">タップして引く</div>
+              <div class="hint">
+                <span>タップ / スペースで引く</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- BACK (カード裏) -->
+          <div class="face back" aria-hidden="true">
+            <div class="back-inner">
+              <div class="back-title">褒め松です。</div>
+              <div class="back-ring"></div>
+              <div class="back-sub">MATSUMURA COMPLIMENT CARD</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <section class="controls">
+      <button class="btn" id="drawBtn">カードを引く</button>
+      <button class="btn secondary" id="shuffleBtn" title="画像だけ変える" aria-label="画像だけ変える">↻</button>
+    </section>
+
+    <footer>
+
+    </footer>
+  </div>
+
+  <script type="module">
+    // 1日1アプリのルール：動的アセットは import.meta.url で参照
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    // ---- Assets (10種類) ----
+    const IMAGES = Array.from({ length: 10 }, (_, i) => {
+      const n = String(i + 1).padStart(2, "0");
+      return asset(`./assets/matsumura_${n}.png`);
+    });
+
+    // ---- Compliments (①生活 ②身体 ③意味不明) ----
+    const COMPLIMENTS = [
+      // ① 生活どうでもいい褒め
+      "え？朝ごはん食べたの？えらい！",
+      "水飲んだ？すごいじゃん",
+      "今日ちゃんと起きたの。すばらしすぎる",
+      "歯磨いた？もう優勝",
+      "外出たんだ。強い",
+      "服着替えた？神じゃん",
+      "雨なのに動いたの？英雄",
+      "仕事行ったの？本当に尊敬",
+      "コンビニ行ったの？経済回してる！",
+      "今日を開始しただけで満点",
+
+      // ② 身体・フィジカル急褒め
+      "三角筋がメロンみたいじゃん！",
+      "僧帽筋が北アルプス！",
+      "もはや前腕っていうか前脚",
+      "肩がサイヤ人の服みたい",
+      "背中がステイサムじゃん",
+      "腹筋が板チョコ",
+      "ナイスデコルテ",
+      "大胸筋が歩いてる",
+      "そこまで絞るには眠れない夜もあったろう",
+      "腹斜筋で大根おろせるね",
+
+      // ③ 意味不明たとえ褒め
+      "イソフラボンみたいだね！",
+      "発酵してるって感じ",
+      "今日のあなた、低温調理",
+      "マイルドかつワイルドだね",
+      "熟成感があるね",
+      "ポリフェノールたっぷり",
+      "出汁が効いてる",
+      "角が取れてきた",
+      "ミネラル感ある",
+      "常温で強いタイプ",
+    ];
+
+    // ---- Helpers ----
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    const $card = document.getElementById("card");
+    const $img = document.getElementById("mImg");
+    const $compliment = document.getElementById("compliment");
+    const $counter = document.getElementById("counter");
+    const $drawBtn = document.getElementById("drawBtn");
+    const $shuffleBtn = document.getElementById("shuffleBtn");
+
+    let drawCount = 0;
+    let locked = false;
+    let currentImage = null;
+    let currentText = null;
+
+    function setCounter() {
+      $counter.textContent = `${drawCount}回引いた`;
+    }
+
+    function setCardContent({ imageUrl, text }) {
+      if (imageUrl) {
+        $img.src = imageUrl;
+        currentImage = imageUrl;
+      }
+      if (text) {
+        $compliment.textContent = text;
+        currentText = text;
+      }
+    }
+
+    function init() {
+      setCardContent({
+        imageUrl: pick(IMAGES),
+        text: "タップして引く",
+      });
+      setCounter();
+    }
+
+    function flipAndReveal({ imageUrl, text }) {
+      if (locked) return;
+      locked = true;
+
+      // 裏へ（ここで裏面が見える）
+      $card.classList.add("is-flipping");
+      $card.setAttribute("aria-pressed", "true");
+
+      // 裏面が正面になってから内容を仕込む
+      window.setTimeout(() => {
+        setCardContent({ imageUrl, text });
+      }, 450);
+
+      // 裏面を「見せる」ために少し待ってから表に戻す
+      window.setTimeout(() => {
+        $card.classList.remove("is-flipping");
+        $card.setAttribute("aria-pressed", "false");
+      }, 980);
+
+      // ロック解除
+      window.setTimeout(() => {
+        locked = false;
+      }, 1050);
+    }
+
+    function draw() {
+      drawCount += 1;
+      setCounter();
+      flipAndReveal({
+        imageUrl: pick(IMAGES),
+        text: pick(COMPLIMENTS),
+      });
+    }
+
+    function shuffleImageOnly() {
+      // 画像だけ変える（テキストは維持）
+      flipAndReveal({
+        imageUrl: pick(IMAGES),
+        text: currentText || pick(COMPLIMENTS),
+      });
+    }
+
+    // ---- Events ----
+    $drawBtn.addEventListener("click", draw);
+    $shuffleBtn.addEventListener("click", shuffleImageOnly);
+
+    // カード自体のタップでも引ける
+    $card.addEventListener("click", draw);
+
+    // キーボード：Enter/Space で引く
+    $card.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        draw();
+      }
+    });
+
+    // iOSのダブルタップ拡大や選択をさらに抑止
+    document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
+
+    init();
+  </script>
+</body>
+</html>
