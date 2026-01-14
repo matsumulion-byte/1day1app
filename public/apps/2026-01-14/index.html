@@ -118,6 +118,8 @@
       flex-direction:column;
       padding:16px;
       gap:12px;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
     }
     .imgbox{
       width: 100%;
@@ -133,6 +135,8 @@
       border-radius: 16px;
       position: relative;
       overflow: hidden;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
 
       /* キラカード背景 */
       background:
@@ -168,6 +172,8 @@
       object-fit: contain;
       z-index: 2;
       transform: translateY(6%);     /* 少し下寄せでカード感UP */
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
     }
     .caption{
       display:flex;
@@ -201,6 +207,8 @@
       align-items:center;
       justify-content:center;
       padding:18px;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
 
       /* 裏面は派手にして「裏だ」と分かるように */
       background:
