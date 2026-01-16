@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>ヒーロー診断｜松村</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --accent:#60a5fa;
+      --good:#34d399;
+      --bad:#fb7185;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink)}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP",
+                   "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select:none;
+    }
+    a{color:inherit}
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding: calc(env(safe-area-inset-top) + 14px) 14px calc(env(safe-area-inset-bottom) + 14px);
+      gap:12px;
+      background:
+        radial-gradient(1200px 600px at 50% -10%, rgba(96,165,250,.25), transparent 60%),
+        radial-gradient(900px 500px at 110% 20%, rgba(52,211,153,.14), transparent 55%),
+        radial-gradient(900px 600px at -10% 70%, rgba(251,113,133,.12), transparent 55%),
+        linear-gradient(180deg, #070a12, #0b1020 40%, #070a12);
+    }
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:0;
+    }
+    .title h1{
+      font-size:18px;
+      line-height:1.1;
+      letter-spacing:.02em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .title p{font-size:12px;color:var(--muted)}
+    .badge{
+      flex:0 0 auto;
+      font-size:12px;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+    }
+    .card{
+      flex:1 1 auto;
+      min-height:0;
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      background:rgba(255,255,255,.06);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .cardInner{
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      min-height:0;
+      flex:1;
+    }
+    .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .progress{
+      height:10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      overflow:hidden;
+      border:1px solid var(--line);
+    }
+    .bar{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg, rgba(96,165,250,.95), rgba(52,211,153,.9));
+      border-radius:999px;
+      transition:width .35s ease;
+    }
+    .qNo{font-size:12px;color:var(--muted)}
+    .qText{
+      font-size:18px;
+      line-height:1.35;
+      letter-spacing:.01em;
+    }
+    .hint{font-size:12px;color:var(--muted)}
+    .choices{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:4px;
+    }
+    button{
+      appearance:none;
+      border:none;
+      color:inherit;
+      background:none;
+      font:inherit;
+    }
+    .btn{
+      width:100%;
+      text-align:left;
+      padding:14px 14px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:rgba(255,255,255,.06);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      cursor:pointer;
+      transition:transform .06s ease, background .2s ease, border-color .2s ease;
+      touch-action:manipulation;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn:hover{background:rgba(255,255,255,.08)}
+    .btn .label{font-size:15px;line-height:1.25}
+    .btn .arrow{opacity:.7}
+    .btnPrimary{
+      background:rgba(96,165,250,.16);
+      border-color:rgba(96,165,250,.35);
+    }
+    .btnPrimary:hover{background:rgba(96,165,250,.20)}
+    .grid2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .resultWrap{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      min-height:0;
+      flex:1;
+    }
+    .resultHero{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .resultName{
+      font-size:20px;
+      line-height:1.15;
+      letter-spacing:.02em;
+    }
+    .resultCopy{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.6;
+    }
+    .resultFrame{
+      flex:1 1 auto;
+      min-height:0;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(0,0,0,.22);
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+    }
+    .resultFrame img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      transform:scale(1.02);
+    }
+    .placeholder{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      padding:18px;
+      text-align:center;
+      color:rgba(243,246,255,.85);
+      background:
+        radial-gradient(700px 400px at 30% 20%, rgba(96,165,250,.18), transparent 60%),
+        radial-gradient(700px 420px at 70% 80%, rgba(52,211,153,.12), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    }
+    .placeholder .big{
+      font-size:18px;
+      letter-spacing:.04em;
+    }
+    .placeholder .small{
+      font-size:12px;
+      color:rgba(243,246,255,.7);
+      line-height:1.6;
+    }
+    footer{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .fine{
+      font-size:11px;
+      color:rgba(243,246,255,.62);
+      line-height:1.5;
+    }
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom: calc(env(safe-area-inset-bottom) + 18px);
+      transform:translateX(-50%);
+      background:rgba(0,0,0,.72);
+      border:1px solid rgba(255,255,255,.14);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:12px;
+      color:rgba(243,246,255,.92);
+      box-shadow:0 12px 40px rgba(0,0,0,.55);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .2s ease, transform .2s ease;
+    }
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(-2px)}
+    .sep{opacity:.5}
+
+    /* PC向けスタイル */
+    @media (min-width: 768px) {
+      html, body {
+        overflow: auto;
+        height: auto;
+        min-height: 100%;
+      }
+      .app {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 24px 20px;
+        height: auto;
+        min-height: 100vh;
+      }
+      .title h1 {
+        font-size: 22px;
+      }
+      .title p {
+        font-size: 13px;
+      }
+      .cardInner {
+        padding: 24px;
+      }
+      .qText {
+        font-size: 20px;
+      }
+      .hint {
+        font-size: 13px;
+      }
+      .btn {
+        padding: 16px 18px;
+        border-radius: 16px;
+      }
+      .btn .label {
+        font-size: 16px;
+      }
+      .btn:hover {
+        background: rgba(255, 255, 255, .1);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, .2);
+      }
+      .btnPrimary:hover {
+        background: rgba(96, 165, 250, .24);
+        box-shadow: 0 4px 12px rgba(96, 165, 250, .2);
+      }
+      .resultName {
+        font-size: 24px;
+      }
+      .resultCopy {
+        font-size: 14px;
+      }
+      .card {
+        flex: 0 1 auto;
+        min-height: 0;
+      }
+      .cardInner {
+        overflow-y: auto;
+        flex: 1 1 auto;
+      }
+      .resultFrame {
+        border-radius: 20px;
+        min-height: 300px;
+        max-height: 500px;
+        flex: 0 1 auto;
+      }
+      .resultFrame img {
+        object-fit: contain;
+        object-position: center;
+        transform: scale(1);
+        max-width: 100%;
+        max-height: 100%;
+      }
+      .choices {
+        gap: 12px;
+      }
+      footer {
+        padding-top: 4px;
+        flex-shrink: 0;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .app {
+        max-width: 700px;
+        padding: 32px 24px;
+      }
+      .cardInner {
+        padding: 28px;
+      }
+      .qText {
+        font-size: 22px;
+      }
+      .resultName {
+        font-size: 26px;
+      }
+      .resultFrame {
+        min-height: 350px;
+        max-height: 550px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="title">
+        <h1>ヒーロー診断</h1>
+        <p>質問に答えてどんなヒーロータイプか診断しよう！</p>
+      </div>
+      <div class="badge" id="modeBadge">6+レア</div>
+    </header>
+
+    <section class="card" aria-live="polite">
+      <div class="cardInner" id="screen"></div>
+    </section>
+
+    <footer>
+      <div class="fine">
+        <span id="fineLeft">Tapで進行</span>
+      </div>
+      <button class="btn" id="resetBtn" style="width:auto; padding:10px 12px; border-radius:999px;">
+        <span class="label">最初から</span><span class="arrow">↺</span>
+      </button>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast">コピーしました</div>
+
+  <script type="module">
+    // 1日1アプリ ルール：動的アセットは import.meta.url
+    // Vercel用：現在のパスから相対パスを解決
+    const getBasePath = () => {
+      const path = location.pathname;
+      // /2026-01-16/ のようなパスから /2026-01-16 を取得
+      const match = path.match(/^\/(\d{4}-\d{2}-\d{2})/);
+      return match ? `/${match[1]}` : '';
+    };
+    const asset = (p) => {
+      const base = getBasePath();
+      return `${base}${p.startsWith('/') ? p : '/' + p}`;
+    };
+
+    // ====== キャラ定義（6 + レア） ======
+    // 画像は下記パスに置いてください（無ければプレースホルダー表示）
+    // /app/2026-01-16/assets/results/
+    //   spiderman.png, ironman.png, superman.png, batman.png, ultraman.png, kamenrider.png, godzilla.png
+    const HEROES = {
+      spiderman: {
+        id: "spiderman",
+        name: "スパイダーマンタイプ",
+        sub: "未完成・成長型",
+        copy: "まず動いて、あとで考える。完璧じゃないから伸びる。",
+        img: asset("./assets/results/spiderman.png"),
+        share: "スパイダーマンタイプ"
+      },
+      ironman: {
+        id: "ironman",
+        name: "アイアンマンタイプ",
+        sub: "知性・テクノロジー",
+        copy: "仕組みで勝つ。道がなければ作る。",
+        img: asset("./assets/results/ironman.png"),
+        share: "アイアンマンタイプ"
+      },
+      superman: {
+        id: "superman",
+        name: "スーパーマンタイプ",
+        sub: "王道・象徴",
+        copy: "いるだけで安心。期待を背負って立つ。",
+        img: asset("./assets/results/superman.png"),
+        share: "スーパーマンタイプ"
+      },
+      batman: {
+        id: "batman",
+        name: "バットマンタイプ",
+        sub: "準備・戦略",
+        copy: "勝つまでを設計する。静かに、確実に。",
+        img: asset("./assets/results/batman.png"),
+        share: "バットマンタイプ"
+      },
+      ultraman: {
+        id: "ultraman",
+        name: "ウルトラマンタイプ",
+        sub: "即決・全力（制限時間）",
+        copy: "ここぞで最大出力。短期決戦の切り札。",
+        img: asset("./assets/results/ultraman.png"),
+        share: "ウルトラマンタイプ"
+      },
+      kamenrider: {
+        id: "kamenrider",
+        name: "仮面ライダータイプ",
+        sub: "変身・孤独・継続",
+        copy: "正義は簡単じゃない。それでも戦う。",
+        img: asset("./assets/results/kamenrider.png"),
+        share: "仮面ライダータイプ"
+      },
+      // レア
+      godzilla: {
+        id: "godzilla",
+        name: "ゴジラ（レア）",
+        sub: "ヒーローの外側",
+        copy: "正義でも悪でもない。それでも世界は揺れる。",
+        img: asset("./assets/results/godzilla.png"),
+        share: "ゴジラ（レア）"
+      }
+    };
+
+    // ====== 質問（5問 / 3択） ======
+    // 各選択肢：points = { heroId: +n, ... }, tag でレア判定用の傾向を拾う
+    const QUESTIONS = [
+      {
+        q: "トラブル発生。最初の一手は？",
+        hint: "直感で選んでOK",
+        a: [
+          { t: "とにかく現場へ行く", points: { spiderman: 2, ultraman: 1 }, tag: "action" },
+          { t: "原因を特定して仕組みで潰す", points: { ironman: 2, batman: 1 }, tag: "logic" },
+          { t: "まずは勝てる準備を整える", points: { batman: 2, superman: 1 }, tag: "prep" }
+        ]
+      },
+      {
+        q: "あなたの強さの源は？",
+        hint: "自分で思う方で",
+        a: [
+          { t: "才能やスペック（存在感）", points: { superman: 2, ultraman: 1 }, tag: "power" },
+          { t: "頭脳・道具・発明", points: { ironman: 2, batman: 1 }, tag: "logic" },
+          { t: "粘りと伸びしろ（成長）", points: { spiderman: 2, kamenrider: 1 }, tag: "growth" }
+        ]
+      },
+      {
+        q: "チームでの立ち位置は？",
+        hint: "一番近いもの",
+        a: [
+          { t: "前で引っ張る（象徴）", points: { superman: 2, captain: 0 }, tag: "lead" },
+          { t: "裏で勝ち筋を作る（参謀）", points: { batman: 2, ironman: 1 }, tag: "prep" },
+          { t: "必要な時だけ全力で出る（切り札）", points: { ultraman: 2, kamenrider: 1 }, tag: "burst" }
+        ]
+      },
+      {
+        q: "理不尽な状況、どう向き合う？",
+        hint: "気持ちの近さで",
+        a: [
+          { t: "正面突破して空気を変える", points: { ultraman: 2, superman: 1 }, tag: "action" },
+          { t: "ルールの外で解決してしまう", points: { batman: 2, kamenrider: 1 }, tag: "shadow" },
+          { t: "工夫して“勝てる形”に変える", points: { ironman: 2, spiderman: 1 }, tag: "logic" }
+        ]
+      },
+      {
+        q: "「正義」とは？",
+        hint: "あなたの感覚で",
+        a: [
+          { t: "守ること（安心の提供）", points: { superman: 2, ultraman: 1 }, tag: "protect" },
+          { t: "戦い続けること（継続）", points: { kamenrider: 2, batman: 1 }, tag: "persist" },
+          { t: "迷いながらでも動くこと（人間味）", points: { spiderman: 2, ironman: 1 }, tag: "growth" }
+        ]
+      }
+    ];
+
+    // ====== 状態 ======
+    const state = {
+      step: "start", // start | quiz | result
+      i: 0,
+      points: Object.fromEntries(Object.keys(HEROES).map(k => [k, 0])),
+      tags: [],
+      answers: []
+    };
+
+    const $screen = document.querySelector("#screen");
+    const $resetBtn = document.querySelector("#resetBtn");
+    const $toast = document.querySelector("#toast");
+
+    // iOS向け：ダブルタップ拡大抑制（完全ではないが体感改善）
+    let lastTouch = 0;
+    document.addEventListener("touchend", (e) => {
+      const now = Date.now();
+      if (now - lastTouch <= 300) e.preventDefault();
+      lastTouch = now;
+    }, { passive:false });
+
+    $resetBtn.addEventListener("click", reset);
+
+    function reset(){
+      state.step = "start";
+      state.i = 0;
+      state.tags = [];
+      state.answers = [];
+      state.points = Object.fromEntries(Object.keys(HEROES).map(k => [k, 0]));
+      render();
+    }
+
+    // ====== レア判定（ゴジラ） ======
+    // base: 1.5%
+    // 条件ブースト：shadow/persist が多い、または「象徴・正義」より「割り切れなさ」寄り
+    function shouldBeRare(){
+      const base = 0.015;
+      const tags = state.tags;
+      const shadowish = tags.filter(t => t === "shadow").length;
+      const persist = tags.filter(t => t === "persist").length;
+      const logic = tags.filter(t => t === "logic").length;
+
+      let p = base;
+      if (shadowish >= 2) p += 0.05;
+      if (persist >= 2) p += 0.04;
+      if (logic >= 3) p += 0.02; // 俯瞰・割り切り寄りで少し上げる
+
+      return Math.random() < Math.min(p, 0.18);
+    }
+
+    function computeWinner(){
+      const entries = Object.entries(state.points)
+        .filter(([k]) => k !== "godzilla"); // 通常判定から除外
+      entries.sort((a,b) => b[1]-a[1]);
+
+      // 同点時は「直近の回答で最後に加点された方」を優先（体感の納得感）
+      const topScore = entries[0][1];
+      const tied = entries.filter(e => e[1] === topScore).map(e => e[0]);
+      if (tied.length === 1) return tied[0];
+
+      // tie-break
+      for (let idx = state.answers.length - 1; idx >= 0; idx--){
+        const picked = QUESTIONS[idx].a[state.answers[idx]];
+        const keys = Object.keys(picked.points || {});
+        const prefer = keys.find(k => tied.includes(k) && (picked.points[k] || 0) > 0);
+        if (prefer) return prefer;
+      }
+      return tied[0];
+    }
+
+    // ====== UI ======
+    function render(){
+      if (state.step === "start") return renderStart();
+      if (state.step === "quiz") return renderQuiz();
+      if (state.step === "result") return renderResult();
+    }
+
+    function renderStart(){
+      $screen.innerHTML = `
+        <div class="row">
+          <div class="qNo">全${QUESTIONS.length}問</div>
+          <div class="progress" style="flex:1; max-width:55%;">
+            <div class="bar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:4px;">
+          <div class="qText">質問に答えて、あなたのヒーロータイプを診断します。</div>
+        </div>
+
+        <div class="choices" style="margin-top:8px;">
+          <button class="btn btnPrimary" id="startBtn">
+            <span class="label">診断をはじめる</span><span class="arrow">▶</span>
+          </button>
+        </div>
+      `;
+      document.querySelector("#startBtn").addEventListener("click", () => {
+        state.step = "quiz";
+        state.i = 0;
+        render();
+      });
+    }
+
+    function renderQuiz(){
+      const q = QUESTIONS[state.i];
+      const pct = Math.round((state.i / QUESTIONS.length) * 100);
+
+      $screen.innerHTML = `
+        <div class="row">
+          <div class="qNo">Q${state.i+1} / ${QUESTIONS.length}</div>
+          <div class="progress" style="flex:1;">
+            <div class="bar" style="width:${pct}%"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div class="qText">${escapeHtml(q.q)}</div>
+          <div class="hint">${escapeHtml(q.hint || "")}</div>
+        </div>
+
+        <div class="choices" id="choices"></div>
+      `;
+
+      const $choices = document.querySelector("#choices");
+      q.a.forEach((opt, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "btn";
+        btn.innerHTML = `<span class="label">${escapeHtml(opt.t)}</span><span class="arrow">→</span>`;
+        btn.addEventListener("click", () => pick(idx));
+        $choices.appendChild(btn);
+      });
+    }
+
+    function pick(choiceIndex){
+      const q = QUESTIONS[state.i];
+      const opt = q.a[choiceIndex];
+
+      // 記録
+      state.answers[state.i] = choiceIndex;
+      if (opt.tag) state.tags.push(opt.tag);
+
+      // 加点
+      for (const [k,v] of Object.entries(opt.points || {})){
+        if (state.points[k] == null) continue;
+        state.points[k] += v;
+      }
+
+      // 次へ
+      state.i++;
+      if (state.i >= QUESTIONS.length){
+        state.step = "result";
+      }
+      render();
+    }
+
+    async function renderResult(){
+      const normalWinner = computeWinner();
+      const rare = shouldBeRare();
+      const winner = rare ? "godzilla" : normalWinner;
+      const h = HEROES[winner];
+
+      // 画像の存在チェック（404でも落ちないように）
+      const imgOk = await canLoadImage(h.img);
+
+      const textForShare = `診断結果：${h.share}\n#ヒーロー診断 #松村`;
+      const url = location.href;
+
+      $screen.innerHTML = `
+        <div class="row">
+          <div class="qNo">結果</div>
+          <div class="progress" style="flex:1;">
+            <div class="bar" style="width:100%"></div>
+          </div>
+        </div>
+
+        <div class="resultWrap">
+          <div>
+            <div class="resultHero">${escapeHtml(h.sub)}</div>
+            <div class="resultName">${escapeHtml(h.name)}</div>
+            <div class="resultCopy">${escapeHtml(h.copy)}</div>
+          </div>
+
+          <div class="resultFrame">
+            ${imgOk ? `<img alt="${escapeHtml(h.name)}" src="${h.img}" />` : `
+              <div class="placeholder">
+                <div class="big">${escapeHtml(h.name)}</div>
+                <div class="small">
+                  画像が見つかりませんでした。<br/>
+                  <span style="opacity:.85;">assets/results/</span> に画像を配置してください。
+                </div>
+              </div>
+            `}
+          </div>
+
+          <div class="grid2">
+            <button class="btn btnPrimary" id="shareBtn">
+              <span class="label">シェア</span><span class="arrow">⤴︎</span>
+            </button>
+            <button class="btn" id="copyBtn">
+              <span class="label">結果をコピー</span><span class="arrow">⧉</span>
+            </button>
+          </div>
+
+          <button class="btn" id="retryBtn">
+            <span class="label">もう一回やる</span><span class="arrow">↺</span>
+          </button>
+        </div>
+      `;
+
+      document.querySelector("#retryBtn").addEventListener("click", reset);
+
+      document.querySelector("#copyBtn").addEventListener("click", async () => {
+        const t = `${textForShare}\n${url}`;
+        try{
+          await navigator.clipboard.writeText(t);
+          toast("コピーしました");
+        }catch{
+          fallbackCopy(t);
+        }
+      });
+
+      document.querySelector("#shareBtn").addEventListener("click", async () => {
+        const shareData = { title: "ヒーロー診断｜松村", text: textForShare, url };
+        if (navigator.share){
+          try{ await navigator.share(shareData); }
+          catch{ /* cancelled */ }
+        }else{
+          const t = `${textForShare}\n${url}`;
+          fallbackCopy(t);
+        }
+      });
+    }
+
+    function toast(msg){
+      $toast.textContent = msg;
+      $toast.classList.add("show");
+      setTimeout(() => $toast.classList.remove("show"), 1200);
+    }
+
+    function fallbackCopy(text){
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      ta.style.top = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try{
+        document.execCommand("copy");
+        toast("コピーしました");
+      }catch{
+        toast("コピーに失敗しました");
+      }finally{
+        document.body.removeChild(ta);
+      }
+    }
+
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function canLoadImage(src){
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = src;
+      });
+    }
+
+    // 初期表示
+    render();
+  </script>
+</body>
+</html>
