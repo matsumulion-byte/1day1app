@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<meta name="theme-color" content="#0b1020" />
+<title>松村スネーク</title>
+<style>
+  :root{
+    --bg:#0b1020; --ink:#f3f6ff; --muted:rgba(243,246,255,.65);
+    --panel:rgba(255,255,255,.08); --line:rgba(255,255,255,.14);
+    --shadow:0 18px 60px rgba(0,0,0,.55);
+    --good:#34d399; --bad:#fb7185; --accent:#60a5fa;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%; background:var(--bg); color:var(--ink); overflow:hidden}
+  body{
+    font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans JP", sans-serif;
+    touch-action:none;
+  }
+  .wrap{
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    padding:14px;
+    padding-bottom:calc(14px + env(safe-area-inset-bottom));
+  }
+  .topbar{
+    width:min(520px,100%);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    opacity:.95;
+  }
+  .pill{
+    display:flex; gap:10px; align-items:center;
+    padding:8px 12px;
+    border-radius:999px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    font-size:12px;
+    color:var(--muted);
+    user-select:none;
+  }
+  .pill b{color:var(--ink)}
+  .btnrow{display:flex; gap:8px; align-items:center;}
+  button.ghost{
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--ink);
+    border-radius:999px;
+    padding:8px 12px;
+    font-size:12px;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+  }
+  button.ghost:active{transform:translateY(1px)}
+  canvas{
+    width:min(92vmin,520px);
+    height:auto;
+    aspect-ratio:1/1;
+    background:#11162a;
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    border:1px solid rgba(255,255,255,.10);
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    touch-action:none;
+  }
+
+  .overlay{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.55);
+    backdrop-filter:blur(4px);
+    padding:18px;
+  }
+  .overlay.show{display:flex}
+  .card{
+    width:min(420px,100%);
+    background:rgba(17,22,42,.92);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:22px;
+    box-shadow:var(--shadow);
+    padding:18px;
+    text-align:center;
+  }
+  .card h1{font-size:20px; margin-bottom:8px}
+  .card p{font-size:13px; color:var(--muted); margin-bottom:14px; line-height:1.5}
+  .ctaRow{display:flex; gap:10px;}
+  .cta{
+    flex:1;
+    border:0;
+    border-radius:14px;
+    padding:12px 14px;
+    cursor:pointer;
+    font-weight:900;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cta:active{transform:translateY(1px)}
+  .cta.on{background:linear-gradient(180deg, rgba(52,211,153,.95), rgba(52,211,153,.70)); color:#071022;}
+  .cta.off{background:rgba(255,255,255,.10); color:var(--ink); border:1px solid rgba(255,255,255,.14);}
+  .cta.primary{background:linear-gradient(180deg, rgba(96,165,250,.95), rgba(96,165,250,.70)); color:#071022;}
+
+  .controls{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    padding:12px;
+    padding-bottom:calc(12px + env(safe-area-inset-bottom));
+    display:flex;
+    justify-content:center;
+    pointer-events:none;
+  }
+  .dpad{
+    pointer-events:auto;
+    display:grid;
+    grid-template-columns:64px 64px 64px;
+    grid-template-rows:64px 64px 64px;
+    gap:10px;
+    padding:12px;
+    border-radius:22px;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 16px 50px rgba(0,0,0,.45);
+  }
+  .key{
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.08);
+    color:var(--ink);
+    border-radius:18px;
+    font-size:18px;
+    font-weight:900;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:none;
+  }
+  .key:active{transform:translateY(1px); background:rgba(255,255,255,.12)}
+  .empty{opacity:0; pointer-events:none}
+
+  .hint{
+    width:min(520px,100%);
+    font-size:12px;
+    color:var(--muted);
+    text-align:center;
+    padding-bottom:92px;
+    user-select:none;
+  }
+  @media (pointer:fine){
+    .controls{display:none}
+    .hint{padding-bottom:0}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="pill">SCORE <b id="score">0</b></div>
+    <div class="btnrow">
+      <button class="ghost" id="soundBtn" type="button">🔇 OFF</button>
+      <button class="ghost" id="restartBtn" type="button">リスタート</button>
+    </div>
+  </div>
+
+  <canvas id="c"></canvas>
+  <div class="hint">PC: ←↑↓→ / スマホ: 画面下の十字キー（ゲーム開始は上の確認から）</div>
+</div>
+
+<!-- start overlay -->
+<div class="overlay show" id="startOverlay">
+  <div class="card">
+    <h1>サウンド設定</h1>
+    <p>BGMを再生しますか？（開始後も右上から切替できます）</p>
+    <div class="ctaRow">
+      <button class="cta on" id="startOn" type="button">ONで開始</button>
+      <button class="cta off" id="startOff" type="button">OFFで開始</button>
+    </div>
+  </div>
+</div>
+
+<!-- gameover overlay -->
+<div class="overlay" id="overOverlay">
+  <div class="card">
+    <h1>GAME OVER</h1>
+    <p>もう一回やる？</p>
+    <button class="cta primary" id="retryBtn" type="button">RETRY</button>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="dpad" aria-label="d-pad">
+    <div class="key empty"></div>
+    <div class="key" data-dir="up">▲</div>
+    <div class="key empty"></div>
+
+    <div class="key" data-dir="left">◀</div>
+    <div class="key empty"></div>
+    <div class="key" data-dir="right">▶</div>
+
+    <div class="key empty"></div>
+    <div class="key" data-dir="down">▼</div>
+    <div class="key empty"></div>
+  </div>
+</div>
+
+<script type="module">
+/* ===== assets helper (Vercel対応) ===== */
+const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+const asset = (p = "") => {
+  const clean = String(p).replace(/^\.?\//, "");
+  return `${DATE_BASE}${clean}`;
+};
+
+/* ===== canvas ===== */
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d', { alpha:true });
+
+const CELL = 24;     // もっと大きくしたいなら 28
+const COLS = 15;
+const ROWS = 15;
+canvas.width  = COLS * CELL;
+canvas.height = ROWS * CELL;
+
+/* ===== UI ===== */
+const scoreEl = document.getElementById('score');
+const soundBtn = document.getElementById('soundBtn');
+const restartBtn = document.getElementById('restartBtn');
+
+const startOverlay = document.getElementById('startOverlay');
+const startOn = document.getElementById('startOn');
+const startOff = document.getElementById('startOff');
+
+const overOverlay = document.getElementById('overOverlay');
+const retryBtn = document.getElementById('retryBtn');
+
+/* ===== assets ===== */
+const headImg = new Image();
+headImg.src = asset('./assets/matsumura.png');
+
+/* BGM: ファイル名だけ合わせて */
+const bgm = new Audio(asset('./assets/bgm.mp3'));
+bgm.loop = true;
+bgm.preload = 'auto';
+
+let soundEnabled = false;
+function reflectSoundUI(){
+  soundBtn.textContent = soundEnabled ? '🔊 ON' : '🔇 OFF';
+}
+async function applySound(){
+  if(soundEnabled){
+    try{
+      bgm.currentTime = 0;
+      await bgm.play();
+    }catch(_){
+      // iOS等で失敗しても、次のユーザー操作で再トライできる
+    }
+  }else{
+    bgm.pause();
+  }
+  reflectSoundUI();
+}
+
+/* ===== phrase ===== */
+const PHRASE = ["ま","つ","む","ら","で","す"];
+
+/* ===== state ===== */
+let started = false;
+let dir, snake, food, alive, score;
+
+function same(a,b){ return a.x===b.x && a.y===b.y; }
+
+function spawnFood(){
+  let p;
+  do{
+    p = { x:(Math.random()*COLS)|0, y:(Math.random()*ROWS)|0 };
+  }while(snake.some(s => same(s,p)));
+  return p;
+}
+
+function setDir(next){
+  if(next.x + dir.x === 0 && next.y + dir.y === 0) return; // 逆走防止
+  dir = next;
+}
+
+function resetGame(){
+  dir = {x:1, y:0};
+  snake = [{x:7, y:7}]; // 頭だけスタート（成長で文字が増える）
+  food = spawnFood();
+  alive = true;
+  score = 0;
+  scoreEl.textContent = String(score);
+  overOverlay.classList.remove('show');
+  draw();
+}
+
+/* ===== start flow ===== */
+async function startGame(withSound){
+  started = true;
+  soundEnabled = !!withSound;
+  startOverlay.classList.remove('show');
+  resetGame();
+  await applySound();
+}
+
+startOn.addEventListener('click', ()=> startGame(true));
+startOff.addEventListener('click', ()=> startGame(false));
+
+/* ===== sound toggle (in-game) ===== */
+soundBtn.addEventListener('click', async ()=>{
+  if(!started) return;
+  soundEnabled = !soundEnabled;
+  if(soundEnabled){
+    try{ await bgm.play(); }catch(_){}
+  }else{
+    bgm.pause();
+  }
+  reflectSoundUI();
+});
+
+/* ===== restart buttons ===== */
+retryBtn.addEventListener('click', ()=>{
+  if(!started) return;
+  resetGame();
+});
+restartBtn.addEventListener('click', ()=>{
+  if(!started) return;
+  resetGame();
+});
+
+// ゲームオーバー時、キャンバスタップでリトライ
+canvas.addEventListener('pointerdown', ()=>{
+  if(!started) return;
+  if(!alive) resetGame();
+});
+
+/* ===== input ===== */
+window.addEventListener('keydown', (e)=>{
+  const map = {
+    ArrowUp:{x:0,y:-1}, ArrowDown:{x:0,y:1}, ArrowLeft:{x:-1,y:0}, ArrowRight:{x:1,y:0},
+    w:{x:0,y:-1}, s:{x:0,y:1}, a:{x:-1,y:0}, d:{x:1,y:0},
+  };
+  const d = map[e.key];
+  if(!d) return;
+  e.preventDefault();
+  if(!started || !alive) return;
+  setDir(d);
+}, {passive:false});
+
+document.querySelectorAll('.key[data-dir]').forEach(btn=>{
+  const map = { up:{x:0,y:-1}, down:{x:0,y:1}, left:{x:-1,y:0}, right:{x:1,y:0} };
+  const next = map[btn.dataset.dir];
+  btn.addEventListener('pointerdown', (ev)=>{
+    ev.preventDefault();
+    if(!started || !alive) return;
+    setDir(next);
+  }, {passive:false});
+});
+
+/* ===== loop ===== */
+const TICK_MS = 130;
+setInterval(tick, TICK_MS);
+
+function tick(){
+  if(!started || !alive) return;
+
+  const head = snake[0];
+  const next = { x: head.x + dir.x, y: head.y + dir.y };
+
+  if(
+    next.x < 0 || next.y < 0 ||
+    next.x >= COLS || next.y >= ROWS ||
+    snake.some(s => same(s,next))
+  ){
+    alive = false;
+    draw();
+    overOverlay.classList.add('show');
+    return;
+  }
+
+  snake.unshift(next);
+
+  if(same(next, food)){
+    score++;
+    scoreEl.textContent = String(score);
+    food = spawnFood();
+  }else{
+    snake.pop();
+  }
+
+  draw();
+}
+
+/* ===== draw ===== */
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // grid
+  ctx.globalAlpha = 0.18;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1;
+  for(let x=0;x<=COLS;x++){
+    ctx.beginPath();
+    ctx.moveTo(x*CELL+0.5, 0);
+    ctx.lineTo(x*CELL+0.5, canvas.height);
+    ctx.stroke();
+  }
+  for(let y=0;y<=ROWS;y++){
+    ctx.beginPath();
+    ctx.moveTo(0, y*CELL+0.5);
+    ctx.lineTo(canvas.width, y*CELL+0.5);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // food
+  ctx.fillStyle = '#34d399';
+  ctx.fillRect(food.x*CELL+2, food.y*CELL+2, CELL-4, CELL-4);
+
+  // body + letters
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `900 ${Math.floor(CELL*0.62)}px ui-sans-serif, system-ui, "Noto Sans JP", sans-serif`;
+
+  for(let i=1;i<snake.length;i++){
+    const s = snake[i];
+
+    ctx.fillStyle = '#60a5fa';
+    ctx.fillRect(s.x*CELL+2, s.y*CELL+2, CELL-4, CELL-4);
+
+    const ch = PHRASE[(i-1) % PHRASE.length];
+    ctx.fillStyle = '#071022';
+    ctx.fillText(ch, s.x*CELL + CELL/2, s.y*CELL + CELL/2 + 0.5);
+  }
+
+  // head (matsumura)
+  const h = snake[0];
+  if(headImg.complete && headImg.naturalWidth){
+    ctx.drawImage(headImg, h.x*CELL, h.y*CELL, CELL, CELL);
+  }else{
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(h.x*CELL, h.y*CELL, CELL, CELL);
+  }
+}
+
+/* init UI */
+reflectSoundUI();
+draw(); // start overlay中でも盤面は描いておく
+</script>
+</body>
+</html>
