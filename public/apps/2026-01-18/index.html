@@ -17,7 +17,10 @@
     body{
       font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
       touch-action: manipulation; -webkit-user-select:none; user-select:none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
     }
+    *{touch-action: manipulation;}
     .wrap{height:100%; display:flex; flex-direction:column; padding:max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)) 12px; gap:10px;}
     header{display:flex; align-items:center; justify-content:space-between; gap:10px;}
     .title{display:flex; flex-direction:column; gap:2px; min-width:0}
@@ -86,8 +89,6 @@
         <div class="pill">LIFE <b id="life">3</b></div>
         <div class="pill">BALLOON <b id="left">0</b></div>
         <button id="btnSound" class="primary" type="button">SOUND: ON</button>
-        <button id="btnPause" type="button">PAUSE</button>
-        <button id="btnRestart" class="danger" type="button">RESTART</button>
       </div>
     </header>
 
@@ -149,8 +150,6 @@
     const lifeEl  = document.getElementById('life');
     const leftEl  = document.getElementById('left');
     const btnSound = document.getElementById('btnSound');
-    const btnPause = document.getElementById('btnPause');
-    const btnRestart = document.getElementById('btnRestart');
     const leftBtn = document.getElementById('leftBtn');
     const rightBtn = document.getElementById('rightBtn');
     const startOn = document.getElementById('startOn');
@@ -287,7 +286,6 @@
       scoreEl.textContent = String(G.score);
       lifeEl.textContent  = String(G.life);
       leftEl.textContent  = String(G.balloonLeft);
-      btnPause.textContent = G.paused ? 'RESUME' : 'PAUSE';
     }
 
     function startGame(){
@@ -665,23 +663,6 @@
       stop();
     });
 
-    btnPause.addEventListener('click', ()=>{
-      if (!G.running || G.gameOver) return;
-      G.paused = !G.paused;
-      updateHud();
-      beep(G.paused ? 260 : 520, 0.05);
-    });
-
-    btnRestart.addEventListener('click', ()=>{
-      resetGame();
-      if (!G.gameOver){
-        G.running = true;
-        lastT = performance.now();
-        requestAnimationFrame(loop);
-      }
-      beep(520, 0.05);
-    });
-
     btnSound.addEventListener('click', ()=>{
       setSound(!soundOn);
       beep(660, 0.04);
@@ -697,12 +678,24 @@
       startGame();
     });
 
-    // prevent double-tap zoom
+    // prevent double-tap zoom (強化版)
     let lastTouch=0;
+    let touchCount=0;
+    document.addEventListener('touchstart', (e)=>{
+      touchCount++;
+      const now=Date.now();
+      if (now-lastTouch<=300 && touchCount===2){
+        e.preventDefault();
+        touchCount=0;
+      }
+      if (now-lastTouch>300) touchCount=1;
+      lastTouch=now;
+    }, {passive:false});
     document.addEventListener('touchend', (e)=>{
       const now=Date.now();
-      if (now-lastTouch<=250) e.preventDefault();
+      if (now-lastTouch<=300) e.preventDefault();
       lastTouch=now;
+      setTimeout(()=>{touchCount=0;}, 300);
     }, {passive:false});
 
     // init
