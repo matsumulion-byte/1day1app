@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no" />
   <meta name="theme-color" content="#0b1020" />
   <title>CIRCUS｜松村</title>
   <style>
@@ -124,6 +124,9 @@
       return `${DATE_BASE}${clean}`;
     };
 
+    // ---------- SP判定 ----------
+    const isSP = () => window.innerWidth < 768;
+
     // ---------- Canvas ----------
     const stage = document.getElementById('stage');
     const canvas = document.getElementById('c');
@@ -205,7 +208,7 @@
       score:0, life:3,
 
       // seesaw
-      cx:0, vx:0, y:0, len:0, moveSpeed:560,
+      cx:0, vx:0, y:0, len:0, moveSpeed:560, // SPでは調整される
 
       // actors
       waitingEnd: 'R', // 'L' or 'R' : どっち端で待ってるか
@@ -257,17 +260,24 @@
     function resetGame(){
       G.running=false; G.paused=false; G.gameOver=false;
       G.score=0; G.life=3;
-      G.len = clamp(W*0.28, 120, 200);
+      
+      // SP調整
+      const sp = isSP();
+      const scale = sp ? 0.75 : 1.0; // SPは75%スケール
+      
+      G.len = clamp(W * (sp ? 0.32 : 0.28), sp ? 140 : 120, sp ? 220 : 200);
       G.cx = W/2; G.vx=0;
-      G.y = H-100;
+      G.y = H - (sp ? 80 : 100);
 
       G.waitingEnd = 'R';
       resetBalloons();
       resetActors();
 
-      G.gravity = 950;
-      G.launchVyBase = -640;
-      G.launchVyBonus = -320;
+      // SPでは速度を調整（遅くする）
+      G.gravity = sp ? 800 : 950;
+      G.launchVyBase = sp ? -520 : -640;
+      G.launchVyBonus = sp ? -260 : -320;
+      G.moveSpeed = sp ? 420 : 560;
       G.missCooldown = 0;
 
       updateHud();
@@ -350,7 +360,7 @@
       // 落下してきた側（着地候補）は「待ってる側の反対」
       const landingEnd = otherEnd(G.waitingEnd);
       const ex = endX(landingEnd);
-      const catchR = 46;
+      const catchR = isSP() ? 52 : 46; // SPでは少し広めに
 
       const dx = a.x - ex;
       const adx = Math.abs(dx);
