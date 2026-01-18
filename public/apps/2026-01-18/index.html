@@ -678,10 +678,18 @@
       startGame();
     });
 
-    // prevent double-tap zoom (強化版)
+    // prevent double-tap zoom (ボタンやインタラクティブ要素は除外)
     let lastTouch=0;
     let touchCount=0;
+    const isInteractive = (e) => {
+      const t = e.target;
+      return t.tagName === 'BUTTON' || t.tagName === 'A' || 
+             t.closest('button') || t.closest('a') || 
+             t.closest('.half') || t.closest('#leftBtn') || t.closest('#rightBtn') ||
+             t.closest('#stage') || t.closest('#overlay');
+    };
     document.addEventListener('touchstart', (e)=>{
+      if (isInteractive(e)) return; // ボタンなどは除外
       touchCount++;
       const now=Date.now();
       if (now-lastTouch<=300 && touchCount===2){
@@ -692,6 +700,7 @@
       lastTouch=now;
     }, {passive:false});
     document.addEventListener('touchend', (e)=>{
+      if (isInteractive(e)) return; // ボタンなどは除外
       const now=Date.now();
       if (now-lastTouch<=300) e.preventDefault();
       lastTouch=now;
