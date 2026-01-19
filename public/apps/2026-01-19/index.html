@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <!-- OGP AUTO-GENERATED START (do not edit by hand) -->
+  <meta property="og:title" content="空気清浄機 松村">
+  <meta name="twitter:title" content="空気清浄機 松村">
+  <meta property="og:description" content="空気清浄機 松村 松村を1回タップ → 自動で浄化。最後は“クリア後のきれいなカメラ”を見せます。 420 / 500 最悪 📷 カメラ準備中… 許可が出ると背景がカメラになります（拒否でも遊べます）。 😮‍💨 空気清浄機 松村 タップで自動浄化開始 🌀 カメラ切替 浄化">
+  <meta name="twitter:description" content="空気清浄機 松村 松村を1回タップ → 自動で浄化。最後は“クリア後のきれいなカメラ”を見せます。 420 / 500 最悪 📷 カメラ準備中… 許可が出ると背景がカメラになります（拒否でも遊べます）。 😮‍💨 空気清浄機 松村 タップで自動浄化開始 🌀 カメラ切替 浄化">
+  <meta property="og:image" content="/2026-01-19/assets/matsumura.png">
+  <meta name="twitter:image" content="/2026-01-19/assets/matsumura.png">
+  <meta property="og:url" content="/2026-01-19/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <!-- OGP AUTO-GENERATED END -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>空気清浄機 松村</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --good:#34d399;
+      --bad:#fb7185;
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; background:var(--bg); color:var(--ink); overflow:hidden}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP",
+        "Hiragino Kaku Gothic ProN","Hiragino Sans", Meiryo, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .wrap{
+      height:100%;
+      padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right))
+               max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    header{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:6px;
+      min-width:0;
+    }
+    h1{
+      font-size:16px; letter-spacing:.02em; line-height:1.2;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .sub{
+      font-size:12px; color:var(--muted); line-height:1.35;
+    }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border-radius:999px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      user-select:none;
+      white-space:nowrap;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: var(--bad);
+      box-shadow: 0 0 18px rgba(251,113,133,.55);
+      flex:0 0 auto;
+    }
+    .aqi{
+      font-variant-numeric: tabular-nums;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .aqi strong{color:var(--ink); font-size:14px}
+
+    .stage{
+      position:relative;
+      flex:1;
+      border-radius: var(--r);
+      overflow:hidden;
+      border:1px solid var(--line);
+      background:
+        radial-gradient(1200px 600px at 30% 10%, rgba(96,165,250,.14), rgba(11,16,32,0)),
+        radial-gradient(900px 500px at 80% 110%, rgba(52,211,153,.10), rgba(11,16,32,0)),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      box-shadow: var(--shadow);
+    }
+
+    video{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+      filter: saturate(1.05) contrast(1.02);
+      background: #000;
+    }
+
+    .fallback{
+      position:absolute; inset:0;
+      background:
+        radial-gradient(900px 500px at 30% 20%, rgba(255,255,255,.08), rgba(0,0,0,0)),
+        radial-gradient(900px 600px at 70% 90%, rgba(96,165,250,.18), rgba(0,0,0,0)),
+        linear-gradient(180deg, rgba(15,23,42,.75), rgba(2,6,23,.88));
+      display:none;
+    }
+    .fallback.on{display:block}
+
+    canvas{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      pointer-events:none;
+    }
+    /* 霞はscreenで“濁り”を足す、キラキラは通常合成 */
+    canvas#haze{ mix-blend-mode: screen; }
+    canvas#sparkle{ mix-blend-mode: lighter; }
+
+    .banner{
+      position:absolute; left:12px; right:12px; top:12px;
+      padding:10px 12px;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.28);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: var(--muted);
+      font-size:12px;
+      display:flex; gap:10px; align-items:flex-start;
+      transition: opacity 220ms ease;
+    }
+    .banner b{color:var(--ink); font-weight:700}
+
+    .controls{
+      position:absolute; left:12px; right:12px; bottom:12px;
+      display:flex; gap:12px; align-items:stretch;
+    }
+
+    .btn{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      color: var(--ink);
+      border-radius: 16px;
+      padding: 12px 14px;
+      font-weight:700;
+      letter-spacing:.02em;
+      box-shadow: 0 14px 40px rgba(0,0,0,.35);
+      user-select:none;
+      -webkit-user-select:none;
+      transform: translateZ(0);
+    }
+    .btn:active{transform: scale(.99)}
+    .btn.secondary{
+      width: 120px;
+      font-weight:600;
+      color: var(--muted);
+    }
+
+    .matsumura{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      min-height:56px;
+    }
+    .m-left{display:flex; align-items:center; gap:12px; min-width:0}
+    .avatar{
+      width:42px; height:42px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      overflow:hidden;
+      flex:0 0 auto;
+      display:grid; place-items:center;
+    }
+    .avatar img{width:100%; height:100%; object-fit:cover}
+    .m-text{display:flex; flex-direction:column; gap:2px; min-width:0}
+    .m-text .name{
+      font-size:13px; font-weight:800;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .m-text .hint{font-size:12px; color:var(--muted); line-height:1.25}
+    .spark{
+      font-size:18px;
+      opacity:.9;
+      flex:0 0 auto;
+    }
+
+    .pop{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform: translate(-50%,-50%);
+      padding:10px 12px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.35);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-size:12px;
+      color: var(--ink);
+      pointer-events:none;
+      opacity:0;
+    }
+    .pop.show{ animation: pop 900ms ease-out forwards; }
+    @keyframes pop{
+      0%{opacity:0; transform: translate(-50%,-50%) scale(.96)}
+      15%{opacity:1}
+      80%{opacity:1; transform: translate(-50%,-60%) scale(1)}
+      100%{opacity:0; transform: translate(-50%,-72%) scale(1.02)}
+    }
+
+    /* 完了：画面は“見える”まま。下部にシートだけ出す */
+    .sheet{
+      position:absolute; left:12px; right:12px; bottom:84px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.28);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 18px;
+      box-shadow: 0 18px 70px rgba(0,0,0,.55);
+      padding:14px;
+      transform: translateY(18px);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity 220ms ease, transform 220ms ease;
+    }
+    .sheet.on{
+      opacity:1;
+      transform: translateY(0);
+      pointer-events:auto;
+    }
+    .sheet h2{font-size:14px; margin-bottom:6px}
+    .sheet p{font-size:12px; color:var(--muted); line-height:1.4}
+    .row{
+      margin-top:10px;
+      display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;
+    }
+    .miniBtn{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      color: var(--ink);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-weight:800;
+      font-size:13px;
+      min-width: 140px;
+    }
+    .miniBtn:active{transform:scale(.99)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>空気清浄機 松村</h1>
+        <div class="sub">松村を1回タップ → 自動で浄化。最後は“クリア後のきれいなカメラ”を見せます。</div>
+      </div>
+
+      <div class="pill" aria-label="air quality">
+        <span class="dot" id="dot"></span>
+        <div class="aqi"><strong id="aqiNum">420</strong> / 500<br><span id="aqiLabel">最悪</span></div>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <video id="cam" playsinline muted autoplay></video>
+      <div class="fallback" id="fallback"></div>
+
+      <canvas id="haze"></canvas>
+      <canvas id="sparkle"></canvas>
+
+      <div class="banner" id="banner">
+        <div style="flex:0 0 auto; opacity:.95">📷</div>
+        <div style="min-width:0">
+          <b id="bannerTitle">カメラ準備中…</b><br>
+          <span id="bannerText">許可が出ると背景がカメラになります（拒否でも遊べます）。</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn matsumura" id="purifyBtn" type="button" aria-label="purify">
+          <span class="m-left">
+            <span class="avatar">
+              <img id="mImg" alt="松村" />
+              <span id="mFallback" style="display:none">😮‍💨</span>
+            </span>
+            <span class="m-text">
+              <span class="name">空気清浄機 松村</span>
+              <span class="hint" id="hint">タップで自動浄化開始</span>
+            </span>
+          </span>
+          <span class="spark" id="spark">🌀</span>
+        </button>
+
+        <button class="btn secondary" id="switchBtn" type="button">カメラ切替</button>
+      </div>
+
+      <div class="pop" id="pop">浄化開始！！</div>
+
+      <div class="sheet" id="sheet" role="dialog" aria-label="done sheet">
+        <h2>空気、完全にきれい。</h2>
+        <p>この“きれいな画面”が本体です。スクショして良し。</p>
+        <div class="row">
+          <button class="miniBtn" id="resetBtn" type="button">もう一回汚す</button>
+          <button class="miniBtn" id="closeBtn" type="button">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    const cam = document.getElementById('cam');
+    const fallback = document.getElementById('fallback');
+
+    const haze = document.getElementById('haze');
+    const hz = haze.getContext('2d');
+
+    const sparkle = document.getElementById('sparkle');
+    const sp = sparkle.getContext('2d');
+
+    const purifyBtn = document.getElementById('purifyBtn');
+    const switchBtn = document.getElementById('switchBtn');
+
+    const aqiNum = document.getElementById('aqiNum');
+    const aqiLabel = document.getElementById('aqiLabel');
+    const dot = document.getElementById('dot');
+    const hint = document.getElementById('hint');
+
+    const banner = document.getElementById('banner');
+    const bannerTitle = document.getElementById('bannerTitle');
+    const bannerText = document.getElementById('bannerText');
+
+    const pop = document.getElementById('pop');
+    const sheet = document.getElementById('sheet');
+    const resetBtn = document.getElementById('resetBtn');
+    const closeBtn = document.getElementById('closeBtn');
+
+    const mImg = document.getElementById('mImg');
+    const mFallback = document.getElementById('mFallback');
+    mImg.src = asset('./assets/matsumura.png');
+    mImg.onload = () => { mFallback.style.display = 'none'; };
+    mImg.onerror = () => { mImg.style.display = 'none'; mFallback.style.display = 'inline'; };
+
+    // 0..1（1が最悪）
+    let dirty = 0.90;
+
+    // 自動浄化フラグ
+    let purifying = false;
+
+    // 霞の瞬間パルス
+    let pulse = 0;
+
+    // キラキラ強度（0..1）: 浄化中と完了直後に上がる
+    let sparklePower = 0;
+
+    let stream = null;
+    let facing = 'user';
+    let canSwitch = true;
+
+    function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+
+    function resize(){
+      const rect = haze.getBoundingClientRect();
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+
+      for (const c of [haze, sparkle]){
+        c.width = Math.floor(rect.width * dpr);
+        c.height = Math.floor(rect.height * dpr);
+      }
+      hz.setTransform(dpr,0,0,dpr,0,0);
+      sp.setTransform(dpr,0,0,dpr,0,0);
+    }
+    window.addEventListener('resize', resize, {passive:true});
+    resize();
+
+    function aqiFromDirty(d){
+      if (d <= 0.001) return 0;
+      return Math.round(20 + d * 480);
+    }
+    function labelFromDirty(d){
+      if (d <= 0.001) return {t:'完全にきれい', c:'var(--good)'};
+      if (d < 0.18) return {t:'めっちゃきれい', c:'var(--good)'};
+      if (d < 0.38) return {t:'まあまあ', c:'rgba(52,211,153,.85)'};
+      if (d < 0.60) return {t:'ちょい悪い', c:'rgba(250,204,21,.95)'};
+      if (d < 0.80) return {t:'空気わるい', c:'var(--bad)'};
+      return {t:'最悪', c:'var(--bad)'};
+    }
+
+    function updateUI(){
+      const aqi = aqiFromDirty(dirty);
+      aqiNum.textContent = String(aqi);
+
+      const lab = labelFromDirty(dirty);
+      aqiLabel.textContent = lab.t;
+      dot.style.background = lab.c;
+
+      const cleanPct = Math.round((1 - dirty) * 100);
+      hint.textContent = purifying
+        ? `自動浄化中…（きれい: ${cleanPct}%）`
+        : (dirty <= 0.001 ? `完了（きれい: 100%）` : `タップで自動浄化開始（いま: ${cleanPct}%）`);
+    }
+
+    function drawHaze(){
+      const w = haze.clientWidth;
+      const h = haze.clientHeight;
+      hz.clearRect(0,0,w,h);
+
+      const effective = clamp01(dirty - pulse);
+      const baseAlpha = 0.10 + effective * 0.55;
+
+      hz.globalCompositeOperation = 'source-over';
+      hz.fillStyle = `rgba(210, 200, 170, ${baseAlpha})`;
+      hz.fillRect(0,0,w,h);
+
+      const n = Math.floor(70 + effective * 170);
+      for(let i=0;i<n;i++){
+        const x = Math.random()*w;
+        const y = Math.random()*h;
+        const r = 10 + Math.random()*60;
+        const a = (0.01 + Math.random()*0.05) * (0.32 + effective);
+        hz.beginPath();
+        hz.arc(x,y,r,0,Math.PI*2);
+        hz.fillStyle = `rgba(255,255,255,${a})`;
+        hz.fill();
+      }
+
+      const grad = hz.createRadialGradient(w*0.5,h*0.45, Math.min(w,h)*0.10, w*0.5,h*0.5, Math.max(w,h)*0.75);
+      grad.addColorStop(0, `rgba(0,0,0,0)`);
+      grad.addColorStop(1, `rgba(0,0,0,${0.10 + effective*0.30})`);
+      hz.fillStyle = grad;
+      hz.fillRect(0,0,w,h);
+
+      pulse *= 0.88;
+      if (pulse < 0.002) pulse = 0;
+    }
+
+    // ---- キラキラ（軽量パーティクル） ----
+    const particles = [];
+    function spawnSparkles(intensity){
+      // intensity: 0..1
+      const w = sparkle.clientWidth;
+      const h = sparkle.clientHeight;
+      const count = Math.floor(6 + intensity * 18);
+
+      for(let i=0;i<count;i++){
+        const x = Math.random()*w;
+        const y = Math.random()*h;
+        const v = 40 + Math.random()*120;
+        const ang = (-Math.PI/2) + (Math.random()-0.5)*0.9; // 上方向メイン
+        const size = 1.5 + Math.random()*3.0;
+        const life = 0.6 + Math.random()*0.8;
+
+        particles.push({
+          x, y,
+          vx: Math.cos(ang)*v,
+          vy: Math.sin(ang)*v,
+          r: size,
+          t: 0,
+          life,
+          spin: (Math.random()-0.5)*6,
+          a: 0.55 + Math.random()*0.35
+        });
+      }
+      // 制限
+      if (particles.length > 240) particles.splice(0, particles.length - 240);
+    }
+
+    function drawSparkles(dt){
+      const w = sparkle.clientWidth;
+      const h = sparkle.clientHeight;
+      sp.clearRect(0,0,w,h);
+
+      // 浄化中/完了で発生量を増やす
+      if (sparklePower > 0.01){
+        spawnSparkles(sparklePower);
+      }
+
+      // 薄い“光膜”も足す（きれい感）
+      if (dirty < 0.2){
+        const a = (0.16 + (0.2 - dirty)*0.55) * clamp01(sparklePower + 0.25);
+        sp.fillStyle = `rgba(120, 255, 220, ${a * 0.12})`;
+        sp.fillRect(0,0,w,h);
+      }
+
+      // particle update
+      sp.globalCompositeOperation = 'source-over';
+
+      for (let i = particles.length - 1; i >= 0; i--){
+        const p = particles[i];
+        p.t += dt;
+        const k = p.t / p.life;
+        if (k >= 1){
+          particles.splice(i,1);
+          continue;
+        }
+
+        // ease-out
+        const ease = 1 - Math.pow(1 - k, 2);
+        p.x += p.vx * dt;
+        p.y += p.vy * dt + 40*dt; // 重力
+        p.vx *= (1 - 1.6*dt);
+        p.vy *= (1 - 1.6*dt);
+
+        const alpha = p.a * (1 - ease);
+        const rr = p.r * (1 + 0.4*Math.sin(p.t * p.spin));
+
+        // 十字キラ（簡易）
+        sp.save();
+        sp.translate(p.x, p.y);
+        sp.rotate(p.t * p.spin * 0.2);
+        sp.strokeStyle = `rgba(255,255,255,${alpha})`;
+        sp.lineWidth = 1;
+        sp.beginPath();
+        sp.moveTo(-rr*2, 0);
+        sp.lineTo(rr*2, 0);
+        sp.moveTo(0, -rr*2);
+        sp.lineTo(0, rr*2);
+        sp.stroke();
+
+        // ぼんやり光
+        const g = sp.createRadialGradient(0,0,0, 0,0, rr*4.5);
+        g.addColorStop(0, `rgba(170,255,240,${alpha*0.55})`);
+        g.addColorStop(1, `rgba(170,255,240,0)`);
+        sp.fillStyle = g;
+        sp.beginPath();
+        sp.arc(0,0, rr*4.5, 0, Math.PI*2);
+        sp.fill();
+        sp.restore();
+
+        // 画面外掃除（軽量）
+        if (p.x < -80 || p.x > w+80 || p.y < -120 || p.y > h+120){
+          particles.splice(i,1);
+        }
+      }
+
+      // sparklePower decay
+      sparklePower *= Math.pow(0.25, dt); // 早めに減衰
+      if (sparklePower < 0.002) sparklePower = 0;
+    }
+
+    function showPop(text){
+      pop.textContent = text;
+      pop.classList.remove('show');
+      void pop.offsetWidth;
+      pop.classList.add('show');
+    }
+
+    function finish(){
+      dirty = 0;
+      purifying = false;
+
+      // 完了直後だけキラキラ強め
+      sparklePower = Math.max(sparklePower, 1);
+
+      // “画面を見せる”ため、オーバーレイではなくシート表示
+      sheet.classList.add('on');
+      showPop('空気、完全にきれい。');
+    }
+
+    purifyBtn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+
+      if (dirty <= 0.001){
+        // すでに完全にきれいなときだけ、軽くキラキラ
+        sheet.classList.add('on');
+        sparklePower = Math.max(sparklePower, 0.6);
+        return;
+      }
+      if (purifying) return;
+
+      purifying = true;
+      showPop('浄化開始！！');
+      pulse = Math.min(0.55, pulse + 0.22);
+
+      banner.style.opacity = '0';
+      sheet.classList.remove('on');
+    }, {passive:false});
+
+    resetBtn.addEventListener('click', () => {
+      sheet.classList.remove('on');
+      dirty = 0.92;
+      purifying = false;
+      pulse = 0.05;
+      // キラキラ完全リセット
+      sparklePower = 0;
+      particles.length = 0;
+      banner.style.opacity = '1';
+      bannerTitle.textContent = '空気が最悪です';
+      bannerText.textContent = '松村を1回タップして浄化してください。';
+      showPop('空気が最悪です');
+    });
+
+    closeBtn.addEventListener('click', () => {
+      sheet.classList.remove('on');
+    });
+
+    let lastT = performance.now();
+    function tick(t){
+      const dt = Math.min(0.05, (t - lastT)/1000);
+      lastT = t;
+
+      if (purifying){
+        // 気持ちよく 0 に到達（終盤も進む）
+        const k = 1.25;
+        const minSpeed = 0.16;
+        const dec = (dirty * k + minSpeed) * dt;
+        dirty = clamp01(dirty - dec);
+
+        // 霞の薄れ演出（浄化中のみ）
+        pulse = Math.min(0.65, pulse + 0.08);
+
+        if (dirty <= 0.001) finish();
+      } else {
+        // 放置で少し汚れる（ただし完了見せたいので、0のときは汚れない）
+        if (dirty > 0.001){
+          dirty = clamp01(dirty + dt * 0.0008);
+        }
+      }
+
+      drawHaze();
+      drawSparkles(dt);
+      updateUI();
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    async function startCamera(){
+      bannerTitle.textContent = 'カメラ準備中…';
+      bannerText.textContent = '許可が出ると背景がカメラになります（拒否でも遊べます）。';
+
+      if (!navigator.mediaDevices?.getUserMedia){
+        fallback.classList.add('on');
+        cam.style.display = 'none';
+        bannerTitle.textContent = 'カメラ非対応';
+        bannerText.textContent = 'この端末/環境ではカメラが使えないため、背景はダミー表示です。';
+        return;
+      }
+
+      try{
+        if (stream){
+          stream.getTracks().forEach(tr => tr.stop());
+          stream = null;
+        }
+      }catch{}
+
+      try{
+        const constraints = {
+          audio: false,
+          video: {
+            facingMode: { ideal: facing },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        };
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        cam.srcObject = stream;
+        cam.style.display = 'block';
+        fallback.classList.remove('on');
+
+        bannerTitle.textContent = '空気が最悪です';
+        bannerText.textContent = '松村を1回タップして浄化してください。';
+        showPop('空気が最悪です');
+        setTimeout(()=> banner.style.opacity = '0', 2200);
+
+      } catch (err){
+        fallback.classList.add('on');
+        cam.style.display = 'none';
+        bannerTitle.textContent = 'カメラ許可がありません';
+        bannerText.textContent = 'このままでも遊べます。松村を1回タップして浄化。';
+      }
+    }
+
+    startCamera();
+
+    switchBtn.addEventListener('click', async () => {
+      if (!canSwitch) return;
+      canSwitch = false;
+      facing = (facing === 'user') ? 'environment' : 'user';
+      banner.style.opacity = '1';
+      bannerTitle.textContent = 'カメラ切替中…';
+      bannerText.textContent = '少し待ってください。';
+      await startCamera();
+      setTimeout(()=> { canSwitch = true; }, 700);
+    });
+
+    // iOS: ダブルタップ拡大抑止
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, {passive:false});
+  </script>
+</body>
+</html>
