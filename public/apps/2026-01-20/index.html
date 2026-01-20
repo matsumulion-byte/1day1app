@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#08101e" />
+  <title>大寒｜凍結松村 発掘（Canvas）</title>
+  <style>
+    :root{
+      --bg:#08101e;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.12);
+      --r:18px;
+      --shadow:0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; background:var(--bg); color:var(--ink); overflow:hidden;}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      touch-action:none;
+    }
+
+    .wrap{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+      gap:12px;
+    }
+    header{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .title{display:flex; flex-direction:column; gap:6px;}
+    h1{font-size:18px; letter-spacing:.02em; line-height:1.2;}
+    .sub{font-size:12px; color:var(--muted); line-height:1.35;}
+    .badge{
+      font-size:12px;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      border-radius:999px;
+      white-space:nowrap;
+    }
+
+    .card{
+      flex:1;
+      min-height:0;
+      border-radius:var(--r);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      box-shadow: var(--shadow);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+    .stage{
+      position:relative;
+      flex:1;
+      min-height:0;
+      display:grid;
+      place-items:center;
+      padding:16px;
+      background:
+        radial-gradient(900px 420px at 50% 20%, rgba(96,165,250,.15), transparent 60%),
+        radial-gradient(700px 380px at 20% 80%, rgba(52,211,153,.08), transparent 60%);
+    }
+
+    .slab{
+      width:min(360px, 92vw);
+      aspect-ratio: 1 / 1;
+      border-radius:24px;
+      position:relative;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow:0 18px 55px rgba(0,0,0,.45);
+      background:rgba(0,0,0,.12);
+      user-select:none;
+      -webkit-user-select:none;
+      touch-action:none;
+    }
+    .slab img{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+      filter: saturate(.9) contrast(.98);
+      transform: translateZ(0);
+    }
+    canvas{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      display:block;
+      transform: translateZ(0);
+    }
+
+    .toast{
+      position:absolute;
+      left:50%;
+      top:14px;
+      transform: translateX(-50%);
+      background:rgba(0,0,0,.50);
+      border:1px solid rgba(255,255,255,.16);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:12px;
+      color:var(--ink);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity 220ms ease, transform 220ms ease;
+      z-index:5;
+      white-space:nowrap;
+    }
+    .toast.show{
+      opacity:1;
+      transform: translateX(-50%) translateY(2px);
+    }
+
+    .ui{
+      padding:12px 14px 14px;
+      border-top:1px solid var(--line);
+      background:rgba(0,0,0,.08);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .meter{
+      height:10px;
+      flex:1;
+      border-radius:999px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.14);
+      overflow:hidden;
+    }
+    .bar{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg, rgba(96,165,250,.9), rgba(52,211,153,.9));
+      transition: width 140ms linear;
+    }
+    .btn{
+      appearance:none;
+      border:none;
+      color:var(--ink);
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:14px;
+      padding:10px 12px;
+      font-weight:700;
+      letter-spacing:.02em;
+      cursor:pointer;
+      min-width:110px;
+    }
+    .btn:active{transform: translateY(1px)}
+    .hint{font-size:12px; color:var(--muted); line-height:1.45;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>大寒｜凍結松村 発掘</h1>
+        <div class="sub">氷を指で削って発掘。削れた割合が一定を超えるとクリア。</div>
+      </div>
+      <div class="badge" id="badge">0%</div>
+    </header>
+
+    <section class="card">
+      <div class="stage">
+        <div class="toast" id="toast">発掘完了！</div>
+
+        <div class="slab" id="slab">
+          <img id="mImg" alt="松村" />
+          <canvas id="ice"></canvas>
+          <canvas id="fx"></canvas>
+        </div>
+      </div>
+
+      <div class="ui">
+        <div class="row">
+          <div class="meter"><div class="bar" id="bar"></div></div>
+          <button class="btn" id="resetBtn" type="button">リセット</button>
+        </div>
+        <div class="hint">
+          ・タップ / 連打で削れます<br>
+          ・気持ちよさ調整は <b>BRUSH</b> と <b>CLEAR_TO_WIN</b>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module">
+    // 1日1アプリ: 動的アセット参照ヘルパー
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    // 差し替えてOK
+    const MATSUMURA_SRC = asset("./assets/matsumura.png");
+
+    const slab = document.getElementById("slab");
+    const img = document.getElementById("mImg");
+    const iceCanvas = document.getElementById("ice");
+    const fxCanvas = document.getElementById("fx");
+    const bar = document.getElementById("bar");
+    const badge = document.getElementById("badge");
+    const toast = document.getElementById("toast");
+    const resetBtn = document.getElementById("resetBtn");
+
+    img.src = MATSUMURA_SRC;
+
+    // ====== 調整ポイント ======
+    const BRUSH = 30;               // 削る半径(px)
+    const CLEAR_TO_WIN = 0.70;      // 何%削れたらクリア(0-1)
+    const SAMPLE_GRID = 7;          // 進捗計測の粗さ(px相当)
+    const CHIPINESS = 0.55;         // 欠けのギザギザ度(0-1)
+    const BIG_CHIP_CHANCE = 0.18;   // たまに大きく剥がれる確率
+    // =========================
+
+    const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    let W = 0, H = 0;
+    // 画像が実際に表示されている領域（object-fit: contain 用）
+    let imgBox = null; // { x, y, w, h }
+
+    const iceCtx = iceCanvas.getContext("2d", { willReadFrequently: true });
+    const fxCtx  = fxCanvas.getContext("2d");
+
+    let drawing = false;
+    let done = false;
+    let last = null;
+    let progress = 0;
+    let progressRAF = 0;
+
+    function resize(){
+      const rect = slab.getBoundingClientRect();
+      W = Math.max(1, Math.floor(rect.width  * dpr));
+      H = Math.max(1, Math.floor(rect.height * dpr));
+
+      for (const c of [iceCanvas, fxCanvas]){
+        c.width = W; c.height = H;
+        c.style.width = rect.width + "px";
+        c.style.height = rect.height + "px";
+      }
+
+      // object-fit: contain で実際に画像が描画される矩形を計算（氷を削る範囲制限用）
+      if (img.naturalWidth && img.naturalHeight){
+        const iw = img.naturalWidth;
+        const ih = img.naturalHeight;
+        const scale = Math.min(W/iw, H/ih);
+        const rw = iw * scale;
+        const rh = ih * scale;
+        const ox = (W - rw) * 0.5;
+        const oy = (H - rh) * 0.5;
+        imgBox = { x: ox, y: oy, w: rw, h: rh };
+      } else {
+        imgBox = { x: 0, y: 0, w: W, h: H };
+      }
+      resetAll();
+    }
+
+    function rand(n){ return Math.random()*n; }
+
+    function drawIce(){
+      iceCtx.save();
+      iceCtx.clearRect(0,0,W,H);
+
+      // まず「完全不透明」の氷ベース（重要：alpha 255）
+      const g = iceCtx.createLinearGradient(0,0,W,H);
+      g.addColorStop(0,   "rgba(190,235,255,1)");
+      g.addColorStop(0.5, "rgba(135,210,255,1)");
+      g.addColorStop(1,   "rgba(255,255,255,1)");
+      iceCtx.fillStyle = g;
+      iceCtx.fillRect(0,0,W,H);
+
+      // 冷気っぽい霜（source-overで描けば alpha は 1 のまま維持される）
+      iceCtx.globalCompositeOperation = "screen";
+      for (let i=0;i<6;i++){
+        const rg = iceCtx.createRadialGradient(rand(W), rand(H), 0, rand(W), rand(H), rand(Math.min(W,H)*0.55));
+        rg.addColorStop(0, "rgba(255,255,255,0.22)");
+        rg.addColorStop(1, "rgba(255,255,255,0)");
+        iceCtx.fillStyle = rg;
+        iceCtx.fillRect(0,0,W,H);
+      }
+
+      // ノイズ（putImageData禁止：alpha穴が開くため）
+      iceCtx.globalCompositeOperation = "overlay";
+      iceCtx.fillStyle = "rgba(255,255,255,0.06)";
+      for (let i=0;i<2200;i++){
+        const x = rand(W), y = rand(H);
+        const s = (Math.random() < 0.9 ? 1 : 2) * dpr;
+        iceCtx.fillRect(x, y, s, s);
+      }
+
+      // ひび（薄め）
+      iceCtx.globalCompositeOperation = "overlay";
+      iceCtx.lineCap = "round";
+      iceCtx.lineJoin = "round";
+      iceCtx.strokeStyle = "rgba(255,255,255,0.55)";
+      iceCtx.lineWidth = 1.2 * dpr;
+
+      const cracks = 9;
+      for (let i=0;i<cracks;i++){
+        let x = rand(W), y = rand(H);
+        iceCtx.beginPath();
+        iceCtx.moveTo(x,y);
+        const seg = 7 + Math.floor(rand(8));
+        for (let k=0;k<seg;k++){
+          x += (rand(2)-1) * W * 0.16;
+          y += (rand(2)-1) * H * 0.16;
+          x = Math.max(0, Math.min(W, x));
+          y = Math.max(0, Math.min(H, y));
+          iceCtx.lineTo(x,y);
+        }
+        iceCtx.stroke();
+      }
+
+      // 端の霜（ビネット）
+      iceCtx.globalCompositeOperation = "source-over";
+      const v = iceCtx.createRadialGradient(W*0.5,H*0.5, Math.min(W,H)*0.25, W*0.5,H*0.5, Math.min(W,H)*0.85);
+      v.addColorStop(0, "rgba(255,255,255,0)");
+      v.addColorStop(1, "rgba(255,255,255,0.22)");
+      iceCtx.fillStyle = v;
+      iceCtx.fillRect(0,0,W,H);
+
+      iceCtx.restore();
+
+      // 削りモードへ
+      iceCtx.globalCompositeOperation = "destination-out";
+    }
+
+    function stampChip(ctx, x, y, r){
+      // 不規則ポリゴンで「欠け」を作って destination-out で抜く
+      const spikes = 8 + Math.floor(Math.random()*7); // 8-14
+      const ang0 = Math.random()*Math.PI*2;
+
+      ctx.save();
+      ctx.beginPath();
+      for(let i=0;i<spikes;i++){
+        const t = ang0 + (i/spikes)*Math.PI*2;
+        const jitter = 1 - CHIPINESS*0.55 + Math.random()*CHIPINESS*0.55; // 半径の乱れ
+        const rr = r * (0.65 + 0.55*jitter);
+        const px = x + Math.cos(t)*rr;
+        const py = y + Math.sin(t)*rr;
+        if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+      }
+      ctx.closePath();
+      ctx.fillStyle = "rgba(0,0,0,1)";
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawCrackMark(x,y,baseR){
+      // “割れ痕”を残す（ice上に描く＝消えない）
+      iceCtx.save();
+      iceCtx.globalCompositeOperation = "source-over";
+      iceCtx.strokeStyle = "rgba(255,255,255,0.55)";
+      iceCtx.lineWidth = (1.1 + Math.random()*0.8) * dpr;
+      iceCtx.lineCap = "round";
+      iceCtx.lineJoin = "round";
+
+      const rays = 3 + Math.floor(Math.random()*4);
+      for(let i=0;i<rays;i++){
+        const ang = Math.random()*Math.PI*2;
+        const len = (baseR*(1.2 + Math.random()*1.6)) * dpr;
+        iceCtx.beginPath();
+        iceCtx.moveTo(x,y);
+        iceCtx.lineTo(x + Math.cos(ang)*len, y + Math.sin(ang)*len);
+        iceCtx.stroke();
+      }
+      iceCtx.restore();
+
+      // 削りに戻す（超重要：これ忘れると削れなくなる）
+      iceCtx.globalCompositeOperation = "destination-out";
+    }
+
+    function clearFx(){
+      fxCtx.clearRect(0,0,W,H);
+    }
+
+    function showToast(text){
+      toast.textContent = text;
+      toast.classList.add("show");
+      setTimeout(()=> toast.classList.remove("show"), 1200);
+    }
+
+    function renderUI(){
+      const pct = Math.max(0, Math.min(1, progress));
+      badge.textContent = `${Math.round(pct*100)}%`;
+      bar.style.width = `${Math.round(pct*100)}%`;
+    }
+
+    function toLocalPos(ev){
+      const rect = slab.getBoundingClientRect();
+      const clientX = ev.clientX ?? (ev.touches && ev.touches[0]?.clientX) ?? 0;
+      const clientY = ev.clientY ?? (ev.touches && ev.touches[0]?.clientY) ?? 0;
+      return {
+        x: (clientX - rect.left) * dpr,
+        y: (clientY - rect.top) * dpr,
+      };
+    }
+
+    function eraseChip(x,y){
+      const base = BRUSH * dpr;
+
+      // 中心ピクセルにまだ氷が残っているときだけ「割れ痕」を付ける
+      const cx = Math.max(0, Math.min(W-1, Math.floor(x)));
+      const cy = Math.max(0, Math.min(H-1, Math.floor(y)));
+      const centerAlpha = iceCtx.getImageData(cx, cy, 1, 1).data[3];
+      const hasIceHere = centerAlpha > 5; // computeProgress と同じ閾値
+
+      // たまに「バキッ」と大きい欠け
+      const mult = (Math.random() < BIG_CHIP_CHANCE) ? (1.65 + Math.random()*0.55) : (0.95 + Math.random()*0.25);
+      const r = base * mult;
+
+      if (hasIceHere){
+        drawCrackMark(x, y, base*0.9);
+      }
+      stampChip(iceCtx, x, y, r);
+    }
+
+    function eraseStroke(a,b){
+      // スワイプでは氷を削らず、エフェクトだけ出す
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const dist = Math.hypot(dx,dy);
+      const step = Math.max(4, (BRUSH * dpr) * 0.7);
+      const n = Math.max(1, Math.floor(dist / step));
+      for (let i=0;i<=n;i++){
+        const t = i / n;
+        const x = a.x + dx*t;
+        const y = a.y + dy*t;
+        fxCrack(x,y);
+      }
+    }
+
+    function fxCrack(x,y){
+      // 中心に氷がほぼ無ければ FX のひびも出さない
+      const cx = Math.max(0, Math.min(W-1, Math.floor(x)));
+      const cy = Math.max(0, Math.min(H-1, Math.floor(y)));
+      const centerAlpha = iceCtx.getImageData(cx, cy, 1, 1).data[3];
+      if (centerAlpha <= 5) return;
+
+      if (Math.random() > 0.22) return;
+      const len = (16 + rand(16)) * dpr;
+      const ang = rand(Math.PI*2);
+      const x2 = x + Math.cos(ang)*len;
+      const y2 = y + Math.sin(ang)*len;
+
+      fxCtx.save();
+      fxCtx.globalCompositeOperation = "screen";
+      fxCtx.strokeStyle = "rgba(255,255,255,0.32)";
+      fxCtx.lineWidth = (1.0 + rand(0.6)) * dpr;
+      fxCtx.beginPath();
+      fxCtx.moveTo(x,y);
+      fxCtx.lineTo(x2,y2);
+      fxCtx.stroke();
+      fxCtx.restore();
+    }
+
+    // FXは「黒を塗る」じゃなく「透明を増やす」= destination-out でフェード
+    function fadeFxLoop(){
+      fxCtx.save();
+      fxCtx.globalCompositeOperation = "destination-out";
+      fxCtx.fillStyle = "rgba(0,0,0,0.08)";
+      fxCtx.fillRect(0,0,W,H);
+      fxCtx.restore();
+      requestAnimationFrame(fadeFxLoop);
+    }
+
+    function computeProgress(){
+      // destination-outで削った部分は alpha=0 になるので、それだけを削れ扱いにする
+      const data = iceCtx.getImageData(0,0,W,H).data;
+      let cleared = 0, total = 0;
+
+      const step = Math.max(3, Math.floor(SAMPLE_GRID * dpr));
+      for (let y=0; y<H; y+=step){
+        for (let x=0; x<W; x+=step){
+          const a = data[(y*W + x) * 4 + 3];
+          total++;
+          if (a < 5) cleared++; // ここが重要（40とかにすると“薄い氷”まで削れ扱いになる）
+        }
+      }
+
+      progress = cleared / total;
+      renderUI();
+
+      if (!done && progress >= CLEAR_TO_WIN){
+        done = true;
+        showToast("発掘完了！");
+        // 演出：残氷を一気に消す
+        iceCtx.save();
+        iceCtx.globalCompositeOperation = "destination-out";
+        iceCtx.fillStyle = "rgba(0,0,0,1)";
+        iceCtx.fillRect(0,0,W,H);
+        iceCtx.restore();
+        progress = 1;
+        renderUI();
+      }
+    }
+
+    function scheduleProgress(){
+      if (progressRAF) return;
+      progressRAF = requestAnimationFrame(()=>{
+        progressRAF = 0;
+        computeProgress();
+      });
+    }
+
+    function onDown(ev){
+      ev.preventDefault();
+      if (done) return;
+      drawing = true;
+      last = toLocalPos(ev);
+      eraseChip(last.x, last.y);
+      fxCrack(last.x, last.y);
+      scheduleProgress();
+    }
+
+    function onMove(ev){
+      if (!drawing || done) return;
+      ev.preventDefault();
+      const p = toLocalPos(ev);
+      eraseStroke(last, p);
+      last = p;
+      scheduleProgress();
+    }
+
+    function onUp(ev){
+      if (!drawing) return;
+      ev.preventDefault();
+      drawing = false;
+      last = null;
+      scheduleProgress();
+    }
+
+    slab.addEventListener("pointerdown", onDown, { passive:false });
+    slab.addEventListener("pointermove", onMove, { passive:false });
+    window.addEventListener("pointerup", onUp, { passive:false });
+    window.addEventListener("pointercancel", onUp, { passive:false });
+
+    // iOSの余計な動作抑止
+    slab.addEventListener("touchstart", (e)=>e.preventDefault(), { passive:false });
+    slab.addEventListener("touchmove", (e)=>e.preventDefault(), { passive:false });
+
+    function resetAll(){
+      drawIce();
+      clearFx();
+      done = false;
+      progress = 0;
+      renderUI();
+    }
+
+    resetBtn.addEventListener("click", resetAll);
+
+    window.addEventListener("resize", resize);
+    img.addEventListener("load", resize);
+
+    resize();
+    fadeFxLoop();
+  </script>
+</body>
+</html>
