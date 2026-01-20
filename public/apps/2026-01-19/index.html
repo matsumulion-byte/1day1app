@@ -353,7 +353,8 @@
 
     const mImg = document.getElementById('mImg');
     const mFallback = document.getElementById('mFallback');
-    mImg.src = asset('./apps/2026-01-19/assets/matsumura.png');
+    // Vercel の pretty URL 対応のため絶対パス指定にする
+    mImg.src = "/apps/2026-01-19/assets/matsumura.png";
     mImg.onload = () => { mFallback.style.display = 'none'; };
     mImg.onerror = () => { mImg.style.display = 'none'; mFallback.style.display = 'inline'; };
 

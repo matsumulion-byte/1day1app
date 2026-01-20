@@ -259,10 +259,11 @@ const retryBtn = document.getElementById('retryBtn');
 
 /* ===== assets ===== */
 const headImg = new Image();
-headImg.src = asset('./apps/2026-01-17/assets/matsumura.png');
+// Vercel の pretty URL 対応のため絶対パス指定にする
+headImg.src = "/apps/2026-01-17/assets/matsumura.png";
 
 /* BGM: ファイル名だけ合わせて */
-const bgm = new Audio(asset('./apps/2026-01-17/assets/bgm.mp3'));
+const bgm = new Audio("/apps/2026-01-17/assets/bgm.mp3");
 bgm.loop = true;
 bgm.preload = 'auto';
 

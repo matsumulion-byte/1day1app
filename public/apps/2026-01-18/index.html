@@ -195,7 +195,8 @@
 
     // ---------- Assets ----------
     const matsumuraImg = new Image();
-    matsumuraImg.src = asset('./apps/2026-01-18/assets/matsumura.png'); // ここに置く
+    // Vercel の pretty URL 対応のため絶対パス指定にする
+    matsumuraImg.src = "/apps/2026-01-18/assets/matsumura.png"; // ここに置く
 
     // ---------- Helpers ----------
     const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
