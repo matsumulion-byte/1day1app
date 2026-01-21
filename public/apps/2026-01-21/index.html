@@ -20,19 +20,11 @@
       --shadow: 0 18px 60px rgba(0,0,0,.55);
     }
     *{box-sizing:border-box;margin:0;padding:0}
-    html,body{
-      height:100%;
-      background:var(--bg);
-      color:var(--ink);
-      overflow:hidden;
-    }
+    html,body{height:100%;background:var(--bg);color:var(--ink);}
     body{
-      height:100dvh;
       font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
-      display:flex;
-      flex-direction:column;
     }
 
     .app{
@@ -40,9 +32,7 @@
       display:grid;
       grid-template-rows: auto 1fr auto;
       gap:12px;
-      padding: calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 20px);
-      min-height:0;
-      overflow:hidden;
+      padding: calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 12px);
     }
 
     header{
@@ -51,9 +41,6 @@
       justify-content:space-between;
       gap:10px;
       min-height:36px;
-      position:relative;
-      z-index:10;
-      flex-shrink:0;
     }
     .title{
       display:flex; flex-direction:column; gap:2px;
@@ -90,8 +77,6 @@
       align-items:center;
       justify-content:center;
       min-height:0;
-      overflow:hidden;
-      flex:1 1 0;
     }
 
     .stage{
@@ -107,20 +92,12 @@
       position:relative;
       touch-action:none;
       user-select:none;
-      flex-shrink:0;
-      max-width:100%;
     }
 
-    video{
+    video, canvas{
       position:absolute; inset:0;
       width:100%; height:100%;
       object-fit:cover;
-      z-index:1;
-    }
-    canvas{
-      position:absolute; inset:0;
-      width:100%; height:100%;
-      z-index:2;
     }
     video{transform: scaleX(var(--mirror, 1));}
 
@@ -129,9 +106,6 @@
       display:flex;
       flex-direction:column;
       gap:10px;
-      position:relative;
-      z-index:10;
-      flex-shrink:0;
     }
     .bar{
       display:grid;
@@ -157,8 +131,6 @@
       display:flex; align-items:center; justify-content:center; gap:8px;
       user-select:none;
       min-height:44px;
-      position:relative;
-      z-index:11;
     }
     button:active, label.btn:active{transform: translateY(1px)}
     button.primary{
@@ -181,18 +153,6 @@
       font-size:11px;
       color:rgba(243,246,255,.6);
       line-height:1.35;
-    }
-
-    /* PCレイアウト調整：横幅を絞って中央寄せ */
-    @media (min-width: 768px){
-      body{
-        align-items:center;
-        justify-content:center;
-      }
-      .app{
-        max-width:960px;
-        width:100%;
-      }
     }
   </style>
 </head>
@@ -301,9 +261,7 @@
         const constraints = {
           audio:false,
           video:{
-            facingMode: { ideal: facingMode },
-            width: { ideal: 1080 },
-            height: { ideal: 1920 }
+            facingMode: { ideal: facingMode }
           }
         };
         stream = await navigator.mediaDevices.getUserMedia(constraints);
