@@ -206,11 +206,11 @@
   </div>
 
   <script type="module">
-    // 1日1アプリ: 動的アセット参照ヘルパー
+    // 1日1アプリ: 動的アセット参照ヘルパー（他日付用に残しつつ、このページは絶対パス指定を使う）
     const asset = (p) => new URL(p, import.meta.url).toString();
 
-    // 差し替えてOK
-    const MATSUMURA_SRC = asset("./assets/matsumura.png");
+    // 差し替えてOK（Vercel の pretty URL 対応のため絶対パスを直書き）
+    const MATSUMURA_SRC = "/apps/2026-01-20/assets/matsumura.png";
 
     const slab = document.getElementById("slab");
     const img = document.getElementById("mImg");

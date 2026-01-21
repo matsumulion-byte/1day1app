@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>マツムラ会 VS フォト</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --accent:#60a5fa;
+      --good:#34d399;
+      --bad:#fb7185;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;background:var(--bg);color:var(--ink);overflow:hidden}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .app{
+      height:100%;
+      display:grid;
+      grid-template-rows: auto 1fr auto;
+      gap:12px;
+      padding: calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 12px);
+    }
+
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      min-height:36px;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:2px;
+      min-width:0;
+    }
+    .title h1{
+      font-size:14px; letter-spacing:.06em; font-weight:800;
+      color:rgba(243,246,255,.92);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .title p{
+      font-size:11px; color:var(--muted); line-height:1.2;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .pill{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      color:rgba(243,246,255,.9);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+      white-space:nowrap;
+      flex:0 0 auto;
+    }
+    .dot{width:8px;height:8px;border-radius:99px;background:var(--bad)}
+    .dot.on{background:var(--good)}
+
+    .stageWrap{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:0;
+    }
+
+    .stage{
+      width:min(92vw, 520px);
+      aspect-ratio: 9 / 16;
+      border-radius: 22px;
+      border:1px solid var(--line);
+      background: radial-gradient(1200px 800px at 20% 10%, rgba(96,165,250,.18), transparent 55%),
+                  radial-gradient(900px 700px at 80% 20%, rgba(52,211,153,.12), transparent 55%),
+                  rgba(255,255,255,.04);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+      touch-action:none;
+      user-select:none;
+    }
+
+    video, canvas{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      object-fit:cover;
+    }
+    video{transform: scaleX(var(--mirror, 1));}
+
+    /* 画面内の最小ガイド：1つだけ（凍結時は消す） */
+    .hint{
+      position:absolute; left:12px; right:12px; bottom:12px;
+      padding:10px 12px;
+      border-radius: 16px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.36);
+      backdrop-filter: blur(10px);
+      font-size:12px;
+      color:rgba(243,246,255,.86);
+      line-height:1.35;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .hint b{color:#fff}
+    .hint small{font-size:11px;color:rgba(243,246,255,.68)}
+    .hint.hidden{display:none}
+
+    /* 下部UI：2行に整理（モードによって有効/無効） */
+    footer{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .bar{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .bar3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:10px;
+    }
+
+    button, label.btn{
+      appearance:none; border:none; cursor:pointer;
+      padding:12px 12px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.07));
+      border:1px solid var(--line);
+      color:rgba(243,246,255,.92);
+      font-weight:800;
+      letter-spacing:.04em;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      user-select:none;
+      min-height:44px;
+    }
+    button:active, label.btn:active{transform: translateY(1px)}
+    button.primary{
+      background: linear-gradient(180deg, rgba(96,165,250,.35), rgba(96,165,250,.16));
+      border-color: rgba(96,165,250,.35);
+    }
+    button.good{
+      background: linear-gradient(180deg, rgba(52,211,153,.28), rgba(52,211,153,.12));
+      border-color: rgba(52,211,153,.35);
+    }
+    button.ghost{background: rgba(255,255,255,.04)}
+    button:disabled, label.btn.disabled{
+      opacity:.5; cursor:not-allowed;
+      filter:saturate(.6);
+    }
+    input[type="file"]{display:none}
+
+    .note{
+      text-align:center;
+      font-size:11px;
+      color:rgba(243,246,255,.6);
+      line-height:1.35;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <h1>マツムラ会｜VSフォト</h1>
+        <p>右側に立って構えると“対戦”っぽい</p>
+      </div>
+      <div class="pill" id="statusPill"><span class="dot" id="dot"></span><span id="statusText">準備中</span></div>
+    </header>
+
+    <div class="stageWrap">
+      <div class="stage" id="stage">
+        <video id="video" playsinline muted></video>
+        <canvas id="preview" width="1080" height="1920"></canvas>
+
+        <div class="hint" id="hint">
+          <div>
+            <b>右側に立つ → 撮影</b><br/>
+            <small>PCは「写真を選ぶ」で合成</small>
+          </div>
+          <div style="opacity:.75;font-weight:800">9:16</div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <!-- Row 1: 撮影系 -->
+      <div class="bar">
+        <button class="primary" id="btnShot">撮影</button>
+        <button class="ghost" id="btnRetake" disabled>撮り直し</button>
+      </div>
+
+      <!-- Row 2: 保存 / 切替 / 取り込み -->
+      <div class="bar3">
+        <button class="good" id="btnSave" disabled>保存</button>
+        <button class="ghost" id="btnSwitch">カメラ切替</button>
+        <label class="btn" for="filePick" id="filePickLabel">写真を選ぶ</label>
+        <input id="filePick" type="file" accept="image/*" />
+      </div>
+
+      <div class="note">
+        2026年2月9日｜江古田 ロックンロール以外は全部嘘（保存画像に入ります）
+      </div>
+    </footer>
+  </div>
+
+  <script type="module">
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    // Vercel の pretty URL 対応のため、絶対パスで指定（/YYYY-MM-DD → /apps/YYYY-MM-DD にマッピング）
+    const ASSET_POSE = "/apps/2026-01-21/assets/matsumura_pose.png";
+    const ASSET_LOGO = "/apps/2026-01-21/assets/matsumura_logo.png";
+
+    const EVENT_LINE_1 = "2026年2月9日";
+    const EVENT_LINE_2 = "江古田　ロックンロール以外は全部嘘";
+    const HASHTAG = "#マツムラ会";
+
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("preview");
+    const ctx = canvas.getContext("2d");
+
+    const btnShot = document.getElementById("btnShot");
+    const btnSwitch = document.getElementById("btnSwitch");
+    const btnSave = document.getElementById("btnSave");
+    const btnRetake = document.getElementById("btnRetake");
+    const filePick = document.getElementById("filePick");
+    const filePickLabel = document.getElementById("filePickLabel");
+    const hint = document.getElementById("hint");
+
+    const statusText = document.getElementById("statusText");
+    const dot = document.getElementById("dot");
+
+    let stream = null;
+    let usingCamera = false;
+    let frozen = false;
+    let facingMode = "user";
+    let mirror = true;
+
+    const imgPose = new Image();
+    const imgLogo = new Image();
+    imgPose.src = ASSET_POSE;
+    imgLogo.src = ASSET_LOGO;
+
+    const waitImg = (img) => new Promise((res, rej) => {
+      if (img.complete && img.naturalWidth > 0) return res();
+      img.onload = () => res();
+      img.onerror = () => rej(new Error("asset load failed"));
+    });
+
+    function setStatus(on, text){
+      dot.classList.toggle("on", !!on);
+      statusText.textContent = text;
+    }
+
+    function stopStream(){
+      if (!stream) return;
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+    }
+
+    function setFrozenUI(isFrozen){
+      frozen = isFrozen;
+      btnSave.disabled = !isFrozen;
+      btnRetake.disabled = !isFrozen;
+      btnShot.disabled = isFrozen || !usingCamera;
+      hint.classList.toggle("hidden", isFrozen);
+    }
+
+    async function startCamera(){
+      stopStream();
+      try{
+        const constraints = {
+          audio:false,
+          video:{
+            facingMode: { ideal: facingMode },
+            width: { ideal: 1080 },
+            height: { ideal: 1920 }
+          }
+        };
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = stream;
+        await video.play();
+
+        usingCamera = true;
+        mirror = (facingMode === "user");
+        video.style.setProperty("--mirror", mirror ? -1 : 1);
+
+        setStatus(true, "カメラOK");
+        btnSwitch.disabled = false;
+        filePickLabel.classList.remove("disabled");
+
+        setFrozenUI(false);
+        drawLoop();
+      }catch(e){
+        usingCamera = false;
+        setStatus(false, "写真合成モード");
+        btnSwitch.disabled = true;
+        filePickLabel.classList.remove("disabled");
+        drawStaticBackground();
+        drawOverlay();
+        setFrozenUI(false);
+      }
+    }
+
+    function drawStaticBackground(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      const g = ctx.createLinearGradient(0,0,0,canvas.height);
+      g.addColorStop(0, "#0b1020");
+      g.addColorStop(1, "#060912");
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+    }
+
+    function roundRect(c, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      c.beginPath();
+      c.moveTo(x+rr, y);
+      c.arcTo(x+w, y, x+w, y+h, rr);
+      c.arcTo(x+w, y+h, x, y+h, rr);
+      c.arcTo(x, y+h, x, y, rr);
+      c.arcTo(x, y, x+w, y, rr);
+      c.closePath();
+    }
+
+    function drawOverlay(){
+      const W = canvas.width, H = canvas.height;
+
+      // vignette
+      ctx.save();
+      const rg = ctx.createRadialGradient(W*0.5, H*0.45, H*0.1, W*0.5, H*0.45, H*0.75);
+      rg.addColorStop(0, "rgba(0,0,0,0)");
+      rg.addColorStop(1, "rgba(0,0,0,.55)");
+      ctx.fillStyle = rg;
+      ctx.fillRect(0,0,W,H);
+      ctx.restore();
+
+      // VS (center)
+      ctx.save();
+      ctx.translate(W*0.5, H*0.52);
+      ctx.rotate(-0.06);
+
+      const plateW = W*0.30, plateH = H*0.065;
+      roundRect(ctx, -plateW/2, -plateH/2, plateW, plateH, 22);
+      ctx.fillStyle = "rgba(0,0,0,.40)";
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(255,255,255,.20)";
+      ctx.stroke();
+
+      ctx.font = `900 ${Math.round(H*0.052)}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.lineWidth = 10;
+      ctx.strokeStyle = "rgba(0,0,0,.55)";
+      ctx.strokeText("VS", 0, 2);
+      ctx.fillStyle = "rgba(243,246,255,.95)";
+      ctx.fillText("VS", 0, 2);
+      ctx.restore();
+
+      // Logo top center
+      if (imgLogo.naturalWidth > 0){
+        const maxW = W*0.74; // 少し小さめ
+        const scale = maxW / imgLogo.naturalWidth;
+        const lw = imgLogo.naturalWidth * scale;
+        const lh = imgLogo.naturalHeight * scale;
+        const x = (W - lw)/2;
+        const y = H*0.12;        // さらに少し下に
+
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        ctx.filter = "drop-shadow(0px 10px 18px rgba(0,0,0,.55))";
+        ctx.drawImage(imgLogo, x, y, lw, lh);
+        ctx.restore();
+      }
+
+      // Matsumura pose: smaller & more left (要望対応)
+      if (imgPose.naturalWidth > 0){
+        const targetH = H*0.60;       // 0.68 -> 0.60（小さく）
+        const scale = targetH / imgPose.naturalHeight;
+        const pw = imgPose.naturalWidth * scale;
+        const ph = imgPose.naturalHeight * scale;
+
+        const x = -pw*0.18;           // さらに左へ（はみ出し増）
+        const y = H - ph + H*0.03;    // 少し上に
+        ctx.save();
+        ctx.filter = "drop-shadow(0px 18px 30px rgba(0,0,0,.55))";
+        ctx.globalAlpha = 0.98;
+        ctx.drawImage(imgPose, x, y, pw, ph);
+        ctx.restore();
+      }
+
+      // Bottom info
+      ctx.save();
+      const padX = W*0.06;
+      const boxW = W - padX*2;
+      const boxH = H*0.11;
+      const boxY = H - boxH - H*0.045;
+
+      roundRect(ctx, padX, boxY, boxW, boxH, 24);
+      ctx.fillStyle = "rgba(0,0,0,.42)";
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(255,255,255,.18)";
+      ctx.stroke();
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      ctx.font = `900 ${Math.round(H*0.025)}px "Noto Sans JP", ui-sans-serif, system-ui`;
+      ctx.fillStyle = "rgba(243,246,255,.92)";
+      ctx.fillText(EVENT_LINE_1, W*0.5, boxY + boxH*0.30);
+
+      ctx.font = `800 ${Math.round(H*0.022)}px "Noto Sans JP", ui-sans-serif, system-ui`;
+      ctx.fillStyle = "rgba(243,246,255,.86)";
+      ctx.fillText(EVENT_LINE_2, W*0.5, boxY + boxH*0.58);
+
+      ctx.font = `900 ${Math.round(H*0.024)}px ui-sans-serif, system-ui`;
+      ctx.fillStyle = "rgba(96,165,250,.95)";
+      ctx.fillText(HASHTAG, W*0.5, boxY + boxH*0.84);
+      ctx.restore();
+
+      // YOU guide (right)
+      ctx.save();
+      const guideX = W*0.57, guideY = H*0.20, guideW = W*0.38, guideH = H*0.58;
+      roundRect(ctx, guideX, guideY, guideW, guideH, 34);
+      ctx.strokeStyle = "rgba(255,255,255,.16)";
+      ctx.lineWidth = 4;
+      ctx.setLineDash([16, 12]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = `800 ${Math.round(H*0.026)}px ui-sans-serif, system-ui`;
+      ctx.fillStyle = "rgba(255,255,255,.14)";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("YOU", guideX + guideW*0.5, guideY + guideH*0.10);
+      ctx.restore();
+    }
+
+    function drawFrameFromVideo(){
+      const W = canvas.width, H = canvas.height;
+      if (!video.videoWidth || !video.videoHeight){
+        drawStaticBackground();
+        drawOverlay();
+        return;
+      }
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+
+      const canvasAR = W / H;
+      const videoAR = vw / vh;
+
+      let sx=0, sy=0, sw=vw, sh=vh;
+      if (videoAR > canvasAR){
+        sh = vh;
+        sw = Math.round(vh * canvasAR);
+        sx = Math.round((vw - sw)/2);
+      }else{
+        sw = vw;
+        sh = Math.round(vw / canvasAR);
+        sy = Math.round((vh - sh)/2);
+      }
+
+      ctx.save();
+      if (mirror){
+        ctx.translate(W, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.drawImage(video, sx, sy, sw, sh, 0, 0, W, H);
+      ctx.restore();
+
+      drawOverlay();
+    }
+
+    function drawLoop(){
+      if (!usingCamera) return;
+      if (!frozen){
+        drawFrameFromVideo();
+        requestAnimationFrame(drawLoop);
+      }
+    }
+
+    function freeze(){
+      if (!usingCamera) return;
+      drawFrameFromVideo();
+      setFrozenUI(true);
+    }
+
+    function unfreeze(){
+      setFrozenUI(false);
+      if (usingCamera) drawLoop();
+      else{
+        drawStaticBackground();
+        drawOverlay();
+      }
+    }
+
+    function downloadPng(){
+      const a = document.createElement("a");
+      a.download = "matsumura-vs.png";
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+    }
+
+    async function compositeFromImage(file){
+      const bmp = await createImageBitmap(file);
+      const W = canvas.width, H = canvas.height;
+
+      const iw = bmp.width, ih = bmp.height;
+      const canvasAR = W / H;
+      const imgAR = iw / ih;
+
+      let sx=0, sy=0, sw=iw, sh=ih;
+      if (imgAR > canvasAR){
+        sh = ih;
+        sw = Math.round(ih * canvasAR);
+        sx = Math.round((iw - sw)/2);
+      }else{
+        sw = iw;
+        sh = Math.round(iw / canvasAR);
+        sy = Math.round((ih - sh)/2);
+      }
+
+      ctx.clearRect(0,0,W,H);
+      ctx.drawImage(bmp, sx, sy, sw, sh, 0, 0, W, H);
+      drawOverlay();
+
+      stopStream();
+      usingCamera = false;
+      setStatus(false, "写真合成OK");
+      btnSwitch.disabled = true;
+
+      setFrozenUI(true);
+    }
+
+    btnShot.addEventListener("click", freeze);
+    btnRetake.addEventListener("click", unfreeze);
+    btnSave.addEventListener("click", downloadPng);
+
+    btnSwitch.addEventListener("click", async () => {
+      if (!usingCamera) return;
+      facingMode = (facingMode === "user") ? "environment" : "user";
+      await startCamera();
+    });
+
+    filePick.addEventListener("change", async (e) => {
+      const f = e.target.files?.[0];
+      if (!f) return;
+      await compositeFromImage(f);
+      filePick.value = "";
+    });
+
+    (async function init(){
+      setStatus(false, "素材読み込み中");
+      try{ await Promise.all([waitImg(imgPose), waitImg(imgLogo)]); }catch(_){}
+      setStatus(false, "起動中");
+      if (navigator.mediaDevices?.getUserMedia) await startCamera();
+      else{
+        usingCamera = false;
+        setStatus(false, "写真合成モード");
+        drawStaticBackground();
+        drawOverlay();
+        setFrozenUI(false);
+        btnSwitch.disabled = true;
+      }
+    })();
+  </script>
+</body>
+</html>
