@@ -24,20 +24,25 @@
       height:100%;
       background:var(--bg);
       color:var(--ink);
+      overflow:hidden;
     }
     body{
-      min-height:100dvh;
+      height:100dvh;
       font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      display:flex;
+      flex-direction:column;
     }
 
     .app{
-      min-height:100dvh;
+      height:100%;
       display:grid;
       grid-template-rows: auto 1fr auto;
       gap:12px;
       padding: calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 20px);
+      min-height:0;
+      overflow:hidden;
     }
 
     header{
@@ -46,6 +51,9 @@
       justify-content:space-between;
       gap:10px;
       min-height:36px;
+      position:relative;
+      z-index:10;
+      flex-shrink:0;
     }
     .title{
       display:flex; flex-direction:column; gap:2px;
@@ -82,10 +90,13 @@
       align-items:center;
       justify-content:center;
       min-height:0;
+      overflow:hidden;
+      flex:1 1 0;
     }
 
     .stage{
       width:min(92vw, 520px);
+      max-height:100%;
       aspect-ratio: 9 / 16;
       border-radius: 22px;
       border:1px solid var(--line);
@@ -103,6 +114,7 @@
       position:absolute; inset:0;
       width:100%; height:100%;
       object-fit:cover;
+      z-index:1;
     }
     video{transform: scaleX(var(--mirror, 1));}
 
@@ -111,6 +123,9 @@
       display:flex;
       flex-direction:column;
       gap:10px;
+      position:relative;
+      z-index:10;
+      flex-shrink:0;
     }
     .bar{
       display:grid;
@@ -136,6 +151,8 @@
       display:flex; align-items:center; justify-content:center; gap:8px;
       user-select:none;
       min-height:44px;
+      position:relative;
+      z-index:11;
     }
     button:active, label.btn:active{transform: translateY(1px)}
     button.primary{
@@ -163,12 +180,12 @@
     /* PCレイアウト調整：横幅を絞って中央寄せ */
     @media (min-width: 768px){
       body{
-        display:flex;
+        align-items:center;
         justify-content:center;
       }
       .app{
         max-width:960px;
-        margin:0 auto;
+        width:100%;
       }
     }
   </style>
