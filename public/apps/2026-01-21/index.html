@@ -292,12 +292,12 @@
     async function startCamera(){
       stopStream();
       try{
-        // 端末側での過度なセンタークロップ（疑似ズーム）を避けるため、
-        // 解像度は細かく指定せず、向きだけを指定して広めの画角を優先
         const constraints = {
           audio:false,
           video:{
-            facingMode: { ideal: facingMode }
+            facingMode: { ideal: facingMode },
+            width: { ideal: 1080 },
+            height: { ideal: 1920 }
           }
         };
         stream = await navigator.mediaDevices.getUserMedia(constraints);
