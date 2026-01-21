@@ -85,9 +85,7 @@
 
     .stage{
       width:min(92vw, 520px);
-      max-width:100%;
       aspect-ratio: 9 / 16;
-      max-height:100%;
       border-radius: 22px;
       border:1px solid var(--line);
       background: radial-gradient(1200px 800px at 20% 10%, rgba(96,165,250,.18), transparent 55%),
@@ -98,6 +96,7 @@
       position:relative;
       touch-action:none;
       user-select:none;
+      flex-shrink:0;
     }
 
     video, canvas{
