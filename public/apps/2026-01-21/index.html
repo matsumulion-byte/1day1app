@@ -32,7 +32,7 @@
       display:grid;
       grid-template-rows: auto 1fr auto;
       gap:12px;
-      padding: calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 12px);
+      padding: calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 20px);
     }
 
     header{
@@ -106,6 +106,8 @@
       display:flex;
       flex-direction:column;
       gap:10px;
+      position:relative;
+      z-index:10;
     }
     .bar{
       display:grid;
@@ -131,6 +133,8 @@
       display:flex; align-items:center; justify-content:center; gap:8px;
       user-select:none;
       min-height:44px;
+      position:relative;
+      z-index:11;
     }
     button:active, label.btn:active{transform: translateY(1px)}
     button.primary{
