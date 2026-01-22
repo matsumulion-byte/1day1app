@@ -119,19 +119,38 @@
       padding: 14px;
       min-height:0;
       align-items:stretch;
-      overflow:visible;
+      overflow:hidden;
       position:relative;
     }
     @media (max-width: 720px){
       .stage{ 
-        grid-template-columns: 1fr !important; 
-        grid-template-rows: auto;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        gap: 12px;
       }
       .bubbleArea{
         order: 1;
+        grid-row: 1;
+        width: 100%;
       }
       .matsumura{
-        display: none !important;
+        order: 2;
+        grid-row: 2;
+        width: 100%;
+        min-height: 120px;
+        max-height: 120px;
+        height: 120px;
+      }
+      .matsumura .imgWrap{
+        height: 80px;
+        max-height: 80px;
+        flex: 0 0 80px;
+      }
+      .matsumura img{
+        max-width: 100px;
+        max-height: 80px;
+        width: auto;
+        height: auto;
       }
     }
 
@@ -141,7 +160,8 @@
       gap:10px;
       min-height:0;
       position:relative;
-      z-index:10;
+      z-index:2;
+      width: 100%;
     }
     .bubble{
       border:1px solid var(--line);
@@ -177,7 +197,8 @@
       gap:10px;
       margin-top: 12px;
       position:relative;
-      z-index:10;
+      z-index:3;
+      width: 100%;
     }
     .btn{
       width:100%;
@@ -193,7 +214,7 @@
       cursor:pointer;
       transition: transform .06s ease, background .15s ease, border-color .15s ease;
       position:relative;
-      z-index:10;
+      z-index:4;
     }
     .btn:hover{ background: rgba(255,255,255,.075); border-color: rgba(255,255,255,.22); }
     .btn:active{ transform: translateY(1px) scale(.995); }
@@ -208,7 +229,7 @@
       flex-direction:column;
       min-height: 240px;
       position:relative;
-      z-index:0;
+      z-index:1;
     }
     .matsumura .imgWrap{
       flex:1;
