@@ -123,17 +123,29 @@
       position:relative;
     }
     @media (max-width: 720px){
-      .stage{ grid-template-columns: 1fr; }
+      .stage{ 
+        grid-template-columns: 1fr; 
+        grid-template-rows: auto auto;
+      }
+      .bubbleArea{
+        order: 1;
+        grid-row: 1;
+      }
       .matsumura{
-        min-height: 180px;
-        max-height: 200px;
+        order: 2;
+        grid-row: 2;
+        min-height: 140px;
+        max-height: 140px;
+        height: 140px;
       }
       .matsumura .imgWrap{
-        max-height: 150px;
+        max-height: 100px;
+        height: 100px;
+        flex: 0 0 100px;
       }
       .matsumura img{
-        max-width: 180px;
-        max-height: 150px;
+        max-width: 120px;
+        max-height: 100px;
         width:auto;
         height:auto;
         margin: 0 auto;
@@ -146,7 +158,7 @@
       gap:10px;
       min-height:0;
       position:relative;
-      z-index:2;
+      z-index:10;
     }
     .bubble{
       border:1px solid var(--line);
@@ -182,7 +194,7 @@
       gap:10px;
       margin-top: 12px;
       position:relative;
-      z-index:3;
+      z-index:10;
     }
     .btn{
       width:100%;
@@ -198,7 +210,7 @@
       cursor:pointer;
       transition: transform .06s ease, background .15s ease, border-color .15s ease;
       position:relative;
-      z-index:4;
+      z-index:10;
     }
     .btn:hover{ background: rgba(255,255,255,.075); border-color: rgba(255,255,255,.22); }
     .btn:active{ transform: translateY(1px) scale(.995); }
@@ -213,7 +225,7 @@
       flex-direction:column;
       min-height: 240px;
       position:relative;
-      z-index:1;
+      z-index:0;
     }
     .matsumura .imgWrap{
       flex:1;
@@ -224,6 +236,7 @@
       background: radial-gradient(circle at 30% 20%, rgba(251,191,36,.18), rgba(0,0,0,0) 55%);
       position:relative;
       overflow:hidden;
+      contain: layout style paint;
     }
     .matsumura img{
       max-width:100%;
