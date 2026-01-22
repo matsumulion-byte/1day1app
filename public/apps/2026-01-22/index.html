@@ -379,12 +379,13 @@
   <script type="module">
     // Vercel用：相対パスを使用
     const asset = (p) => {
-      const base = window.location.href.replace(/\/[^/]*$/, '/');
-      return new URL(p, base).toString();
+      const pathname = window.location.pathname;
+      const basePath = pathname.endsWith('/') ? pathname : pathname + '/';
+      return basePath + p.replace(/^\.\//, '');
     };
 
     // ====== 設定：画像ファイル名を合わせる ======
-    // 例：/app/2026-01-22/assets/matsumura-india.png
+    // 例：/2026-01-22/assets/matsumura-india.png
     const MATSUMURA_IMG = asset("./assets/matsumura-india.png");
 
     // ====== 質問データ ======
@@ -776,8 +777,9 @@
     // 上のscript内でconst再代入が出るのを避けるため、DOM参照はこのscriptで管理する
     // Vercel用：相対パスを使用
     const asset = (p) => {
-      const base = window.location.href.replace(/\/[^/]*$/, '/');
-      return new URL(p, base).toString();
+      const pathname = window.location.pathname;
+      const basePath = pathname.endsWith('/') ? pathname : pathname + '/';
+      return basePath + p.replace(/^\.\//, '');
     };
     const MATSUMURA_IMG = asset("./assets/matsumura-india.png");
 
