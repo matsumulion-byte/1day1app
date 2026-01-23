@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>MATSUMURA INVADERS</title>
+  <style>
+    :root{
+      --bg:#0b1020; --ink:#f3f6ff; --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14); --panel:rgba(255,255,255,.08); --panel2:rgba(255,255,255,.12);
+      --good:#34d399; --bad:#fb7185; --accent:#60a5fa; --r:18px; --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;background:var(--bg);color:var(--ink);overflow:hidden}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", Arial, sans-serif;
+      touch-action:none; -webkit-user-select:none; user-select:none;
+    }
+    a,button,canvas{touch-action: manipulation}
+    .wrap{position:relative;height:100%;padding:max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+    .brand h1{font-size:14px;letter-spacing:.12em;text-transform:uppercase;opacity:.92}
+    .brand .meta{font-size:12px;color:var(--muted)}
+    .btn{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:10px 12px;border-radius:999px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;-webkit-tap-highlight-color: transparent}
+    .btn:active{background:var(--panel2);transform:translateY(1px)}
+    .btn[aria-pressed="true"]{border-color: rgba(96,165,250,.55); background: rgba(96,165,250,.12);}
+
+    .stage{
+      position:relative;flex:1;border:1px solid var(--line);border-radius: var(--r);
+      background: radial-gradient(1200px 600px at 50% 10%, rgba(96,165,250,.18), transparent 60%),
+                  radial-gradient(900px 500px at 20% 80%, rgba(52,211,153,.10), transparent 60%),
+                  rgba(255,255,255,.03);
+      box-shadow: var(--shadow); overflow:hidden; min-height: 420px;
+    }
+    canvas{width:100%;height:100%;display:block}
+    .overlay{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:16px;
+      background: linear-gradient(180deg, rgba(11,16,32,.78), rgba(11,16,32,.6)); backdrop-filter: blur(6px);}
+    .card{width:min(520px, 100%); border:1px solid var(--line); border-radius: 20px; background: rgba(15,22,44,.72); padding:16px; box-shadow: var(--shadow);}
+    .card h2{font-size:16px;letter-spacing:.08em;margin-bottom:8px}
+    .card p{font-size:13px;line-height:1.6;color:var(--muted)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .pill{border:1px solid var(--line);background: rgba(255,255,255,.06);padding:10px 12px;border-radius: 999px;font-size:12px;color:var(--muted)}
+    .controls{display:grid;grid-template-columns: 1fr 1fr 1fr;gap:10px}
+    .pad{border:1px solid var(--line);background: rgba(255,255,255,.06);border-radius: 16px;padding:12px;display:flex;align-items:center;justify-content:center;font-size:14px;min-height:54px;-webkit-tap-highlight-color: transparent}
+    .pad:active{background: rgba(255,255,255,.10); transform: translateY(1px)}
+    .pad.shoot{background: rgba(52,211,153,.12);border-color: rgba(52,211,153,.28);color: rgba(243,246,255,.92);font-weight:700;letter-spacing:.06em}
+    .pad.shoot:active{background: rgba(52,211,153,.18)}
+    .footer{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;color:var(--muted);font-size:12px}
+    .kbd{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <h1>MATSUMURA INVADERS</h1>
+        <div class="meta" id="meta">SCORE 00000 · WAVE 1 · LIFE 3</div>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="btn" id="soundBtn" aria-pressed="false" title="Sound">🔈 <span id="soundLabel">SOUND OFF</span></button>
+        <button class="btn" id="pauseBtn" aria-pressed="false" title="Pause">⏸️ <span id="pauseLabel">PAUSE</span></button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="cv"></canvas>
+
+      <div class="overlay" id="overlay">
+        <div class="card">
+          <h2 id="ovTitle">READY?</h2>
+          <p id="ovDesc">
+            左右に動いて撃つだけ。<br/>
+            スマホ：下のボタン／PC：<span class="kbd">← →</span> と <span class="kbd">Space</span>
+          </p>
+          <div class="row">
+            <button class="btn" id="startBtn">▶ START</button>
+            <button class="btn" id="soundConfirmBtn">🔈 SOUND ON</button>
+          </div>
+          <div class="row">
+            <div class="pill">敵が下まで来たら負け</div>
+            <div class="pill">UFOは高得点</div>
+            <div class="pill">ウェーブごとに少し速く</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls" aria-label="mobile controls">
+      <div class="pad" id="leftPad">◀︎</div>
+      <div class="pad shoot" id="shootPad">SHOOT</div>
+      <div class="pad" id="rightPad">▶︎</div>
+    </div>
+
+    <div class="footer">
+      <div>Enemy image: <span class="kbd">./assets/enemy.png</span></div>
+      <div>PC: <span class="kbd">← →</span> / <span class="kbd">Space</span> · M: Sound · P: Pause</div>
+    </div>
+  </div>
+
+  <script type="module">
+    const asset = (p) => {
+      // Vercel用: 相対パスを絶対パスに変換
+      if (p.startsWith('./')) {
+        return '/apps/2026-01-23' + p.slice(1);
+      }
+      return new URL(p, import.meta.url).toString();
+    };
+
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+
+    const stage = document.getElementById('stage');
+    const overlay = document.getElementById('overlay');
+    const ovTitle = document.getElementById('ovTitle');
+    const ovDesc = document.getElementById('ovDesc');
+
+    const meta = document.getElementById('meta');
+    const startBtn = document.getElementById('startBtn');
+    const soundBtn = document.getElementById('soundBtn');
+    const soundLabel = document.getElementById('soundLabel');
+    const soundConfirmBtn = document.getElementById('soundConfirmBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const pauseLabel = document.getElementById('pauseLabel');
+
+    const leftPad = document.getElementById('leftPad');
+    const rightPad = document.getElementById('rightPad');
+    const shootPad = document.getElementById('shootPad');
+
+    // ===== 固定画角（SP基準 9:16） =====
+    const LOGICAL_H = 720;
+    const LOGICAL_W = Math.round(LOGICAL_H * 9 / 16); // 405
+
+    let view = { x:0, y:0, w:LOGICAL_W, h:LOGICAL_H, scale:1 };
+    let STAGE_W = 0, STAGE_H = 0;
+
+    function fitCanvas(){
+      const r = stage.getBoundingClientRect();
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      cv.width = Math.floor(r.width * dpr);
+      cv.height = Math.floor(r.height * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+
+      STAGE_W = r.width;
+      STAGE_H = r.height;
+
+      const s = Math.min(STAGE_W / LOGICAL_W, STAGE_H / LOGICAL_H);
+      const vw = LOGICAL_W * s;
+      const vh = LOGICAL_H * s;
+      view.scale = s;
+      view.w = vw;
+      view.h = vh;
+      view.x = (STAGE_W - vw) / 2;
+      view.y = (STAGE_H - vh) / 2;
+    }
+    window.addEventListener('resize', fitCanvas, {passive:true});
+    fitCanvas();
+
+    function beginView(){
+      ctx.save();
+      ctx.clearRect(0,0,STAGE_W,STAGE_H);
+
+      // 黒帯
+      ctx.fillStyle = 'rgba(0,0,0,.28)';
+      ctx.fillRect(0,0,view.x,STAGE_H);
+      ctx.fillRect(view.x+view.w,0,STAGE_W-(view.x+view.w),STAGE_H);
+      ctx.fillRect(view.x,0,view.w,view.y);
+      ctx.fillRect(view.x,view.y+view.h,view.w,STAGE_H-(view.y+view.h));
+
+      ctx.translate(view.x, view.y);
+      ctx.scale(view.scale, view.scale);
+    }
+    function endView(){ ctx.restore(); }
+
+    // ===== Audio (beep) =====
+    let audioCtx = null;
+    let soundOn = false;
+    function ensureAudio(){ if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    function beep(freq=440, dur=0.06, type='square', gain=0.05){
+      if (!soundOn) return;
+      ensureAudio();
+      const t0 = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(gain, t0+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+      osc.connect(g).connect(audioCtx.destination);
+      osc.start(t0);
+      osc.stop(t0+dur+0.02);
+    }
+    function setSound(v){
+      soundOn = v;
+      soundBtn.setAttribute('aria-pressed', String(soundOn));
+      soundLabel.textContent = soundOn ? 'SOUND ON' : 'SOUND OFF';
+      soundConfirmBtn.textContent = soundOn ? '🔈 SOUND ON' : '🔈 SOUND OFF';
+      if (soundOn) beep(660,0.08,'square',0.06);
+    }
+    soundBtn.addEventListener('click', () => setSound(!soundOn));
+    soundConfirmBtn.addEventListener('click', () => setSound(!soundOn));
+
+    // ===== Enemy image only =====
+    const enemyImg = new Image();
+    let enemyImgOk = false;
+    enemyImg.onload = () => { enemyImgOk = true; };
+    enemyImg.onerror = () => { enemyImgOk = false; };
+    enemyImg.src = asset('./assets/enemy.png');
+
+    // ===== Game state =====
+    let raf = 0;
+    let last = 0;
+    let running = false;
+    let paused = false;
+
+    const input = { left:false, right:false, shoot:false };
+    const keys = new Set();
+
+    let score=0, wave=1, life=3;
+
+    const GW = LOGICAL_W;
+    const GH = LOGICAL_H;
+
+    const player = { w: 44, h: 18, x: 0, y: 0, spd: 360, cd: 0 };
+
+    let enemies = [];
+    let enemyDir = 1;
+    let enemySpeed = 28;
+    let enemyStepDown = 12;
+    let enemyShootCd = 0;
+    let enemyStepDownCd = 0;
+
+    let shots = [];
+    let eShots = [];
+
+    let ufo = null;
+    let ufoCd = 6;
+
+    // ===== IMPORTANT: 編隊を画角にフィットさせる =====
+    function resetWave(){
+      shots.length = 0;
+      eShots.length = 0;
+      ufo = null;
+      ufoCd = 4 + Math.random()*4;
+
+      player.x = GW/2;
+      player.y = GH - 84;
+      player.cd = 0;
+
+      const rows = 5;
+
+      // 基本サイズ
+      const baseCellW = 34, baseCellH = 22;
+      const basePadX  = 10, basePadY  = 10;
+
+      // まず11列を狙うが、入らないなら列数を減らす
+      let cols = 11;
+      const leftRightMargin = 18;
+      while (cols > 6){
+        const totalW = cols*baseCellW + (cols-1)*basePadX;
+        if (totalW <= (GW - leftRightMargin*2)) break;
+        cols--;
+      }
+
+      // それでも微妙にきつい場合は、全体を少し縮小
+      const totalW0 = cols*baseCellW + (cols-1)*basePadX;
+      const fitW = GW - leftRightMargin*2;
+      const s = Math.min(1, fitW / totalW0);
+
+      const cellW = baseCellW * s;
+      const cellH = baseCellH * s;
+      const padX  = basePadX  * s;
+      const padY  = basePadY  * s;
+
+      const totalW = cols*cellW + (cols-1)*padX;
+      const startX = (GW - totalW) / 2;
+      const startY = 84;
+
+      enemies = [];
+      for (let r=0; r<rows; r++){
+        for (let c=0; c<cols; c++){
+          enemies.push({
+            x: startX + c*(cellW+padX) + cellW/2,
+            y: startY + r*(cellH+padY) + cellH/2,
+            w: cellW,
+            h: cellH,
+            type: r
+          });
+        }
+      }
+
+      enemyDir = 1;
+      enemySpeed = 28 + (wave-1)*8;
+      enemyShootCd = 0.8;
+      enemyStepDownCd = 0;
+
+      beep(440,0.07,'square',0.05);
+      beep(660,0.07,'square',0.05);
+    }
+
+    function resetGame(){ score=0; wave=1; life=3; resetWave(); updateHUD(); }
+    function updateHUD(){ meta.textContent = `SCORE ${String(score).padStart(5,'0')} · WAVE ${wave} · LIFE ${life}`; }
+
+    function showOverlay(title, desc){ ovTitle.textContent = title; ovDesc.innerHTML = desc; overlay.style.display = 'flex'; }
+    function hideOverlay(){ overlay.style.display = 'none'; }
+
+    function setPause(v){
+      paused = v;
+      pauseBtn.setAttribute('aria-pressed', String(paused));
+      pauseLabel.textContent = paused ? 'RESUME' : 'PAUSE';
+      if (paused) showOverlay('PAUSED', '再開：<span class="kbd">P</span> / ボタン');
+      else hideOverlay();
+    }
+    pauseBtn.addEventListener('click', () => { if (!running) return; setPause(!paused); });
+
+    // ===== Input =====
+    function keyDown(e){
+      const k = e.key.toLowerCase();
+      keys.add(k);
+      if (k === 'arrowleft' || k==='a') input.left = true;
+      if (k === 'arrowright' || k==='d') input.right = true;
+      if (k === ' ' || k==='spacebar') { input.shoot = true; e.preventDefault(); }
+      if (k === 'p') { if (running) setPause(!paused); }
+      if (k === 'm') setSound(!soundOn);
+    }
+    function keyUp(e){
+      const k = e.key.toLowerCase();
+      keys.delete(k);
+      if (k === 'arrowleft' || k==='a') input.left = false;
+      if (k === 'arrowright' || k==='d') input.right = false;
+      if (k === ' ' || k==='spacebar') input.shoot = false;
+    }
+    window.addEventListener('keydown', keyDown);
+    window.addEventListener('keyup', keyUp);
+
+    function bindHold(el, on, off){
+      const start = (e)=>{ e.preventDefault(); on(); };
+      const end = (e)=>{ e.preventDefault(); off(); };
+      el.addEventListener('pointerdown', start);
+      window.addEventListener('pointerup', end);
+      window.addEventListener('pointercancel', end);
+      window.addEventListener('pointerleave', end);
+    }
+    bindHold(leftPad, ()=>input.left=true, ()=>input.left=false);
+    bindHold(rightPad, ()=>input.right=true, ()=>input.right=false);
+    bindHold(shootPad, ()=>input.shoot=true, ()=>input.shoot=false);
+
+    // ===== Helpers =====
+    const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+    function aabb(ax,ay,aw,ah,bx,by,bw,bh){
+      return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
+    }
+
+    function spawnShot(){
+      shots.push({ x: player.x, y: player.y - player.h/2 - 8, vy: -520, w: 4, h: 10 });
+      beep(900,0.04,'square',0.04);
+    }
+    function spawnEnemyShot(ex,ey){
+      eShots.push({ x: ex, y: ey, vy: 220 + (wave-1)*15, w: 4, h: 10 });
+      beep(240,0.05,'square',0.03);
+    }
+
+    function killPlayer(){
+      life -= 1;
+      updateHUD();
+      beep(110,0.12,'sawtooth',0.06);
+      beep(90,0.18,'sawtooth',0.05);
+
+      if (life <= 0){
+        running = false;
+        showOverlay('GAME OVER', `SCORE ${String(score).padStart(5,'0')}<br/>再挑戦：START`);
+        startBtn.textContent = '↻ RESTART';
+        return;
+      }
+
+      shots.length = 0;
+      eShots.length = 0;
+      player.x = GW/2;
+      player.cd = 0.25;
+      showOverlay('OOPS!', `LIFE ${life} 残り。<br/>少し待つと再開します。`);
+      setTimeout(()=>{ if (running && !paused){ hideOverlay(); } }, 650);
+    }
+
+    function waveClear(){
+      wave += 1;
+      updateHUD();
+      beep(660,0.08,'square',0.06);
+      beep(880,0.08,'square',0.06);
+      resetWave();
+    }
+
+    // ===== Draw (logical coords) =====
+    function drawPlayer(){
+      ctx.save();
+      ctx.translate(player.x, player.y);
+      ctx.fillStyle = 'rgba(96,165,250,.95)';
+      ctx.beginPath();
+      ctx.moveTo(-player.w/2, player.h/2);
+      ctx.lineTo(0, -player.h/2);
+      ctx.lineTo(player.w/2, player.h/2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawEnemy(e){
+      ctx.save();
+      ctx.translate(e.x, e.y);
+      if (enemyImgOk){
+        const s = Math.max(e.w, e.h) + 10;
+        ctx.globalAlpha = 0.95;
+        ctx.drawImage(enemyImg, -s/2, -s/2, s, s);
+      } else {
+        ctx.fillStyle = 'rgba(243,246,255,.85)';
+        ctx.fillRect(-e.w/2, -e.h/2, e.w, e.h);
+      }
+      ctx.restore();
+    }
+
+    function drawUFO(){
+      if (!ufo) return;
+      ctx.save();
+      ctx.translate(ufo.x, ufo.y);
+      ctx.globalAlpha = 0.95;
+      ctx.strokeStyle = 'rgba(251,113,133,.9)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22, 10, 0, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(0, -6, 12, 6, 0, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawBullets(){
+      ctx.save();
+      ctx.fillStyle = 'rgba(52,211,153,.95)';
+      for (const b of shots) ctx.fillRect(b.x - b.w/2, b.y - b.h/2, b.w, b.h);
+      ctx.fillStyle = 'rgba(251,113,133,.95)';
+      for (const b of eShots) ctx.fillRect(b.x - b.w/2, b.y - b.h/2, b.w, b.h);
+      ctx.restore();
+    }
+
+    function draw(){
+      beginView();
+
+      // scanlines
+      ctx.save();
+      ctx.globalAlpha = 0.06;
+      ctx.fillStyle = '#fff';
+      for (let y=0; y<GH; y+=4) ctx.fillRect(0,y,GW,1);
+      ctx.restore();
+
+      drawUFO();
+      for (const e of enemies) drawEnemy(e);
+      drawBullets();
+      drawPlayer();
+
+      ctx.save();
+      ctx.globalAlpha = 0.25;
+      ctx.strokeStyle = 'rgba(255,255,255,.25)';
+      ctx.beginPath();
+      ctx.moveTo(0, GH-54);
+      ctx.lineTo(GW, GH-54);
+      ctx.stroke();
+      ctx.restore();
+
+      endView();
+    }
+
+    // ===== Update =====
+    function update(dt){
+      const dir = (input.right?1:0) - (input.left?1:0);
+      player.x = clamp(player.x + dir*player.spd*dt, 24, GW-24);
+
+      player.cd = Math.max(0, player.cd - dt);
+      if (input.shoot && player.cd <= 0){
+        spawnShot();
+        player.cd = 0.18;
+      }
+
+      if (enemies.length){
+        let minX=Infinity, maxX=-Infinity, maxY=-Infinity;
+        for (const e of enemies){
+          minX = Math.min(minX, e.x - e.w/2);
+          maxX = Math.max(maxX, e.x + e.w/2);
+          maxY = Math.max(maxY, e.y + e.h/2);
+        }
+
+        const step = enemySpeed * dt * enemyDir;
+        for (const e of enemies) e.x += step;
+
+        enemyStepDownCd = Math.max(0, enemyStepDownCd - dt);
+        if ((minX < 10 || maxX > GW-10) && enemyStepDownCd <= 0){
+          enemyDir *= -1;
+          for (const e of enemies) e.y += enemyStepDown;
+          enemyStepDownCd = 0.15;
+          beep(180,0.03,'square',0.03);
+        }
+
+        if (maxY > GH-70){
+          running = false;
+          showOverlay('INVADED…', `SCORE ${String(score).padStart(5,'0')}<br/>再挑戦：START`);
+          startBtn.textContent = '↻ RESTART';
+          return;
+        }
+      }
+
+      enemyShootCd = Math.max(0, enemyShootCd - dt);
+      if (enemyShootCd <= 0 && enemies.length){
+        const byX = [...enemies].sort((a,b)=>a.x-b.x);
+        const buckets = [];
+        for (const e of byX){
+          let found = false;
+          for (const b of buckets){
+            if (Math.abs(b.x - e.x) < 22){ b.list.push(e); found = true; break; }
+          }
+          if (!found) buckets.push({ x: e.x, list:[e] });
+        }
+        const fronts = buckets.map(b => b.list.reduce((m,e)=> (e.y>m.y?e:m), b.list[0]));
+        const shooter = fronts[(Math.random()*fronts.length)|0];
+        spawnEnemyShot(shooter.x, shooter.y + shooter.h/2 + 8);
+        enemyShootCd = Math.max(0.35, 0.95 - wave*0.05) + Math.random()*0.25;
+      }
+
+      for (const b of shots) b.y += b.vy*dt;
+      for (const b of eShots) b.y += b.vy*dt;
+      shots = shots.filter(b => b.y > -30);
+      eShots = eShots.filter(b => b.y < GH+30);
+
+      ufoCd -= dt;
+      if (!ufo && ufoCd <= 0){
+        const fromLeft = Math.random() < 0.5;
+        ufo = { x: fromLeft ? -60 : GW+60, y: 64, vx: fromLeft ? 120 : -120 };
+        ufoCd = 8 + Math.random()*6;
+        beep(520,0.05,'triangle',0.03);
+      }
+      if (ufo){
+        ufo.x += ufo.vx*dt;
+        if (ufo.x < -100 || ufo.x > GW+100) ufo = null;
+      }
+
+      for (let i=shots.length-1; i>=0; i--){
+        const b = shots[i];
+
+        if (ufo && aabb(b.x-b.w/2,b.y-b.h/2,b.w,b.h, ufo.x-24,ufo.y-12,48,24)){
+          shots.splice(i,1);
+          const pts = 100 + ((Math.random()*3)|0)*50;
+          score += pts;
+          ufo = null;
+          updateHUD();
+          beep(880,0.06,'square',0.05);
+          continue;
+        }
+
+        let hit = -1;
+        for (let j=enemies.length-1; j>=0; j--){
+          const e = enemies[j];
+          if (aabb(b.x-b.w/2,b.y-b.h/2,b.w,b.h, e.x-e.w/2,e.y-e.h/2,e.w,e.h)){
+            hit = j; break;
+          }
+        }
+        if (hit >= 0){
+          const e = enemies[hit];
+          enemies.splice(hit,1);
+          shots.splice(i,1);
+          const rowScore = [40,30,20,20,10][e.type] ?? 10;
+          score += rowScore;
+          updateHUD();
+          beep(420,0.04,'square',0.04);
+          beep(260,0.05,'square',0.03);
+        }
+      }
+
+      for (let i=eShots.length-1; i>=0; i--){
+        const b = eShots[i];
+        if (aabb(b.x-b.w/2,b.y-b.h/2,b.w,b.h, player.x-player.w/2, player.y-player.h/2, player.w, player.h)){
+          eShots.splice(i,1);
+          killPlayer();
+          break;
+        }
+      }
+
+      if (enemies.length === 0) waveClear();
+    }
+
+    function loop(ts){
+      raf = requestAnimationFrame(loop);
+      if (!running || paused) { draw(); return; }
+      const t = ts/1000;
+      const dt = Math.min(0.033, t - last);
+      last = t;
+      update(dt);
+      draw();
+    }
+
+    function start(){
+      if (!audioCtx && soundOn) ensureAudio();
+      resetGame();
+      running = true;
+      paused = false;
+      setPause(false);
+      hideOverlay();
+      last = performance.now()/1000;
+      startBtn.textContent = '↻ RESTART';
+      beep(660,0.06,'square',0.06);
+    }
+
+    startBtn.addEventListener('click', () => start());
+
+    showOverlay('READY?', '左右に動いて撃つだけ。<br/>スマホ：下のボタン／PC：<span class="kbd">← →</span> と <span class="kbd">Space</span>');
+    setSound(false);
+    updateHUD();
+    loop(performance.now());
+  </script>
+</body>
+</html>
