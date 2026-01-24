@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>Gold Panning｜砂金パンニング</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --good:#34d399;
+      --bad:#fb7185;
+      --accent:#60a5fa;
+      --gold:#fbbf24;
+      --r:18px;
+      --shadow:0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; overflow:hidden; background:var(--bg); color:var(--ink)}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+      touch-action:none;
+      -webkit-user-select:none; user-select:none;
+    }
+    .wrap{
+      position:fixed; inset:0;
+      padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom)) 14px;
+      display:flex; flex-direction:column; gap:12px;
+    }
+    header{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+    }
+    .brand{
+      display:flex; flex-direction:column; gap:2px;
+      line-height:1.1;
+    }
+    .brand .t{font-weight:800; letter-spacing:.02em}
+    .brand .s{font-size:12px; color:var(--muted)}
+    .hud{
+      display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .pill{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:12px;
+      color:var(--muted);
+      display:flex; gap:8px; align-items:center;
+      backdrop-filter: blur(10px);
+    }
+    .pill b{color:var(--ink); font-weight:800}
+    .btn{
+      appearance:none; border:1px solid var(--line);
+      background:var(--panel);
+      color:var(--ink);
+      border-radius:999px;
+      padding:10px 12px;
+      font-weight:800;
+      cursor:pointer;
+      touch-action:manipulation;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{background:linear-gradient(180deg, rgba(96,165,250,.25), rgba(96,165,250,.12)); border-color:rgba(96,165,250,.35)}
+    .btn.danger{background:linear-gradient(180deg, rgba(251,113,133,.22), rgba(251,113,133,.10)); border-color:rgba(251,113,133,.35)}
+    main{
+      flex:1;
+      display:grid;
+      grid-template-rows: 1fr auto;
+      gap:12px;
+      min-height:0;
+    }
+    .stage{
+      position:relative;
+      border-radius: calc(var(--r) + 6px);
+      background: radial-gradient(1200px 700px at 50% 20%, rgba(255,255,255,.10), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      min-height:0;
+    }
+    canvas{width:100%; height:100%; display:block}
+    .hint{
+      position:absolute; left:12px; bottom:12px;
+      background:rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.12);
+      color:rgba(243,246,255,.80);
+      border-radius:12px;
+      padding:8px 10px;
+      font-size:12px;
+      line-height:1.35;
+      max-width:min(420px, calc(100% - 24px));
+      backdrop-filter: blur(10px);
+      pointer-events:none;
+    }
+    .panel{
+      display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      padding:10px 12px;
+      backdrop-filter: blur(10px);
+    }
+    .panel .left, .panel .right{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .meter{
+      width:220px; max-width:60vw;
+      height:10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.10);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .meter > i{
+      display:block; height:100%;
+      width:50%;
+      background:linear-gradient(90deg, rgba(52,211,153,.85), rgba(96,165,250,.85));
+    }
+    .toast{
+      position:fixed; left:50%; top:14px;
+      transform:translateX(-50%);
+      background:rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.14);
+      color:rgba(243,246,255,.92);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:12px;
+      opacity:0; pointer-events:none;
+      transition:opacity .18s ease;
+      backdrop-filter: blur(10px);
+    }
+    .toast.show{opacity:1}
+    .overlay{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(0,0,0,.55);
+      backdrop-filter: blur(10px);
+    }
+    .card{
+      width:min(560px, 92%);
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:24px;
+      padding:16px;
+      box-shadow:0 30px 80px rgba(0,0,0,.55);
+    }
+    .card h2{font-size:18px; margin-bottom:6px}
+    .card p{font-size:13px; color:rgba(243,246,255,.78); line-height:1.55}
+    .card .row{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+    .small{font-size:12px; color:rgba(243,246,255,.70)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="t">Gold Panning</div>
+        <div class="s">砂を流して、金だけ残せ</div>
+      </div>
+      <div class="hud">
+        <div class="pill">TIME <b id="time">30.0</b></div>
+        <div class="pill">GOLD <b id="gold">0</b></div>
+        <div class="pill">SAND <b id="sand">0</b></div>
+        <button class="btn" id="soundBtn" aria-pressed="false">SFX: OFF</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="stage" id="stage">
+        <canvas id="c"></canvas>
+        <div class="hint" id="hint">
+          指でドラッグして皿をゆする。フチ近くで強くゆすると砂が流れやすい。<br>
+          仕上げに <b style="color:var(--gold)">金粒</b> をタップして回収。
+        </div>
+
+        <div class="overlay" id="startOverlay">
+          <div class="card">
+            <h2>砂金パンニング</h2>
+            <p>
+              30秒で砂を流し、最後に残った金粒をタップ回収。<br>
+              ドラッグ＝ゆすり（流れ）。傾き対応端末は微調整も効く。
+            </p>
+            <div class="row">
+              <button class="btn primary" id="startBtn">START</button>
+              <button class="btn" id="howBtn">HOW</button>
+            </div>
+            <p class="small" id="howText" style="display:none;margin-top:10px">
+              ・砂は軽く流れやすい／金は重く残りやすい<br>
+              ・フチ（円の端）で速度が出ると粒が外へ流失<br>
+              ・金粒はタップで回収（回収した金だけ得点）
+            </p>
+          </div>
+        </div>
+
+        <div class="overlay" id="endOverlay" style="display:none">
+          <div class="card">
+            <h2>RESULT</h2>
+            <p id="resultText"></p>
+            <div class="row">
+              <button class="btn primary" id="retryBtn">RETRY</button>
+              <button class="btn danger" id="resetBtn">RESET</button>
+            </div>
+            <p class="small" style="margin-top:10px">
+              TIP: フチで素早く回す→砂が流れ、金が残りやすい。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="left">
+          <div class="pill">PURITY <b id="purity">0%</b></div>
+          <div class="meter" aria-label="purity meter"><i id="purityBar" style="width:0%"></i></div>
+        </div>
+        <div class="right">
+          <button class="btn" id="pauseBtn">PAUSE</button>
+          <button class="btn primary" id="finishBtn">FINISH</button>
+          <button class="btn" id="newBtn">NEW PAN</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast">+100 GOLD</div>
+
+  <script type="module">
+    // asset helper (project rule)
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    // ===== Utilities =====
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+
+    // very small SFX (optional)
+    const SFX = (() => {
+      let enabled = false;
+      let ctx = null;
+      function ensure(){
+        if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      function beep(freq=880, dur=0.06){
+        if (!enabled) return;
+        ensure();
+        const t0 = ctx.currentTime;
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "sine";
+        o.frequency.setValueAtTime(freq, t0);
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(0.12, t0 + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+        o.connect(g).connect(ctx.destination);
+        o.start(t0);
+        o.stop(t0 + dur + 0.02);
+      }
+      return {
+        toggle(){
+          enabled = !enabled;
+          if (enabled) {
+            try{ ensure(); ctx.resume?.(); } catch(e){}
+            beep(740, 0.05);
+          }
+          return enabled;
+        },
+        tapGold(){ beep(1040, 0.045); },
+        wash(){ beep(220, 0.03); },
+        get enabled(){ return enabled; }
+      };
+    })();
+
+    // ===== Canvas setup =====
+    const stage = document.getElementById('stage');
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    let W=0, H=0, DPR=1;
+    function resize(){
+      const r = stage.getBoundingClientRect();
+      DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      W = Math.floor(r.width * DPR);
+      H = Math.floor(r.height * DPR);
+      canvas.width = W;
+      canvas.height = H;
+    }
+    window.addEventListener('resize', resize, {passive:true});
+    resize();
+
+    // ===== Game state =====
+    const ui = {
+      time: document.getElementById('time'),
+      gold: document.getElementById('gold'),
+      sand: document.getElementById('sand'),
+      purity: document.getElementById('purity'),
+      purityBar: document.getElementById('purityBar'),
+      toast: document.getElementById('toast'),
+      startOverlay: document.getElementById('startOverlay'),
+      endOverlay: document.getElementById('endOverlay'),
+      resultText: document.getElementById('resultText'),
+      pauseBtn: document.getElementById('pauseBtn'),
+      newBtn: document.getElementById('newBtn'),
+    };
+
+    const dish = {
+      cx: () => W*0.5,
+      cy: () => H*0.52,
+      R:  () => Math.min(W,H) * 0.38,
+      lip: () => Math.min(W,H) * 0.018, // rim thickness
+    };
+
+    const CONFIG = {
+      duration: 30.0,
+      // particle counts
+      sandN: 1500,
+      goldN: 10,
+      // physics
+      friction: 0.988,
+      boundaryBounce: 0.22,
+      swirlStrength: 1.35,
+      outwardStrength: 0.25,
+      inwardGoldBias: 0.12,
+      spillSpeed: 4.6,      // 流出しやすく
+      spillRate: 0.55,      // リムでの"にじみ流出"強さ（0.3〜0.9）
+      rimBand: 0.88,        // 流出帯を広げる
+      tapRadius: 10,        // px for collecting gold
+      sandClearThreshold: 80, // 残砂がこれ以下でクリア終了（好みで調整）
+    };
+
+    let particles = [];
+    let running = false;
+    let paused = false;
+    let tLeft = CONFIG.duration;
+    let scoreGold = 0;
+    let washedSand = 0;
+    let washedGold = 0;
+
+    // input (drag & tilt)
+    const input = {
+      active:false,
+      x:0, y:0,
+      dx:0, dy:0,
+      px:0, py:0,
+      // low-pass filtered "swirl vector"
+      vx:0, vy:0,
+      tiltX:0, tiltY:0,
+    };
+
+    // ===== Particle model =====
+    // type: 'sand' | 'gold'
+    function spawn(type){
+      const R = dish.R();
+      const cx = dish.cx(), cy = dish.cy();
+      const angle = Math.random()*Math.PI*2;
+      const rad = (Math.random()**0.65) * (R*0.72);
+      const x = cx + Math.cos(angle)*rad;
+      const y = cy + Math.sin(angle)*rad;
+
+      const isGold = type==='gold';
+      const m = isGold ? 3.4 : 1.0; // heavier
+      const r = isGold ? (2.7 + Math.random()*1.2) : (1.6 + Math.random()*1.0);
+
+      return {
+        type,
+        x, y,
+        vx:(Math.random()-0.5)*0.8,
+        vy:(Math.random()-0.5)*0.8,
+        m,
+        r,
+        alive:true,
+      };
+    }
+
+    function resetPan(){
+      particles = [];
+      for (let i=0;i<CONFIG.sandN;i++) particles.push(spawn('sand'));
+      for (let i=0;i<CONFIG.goldN;i++) particles.push(spawn('gold'));
+      running = false;
+      paused = false;
+      tLeft = CONFIG.duration;
+      scoreGold = 0;
+      washedSand = 0;
+      washedGold = 0;
+      ui.endOverlay.style.display = 'none';
+      ui.startOverlay.style.display = 'flex';
+      ui.pauseBtn.textContent = 'PAUSE';
+      updateHud();
+    }
+
+    function startGame(){
+      running = true;
+      paused = false;
+      tLeft = CONFIG.duration;
+      ui.startOverlay.style.display = 'none';
+      ui.endOverlay.style.display = 'none';
+      ui.pauseBtn.textContent = 'PAUSE';
+    }
+
+    function endGame(reason = "TIME_UP"){
+      running = false;
+      paused = false;
+
+      const remainSand = particles.filter(p=>p.alive && p.type==='sand').length;
+      const remainGold = particles.filter(p=>p.alive && p.type==='gold').length;
+      const totalGold = CONFIG.goldN;
+      const purity = totalGold > 0 ? (scoreGold / totalGold) : 0;
+
+      const purityBonus = Math.round(500 * purity);
+      const sandPenalty = Math.round(remainSand * 0.6);
+      const washPenalty = Math.round(washedGold * 80);
+      const score = scoreGold*100 + purityBonus - sandPenalty - washPenalty;
+
+      const reasonLabel =
+        reason === "CLEAR_SAND" ? "CLEAR（砂が減った）" :
+        reason === "FINISH"     ? "FINISH" :
+        reason === "ALL_GOLD"   ? "PERFECT（全回収）" :
+        "TIME UP";
+
+      ui.resultText.innerHTML =
+        `終了: <b>${reasonLabel}</b><br><br>`+
+        `回収金粒: <b style="color:var(--gold)">${scoreGold}</b> / ${totalGold}<br>`+
+        `残砂: <b>${remainSand}</b>　流失砂: <b>${washedSand}</b><br>`+
+        `流失金: <b style="color:var(--bad)">${washedGold}</b><br>`+
+        `純度: <b>${Math.round(purity*100)}%</b>（+${purityBonus}）<br>`+
+        `スコア: <b style="color:var(--accent); font-size:18px">${score}</b>`;
+
+      ui.endOverlay.style.display = 'flex';
+      updateHud();
+    }
+
+    function updateHud(){
+      const aliveSand = particles.filter(p=>p.alive && p.type==='sand').length;
+      const aliveGold = particles.filter(p=>p.alive && p.type==='gold').length;
+
+      ui.time.textContent = tLeft.toFixed(1);
+      ui.gold.textContent = scoreGold.toString();
+      ui.sand.textContent = aliveSand.toString();
+
+      const totalAlive = aliveSand + aliveGold;
+      const purity = totalAlive>0 ? aliveGold / totalAlive : 0;
+      const pct = Math.round(purity*100);
+      ui.purity.textContent = `${pct}%`;
+      ui.purityBar.style.width = `${pct}%`;
+    }
+
+    // ===== Drag to swirl =====
+    function toCanvasPos(e){
+      const r = canvas.getBoundingClientRect();
+      const x = (e.clientX - r.left) * DPR;
+      const y = (e.clientY - r.top) * DPR;
+      return {x,y};
+    }
+
+    canvas.addEventListener('pointerdown', (e)=>{
+      canvas.setPointerCapture(e.pointerId);
+      const p = toCanvasPos(e);
+      input.active = true;
+      input.x = input.px = p.x;
+      input.y = input.py = p.y;
+      input.dx = input.dy = 0;
+    });
+
+    canvas.addEventListener('pointermove', (e)=>{
+      const p = toCanvasPos(e);
+      if (!input.active) return;
+
+      input.x = p.x; input.y = p.y;
+      input.dx = (input.x - input.px);
+      input.dy = (input.y - input.py);
+      input.px = input.x; input.py = input.y;
+    }, {passive:true});
+
+    function tryCollectAt(x,y){
+      if (!running || paused) return false;
+      // collect gold only
+      const tapR = CONFIG.tapRadius * DPR;
+      let best = null;
+      let bestD = 1e9;
+
+      for (const p of particles){
+        if (!p.alive || p.type !== 'gold') continue;
+        const dx = p.x - x, dy = p.y - y;
+        const d2 = dx*dx + dy*dy;
+        if (d2 < tapR*tapR && d2 < bestD){
+          best = p; bestD = d2;
+        }
+      }
+      if (best){
+        best.alive = false;
+        scoreGold++;
+        SFX.tapGold();
+        showToast("+100 GOLD");
+        updateHud();
+        return true;
+      }
+      return false;
+    }
+
+    canvas.addEventListener('pointerup', (e)=>{
+      const p = toCanvasPos(e);
+      // tap to collect (small move)
+      const moved = Math.hypot(input.dx, input.dy);
+      if (moved < 3*DPR) tryCollectAt(p.x, p.y);
+
+      input.active = false;
+      input.dx = input.dy = 0;
+    });
+
+    canvas.addEventListener('pointercancel', ()=>{
+      input.active = false;
+      input.dx = input.dy = 0;
+    });
+
+    // ===== Tilt (optional) =====
+    window.addEventListener('deviceorientation', (e)=>{
+      // gamma: left-right, beta: front-back
+      const g = (e.gamma ?? 0) / 30; // normalize
+      const b = (e.beta ?? 0) / 30;
+      input.tiltX = clamp(g, -1, 1);
+      input.tiltY = clamp(b, -1, 1);
+    }, {passive:true});
+
+    // ===== UI Buttons =====
+    document.getElementById('startBtn').addEventListener('click', ()=>{
+      // ensure audio context can start on gesture if enabled
+      startGame();
+    });
+
+    document.getElementById('retryBtn').addEventListener('click', ()=>{
+      resetPan();
+      startGame();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      resetPan();
+    });
+
+    document.getElementById('newBtn').addEventListener('click', ()=>{
+      resetPan();
+      startGame();
+    });
+
+    document.getElementById('pauseBtn').addEventListener('click', ()=>{
+      if (!running) return;
+      paused = !paused;
+      ui.pauseBtn.textContent = paused ? 'RESUME' : 'PAUSE';
+    });
+
+    document.getElementById('finishBtn').addEventListener('click', ()=>{
+      if (!running) return;
+      endGame("FINISH");
+    });
+
+    const soundBtn = document.getElementById('soundBtn');
+    soundBtn.addEventListener('click', ()=>{
+      const on = SFX.toggle();
+      soundBtn.textContent = `SFX: ${on ? 'ON' : 'OFF'}`;
+      soundBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+
+    const howBtn = document.getElementById('howBtn');
+    const howText = document.getElementById('howText');
+    howBtn.addEventListener('click', ()=>{
+      howText.style.display = (howText.style.display === 'none') ? 'block' : 'none';
+    });
+
+    // ===== Toast =====
+    let toastTimer = null;
+    function showToast(text){
+      ui.toast.textContent = text;
+      ui.toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=> ui.toast.classList.remove('show'), 700);
+    }
+
+    // ===== Simulation =====
+    let last = performance.now();
+
+    function step(dt){
+      const cx = dish.cx(), cy = dish.cy();
+      const R  = dish.R();
+      const rim = R * CONFIG.rimBand;
+
+      // input -> swirl vector (low pass)
+      // Drag creates a "shake" velocity: use pointer delta and decay
+      const dragVX = input.dx * 0.12;
+      const dragVY = input.dy * 0.12;
+
+      // tilt adds constant gentle bias
+      const tiltVX = input.tiltX * 0.55 * DPR;
+      const tiltVY = input.tiltY * 0.55 * DPR;
+
+      // smooth
+      input.vx = lerp(input.vx, dragVX + tiltVX, 0.18);
+      input.vy = lerp(input.vy, dragVY + tiltVY, 0.18);
+
+      // decay pointer delta
+      input.dx *= 0.72;
+      input.dy *= 0.72;
+
+      // approximate swirl: tangential flow around center
+      for (const p of particles){
+        if (!p.alive) continue;
+
+        const dx = p.x - cx, dy = p.y - cy;
+        const r = Math.hypot(dx, dy) || 1;
+        const nx = dx / r, ny = dy / r;
+
+        // tangential direction (rotate normal)
+        const tx = -ny, ty = nx;
+
+        // amount of swirl: based on input magnitude, stronger away from center
+        const inMagRaw = Math.hypot(input.vx, input.vy);
+        const inMag = Math.min(inMagRaw, 10 * DPR); // 上限。必要なら 8〜14で調整
+        const swirl = CONFIG.swirlStrength * inMag * (r / R);
+
+        // outward push (centrifugal-ish) affects lighter more
+        const outward = CONFIG.outwardStrength * inMag * (r / R);
+
+        // apply as acceleration; heavier particles respond less
+        const invM = 1 / p.m;
+
+        // combine: tangential + outward; plus a little "gravity" from tilt (already in input)
+        p.vx += (tx * swirl + nx * outward) * invM * dt * 60;
+        p.vy += (ty * swirl + ny * outward) * invM * dt * 60;
+
+        // gold tends to settle toward center slightly (helps "残る"快感)
+        if (p.type === 'gold'){
+          p.vx += (-nx * CONFIG.inwardGoldBias) * dt * 60;
+          p.vy += (-ny * CONFIG.inwardGoldBias) * dt * 60;
+        }
+
+        // friction
+        p.vx *= CONFIG.friction;
+        p.vy *= CONFIG.friction;
+
+        // integrate
+        p.x += p.vx * dt * 60;
+        p.y += p.vy * dt * 60;
+
+        // boundary (dish wall): keep inside circle; allow spill near rim with speed
+        const dx2 = p.x - cx, dy2 = p.y - cy;
+        const r2 = Math.hypot(dx2, dy2) || 1;
+
+        const speed = Math.hypot(p.vx, p.vy);
+
+        // ooze-out: rim付近ほど外へ引っ張られて、一定確率で流出
+        if (r2 > rim) {
+          const band = (r2 - rim) / Math.max(1, (R - rim)); // 0..1
+          const ooze = band * band; // 端ほど強い
+          // 外向きに少しだけ加速（飛ばない程度）
+          const nxO = dx2 / r2, nyO = dy2 / r2;
+          p.vx += nxO * (CONFIG.spillRate * ooze) * (1 / p.m) * dt * 60;
+          p.vy += nyO * (CONFIG.spillRate * ooze) * (1 / p.m) * dt * 60;
+
+          // すぐ消さず、縁を超えたら流出
+          if (r2 > R + p.r * 0.8) {
+            p.alive = false;
+            if (p.type === 'sand') {
+              washedSand++;
+              if (Math.random() < 0.14) SFX.wash();
+            } else {
+              washedGold++;
+            }
+            continue;
+          }
+        }
+
+        // hard wall bounce
+        if (r2 > R - p.r){
+          const nx2 = dx2 / r2, ny2 = dy2 / r2;
+          // project back inside
+          p.x = cx + nx2 * (R - p.r);
+          p.y = cy + ny2 * (R - p.r);
+
+          // reflect velocity
+          const dot = p.vx * nx2 + p.vy * ny2;
+          p.vx -= (1 + CONFIG.boundaryBounce) * dot * nx2;
+          p.vy -= (1 + CONFIG.boundaryBounce) * dot * ny2;
+
+          // extra damping at wall
+          p.vx *= 0.86; p.vy *= 0.86;
+        }
+      }
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+
+      const cx = dish.cx(), cy = dish.cy();
+      const R  = dish.R();
+      const lip = dish.lip();
+
+      // background glow
+      ctx.save();
+      ctx.globalAlpha = 0.55;
+      const g = ctx.createRadialGradient(cx, cy - R*0.35, R*0.05, cx, cy, R*1.05);
+      g.addColorStop(0, 'rgba(255,255,255,0.12)');
+      g.addColorStop(0.6, 'rgba(255,255,255,0.05)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R*1.08, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+
+      // dish
+      ctx.save();
+      // outer rim
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = lip*2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, Math.PI*2);
+      ctx.stroke();
+
+      // inner bowl
+      const bowl = ctx.createRadialGradient(cx, cy - R*0.2, R*0.1, cx, cy, R);
+      bowl.addColorStop(0, 'rgba(255,255,255,0.10)');
+      bowl.addColorStop(1, 'rgba(0,0,0,0.28)');
+      ctx.fillStyle = bowl;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R - lip*1.2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+
+      // particles: draw sand first, gold last
+      const sand = [];
+      const gold = [];
+      for (const p of particles){
+        if (!p.alive) continue;
+        (p.type==='gold' ? gold : sand).push(p);
+      }
+
+      // sand
+      ctx.save();
+      ctx.fillStyle = 'rgba(243,246,255,0.75)';
+      for (const p of sand){
+        ctx.globalAlpha = 0.55 + Math.random()*0.18;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // gold
+      ctx.save();
+      for (const p of gold){
+        // small highlight
+        const gg = ctx.createRadialGradient(p.x - p.r*0.35, p.y - p.r*0.35, p.r*0.2, p.x, p.y, p.r*1.6);
+        gg.addColorStop(0, 'rgba(255,255,255,0.85)');
+        gg.addColorStop(0.25,'rgba(251,191,36,0.95)');
+        gg.addColorStop(1, 'rgba(251,191,36,0.25)');
+        ctx.fillStyle = gg;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r*1.25, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.20)';
+        ctx.lineWidth = 1.0 * DPR;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r*1.1, 0, Math.PI*2);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // subtle center marker
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      ctx.strokeStyle = 'rgba(96,165,250,0.7)';
+      ctx.lineWidth = 1 * DPR;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R*0.14, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function loop(now){
+      const dt = Math.min(0.033, (now - last) / 1000);
+      last = now;
+
+      if (running && !paused){
+        tLeft -= dt;
+        if (tLeft <= 0){
+          tLeft = 0;
+          updateHud();
+          draw();
+          endGame("TIME_UP");
+          requestAnimationFrame(loop);
+          return;
+        }
+        step(dt);
+        updateHud();
+
+        // 終了条件(3): 金を全回収
+        if (scoreGold >= CONFIG.goldN) {
+          endGame("ALL_GOLD");
+          requestAnimationFrame(loop);
+          return;
+        }
+
+        // 終了条件(1): 残砂が一定以下
+        const aliveSand = particles.filter(p=>p.alive && p.type==='sand').length;
+        if (aliveSand <= CONFIG.sandClearThreshold) {
+          endGame("CLEAR_SAND");
+          requestAnimationFrame(loop);
+          return;
+        }
+      }
+
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    // init
+    resetPan();
+    requestAnimationFrame(loop);
+
+    // prevent double-tap zoom on iOS Safari more strongly
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e)=>{
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, {passive:false});
+  </script>
+</body>
+</html>
