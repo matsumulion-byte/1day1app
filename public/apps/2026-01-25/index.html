@@ -205,8 +205,9 @@
 
   <script type="module">
     const asset = (p) => {
-      const basePath = window.location.pathname.replace(/\/$/, '') || '/';
-      return new URL(p, basePath + '/').toString();
+      const basePath = window.location.pathname.replace(/\/$/, '') || '';
+      const relativePath = p.startsWith('./') ? p.slice(2) : p;
+      return `${basePath}/${relativePath}`;
     };
 
     // UIには出さない内部パラメータ（語尾の揺れ用）
