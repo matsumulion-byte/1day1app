@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>お詫びジェネレーター｜ナンセンス</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; background:var(--bg); color:var(--ink)}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      overflow:hidden;
+      -webkit-font-smoothing:antialiased;
+      touch-action: manipulation;
+    }
+    .wrap{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+      overflow:hidden;
+    }
+    header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+    .ttl{display:flex;flex-direction:column;gap:4px;min-width:0}
+    .ttl h1{font-size:18px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ttl p{font-size:12px;color:var(--muted)}
+    .pill{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      color:var(--muted);
+      user-select:none;
+      flex:0 0 auto;
+    }
+
+    .card{
+      flex:1; min-height:0;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      border-radius:var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .content{
+      padding:12px;
+      display:grid;
+      grid-template-columns: 96px 1fr;
+      gap:12px;
+      align-items:start;
+      min-height:0;
+    }
+    .imgBox{
+      width:96px; aspect-ratio:1/1;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      overflow:hidden;
+      position:relative;
+    }
+    .imgBox img{width:100%;height:100%;object-fit:cover;display:block}
+    .imgFallback{
+      position:absolute; inset:0;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:6px;
+      color:var(--muted);
+      font-size:11px;
+      padding:10px;
+      text-align:center;
+      word-break:break-word;
+    }
+
+    .texts{min-width:0;display:flex;flex-direction:column;gap:10px}
+    .box{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      border-radius:16px;
+      padding:10px;
+    }
+    .k{font-size:11px;color:var(--muted);margin-bottom:6px}
+    .v{font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+
+    .controls{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap:10px;
+      padding:12px;
+      border-top:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+    }
+    .btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.08);
+      color:var(--ink);
+      padding:12px 12px;
+      border-radius:14px;
+      font-weight:700;
+      font-size:14px;
+      cursor:pointer;
+      user-select:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      width:100%;
+      min-width:0;
+      white-space:nowrap;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{
+      border-color: rgba(96,165,250,.55);
+      background:rgba(96,165,250,.18);
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      transform:translateX(-50%);
+      background:rgba(0,0,0,.65);
+      border:1px solid rgba(255,255,255,.18);
+      color:var(--ink);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:12px;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .18s ease, transform .18s ease;
+      z-index:5;
+      white-space:nowrap;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+
+    @media (min-width: 720px){
+      .controls{grid-template-columns: repeat(4, minmax(0, 1fr))}
+    }
+    @media (min-width: 820px){
+      .content{grid-template-columns: 120px 1fr}
+      .imgBox{width:120px;border-radius:18px}
+      .ttl h1{font-size:20px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="ttl">
+        <h1>お詫びジェネレーター</h1>
+        <p>ナンセンスな状況 × それっぽいお詫び（ランダム）</p>
+      </div>
+      <div class="pill" id="seedPill">seed: —</div>
+    </header>
+
+    <section class="card">
+      <div class="content">
+        <div class="imgBox" title="松村が謝っている画像">
+          <img id="sorryImg" alt="松村が謝っている画像" />
+          <div class="imgFallback" id="imgFallback" hidden>
+            <div>画像が見つかりません</div>
+            <div style="opacity:.9">/assets/matsumura_sorry.png</div>
+          </div>
+        </div>
+
+        <div class="texts">
+          <div class="box">
+            <div class="k">シチュエーション</div>
+            <div class="v" id="scenarioText">—</div>
+          </div>
+
+          <div class="box">
+            <div class="k">お詫び文</div>
+            <div class="v" id="apologyText">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="btnGenerate" type="button">🎲 もう一回</button>
+        <button class="btn" id="btnCopy" type="button">📋 コピー</button>
+        <button class="btn" id="btnCopyAll" type="button">まとめてコピー</button>
+        <button class="btn" id="btnShare" type="button">共有</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast">Copied</div>
+
+  <script type="module">
+    const asset = (p) => {
+      const basePath = window.location.pathname.replace(/\/$/, '') || '/';
+      return new URL(p, basePath + '/').toString();
+    };
+
+    // UIには出さない内部パラメータ（語尾の揺れ用）
+    const TONE = ["hard","mid","soft"];
+    const LEVEL = ["light","mid","heavy"];
+
+    // 仕事っぽさを避ける：会議/納品/資料/見積/サーバー/Slack/Zoom などを排除
+    // 「現実にありそう」を避けて、物理法則・世界観が崩れる系に寄せる
+    const SITUATIONS = [
+      "買ったはずのアイスが、家に着いたら\"ヒヨコ\"になっていました。",
+      "自分の傘だけ、雨に避けられていました。",
+      "自動ドアが自分にだけ反応せず、気まずい時間が流れました。",
+      "靴を左右バラバラに履いて外出し、途中で気づいたので遅刻しました。",
+      "炊飯器を開けたら、そこは異世界でした。",
+      "目覚ましを止めたのに、夢の中で鳴り続けていました。",
+      "電子レンジで温めたのに、なぜか冷えて出てきました。",
+      "洗濯物を干した瞬間だけ、ピンポイントで雨が降りました。",
+      "コンビニ袋を開けたら、買った記憶のないお菓子が入っていました。",
+      "靴ひもを結んだはずが、運命の人と結ばれていました",
+      "ペットボトルのフタが硬すぎて1年半が過ぎました。",
+      "レシートが長すぎて、持ち帰り用の筒が必要になりました。",
+      "写真を撮ったら、自分だけ全部ブレていました。",
+      "改札を通ったら、ピッではなく\"ため息\"みたいな音がしました。",
+      "イヤホンを差したのに、音が全部スピーカーから出ていました。",
+      "家の鍵を開けたら、自分の家なのに\"ようこそ\"と言われました。",
+      "宅配便の受け取りサインを小学校の時に練習したので書いてしましました。",
+      "片方だけの靴下が10足を超えました。",
+      "電車で座った瞬間に終点についていました。",
+      "エレベーターでボタンを押してなくてずっと1階にいました。",
+      "髪を切ったのに、誰にも気づかれませんでした。",
+    ];
+
+    function mulberry32(seed){
+      return function(){
+        let t = seed += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+    const pick = (rng, arr) => arr[Math.floor(rng() * arr.length)];
+
+    // お詫び文も「仕事の定型」を薄める（ただし“それっぽさ”は残す）
+    const OPEN = {
+      hard:["恐れ入ります。","失礼いたします。","まずはお詫び申し上げます。"],
+      mid:["すみません。","失礼しました。","申し訳ないです。"],
+      soft:["ごめんなさい…！","ほんとごめん…！","すみません…！"]
+    };
+    const BODY = {
+      hard:{
+        light:["不手際が発生しました。","配慮が足りませんでした。","取り扱いが雑でした。"],
+        mid:["混乱を招きました。","ご迷惑をおかけしました。","状況を悪化させました。"],
+        heavy:["深刻な事態を招きました。","取り返しのつかない感じにしてしまいました。","世界観を崩しました。"]
+      },
+      mid:{
+        light:["やらかしました。","ミスりました。","うっかりしました。"],
+        mid:["だいぶやらかしました。","けっこうミスりました。","完全にうっかりでした。"],
+        heavy:["かなりやらかしました。","致命的にミスりました。","もう言い訳できない感じです。"]
+      },
+      soft:{
+        light:["やっちゃいました…！","うっかりでした…！","ごめんなさい…！"],
+        mid:["だいぶやっちゃいました…！","完全にうっかりです…！","ほんとすみません…！"],
+        heavy:["大事件にしちゃいました…！","世界に迷惑かけました…！","取り返したいです…！"]
+      }
+    };
+    const FIX = {
+      hard:["直ちに整えます。","原因を追います。","再発防止に努めます。"],
+      mid:["落ち着いて直します。","いったん整え直します。","ちゃんと戻します。"],
+      soft:["すぐ直します…！","ちゃんとします…！","がんばって戻します…！"]
+    };
+    const CLOSE = {
+      hard:["何卒ご容赦ください。","以後気をつけます。","よろしくお願いいたします。"],
+      mid:["以後気をつけます。","許してください。","よろしくです。"],
+      soft:["許して…！","次はうまくやる…！","よろしくお願いします…！"]
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    let seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
+    let rng = mulberry32(seed);
+
+    const state = { situation:"—", apology:"—" };
+
+    function buildApology(situation){
+      const tone = pick(rng, TONE);
+      const level = pick(rng, LEVEL);
+
+      const o = pick(rng, OPEN[tone]);
+      const b = pick(rng, BODY[tone][level]);
+      const f = pick(rng, FIX[tone]);
+      const c = pick(rng, CLOSE[tone]);
+
+      // “それっぽさ”は残すが、特定の業務語彙は出さない
+      return `${o}
+
+【状況】${situation}
+
+${b}
+${f}
+
+${c}`;
+    }
+
+    function render(){
+      $("seedPill").textContent = `seed: ${seed}`;
+      $("scenarioText").textContent = state.situation;
+      $("apologyText").textContent = state.apology;
+    }
+
+    function regenerate(){
+      seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
+      rng = mulberry32(seed);
+
+      state.situation = pick(rng, SITUATIONS);
+      state.apology = buildApology(state.situation);
+      render();
+    }
+
+    // Image
+    const img = $("sorryImg");
+    const imgFallback = $("imgFallback");
+    img.src = asset("./assets/matsumura_sorry.png");
+    img.addEventListener("error", () => {
+      imgFallback.hidden = false;
+      img.style.display = "none";
+    });
+
+    // Toast
+    const elToast = $("toast");
+    function toast(msg){
+      elToast.textContent = msg;
+      elToast.classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(()=> elToast.classList.remove("show"), 900);
+    }
+
+    // Copy / Share
+    async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        toast("コピーしました");
+      }catch(e){
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+        toast("コピーしました");
+      }
+    }
+
+    $("btnGenerate").addEventListener("click", regenerate);
+    $("btnCopy").addEventListener("click", ()=> copyText(state.apology));
+    $("btnCopyAll").addEventListener("click", ()=> {
+      const all = `【シチュエーション】\n${state.situation}\n\n【お詫び文】\n${state.apology}`;
+      copyText(all);
+    });
+    $("btnShare").addEventListener("click", async ()=>{
+      const text = `【シチュエーション】\n${state.situation}\n\n【お詫び文】\n${state.apology}`;
+      if(navigator.share){
+        try{ await navigator.share({ title:"お詫びジェネレーター", text }); }catch(e){}
+      }else{
+        toast("共有は未対応です");
+      }
+    });
+
+    regenerate();
+  </script>
+</body>
+</html>
