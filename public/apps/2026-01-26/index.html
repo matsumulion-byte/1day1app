@@ -225,13 +225,10 @@
         <button class="btn good" id="startBtn">スタート</button>
         <button class="btn" id="retryBtn" style="display:none;">もう一回</button>
       </div>
-      <div class="tiny">※画像やBGMなしで動作。必要なら assets に置いて差し替え可能。</div>
     </div>
   </div>
 
   <script type="module">
-    const asset = (p) => new URL(p, import.meta.url).toString();
-
     const canvas = document.getElementById('c');
     const stage = document.getElementById('stage');
     const ctx = canvas.getContext('2d');
