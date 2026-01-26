@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>有料駐車場の日｜車庫入れゲーム</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --good:#34d399;
+      --bad:#fb7185;
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; background:var(--bg); color:var(--ink); overflow:hidden}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      touch-action: manipulation;
+    }
+
+    .app{height:100%; display:flex; flex-direction:column}
+    header{
+      padding: calc(env(safe-area-inset-top) + 12px) 14px 10px;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    }
+    .title{display:flex; flex-direction:column; gap:4px; min-width:0;}
+    .title h1{font-size:14px; letter-spacing:.02em; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .title p{font-size:12px; color:var(--muted)}
+    .hud{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px; border-radius:999px;
+      background:var(--panel); border:1px solid var(--line);
+      font-size:12px; color:var(--muted);
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      user-select:none;
+    }
+    .pill b{color:var(--ink); font-variant-numeric:tabular-nums}
+
+    main{
+      flex:1; padding: 0 12px 12px;
+      display:grid; grid-template-rows: 1fr auto;
+      gap:12px;
+      min-height: 0;
+    }
+    .stage{
+      position:relative;
+      border-radius: var(--r);
+      background: radial-gradient(1200px 700px at 50% 30%, rgba(96,165,250,.16), transparent 55%),
+                  linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      min-height: 360px;
+    }
+    canvas{width:100%; height:100%; display:block; touch-action:none;}
+
+    .controls{
+      padding: 12px;
+      border-radius: var(--r);
+      background:var(--panel);
+      border:1px solid var(--line);
+      display:grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap:10px;
+      align-items:center;
+      padding-bottom: calc(env(safe-area-inset-bottom) + 12px);
+    }
+
+    .pad{display:grid; grid-template-columns: 1fr 1fr; gap:10px; align-items:stretch;}
+    .mid{display:grid; grid-template-rows: 1fr 1fr; gap:10px; align-items:stretch; justify-items:stretch; width:min(160px, 36vw);}
+
+    button.btn{
+      appearance:none; border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      color:var(--ink);
+      border-radius: 16px;
+      padding:14px 12px;
+      font-weight:700;
+      letter-spacing:.02em;
+      box-shadow: 0 12px 30px rgba(0,0,0,.25);
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation; /* これで十分。touchend preventDefault は不要 */
+    }
+    button.btn:active{transform: translateY(1px); filter: brightness(1.05)}
+    .btn small{display:block; font-size:11px; color:var(--muted); font-weight:600; margin-top:3px; letter-spacing:0}
+
+    .btn.good{border-color: rgba(52,211,153,.45)}
+    .btn.bad{border-color: rgba(251,113,133,.45)}
+
+    /* ✅ ここを fixed にして「沈む」問題を潰す */
+    .overlay{
+      position:fixed;
+      inset:0;
+      display:grid; place-items:center;
+      background: radial-gradient(900px 600px at 50% 30%, rgba(0,0,0,.35), rgba(0,0,0,.68));
+      padding: 18px;
+      z-index: 50;
+    }
+    .card{
+      width:min(520px, 100%);
+      border-radius: 22px;
+      background: rgba(11,16,32,.78);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 22px 70px rgba(0,0,0,.6);
+      padding:16px 16px 14px;
+      backdrop-filter: blur(10px);
+    }
+    .card h2{font-size:16px; letter-spacing:.02em}
+    .card p{margin-top:8px; font-size:13px; color:var(--muted); line-height:1.6}
+    .tips{
+      margin-top:12px;
+      display:grid; gap:8px;
+      padding: 10px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      font-size:12px;
+      color:var(--muted);
+    }
+    .tips b{color:var(--ink)}
+    .row{margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;}
+    .row .btn{flex:1; min-width: 160px}
+    .tiny{margin-top:10px; font-size:11px; color: rgba(243,246,255,.55);}
+
+    .badge{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px; border-radius:999px;
+      background: rgba(96,165,250,.14);
+      border:1px solid rgba(96,165,250,.28);
+      color: rgba(243,246,255,.9);
+      font-size:12px; font-weight:700;
+    }
+
+    @media (min-width: 900px){
+      header{padding-left: 18px; padding-right: 18px;}
+      main{padding-left: 18px; padding-right: 18px;}
+      .controls{grid-template-columns: 1fr 220px 1fr}
+      .mid{width:220px}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <h1>有料駐車場の日｜車庫入れチャレンジ</h1>
+        <p>目標枠に「ゆっくり」停めたらクリア（できればバックで）</p>
+      </div>
+      <div class="hud">
+        <div class="pill">残り <b id="time">45.0</b>s</div>
+        <div class="pill">バンプ <b id="bumps">0</b></div>
+        <div class="pill">スコア <b id="score">—</b></div>
+      </div>
+    </header>
+
+    <main>
+      <section class="stage" id="stage">
+        <canvas id="c"></canvas>
+      </section>
+
+      <section class="controls" aria-label="操作">
+        <div class="pad">
+          <button class="btn" id="leftBtn">左<small>ハンドル</small></button>
+          <button class="btn" id="rightBtn">右<small>ハンドル</small></button>
+        </div>
+
+        <div class="mid">
+          <button class="btn good" id="gasBtn">前進<small>アクセル</small></button>
+          <button class="btn bad" id="revBtn">後退<small>リバース</small></button>
+        </div>
+
+        <div class="pad">
+          <button class="btn" id="brakeBtn">ブレーキ<small>停止優先</small></button>
+          <button class="btn" id="resetBtn">リセット<small>最初から</small></button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ✅ overlay は stage の外（fixed） -->
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <div class="badge">車庫入れゲーム</div>
+      <h2 style="margin-top:10px;">時間内に駐車枠へピタッと。</h2>
+      <p>
+        壁やコーンに当たると<strong>バンプ</strong>が増えます。<br/>
+        枠の中で<strong>停止に近い速度</strong>になったらクリア。
+      </p>
+      <div class="tips">
+        <div>SP：下のボタンで操作（押しっぱなしOK）</div>
+        <div>PC：<b>W/S</b> 前進/後退、<b>A/D</b> 旋回、<b>Space</b> ブレーキ</div>
+        <div>コツ：<b>バック駐車</b>だと決まりやすい</div>
+      </div>
+      <div class="row">
+        <button class="btn good" id="startBtn">スタート</button>
+        <button class="btn" id="retryBtn" style="display:none;">もう一回</button>
+      </div>
+      <div class="tiny">※画像やBGMなしで動作。必要なら assets に置いて差し替え可能。</div>
+    </div>
+  </div>
+
+  <script type="module">
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    const canvas = document.getElementById('c');
+    const stage = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+
+    const uiTime = document.getElementById('time');
+    const uiBumps = document.getElementById('bumps');
+    const uiScore = document.getElementById('score');
+
+    const overlay = document.getElementById('overlay');
+    const startBtn = document.getElementById('startBtn');
+    const retryBtn = document.getElementById('retryBtn');
+
+    const leftBtn = document.getElementById('leftBtn');
+    const rightBtn = document.getElementById('rightBtn');
+    const gasBtn = document.getElementById('gasBtn');
+    const revBtn = document.getElementById('revBtn');
+    const brakeBtn = document.getElementById('brakeBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
+
+    function resize(){
+      const r = stage.getBoundingClientRect();
+      canvas.width = Math.floor(r.width * DPR);
+      canvas.height = Math.floor(r.height * DPR);
+      ctx.setTransform(DPR,0,0,DPR,0,0);
+    }
+
+    const ro = new ResizeObserver(()=>{ resize(); layout(); });
+    ro.observe(stage);
+
+    // ---- Game constants
+    const GAME = {
+      totalTime: 45.0,
+      bumpPenalty: 25,
+      finishSpeed: 18,
+      finishAngleDeg: 28,
+      minInsideRatio: 0.98
+    };
+
+    // ---- Input
+    const input = { left:false, right:false, gas:false, rev:false, brake:false };
+
+    function bindHold(el, key){
+      const on = () => { input[key] = true; };
+      const off = () => { input[key] = false; };
+
+      el.addEventListener('pointerdown', (e)=>{
+        e.preventDefault();
+        el.setPointerCapture(e.pointerId);
+        on();
+      });
+      el.addEventListener('pointerup', off);
+      el.addEventListener('pointercancel', off);
+      el.addEventListener('contextmenu', (e)=>e.preventDefault());
+    }
+    bindHold(leftBtn,'left');
+    bindHold(rightBtn,'right');
+    bindHold(gasBtn,'gas');
+    bindHold(revBtn,'rev');
+    bindHold(brakeBtn,'brake');
+
+    resetBtn.addEventListener('click', ()=> reset(true));
+
+    // Keyboard
+    window.addEventListener('keydown', (e)=>{
+      if(e.repeat) return;
+      if(e.code==='KeyA') input.left = true;
+      if(e.code==='KeyD') input.right = true;
+      if(e.code==='KeyW') input.gas = true;
+      if(e.code==='KeyS') input.rev = true;
+      if(e.code==='Space'){ input.brake = true; e.preventDefault(); }
+    });
+    window.addEventListener('keyup', (e)=>{
+      if(e.code==='KeyA') input.left = false;
+      if(e.code==='KeyD') input.right = false;
+      if(e.code==='KeyW') input.gas = false;
+      if(e.code==='KeyS') input.rev = false;
+      if(e.code==='Space') input.brake = false;
+    });
+
+    // ---- Helpers
+    const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+    const rad = (deg)=>deg*Math.PI/180;
+    const deg = (r)=>r*180/Math.PI;
+
+    function rotatePoint(px, py, ang){
+      const c = Math.cos(ang), s = Math.sin(ang);
+      return {x:px*c - py*s, y:px*s + py*c};
+    }
+    function rectCorners(cx,cy,w,h,ang){
+      const hw=w/2, hh=h/2;
+      return [
+        {x:-hw, y:-hh},{x: hw, y:-hh},{x: hw, y: hh},{x:-hw, y: hh},
+      ].map(p=>{
+        const q = rotatePoint(p.x,p.y,ang);
+        return {x: cx+q.x, y: cy+q.y};
+      });
+    }
+    function pointInOrientedRect(px,py, rcx, rcy, rw, rh, rang){
+      const dx = px-rcx, dy = py-rcy;
+      const c = Math.cos(-rang), s = Math.sin(-rang);
+      const lx = dx*c - dy*s;
+      const ly = dx*s + dy*c;
+      return Math.abs(lx) <= rw/2 && Math.abs(ly) <= rh/2;
+    }
+
+    // ---- World
+    const state = { running:false, ended:false, win:false, timeLeft: GAME.totalTime, bumps:0, score:null };
+    const world = {
+      pad: 28, w:0, h:0,
+      car: { x:0,y:0, ang:0, v:0, steer:0, w:42, h:76, radius:44 },
+      goal:{ x:0,y:0,w:70,h:128, ang: rad(-10) },
+      cones:[]
+    };
+
+    function layout(){
+      const r = stage.getBoundingClientRect();
+      world.w = r.width; world.h = r.height;
+
+      world.goal.x = world.w - world.pad - 110;
+      world.goal.y = world.pad + 120;
+
+      world.car.x = world.pad + 120;
+      world.car.y = world.h - world.pad - 120;
+      world.car.ang = rad(12);
+      world.car.v = 0;
+
+      const cones = [];
+      const cx0 = world.w*0.48;
+      const cy0 = world.h*0.55;
+      const spacing = Math.min(72, world.h/8);
+      for(let i=0;i<6;i++){
+        cones.push({ x: cx0 + (i%2===0 ? -70 : 70), y: cy0 - i*spacing, r: 16 });
+      }
+      cones.push({x: world.goal.x-70, y: world.goal.y+40, r:16});
+      cones.push({x: world.goal.x+70, y: world.goal.y+40, r:16});
+      world.cones = cones;
+    }
+
+    // ---- Physics
+    let bumpCooldown = 0;
+
+    function bumpOnce(){
+      if(bumpCooldown > 0) return;
+      bumpCooldown = 0.22;
+      state.bumps++;
+      uiBumps.textContent = String(state.bumps);
+    }
+
+    function checkParked(){
+      const car = world.car, goal = world.goal;
+      const corners = rectCorners(car.x, car.y, car.w, car.h, car.ang);
+      let inside = 0;
+      for(const p of corners){
+        if(pointInOrientedRect(p.x,p.y, goal.x,goal.y,goal.w,goal.h,goal.ang)) inside++;
+      }
+      const ratio = inside / 4;
+      const speed = Math.abs(car.v);
+      const angDiff = Math.abs(((deg(car.ang - goal.ang)+540)%360)-180);
+      return ratio >= GAME.minInsideRatio && speed <= GAME.finishSpeed && angDiff <= GAME.finishAngleDeg;
+    }
+
+    function step(dt){
+      const car = world.car;
+
+      const steerRate = 2.7;
+      const maxSteer = rad(36);
+      const targetSteer = (input.left ? -1 : 0) + (input.right ? 1 : 0);
+      car.steer += (targetSteer*maxSteer - car.steer) * clamp(dt*steerRate, 0, 1);
+
+      const accel = 220, revAccel = 170, drag = 1.85, brake = 420;
+
+      if(input.gas && !input.rev) car.v += accel * dt;
+      else if(input.rev && !input.gas) car.v -= revAccel * dt;
+      else car.v *= Math.exp(-drag*dt);
+
+      if(input.brake){
+        const s = Math.sign(car.v);
+        const nv = car.v - s*brake*dt;
+        car.v = (Math.sign(nv)===s) ? nv : 0;
+      }
+
+      car.v = clamp(car.v, -220, 320);
+
+      const speedFactor = clamp(Math.abs(car.v)/220, 0.08, 1);
+      const turnRate = 1.55;
+      car.ang += car.steer * turnRate * speedFactor * dt * (car.v>=0 ? 1 : -1);
+
+      // ✅ 車の「前」を -Y に揃える（描画と一致）
+      car.x += Math.sin(car.ang) * car.v * dt;
+      car.y += -Math.cos(car.ang) * car.v * dt;
+
+      const pad = world.pad;
+      let bumped = false;
+      if(car.x < pad){ car.x = pad; car.v *= -0.25; bumped = true; }
+      if(car.y < pad){ car.y = pad; car.v *= -0.25; bumped = true; }
+      if(car.x > world.w - pad){ car.x = world.w - pad; car.v *= -0.25; bumped = true; }
+      if(car.y > world.h - pad){ car.y = world.h - pad; car.v *= -0.25; bumped = true; }
+
+      for(const cone of world.cones){
+        const dx = car.x - cone.x, dy = car.y - cone.y;
+        const d = Math.hypot(dx,dy);
+        const minD = car.radius + cone.r;
+        if(d < minD){
+          const nx = dx / (d || 1), ny = dy / (d || 1);
+          const push = (minD - d) + 0.5;
+          car.x += nx * push; car.y += ny * push;
+          car.v *= 0.6;
+          bumped = true;
+        }
+      }
+      if(bumped) bumpOnce();
+
+      state.timeLeft = Math.max(0, state.timeLeft - dt);
+      uiTime.textContent = state.timeLeft.toFixed(1);
+
+      if(!state.ended){
+        if(checkParked()) end(true);
+        else if(state.timeLeft <= 0) end(false);
+      }
+    }
+
+    // ---- Render
+    function roundRect(x,y,w,h,r,fill,stroke){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr,y);
+      ctx.arcTo(x+w,y,x+w,y+h,rr);
+      ctx.arcTo(x+w,y+h,x,y+h,rr);
+      ctx.arcTo(x,y+h,x,y,rr);
+      ctx.arcTo(x,y,x+w,y,rr);
+      if(fill) ctx.fill();
+      if(stroke) ctx.stroke();
+    }
+
+    function drawGoal(){
+      const g = world.goal;
+      ctx.save();
+      ctx.translate(g.x, g.y);
+      ctx.rotate(g.ang);
+
+      ctx.fillStyle = 'rgba(52,211,153,.12)';
+      ctx.strokeStyle = 'rgba(52,211,153,.55)';
+      ctx.lineWidth = 2;
+      ctx.fillRect(-g.w/2, -g.h/2, g.w, g.h);
+      ctx.strokeRect(-g.w/2, -g.h/2, g.w, g.h);
+
+      ctx.fillStyle = 'rgba(52,211,153,.85)';
+      ctx.font = '800 28px ui-sans-serif, system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('P', 0, -g.h*0.12);
+
+      ctx.globalAlpha = 0.65;
+      ctx.strokeStyle = 'rgba(52,211,153,.55)';
+      ctx.lineWidth = 1.5;
+      for(let i=0;i<3;i++){
+        const y = -g.h/2 + 18 + i*22;
+        ctx.beginPath();
+        ctx.moveTo(-g.w/2+12, y);
+        ctx.lineTo(g.w/2-12, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawCar(){
+      const car = world.car;
+      ctx.save();
+      ctx.translate(car.x, car.y);
+      ctx.rotate(car.ang);
+
+      ctx.save();
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = 'rgba(0,0,0,.7)';
+      ctx.filter = 'blur(6px)';
+      ctx.fillRect(-car.w/2 + 2, -car.h/2 + 8, car.w, car.h);
+      ctx.filter = 'none';
+      ctx.restore();
+
+      ctx.fillStyle = 'rgba(96,165,250,.95)';
+      ctx.strokeStyle = 'rgba(255,255,255,.25)';
+      ctx.lineWidth = 2;
+      roundRect(-car.w/2, -car.h/2, car.w, car.h, 10, true, true);
+
+      ctx.fillStyle = 'rgba(11,16,32,.55)';
+      roundRect(-car.w/2 + 6, -car.h/2 + 14, car.w - 12, car.h*0.38, 9, true, false);
+
+      ctx.fillStyle = 'rgba(251,113,133,.95)';
+      ctx.fillRect(-car.w/2 + 6, car.h/2 - 12, car.w - 12, 6);
+      ctx.fillStyle = 'rgba(243,246,255,.85)';
+      ctx.fillRect(-car.w/2 + 6, -car.h/2 + 6, car.w - 12, 6);
+
+      ctx.fillStyle = 'rgba(243,246,255,.8)';
+      ctx.font = '800 12px ui-sans-serif, system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('松', 0, 4);
+
+      ctx.restore();
+    }
+
+    function draw(){
+      const w = world.w, h = world.h;
+      ctx.clearRect(0,0,w,h);
+
+      ctx.save();
+      ctx.globalAlpha = 0.55;
+      ctx.strokeStyle = 'rgba(255,255,255,.08)';
+      ctx.lineWidth = 1;
+      const g = 34;
+      for(let x=world.pad; x<w-world.pad; x+=g){
+        ctx.beginPath(); ctx.moveTo(x, world.pad); ctx.lineTo(x, h-world.pad); ctx.stroke();
+      }
+      for(let y=world.pad; y<h-world.pad; y+=g){
+        ctx.beginPath(); ctx.moveTo(world.pad, y); ctx.lineTo(w-world.pad, y); ctx.stroke();
+      }
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,.18)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(world.pad, world.pad, w-2*world.pad, h-2*world.pad);
+      ctx.restore();
+
+      drawGoal();
+
+      for(const cone of world.cones){
+        ctx.save();
+        ctx.translate(cone.x, cone.y);
+        ctx.fillStyle = 'rgba(251,113,133,.88)';
+        ctx.beginPath(); ctx.arc(0,0,cone.r,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,.2)';
+        ctx.beginPath(); ctx.arc(0,0,cone.r*0.55,0,Math.PI*2); ctx.fill();
+        ctx.restore();
+      }
+
+      drawCar();
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(243,246,255,.72)';
+      ctx.font = '12px ui-sans-serif, system-ui';
+      const hint = state.ended ? (state.win ? '駐車成功！' : '時間切れ…') : '目標枠へ停止（ゆっくり）';
+      ctx.fillText(hint, world.pad+10, world.pad+20);
+      ctx.restore();
+    }
+
+    // ---- Loop
+    let last = 0;
+    function loop(ts){
+      if(!last) last = ts;
+      const dt = Math.min(0.033, (ts-last)/1000);
+      last = ts;
+
+      bumpCooldown = Math.max(0, bumpCooldown - dt);
+
+      if(state.running && !state.ended) step(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+
+    // ---- Start/Reset/End
+    function reset(showOverlay=false){
+      state.running = false;
+      state.ended = false;
+      state.win = false;
+      state.timeLeft = GAME.totalTime;
+      state.bumps = 0;
+      state.score = null;
+
+      uiTime.textContent = state.timeLeft.toFixed(1);
+      uiBumps.textContent = '0';
+      uiScore.textContent = '—';
+
+      input.left = input.right = input.gas = input.rev = input.brake = false;
+
+      layout();
+      if(showOverlay){
+        retryBtn.style.display = 'none';
+        startBtn.style.display = '';
+        overlay.style.display = 'grid';
+      }
+    }
+
+    function start(){
+      reset(false);
+      state.running = true;
+      overlay.style.display = 'none';
+    }
+
+    function end(win){
+      state.ended = true;
+      state.running = false;
+      state.win = win;
+
+      const tUsed = GAME.totalTime - state.timeLeft;
+      const base = win ? 1000 : 0;
+      const timeBonus = win ? Math.max(0, Math.round((GAME.totalTime - tUsed) * 12)) : 0;
+      const bumpMinus = state.bumps * GAME.bumpPenalty;
+      const total = Math.max(0, base + timeBonus - bumpMinus);
+
+      state.score = total;
+      uiScore.textContent = String(total);
+
+      const card = overlay.querySelector('.card');
+      const h2 = card.querySelector('h2');
+      const p = card.querySelector('p');
+
+      if(win){
+        h2.textContent = '駐車成功！';
+        p.innerHTML = `スコア <strong>${total}</strong><br/>バンプ：<strong>${state.bumps}</strong> / 残り：<strong>${state.timeLeft.toFixed(1)}s</strong>`;
+      }else{
+        h2.textContent = '時間切れ…';
+        p.innerHTML = `バンプ：<strong>${state.bumps}</strong><br/>バックで角度を作って入れると安定します。`;
+      }
+
+      startBtn.style.display = 'none';
+      retryBtn.style.display = '';
+      overlay.style.display = 'grid';
+    }
+
+    // ✅ clickが潰れないように素直に click で開始
+    startBtn.addEventListener('click', start);
+    retryBtn.addEventListener('click', start);
+
+    // 初期化
+    resize();
+    layout();
+    reset(true);
+  </script>
+</body>
+</html>
