@@ -147,6 +147,25 @@
       .controls{grid-template-columns: 1fr 220px 1fr}
       .mid{width:220px}
     }
+
+    /* iOS Safariの長押し選択・コールアウトを殺す（ゲームなので全面OFF） */
+    html, body {
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    button, canvas, .pill, .card, .controls, header {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
   </style>
 </head>
 
@@ -294,6 +313,15 @@
       if(e.code==='Space') input.brake = false;
     });
 
+    // iOSの長押し選択を強制的に無効化
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+    document.addEventListener('selectstart', (e) => e.preventDefault());
+
+    // スタート/もう一回/リセットも「押した瞬間に選択」されがちなので潰す
+    [startBtn, retryBtn, resetBtn].forEach((btn) => {
+      btn.addEventListener('pointerdown', (e) => e.preventDefault());
+    });
+
     // ---- Helpers
     const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
     const rad = (deg)=>deg*Math.PI/180;
@@ -333,23 +361,65 @@
       const r = stage.getBoundingClientRect();
       world.w = r.width; world.h = r.height;
 
+      // ゴール：右上寄り（小さい画面でも余白確保）
+      world.goal.w = 70;
+      world.goal.h = 128;
+      world.goal.ang = rad(-10);
       world.goal.x = world.w - world.pad - 110;
       world.goal.y = world.pad + 120;
 
+      // 車：左下
       world.car.x = world.pad + 120;
       world.car.y = world.h - world.pad - 120;
       world.car.ang = rad(12);
       world.car.v = 0;
 
       const cones = [];
-      const cx0 = world.w*0.48;
-      const cy0 = world.h*0.55;
-      const spacing = Math.min(72, world.h/8);
+
+      // スラローム列：ゴールの左側に寄せる（小画面でゴールに被らせない）
+      const safeRight = world.goal.x - 170;
+      const cx0 = clamp(world.w * 0.48, world.pad + 140, safeRight);
+      const cy0 = world.h * 0.55;
+      const spacing = clamp(world.h / 8, 56, 80);
+
       for(let i=0;i<6;i++){
-        cones.push({ x: cx0 + (i%2===0 ? -70 : 70), y: cy0 - i*spacing, r: 16 });
+        cones.push({
+          x: cx0 + (i%2===0 ? -70 : 70),
+          y: cy0 - i*spacing,
+          r: 16
+        });
       }
-      cones.push({x: world.goal.x-70, y: world.goal.y+40, r:16});
-      cones.push({x: world.goal.x+70, y: world.goal.y+40, r:16});
+
+      // ゴール周りのガード：ゴールの左右外側に「確実に」置く（向き込み）
+      {
+        const g = world.goal;
+        const perp = g.ang + Math.PI/2; // ゴールの横方向
+        const off = g.w/2 + 64;         // 外側に出す量（小画面でも被りにくい）
+        cones.push({ x: g.x + Math.cos(perp)*off, y: g.y + Math.sin(perp)*off, r:16 });
+        cones.push({ x: g.x - Math.cos(perp)*off, y: g.y - Math.sin(perp)*off, r:16 });
+      }
+
+      // ✅ 退避処理：ゴール領域（拡張版）に入ってしまったコーンを押し出す
+      const g = world.goal;
+      const pad = world.pad;
+      const extra = 90; // ゴールの周りに「立ち入り禁止」バッファを作る
+      const isInNoGo = (x,y) => pointInOrientedRect(x, y, g.x, g.y, g.w + extra, g.h + extra, g.ang);
+
+      for(const c of cones){
+        if(isInNoGo(c.x, c.y)){
+          // ゴール中心から外へ押し出す
+          let dx = c.x - g.x;
+          let dy = c.y - g.y;
+          const d = Math.hypot(dx,dy) || 1;
+          const target = Math.max(g.w, g.h)/2 + extra;
+          c.x = g.x + (dx/d) * target;
+          c.y = g.y + (dy/d) * target;
+        }
+        // 画面外に出ないようクランプ
+        c.x = clamp(c.x, pad + 20, world.w - pad - 20);
+        c.y = clamp(c.y, pad + 20, world.h - pad - 20);
+      }
+
       world.cones = cones;
     }
 
