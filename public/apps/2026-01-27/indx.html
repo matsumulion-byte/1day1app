@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>求婚の日｜短文プロポーズ生成</title>
+  <style>
+    :root{
+      --bg:#0b1020; --ink:#f3f6ff; --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14); --panel:rgba(255,255,255,.08);
+      --accent:#60a5fa; --r:18px; --shadow:0 18px 60px rgba(0,0,0,.55);
+      --pad:clamp(14px,2.4vw,18px); --max:920px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; background:var(--bg); color:var(--ink)}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+      overflow-x:hidden;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .wrap{min-height:100%; padding:calc(env(safe-area-inset-top) + 20px) var(--pad) calc(env(safe-area-inset-bottom) + 24px); display:flex; justify-content:center;}
+    .app{width:min(var(--max),100%); display:flex; flex-direction:column; gap:14px;}
+    header{display:flex; align-items:flex-end; justify-content:space-between; gap:12px;}
+    h1{font-size:clamp(20px,3.6vw,28px); line-height:1.12;}
+    .sub{margin-top:6px; color:var(--muted); font-size:12px; line-height:1.5;}
+    .pill{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      padding:10px 12px; border-radius:999px;
+      display:flex; gap:8px; align-items:center;
+      color:var(--muted); font-size:12px; user-select:none; white-space:nowrap;
+    }
+
+    .card{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border-radius: calc(var(--r) + 4px);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .cardHead{padding:14px; border-bottom:1px solid rgba(255,255,255,.10); display:flex; align-items:center; justify-content:space-between; gap:10px;}
+    .btnRow{display:flex; gap:10px; flex-wrap:wrap; padding:12px 14px 14px; border-bottom:1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.03);}
+    .btn{
+      border:1px solid var(--line); background: rgba(255,255,255,.06); color:var(--ink);
+      padding:10px 12px; border-radius: 12px; font-size:13px; line-height:1;
+      cursor:pointer; user-select:none; display:inline-flex; align-items:center; gap:8px;
+    }
+    .btn.primary{border-color: rgba(96,165,250,.55); background: linear-gradient(180deg, rgba(96,165,250,.22), rgba(96,165,250,.10));}
+    .btn.small{padding:8px 10px; font-size:12px; border-radius: 11px}
+    .btn.ghost{background: transparent}
+
+    /* 画像（松村） */
+    .hero{
+      display:flex;
+      gap:12px;
+      align-items:stretch;
+      padding:14px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
+    }
+    .heroMedia{
+      flex: 0 0 118px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      overflow:hidden;
+      background: rgba(255,255,255,.04);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    .heroMedia img{
+      width:100%;
+      height:100%;
+      display:block;
+      object-fit: cover;
+    }
+    .heroCopy{
+      flex:1;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      background: rgba(255,255,255,.03);
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:6px;
+      min-height:118px;
+    }
+    .heroCopy .kicker{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.4;
+    }
+    .heroCopy .lead{
+      font-size:14px;
+      line-height:1.55;
+      letter-spacing:.01em;
+    }
+
+    .grid{padding:14px; display:grid; grid-template-columns:1fr; gap:12px;}
+    @media (min-width:760px){ .grid{grid-template-columns:1fr 1fr 1fr;} }
+
+    .sec{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      border-radius: 16px; overflow:hidden;
+      display:flex; flex-direction:column; min-height: 140px;
+    }
+    .secHead{
+      padding:10px; display:flex; align-items:center; justify-content:space-between; gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.03);
+    }
+    .left{display:flex; align-items:center; gap:10px; min-width:0;}
+    .badge{width:22px; height:22px; border-radius:7px; display:grid; place-items:center; background: rgba(96,165,250,.18); border:1px solid rgba(96,165,250,.35); font-size:12px;}
+    .secHead h3{font-size:13px; color: rgba(243,246,255,.92); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .secBody{padding:12px; display:flex; flex-direction:column; gap:10px; flex:1;}
+    .text{
+      font-size:18px;
+      line-height:1.35;
+      letter-spacing:.01em;
+      word-break: break-word;
+      font-weight: 650;
+    }
+    .muted{color:var(--muted); font-size:12px; line-height:1.55}
+    .secFoot{padding:10px; display:flex; align-items:center; justify-content:space-between; gap:10px; border-top:1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.02);}
+
+    .result{padding:14px; border-top:1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.18);}
+    .resultBox{border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); border-radius:16px; padding:14px;}
+    .full{font-size:22px; line-height:1.55; letter-spacing:.01em; white-space:pre-wrap; word-break: break-word;}
+
+    .toast{
+      position: fixed; left:50%;
+      bottom: calc(env(safe-area-inset-bottom) + 16px);
+      transform: translateX(-50%);
+      background: rgba(15,23,42,.92); color: var(--ink);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius: 999px; padding: 10px 12px; font-size: 12px;
+      box-shadow: 0 14px 40px rgba(0,0,0,.55);
+      opacity:0; pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .toast.show{opacity:1; transform: translateX(-50%) translateY(-2px);}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="app">
+      <header>
+        <div>
+          <h1>短文プロポーズ生成</h1>
+        </div>
+        <div class="pill" id="seedPill" title="seed付きURLをコピー">
+          <span>🎲</span><span id="seedText">seed: ----</span>
+        </div>
+      </header>
+
+      <section class="card">
+        <!-- ✅ 松村の画像 -->
+        <div class="hero">
+          <div class="heroMedia" aria-hidden="true">
+            <img id="matsumuraImg" alt="プロポーズしている松村" />
+          </div>
+          <div class="heroCopy">
+            <div class="kicker">本日の松村</div>
+            <div class="lead">短く、ちゃんと。3行で求婚する。</div>
+          </div>
+        </div>
+
+        <div class="cardHead">
+          <div style="display:flex; gap:10px; align-items:center;">
+            <strong style="font-size:14px;">操作</strong>
+            <span class="muted">🔒固定 / ↻単体シャッフル</span>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn small ghost" id="btnReset">初期化</button>
+            <button class="btn small ghost" id="btnShuffleAll">全シャッフル</button>
+          </div>
+        </div>
+
+        <div class="btnRow">
+          <button class="btn primary" id="btnCopy">全文コピー</button>
+          <button class="btn" id="btnShare">共有</button>
+          <button class="btn" id="btnNewSeed">別seed</button>
+        </div>
+
+        <div class="grid" id="sections"></div>
+
+        <div class="result">
+          <div class="resultBox">
+            <div class="full" id="fullText">—</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="toast" id="toast" role="status" aria-live="polite">コピーしました</div>
+    </div>
+  </div>
+
+  <script type="module">
+    // ✅ 1日1アプリ assets ルール（Vercel / 静的ホスティング用）
+    // 現在のパス（例: /2026-01-27/）をベースにして assets を解決する
+    const asset = (p) => {
+      const basePath = window.location.pathname.replace(/\/$/, "") || "";
+      return basePath + "/" + p.replace(/^\.\//, "");
+    };
+
+    // ✅ ここだけ自分のファイル名に合わせて変更
+    const MATSUMURA_IMG_PATH = "./assets/matsumura-propose.png";
+
+    // 画像セット
+    const matsumuraImg = document.getElementById("matsumuraImg");
+    matsumuraImg.src = asset(MATSUMURA_IMG_PATH);
+
+    // 画像が読み込めない時の見た目（任意）
+    matsumuraImg.addEventListener("error", () => {
+      matsumuraImg.alt = "画像が見つかりません（assets に配置してください）";
+      matsumuraImg.style.opacity = "0.35";
+    });
+
+    // RNG
+    const mulberry32 = (a) => () => {
+      let t = (a += 0x6D2B79F5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    const nowSeed = () => {
+      const d = new Date();
+      const base = Number(`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`);
+      const jitter = Math.floor(Math.random() * 1e6);
+      return (base + jitter) >>> 0;
+    };
+    const pick = (rng, arr) => arr[Math.floor(rng() * arr.length)];
+
+    // 3分割：短文用
+    const POOL = {
+      a: ["毎日","今夜から","これから先も","ずっと","一緒に","となりで","最初に","最後に","いつでも","ずっと先まで"],
+      b: ["あなたの味方を","お味噌汁を","ごはんを","笑顔を","帰る場所を","朝を","未来を","日常を","家を","幸せを"],
+      c: ["作ってください","作らせてください","一緒に作ろう","ください","守らせてください","大事にします","そばにいてください","結婚してください","家族になってください","よろしくお願いします"]
+    };
+
+    const SECTION_DEFS = [
+      { key:"a", label:"1行目", icon:"1" },
+      { key:"b", label:"2行目", icon:"2" },
+      { key:"c", label:"3行目", icon:"3" }
+    ];
+
+    const state = {
+      seed: nowSeed(),
+      locked: { a:false, b:false, c:false },
+      choice: { a:null, b:null, c:null }
+    };
+
+    const elSections = document.getElementById("sections");
+    const elFull = document.getElementById("fullText");
+    const elSeedText = document.getElementById("seedText");
+    const toast = document.getElementById("toast");
+
+    function buildSections(){
+      elSections.innerHTML = "";
+      for (const def of SECTION_DEFS){
+        const sec = document.createElement("div");
+        sec.className = "sec";
+        sec.dataset.key = def.key;
+        sec.innerHTML = `
+          <div class="secHead">
+            <div class="left">
+              <div class="badge" aria-hidden="true">${def.icon}</div>
+              <h3>${def.label}</h3>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <button class="btn small" data-action="reroll" title="この行だけ再抽選">↻</button>
+              <button class="btn small" data-action="lock" aria-pressed="false" title="固定">🔒</button>
+            </div>
+          </div>
+          <div class="secBody">
+            <div class="text" data-role="text">—</div>
+            <div class="muted">候補数: ${POOL[def.key].length}</div>
+          </div>
+          <div class="secFoot">
+            <button class="btn small ghost" data-action="copyOne">この行だけコピー</button>
+            <span class="muted" data-role="lockState">未固定</span>
+          </div>
+        `;
+        elSections.appendChild(sec);
+      }
+    }
+
+    function compute(){
+      const rng = mulberry32(state.seed);
+      for (const def of SECTION_DEFS){
+        const k = def.key;
+        if (!state.locked[k] || !state.choice[k]){
+          state.choice[k] = pick(rng, POOL[k]);
+        } else {
+          rng(); rng();
+        }
+      }
+    }
+
+    function fullSentence(){
+      return [state.choice.a, state.choice.b, state.choice.c].filter(Boolean).join("　\n");
+    }
+
+    function render(recompute=true){
+      if (recompute) compute();
+      elSeedText.textContent = `seed: ${String(state.seed).padStart(10,"0")}`;
+
+      for (const def of SECTION_DEFS){
+        const card = elSections.querySelector(`.sec[data-key="${def.key}"]`);
+        const t = card.querySelector('[data-role="text"]');
+        const lockBtn = card.querySelector('[data-action="lock"]');
+        const lockState = card.querySelector('[data-role="lockState"]');
+
+        t.textContent = state.choice[def.key] ?? "—";
+        const locked = !!state.locked[def.key];
+        lockBtn.setAttribute("aria-pressed", locked ? "true":"false");
+        lockBtn.textContent = locked ? "🔐" : "🔒";
+        lockState.textContent = locked ? "固定中" : "未固定";
+      }
+
+      elFull.textContent = fullSentence() || "—";
+    }
+
+    let toastTimer=null;
+    const showToast = (msg) => {
+      toast.textContent = msg;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=>toast.classList.remove("show"), 1100);
+    };
+
+    async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        showToast("コピーしました");
+      }catch{
+        const ta=document.createElement("textarea");
+        ta.value=text; ta.style.position="fixed"; ta.style.left="-9999px";
+        document.body.appendChild(ta); ta.select(); document.execCommand("copy");
+        document.body.removeChild(ta);
+        showToast("コピーしました");
+      }
+    }
+
+    async function shareText(text){
+      try{
+        if (navigator.share) await navigator.share({ text, title:"短文プロポーズ生成" });
+        else { await copyText(text); showToast("共有未対応：コピーしました"); }
+      }catch{}
+    }
+
+    function reseed(seed){
+      state.seed = (seed>>>0);
+      render(true);
+    }
+
+    // events
+    buildSections();
+
+    elSections.addEventListener("click", async (ev) => {
+      const btn = ev.target.closest("button");
+      if (!btn) return;
+      const card = ev.target.closest(".sec");
+      if (!card) return;
+
+      const key = card.dataset.key;
+      const action = btn.dataset.action;
+
+      if (action === "lock"){
+        state.locked[key] = !state.locked[key];
+        render(false);
+      }
+      if (action === "reroll"){
+        const rng = mulberry32((state.seed ^ (Date.now() & 0xffffffff)) >>> 0);
+        state.choice[key] = pick(rng, POOL[key]);
+        render(false);
+      }
+      if (action === "copyOne"){
+        await copyText(state.choice[key] ?? "");
+      }
+    });
+
+    document.getElementById("btnShuffleAll").addEventListener("click", () => reseed(nowSeed()));
+    document.getElementById("btnNewSeed").addEventListener("click", () => { reseed(nowSeed()); showToast("seed変更"); });
+
+    document.getElementById("btnReset").addEventListener("click", () => {
+      state.locked = { a:false, b:false, c:false };
+      state.choice = { a:null, b:null, c:null };
+      reseed(nowSeed());
+      showToast("初期化しました");
+    });
+
+    document.getElementById("btnCopy").addEventListener("click", async () => copyText(fullSentence()));
+    document.getElementById("btnShare").addEventListener("click", async () => shareText(fullSentence()));
+
+    // iOS Safari: ダブルタップ拡大抑制
+    let lastTouchEnd=0;
+    document.addEventListener("touchend", (e) => {
+      const now=Date.now();
+      if (now - lastTouchEnd <= 260) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive:false });
+
+    // ?seed= で復元
+    (() => {
+      const sp = new URLSearchParams(location.search);
+      const s = sp.get("seed");
+      if (!s) return;
+      const n = Number(s);
+      if (Number.isFinite(n)) reseed(n>>>0);
+    })();
+
+    // seedクリックでURLコピー
+    document.getElementById("seedPill").addEventListener("click", async () => {
+      const u = new URL(location.href);
+      u.searchParams.set("seed", String(state.seed>>>0));
+      try{ await navigator.clipboard.writeText(u.toString()); showToast("URLをコピーしました"); }catch{ showToast("seed付与済み"); }
+      history.replaceState(null, "", u);
+    });
+
+    render(true);
+  </script>
+</body>
+</html>
