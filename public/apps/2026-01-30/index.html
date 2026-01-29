@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>人口調査記念日｜松村増殖（画像・消えない）</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --good:#34d399;
+      --bad:#fb7185;
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; overflow:hidden; background:var(--bg); color:var(--ink)}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP",
+        "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select: none;
+    }
+    canvas{position:fixed; inset:0; width:100%; height:100%; display:block}
+
+    .hud{
+      position:fixed;
+      left: env(safe-area-inset-left);
+      right: env(safe-area-inset-right);
+      top: env(safe-area-inset-top);
+      padding: 14px 14px 0;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      pointer-events:none;
+    }
+    .card{
+      pointer-events:auto;
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      padding:12px 12px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      min-width: 200px;
+    }
+    .title{
+      font-size:12px;
+      color: var(--muted);
+      letter-spacing:.08em;
+      text-transform: uppercase;
+      margin-bottom:8px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .pill{
+      font-size:11px;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .count{
+      font-size:34px;
+      font-weight:900;
+      line-height:1;
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+    }
+    .count small{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+      letter-spacing:.06em;
+    }
+    .sub{
+      margin-top:8px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.4;
+    }
+
+    .controls{
+      pointer-events:auto;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:stretch;
+      min-width: 170px;
+    }
+    .btnrow{display:flex; gap:10px}
+    button{
+      appearance:none;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.08);
+      color: var(--ink);
+      border-radius: 14px;
+      padding: 12px 12px;
+      font-weight: 800;
+      letter-spacing:.02em;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      cursor:pointer;
+      touch-action: manipulation;
+    }
+    button:active{transform: translateY(1px); background: rgba(255,255,255,.12)}
+    .btn-accent{border-color: rgba(96,165,250,.55); background: rgba(96,165,250,.16)}
+    .btn-good{border-color: rgba(52,211,153,.55); background: rgba(52,211,153,.14)}
+    .btn-bad{border-color: rgba(251,113,133,.55); background: rgba(251,113,133,.14)}
+    .btn-ghost{background: rgba(255,255,255,.06)}
+
+    .hint{
+      pointer-events:none;
+      position:fixed;
+      left:50%;
+      transform: translateX(-50%);
+      bottom: calc(env(safe-area-inset-bottom) + 16px);
+      padding: 10px 12px;
+      border:1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      font-size: 12px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      text-align:center;
+      max-width: min(720px, calc(100% - 28px));
+    }
+
+    .centerOverlay{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      background: radial-gradient(1200px 900px at 50% 40%, rgba(96,165,250,.20), rgba(0,0,0,.70));
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .centerOverlay.show{display:flex}
+    .centerCard{
+      width:min(560px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+      border:1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      text-align:center;
+    }
+    .centerCard h1{font-size:18px; margin-bottom:8px}
+    .big{font-size:44px; font-weight:950; margin:10px 0 6px}
+    .small{font-size:12px; color:var(--muted); line-height:1.6}
+    .bar{margin-top:12px;height:10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);overflow:hidden}
+    .bar > i{display:block;height:100%;width:0%;background:rgba(52,211,153,.40)}
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <div class="hud" aria-hidden="true">
+    <div class="card">
+      <div class="title">
+        <span>人口調査</span>
+        <span class="pill" id="tapPill">＋1 / タップ</span>
+        <span class="pill" id="goalPill">目標 8,000</span>
+      </div>
+      <div class="count">
+        <span id="pop">0</span>
+        <small>松村</small>
+      </div>
+      <div class="sub">
+        出てきた松村は<strong>消えません</strong>（画面に焼き付け方式）。<br/>
+        増え方は控えめ。押しっぱで連続増殖。
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="btnrow">
+        <button class="btn-ghost" id="resetBtn" type="button">リセット</button>
+        <button class="btn-bad" id="endBtn" type="button">強制終了</button>
+      </div>
+      <button class="btn-accent" id="turboBtn" type="button">押しっぱ増殖</button>
+    </div>
+  </div>
+
+  <div class="hint" id="hint">タップ：増殖（少なめ）／ 押しっぱ：連続増殖 ／ 目標到達でエンディング</div>
+
+  <div class="centerOverlay" id="ending" role="dialog" aria-modal="true" aria-label="調査完了">
+    <div class="centerCard">
+      <h1>調査完了</h1>
+      <div class="big" id="endPop">0</div>
+      <div class="small" id="endText">
+        松村の人口が閾値を超えました。<br/>壬申戸籍（っぽい）に記録して封印します。
+      </div>
+      <div class="bar" aria-hidden="true"><i id="endBar"></i></div>
+      <div class="small" style="margin-top:10px">
+        <span class="pill" id="endTime">00:00</span>
+        <span class="pill" id="endTaps">0 taps</span>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:12px">
+        <button class="btn-good" id="againBtn" type="button" style="flex:1">もう一度</button>
+        <button class="btn-ghost" id="closeBtn" type="button" style="flex:1">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // asset helper (project rule)
+    // Vercel用：現在のパスから相対パスを解決
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : '/';
+    const asset = (p) => {
+      const clean = String(p || '').replace(/^\.?\//, '');
+      // Vercelのルーティング: /YYYY-MM-DD/xxx -> /apps/YYYY-MM-DD/xxx
+      // ただし、ブラウザからは /YYYY-MM-DD/xxx でアクセスする
+      return `${DATE_BASE}${clean}`;
+    };
+
+    // ここに画像を置いてください: /app/2026-01-30/assets/matsumura.png
+    const MATSUMURA_IMG = asset("./assets/matsumura.png");
+    console.log("[Matsumura] Image path:", MATSUMURA_IMG);
+    console.log("[Matsumura] DATE_BASE:", DATE_BASE);
+    console.log("[Matsumura] location.pathname:", location.pathname);
+
+    const canvas = document.getElementById("c");
+    const ctx = canvas.getContext("2d");
+
+    const popEl = document.getElementById("pop");
+    const tapPill = document.getElementById("tapPill");
+    const goalPill = document.getElementById("goalPill");
+    const hint = document.getElementById("hint");
+
+    const resetBtn = document.getElementById("resetBtn");
+    const turboBtn = document.getElementById("turboBtn");
+    const endBtn = document.getElementById("endBtn");
+
+    const ending = document.getElementById("ending");
+    const endPop = document.getElementById("endPop");
+    const endBar = document.getElementById("endBar");
+    const endTime = document.getElementById("endTime");
+    const endTaps = document.getElementById("endTaps");
+    const againBtn = document.getElementById("againBtn");
+    const closeBtn = document.getElementById("closeBtn");
+
+    document.addEventListener("gesturestart", (e) => e.preventDefault());
+
+    const DPR = () => Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    let W=0, H=0, dpr=1;
+
+    // 「消えない」を成立させるために、画像を焼き付けるレイヤー（オフスクリーン）を使う
+    let bake = document.createElement("canvas");
+    let bctx = bake.getContext("2d");
+
+    function resize(){
+      dpr = DPR();
+      const rect = canvas.getBoundingClientRect();
+      W = Math.floor(rect.width);
+      H = Math.floor(rect.height);
+
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+
+      // bakeも作り直して全スタンプを描き直す
+      bake.width = canvas.width;
+      bake.height = canvas.height;
+      bctx.setTransform(dpr,0,0,dpr,0,0);
+      redrawAll();
+    }
+    window.addEventListener("resize", resize, {passive:true});
+
+    function fmt(n){ return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+    function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+    function mmss(ms){
+      const s = Math.floor(ms/1000);
+      const m = Math.floor(s/60);
+      const r = s%60;
+      return `${String(m).padStart(2,"0")}:${String(r).padStart(2,"0")}`;
+    }
+
+    // ===== 設定（増え方少なめ／終わりは遠め） =====
+    const TARGET_POP = 8000;           // すっごい先（画像が消えない前提で現実的な上限）
+    const HOLD_INTERVAL_MS = 120;      // 押しっぱ増殖の間隔
+    const BASE_SIZE = 46;              // 画像表示サイズ（px）
+    const SAFE_TOP = 110;              // HUD避け
+    const SAFE_PAD = 18;
+
+    goalPill.textContent = `目標 ${fmt(TARGET_POP)}`;
+
+    // 画像が消えないので、位置情報を保持してリサイズ時に再描画する
+    // nx, ny: 0..1 の正規化座標 / s: px
+    const stamps = [];
+    let population = 0;
+    let taps = 0;
+    let startedAt = performance.now();
+    let ended = false;
+
+    // 増殖数（控えめ、でも「じわっと増える」）
+    // 0..999 => 1 / 1000..2999 => 2 / 3000..5999 => 3 / 6000.. => 4
+    function perTap(pop){
+      if (pop >= 6000) return 4;
+      if (pop >= 3000) return 3;
+      if (pop >= 1000) return 2;
+      return 1;
+    }
+
+    // 画像読み込み
+    const img = new Image();
+    img.src = MATSUMURA_IMG;
+    let imgReady = false;
+    img.onload = () => { 
+      console.log("[Matsumura] Image loaded successfully:", img.src);
+      imgReady = true; 
+      redrawAll(); 
+    };
+    img.onerror = (e) => { 
+      console.error("[Matsumura] Image load failed:", img.src, e);
+      imgReady = false; 
+      redrawAll(); 
+    };
+
+    function getPoint(e){
+      const rect = canvas.getBoundingClientRect();
+      if (e.touches && e.touches[0]){
+        return { x: (e.touches[0].clientX - rect.left), y: (e.touches[0].clientY - rect.top) };
+      }
+      return { x: (e.clientX - rect.left), y: (e.clientY - rect.top) };
+    }
+
+    function rand(a,b){ return a + Math.random()*(b-a); }
+
+    function drawStampAt(x, y, s){
+      // bakeに「そのまま画像」をスタンプ（消えない）
+      if (imgReady){
+        // cover/containではなく、そのまま縮小（アスペクト維持）
+        const iw = img.naturalWidth || 1;
+        const ih = img.naturalHeight || 1;
+        const scale = Math.min(s/iw, s/ih);
+        const dw = iw * scale;
+        const dh = ih * scale;
+        bctx.drawImage(img, x - dw/2, y - dh/2, dw, dh);
+      }else{
+        // 画像が無い/読めない時の代替（最低限）
+        bctx.save();
+        bctx.translate(x,y);
+        bctx.fillStyle = "rgba(255,255,255,.85)";
+        bctx.beginPath(); bctx.arc(0,0,s*0.46,0,Math.PI*2); bctx.fill();
+        bctx.fillStyle = "rgba(11,16,32,.90)";
+        bctx.font = `900 ${Math.floor(s*0.55)}px ui-sans-serif, system-ui, "Noto Sans JP"`;
+        bctx.textAlign = "center";
+        bctx.textBaseline = "middle";
+        bctx.fillText("松", 0, 2);
+        bctx.restore();
+      }
+    }
+
+    function redrawAll(){
+      if (!bctx) return;
+      bctx.clearRect(0,0,W,H);
+
+      // 背景（薄いグリッド）
+      bctx.save();
+      bctx.globalAlpha = 0.18;
+      bctx.strokeStyle = "rgba(255,255,255,.10)";
+      bctx.lineWidth = 1;
+      const step = 42;
+      for(let x=0; x<=W; x+=step){
+        bctx.beginPath(); bctx.moveTo(x,0); bctx.lineTo(x,H); bctx.stroke();
+      }
+      for(let y=0; y<=H; y+=step){
+        bctx.beginPath(); bctx.moveTo(0,y); bctx.lineTo(W,y); bctx.stroke();
+      }
+      bctx.restore();
+
+      // 全スタンプ再描画
+      for (const st of stamps){
+        const x = st.nx * W;
+        const y = st.ny * H;
+        drawStampAt(x, y, st.s);
+      }
+    }
+
+    function stampMany(centerX, centerY, n){
+      // HUDの上に出ないように
+      const minY = SAFE_TOP + SAFE_PAD;
+      const maxY = H - SAFE_PAD;
+      const minX = SAFE_PAD;
+      const maxX = W - SAFE_PAD;
+
+      for(let i=0;i<n;i++){
+        // 周辺に散らす（密集しすぎ回避の雰囲気）
+        const x = clamp(centerX + rand(-140, 140), minX, maxX);
+        const y = clamp(centerY + rand(-180, 180), minY, maxY);
+
+        // 保存（リサイズ用に正規化）
+        const st = { nx: x / W, ny: y / H, s: BASE_SIZE };
+        stamps.push(st);
+
+        // 今の画面に即スタンプ
+        drawStampAt(x, y, BASE_SIZE);
+      }
+    }
+
+    function increase(add, atX, atY){
+      if (ended) return;
+
+      population += add;
+      stampMany(atX, atY, add); // 「増えた分だけ画像をそのまま出す」
+
+      popEl.textContent = fmt(population);
+      tapPill.textContent = `＋${fmt(perTap(population))} / タップ`;
+
+      const progress = clamp(population / TARGET_POP, 0, 1);
+      hint.textContent = `タップ：＋${fmt(perTap(population))} ／ 押しっぱ：連続増殖 ／ 目標 ${fmt(TARGET_POP)} まで ${(progress*100).toFixed(1)}%`;
+
+      if (population >= TARGET_POP) finish(false);
+    }
+
+    // 描画ループ（画面は bake を貼るだけ）
+    let holding = false;
+    let lastHold = 0;
+
+    function frame(ts){
+      // main canvas: bake を表示
+      ctx.clearRect(0,0,W,H);
+      ctx.drawImage(bake, 0, 0, canvas.width, canvas.height);
+
+      // hold増殖
+      if (!ended && holding){
+        if (!lastHold) lastHold = ts;
+        const dt = ts - lastHold;
+        if (dt >= HOLD_INTERVAL_MS){
+          lastHold = ts;
+          const add = perTap(population);
+          const x = rand(SAFE_PAD, W - SAFE_PAD);
+          const y = rand(SAFE_TOP + SAFE_PAD, H - SAFE_PAD);
+          increase(add, x, y);
+        }
+      }else{
+        lastHold = 0;
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    function finish(forced){
+      if (ended) return;
+      ended = true;
+      holding = false;
+
+      const elapsed = performance.now() - startedAt;
+      endPop.textContent = fmt(population);
+      endTime.textContent = mmss(elapsed);
+      endTaps.textContent = `${fmt(taps)} taps`;
+
+      const pct = clamp(population / TARGET_POP, 0, 1);
+      endBar.style.width = `${(pct*100).toFixed(1)}%`;
+
+      document.getElementById("endText").innerHTML = forced
+        ? `強制的に調査を打ち切りました。<br/>壬申戸籍（っぽい）に封印します。`
+        : `松村の人口が目標に到達しました。<br/>壬申戸籍（っぽい）に記録して封印します。`;
+
+      ending.classList.add("show");
+    }
+
+    function resetAll(){
+      stamps.length = 0;
+      population = 0;
+      taps = 0;
+      startedAt = performance.now();
+      ended = false;
+      holding = false;
+      popEl.textContent = "0";
+      tapPill.textContent = "＋1 / タップ";
+      ending.classList.remove("show");
+      redrawAll();
+    }
+
+    // interactions
+    let pressTimer = null;
+
+    canvas.addEventListener("pointerdown", (e) => {
+      if (ending.classList.contains("show")) return;
+
+      const p = getPoint(e);
+      const add = perTap(population);
+      taps++;
+      increase(add, p.x, p.y);
+
+      clearTimeout(pressTimer);
+      pressTimer = setTimeout(() => { holding = true; }, 240);
+    }, {passive:true});
+
+    function endPress(){
+      clearTimeout(pressTimer);
+      holding = false;
+    }
+    canvas.addEventListener("pointerup", endPress, {passive:true});
+    canvas.addEventListener("pointercancel", endPress, {passive:true});
+    canvas.addEventListener("pointerleave", endPress, {passive:true});
+
+    turboBtn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      if (ending.classList.contains("show")) return;
+      holding = true;
+    });
+    turboBtn.addEventListener("pointerup", (e) => { e.preventDefault(); holding = false; });
+    turboBtn.addEventListener("pointercancel", (e) => { e.preventDefault(); holding = false; });
+    turboBtn.addEventListener("pointerleave", () => { holding = false; });
+
+    resetBtn.addEventListener("click", resetAll);
+    endBtn.addEventListener("click", () => finish(true));
+
+    againBtn.addEventListener("click", resetAll);
+    closeBtn.addEventListener("click", () => ending.classList.remove("show"));
+
+    // init
+    resize();
+    popEl.textContent = "0";
+    tapPill.textContent = `＋${fmt(perTap(0))} / タップ`;
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
