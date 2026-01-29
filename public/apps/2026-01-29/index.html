@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
   <meta name="theme-color" content="#0b1020" />
-  <title>人口調査記念日｜松村増殖（画像・消えない）</title>
+  <title>人口調査記念日｜松村増殖</title>
   <style>
     :root{
       --bg:#0b1020;
@@ -182,8 +182,7 @@
         <small>松村</small>
       </div>
       <div class="sub">
-        出てきた松村は<strong>消えません</strong>（画面に焼き付け方式）。<br/>
-        増え方は控えめ。押しっぱで連続増殖。
+        押しっぱで連続増殖。
       </div>
     </div>
 
@@ -196,14 +195,14 @@
     </div>
   </div>
 
-  <div class="hint" id="hint">タップ：増殖（少なめ）／ 押しっぱ：連続増殖 ／ 目標到達でエンディング</div>
+  <div class="hint" id="hint">タップ：増殖／ 押しっぱ：連続増殖</div>
 
   <div class="centerOverlay" id="ending" role="dialog" aria-modal="true" aria-label="調査完了">
     <div class="centerCard">
       <h1>調査完了</h1>
       <div class="big" id="endPop">0</div>
       <div class="small" id="endText">
-        松村の人口が閾値を超えました。<br/>壬申戸籍（っぽい）に記録して封印します。
+        松村の人口が閾値を超えました。<br/>壬申戸籍に記録して封印します。
       </div>
       <div class="bar" aria-hidden="true"><i id="endBar"></i></div>
       <div class="small" style="margin-top:10px">
@@ -470,8 +469,8 @@
       endBar.style.width = `${(pct*100).toFixed(1)}%`;
 
       document.getElementById("endText").innerHTML = forced
-        ? `強制的に調査を打ち切りました。<br/>壬申戸籍（っぽい）に封印します。`
-        : `松村の人口が目標に到達しました。<br/>壬申戸籍（っぽい）に記録して封印します。`;
+        ? `強制的に調査を打ち切りました。<br/>壬申戸籍に封印します。`
+        : `松村の人口が目標に到達しました。<br/>壬申戸籍に記録して封印します。`;
 
       ending.classList.add("show");
     }
