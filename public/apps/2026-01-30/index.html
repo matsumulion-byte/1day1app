@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>松村から着信</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --ok:#34d399;
+      --ng:#fb7185;
+      --panel:rgba(255,255,255,.08);
+      --r:20px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; background:var(--bg); color:var(--ink); overflow:hidden}
+    body{font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;}
+    .wrap{height:100%; display:grid; place-items:center; padding:16px}
+    .phone{
+      width:min(420px, 100%);
+      border:1px solid var(--line);
+      border-radius:28px;
+      padding:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow:var(--shadow);
+    }
+    .top{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:6px 6px 14px;
+      border-bottom:1px solid var(--line);
+      margin-bottom:16px;
+    }
+    .badge{
+      font-size:12px; color:var(--muted);
+      padding:6px 10px; border:1px solid var(--line);
+      border-radius:999px; background:rgba(255,255,255,.04);
+    }
+    .btn-sm{
+      -webkit-tap-highlight-color: transparent;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      color:var(--ink);
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      line-height:1;
+      user-select:none;
+    }
+    .btn-sm:active{transform:translateY(1px)}
+    .screen{
+      padding:18px 10px 14px;
+      text-align:center;
+    }
+    .caller{
+      font-size:34px;
+      font-weight:800;
+      letter-spacing:.02em;
+    }
+    .sub{
+      margin-top:8px;
+      font-size:14px;
+      color:var(--muted);
+      min-height:20px;
+    }
+    .hint{
+      margin-top:14px;
+      font-size:12px;
+      color:rgba(243,246,255,.6);
+    }
+    .actions{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    .btn{
+      -webkit-tap-highlight-color: transparent;
+      border:none;
+      border-radius:18px;
+      padding:16px 14px;
+      font-size:18px;
+      font-weight:800;
+      color:#0b1020;
+      user-select:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.green{background:var(--ok)}
+    .btn.red{background:var(--ng)}
+    .footer{
+      margin-top:16px;
+      border-top:1px solid var(--line);
+      padding-top:12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .lock{
+      position:fixed; inset:0;
+      display:grid; place-items:center;
+      background:rgba(11,16,32,.86);
+      padding:16px;
+    }
+    .lock .card{
+      width:min(420px, 100%);
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:18px;
+      background:rgba(255,255,255,.06);
+      box-shadow:var(--shadow);
+      text-align:center;
+    }
+    .lock h2{font-size:18px; margin-bottom:8px}
+    .lock p{font-size:13px; color:var(--muted); line-height:1.6}
+    .lock .go{
+      margin-top:14px;
+      width:100%;
+      border:none;
+      border-radius:16px;
+      padding:14px 12px;
+      font-weight:900;
+      font-size:16px;
+      background:rgba(96,165,250,.95);
+      color:#07102a;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .lock .go:active{transform:translateY(1px)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="phone" role="application" aria-label="松村から着信">
+      <div class="top">
+        <div class="badge" id="statusBadge">待機中</div>
+        <button class="btn-sm" id="muteBtn" type="button">音: ON</button>
+      </div>
+
+      <div class="screen">
+        <div class="caller" id="caller">—</div>
+        <div class="sub" id="sub">次の着信を待っています</div>
+        <div class="hint" id="hint"></div>
+
+        <div class="actions">
+          <button class="btn green" id="answerBtn" type="button">出る</button>
+          <button class="btn red" id="declineBtn" type="button">切る</button>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>着信: <span id="count">0</span></div>
+        <div>不在: <span id="missed">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- iOS対策：最初のユーザー操作で音声/振動を有効化 -->
+  <div class="lock" id="lock">
+    <div class="card">
+      <h2>音を有効化</h2>
+      <p>最初に一度だけタップが必要です。<br>有効化すると、ひたすら松村から電話がかかってきます。</p>
+      <button class="go" id="startBtn" type="button">開始</button>
+    </div>
+  </div>
+
+  <script type="module">
+    // Vercel用のパス解決ヘルパー
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    const statusBadge = $("statusBadge");
+    const callerEl = $("caller");
+    const subEl = $("sub");
+    const hintEl = $("hint");
+    const answerBtn = $("answerBtn");
+    const declineBtn = $("declineBtn");
+    const muteBtn = $("muteBtn");
+    const countEl = $("count");
+    const missedEl = $("missed");
+    const lock = $("lock");
+    const startBtn = $("startBtn");
+
+    const State = {
+      audioEnabled: false,
+      muted: false,
+      incoming: false,
+      timerId: null,
+      timeoutId: null,
+      calls: 0,
+      missed: 0,
+      ring: null,        // {ctx, gain, osc1, osc2, lfo, lfoGain}
+    };
+
+    function setStatus(text){ statusBadge.textContent = text; }
+    function setCaller(name){ callerEl.textContent = name; }
+    function setSub(text){ subEl.textContent = text; }
+
+    function vibrate(pattern){
+      try{
+        if (!State.muted && navigator.vibrate) navigator.vibrate(pattern);
+      }catch{}
+    }
+
+    function createRinger(){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AC();
+      const gain = ctx.createGain();
+      gain.gain.value = 0.0001;
+      gain.connect(ctx.destination);
+
+      // 2音 + LFOで「ピリピリ」っぽくする
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      osc1.type = "sine";
+      osc2.type = "sine";
+      osc1.frequency.value = 880;
+      osc2.frequency.value = 660;
+
+      const lfo = ctx.createOscillator();
+      lfo.type = "square";
+      lfo.frequency.value = 8;
+
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 0.12;
+
+      lfo.connect(lfoGain);
+      lfoGain.connect(gain.gain);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+
+      osc1.start();
+      osc2.start();
+      lfo.start();
+
+      return { ctx, gain, osc1, osc2, lfo, lfoGain };
+    }
+
+    function startRing(){
+      if (State.muted) return;
+      stopRing();
+      State.ring = createRinger();
+      // フェードイン
+      const { ctx, gain } = State.ring;
+      const t = ctx.currentTime;
+      gain.gain.cancelScheduledValues(t);
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.15, t + 0.03);
+    }
+
+    function stopRing(){
+      if (!State.ring) return;
+      const r = State.ring;
+      try{
+        const t = r.ctx.currentTime;
+        r.gain.gain.cancelScheduledValues(t);
+        r.gain.gain.setValueAtTime(Math.max(r.gain.gain.value, 0.0001), t);
+        r.gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+        setTimeout(() => {
+          try{ r.osc1.stop(); }catch{}
+          try{ r.osc2.stop(); }catch{}
+          try{ r.lfo.stop(); }catch{}
+          try{ r.ctx.close(); }catch{}
+        }, 80);
+      }catch{
+        try{ r.ctx.close(); }catch{}
+      }
+      State.ring = null;
+    }
+
+    function speakMatsumura(){
+      return new Promise((resolve) => {
+        if (State.muted) { resolve(); return; }
+
+        // matsumura_desu.m4aを再生
+        const audio = new Audio(asset("./assets/matsumura_desu.m4a"));
+        audio.volume = 1.0;
+        
+        audio.onended = () => resolve();
+        audio.onerror = () => {
+          // エラー時はビープで代替
+          beep(0.09, 740).then(resolve);
+        };
+
+        try{
+          audio.play().catch(() => {
+            // 再生失敗時はビープで代替
+            beep(0.09, 740).then(resolve);
+          });
+          // 念のためタイムアウト（5秒）
+          setTimeout(() => resolve(), 5000);
+        }catch{
+          beep(0.09, 740).then(resolve);
+        }
+      });
+    }
+
+    function beep(sec=0.08, freq=660){
+      return new Promise((resolve) => {
+        try{
+          const AC = window.AudioContext || window.webkitAudioContext;
+          const ctx = new AC();
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = "sine";
+          o.frequency.value = freq;
+          g.gain.value = 0.0001;
+          o.connect(g);
+          g.connect(ctx.destination);
+          const t = ctx.currentTime;
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(0.12, t + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + sec);
+          o.start();
+          o.stop(t + sec + 0.02);
+          setTimeout(() => { try{ ctx.close(); }catch{}; resolve(); }, (sec + 0.08) * 1000);
+        }catch{
+          resolve();
+        }
+      });
+    }
+
+    function setIncomingUI(on){
+      State.incoming = on;
+      answerBtn.disabled = !on;
+      declineBtn.disabled = !on;
+
+      answerBtn.style.opacity = on ? "1" : ".45";
+      declineBtn.style.opacity = on ? "1" : ".45";
+
+      if (!on){
+        setCaller("—");
+      }
+    }
+
+    function scheduleNextCall(){
+      clearTimeout(State.timerId);
+      // 0.8〜3.2秒で次の着信（ひたすら感）
+      const ms = 800 + Math.random() * 2400;
+      State.timerId = setTimeout(() => incomingCall(), ms);
+      setStatus("待機中");
+      setSub("次の着信を待っています");
+      hintEl.textContent = "";
+      setIncomingUI(false);
+    }
+
+    function incomingCall(){
+      State.calls += 1;
+      countEl.textContent = String(State.calls);
+
+      setIncomingUI(true);
+      setStatus("着信中");
+      setCaller("松村");
+      setSub("着信…");
+
+      startRing();
+      vibrate([80, 60, 80, 60, 120]);
+
+      // 2.6秒で自動不在
+      clearTimeout(State.timeoutId);
+      State.timeoutId = setTimeout(() => {
+        if (!State.incoming) return;
+        State.missed += 1;
+        missedEl.textContent = String(State.missed);
+        stopRing();
+        setStatus("不在着信");
+        setSub("不在着信（またかけてくる）");
+        setIncomingUI(false);
+        scheduleNextCall();
+      }, 2600);
+    }
+
+    async function answer(){
+      if (!State.incoming) return;
+      clearTimeout(State.timeoutId);
+      stopRing();
+      setStatus("通話中");
+      setSub("…");
+
+      vibrate([20, 40, 20]);
+
+      // 「松村です」→即切れる
+      await speakMatsumura();
+
+      setStatus("通話終了");
+      setSub("（切れた）");
+      setIncomingUI(false);
+      scheduleNextCall();
+    }
+
+    function decline(){
+      if (!State.incoming) return;
+      clearTimeout(State.timeoutId);
+      stopRing();
+      setStatus("拒否");
+      setSub("（切った）");
+      setIncomingUI(false);
+      scheduleNextCall();
+    }
+
+    function setMuted(next){
+      State.muted = next;
+      muteBtn.textContent = State.muted ? "音: OFF" : "音: ON";
+      if (State.muted) stopRing();
+    }
+
+    // iOS: ユーザー操作で音声系を解放
+    startBtn.addEventListener("click", async () => {
+      State.audioEnabled = true;
+      lock.style.display = "none";
+
+      // 何か鳴らして AudioContext / Speech を起動済みにする
+      await beep(0.03, 880);
+
+      scheduleNextCall();
+    });
+
+    answerBtn.addEventListener("click", answer);
+    declineBtn.addEventListener("click", decline);
+
+    muteBtn.addEventListener("click", () => setMuted(!State.muted));
+
+    // 初期状態
+    setIncomingUI(false);
+    setMuted(false);
+  </script>
+</body>
+</html>
