@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>生命保険の日｜余命メーカー</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --line:rgba(255,255,255,.14);
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --accent:#60a5fa;
+      --good:#34d399;
+      --bad:#fb7185;
+      --warn:#fbbf24;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;background:var(--bg);color:var(--ink);overflow:hidden}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select:none;
+      -webkit-user-select:none;
+      touch-action: manipulation;
+    }
+
+    .wrap{
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+    }
+    .card{
+      width:min(560px, 100%);
+      border:1px solid var(--line);
+      border-radius:24px;
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    header{
+      padding:18px 18px 14px 18px;
+      border-bottom:1px solid var(--line);
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    }
+    .ttl{
+      display:flex; flex-direction:column; gap:6px;
+    }
+    h1{font-size:18px; letter-spacing:.02em}
+    .sub{font-size:12px; color:var(--muted); line-height:1.4}
+    .badge{
+      font-size:12px;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:rgba(255,255,255,.07);
+      white-space:nowrap;
+    }
+
+    main{padding:16px 18px 18px}
+    .note{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.6;
+      border:1px dashed rgba(255,255,255,.22);
+      background:rgba(0,0,0,.18);
+      padding:10px 12px;
+      border-radius:14px;
+      margin-bottom:14px;
+    }
+
+    .grid{
+      display:grid;
+      gap:10px;
+      grid-template-columns: 1fr;
+    }
+    .field{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      border-radius:16px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .label{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:10px}
+    .label b{color:var(--ink); font-weight:600}
+    input[type="text"], select{
+      width:100%;
+      background:rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.14);
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+      font-size:16px;
+    }
+    input::placeholder{color:rgba(243,246,255,.45)}
+    input:focus, select:focus{border-color: rgba(96,165,250,.7)}
+    .row{
+      display:grid;
+      gap:10px;
+      grid-template-columns: 1fr 1fr;
+    }
+    @media (max-width:420px){
+      .row{grid-template-columns:1fr}
+    }
+
+    .range{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    input[type="range"]{width:100%}
+    .pill{
+      min-width:56px;
+      text-align:center;
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
+    }
+
+    .btns{
+      display:flex;
+      gap:10px;
+      margin-top:12px;
+    }
+    button{
+      appearance:none;
+      border:none;
+      background:rgba(255,255,255,.08);
+      color:var(--ink);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px 12px;
+      font-size:15px;
+      font-weight:600;
+      flex:1;
+      cursor:pointer;
+      transition: transform .06s ease, background .12s ease, border-color .12s ease;
+    }
+    button:active{transform: translateY(1px) scale(.99)}
+    button.primary{
+      background:linear-gradient(180deg, rgba(96,165,250,.30), rgba(96,165,250,.12));
+      border-color: rgba(96,165,250,.45);
+    }
+    button.ghost{
+      background:rgba(0,0,0,.18);
+    }
+
+    .result{
+      margin-top:14px;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:rgba(0,0,0,.18);
+      overflow:hidden;
+      display:none;
+    }
+    .result.show{display:block}
+    .resultTop{
+      padding:12px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+    }
+    .resultTop .who{font-size:13px;color:var(--muted)}
+    .stamp{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+    }
+    .big{
+      padding:14px 12px 10px 12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .life{
+      font-size:28px;
+      font-weight:900;
+      letter-spacing:.01em;
+      line-height:1.15;
+    }
+    .life small{
+      font-size:14px;
+      font-weight:700;
+      color:var(--muted);
+    }
+    .desc{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.6;
+    }
+    .meter{
+      margin-top:2px;
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:999px;
+      overflow:hidden;
+      background:rgba(255,255,255,.06);
+      height:12px;
+      position:relative;
+    }
+    .bar{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg, rgba(52,211,153,.85), rgba(96,165,250,.85), rgba(251,113,133,.85));
+      transition: width .35s ease;
+    }
+    .meterLabel{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-size:12px;
+      color:var(--muted);
+      margin-top:8px;
+    }
+
+    .shareRow{
+      display:flex;
+      gap:10px;
+      padding:12px;
+      border-top:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+    }
+    .shareRow button{
+      padding:10px 10px;
+      font-size:13px;
+      flex:1;
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:16px;
+      transform:translateX(-50%);
+      background:rgba(0,0,0,.65);
+      color:var(--ink);
+      border:1px solid rgba(255,255,255,.16);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:12px;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      transform-origin:center;
+      max-width:min(560px, calc(100% - 24px));
+      text-align:center;
+    }
+    .toast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" role="application" aria-label="余命メーカー">
+      <header>
+        <div class="ttl">
+          <h1>余命メーカー</h1>
+          <div class="sub">生命保険の日（1/31）記念：これはジョーク診断です（寿命の推定はしません）。</div>
+        </div>
+        <div class="badge">#まつむらです</div>
+      </header>
+
+      <main>
+        <div class="note">
+          入力 → 「診断する」。結果はランダム演出＋あなたの入力を少しだけ味付けします。
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <div class="label"><b>名前（任意）</b><span>結果に出ます</span></div>
+            <input id="name" type="text" inputmode="text" autocomplete="off" placeholder="例：松村" maxlength="18" />
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <div class="label"><b>今日のコンディション</b><span id="condPill" class="pill">50</span></div>
+              <div class="range">
+                <input id="cond" type="range" min="0" max="100" value="50" />
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="label"><b>睡眠</b><span>それっぽさ</span></div>
+              <select id="sleep">
+                <option value="0">普通</option>
+                <option value="1">めっちゃ寝た</option>
+                <option value="-1">寝てない</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <div class="label"><b>最近の出費</b><span>気持ちの余命</span></div>
+              <select id="spend">
+                <option value="0">平常運転</option>
+                <option value="-1">散財した</option>
+                <option value="1">節約してる</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <div class="label"><b>松村からの連絡</b><span>運命</span></div>
+              <select id="call">
+                <option value="0">たぶん来ない</option>
+                <option value="1">来そう</option>
+                <option value="2">もう来てる</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="btns">
+            <button id="btnMake" class="primary">診断する</button>
+            <button id="btnReset" class="ghost">リセット</button>
+          </div>
+
+          <section id="result" class="result" aria-live="polite">
+            <div class="resultTop">
+              <div class="who" id="whoTxt">—</div>
+              <div class="stamp" id="stampTxt">判定中…</div>
+            </div>
+
+            <div class="big">
+              <div class="life" id="lifeTxt">—</div>
+              <div class="desc" id="descTxt">—</div>
+
+              <div>
+                <div class="meter" aria-label="備えメーター">
+                  <div class="bar" id="bar"></div>
+                </div>
+                <div class="meterLabel">
+                  <span>備えメーター</span>
+                  <span id="meterTxt">—%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="shareRow">
+              <button id="btnCopy">結果をコピー</button>
+              <button id="btnShare">シェア</button>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">コピーしました</div>
+
+  <script type="module">
+    // ✅ 1日1アプリ：動的アセット参照ヘルパー（使わなくても必ず同梱）
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    const $ = (q) => document.querySelector(q);
+    const nameEl = $("#name");
+    const condEl = $("#cond");
+    const condPill = $("#condPill");
+    const sleepEl = $("#sleep");
+    const spendEl = $("#spend");
+    const callEl = $("#call");
+
+    const resultEl = $("#result");
+    const whoTxt = $("#whoTxt");
+    const stampTxt = $("#stampTxt");
+    const lifeTxt = $("#lifeTxt");
+    const descTxt = $("#descTxt");
+    const barEl = $("#bar");
+    const meterTxt = $("#meterTxt");
+
+    const btnMake = $("#btnMake");
+    const btnReset = $("#btnReset");
+    const btnCopy = $("#btnCopy");
+    const btnShare = $("#btnShare");
+
+    const toast = $("#toast");
+    let lastText = "";
+
+    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+    function randInt(min, maxInclusive){
+      return Math.floor(Math.random() * (maxInclusive - min + 1)) + min;
+    }
+    function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=> toast.classList.remove("show"), 1100);
+    }
+
+    // スライダー表示
+    function syncCond(){
+      condPill.textContent = String(condEl.value);
+    }
+    condEl.addEventListener("input", syncCond);
+    syncCond();
+
+    // ジョーク「余命」フォーマット（時間・日・週など）
+    function makeYomei(base){
+      // base: 0..100（高いほど長い）
+      const modes = [
+        { unit:"分",   min: 3,  max: 180,  scale: 1.0 },
+        { unit:"時間", min: 1,  max: 72,   scale: 0.85 },
+        { unit:"日",   min: 1,  max: 31,   scale: 0.70 },
+        { unit:"週",   min: 1,  max: 12,   scale: 0.55 },
+      ];
+      const m = pick(modes);
+      const t = clamp(Math.round((base/100) * (m.max - m.min) + m.min), m.min, m.max);
+      return { t, unit: m.unit, mode: m };
+    }
+
+    function flavorByInputs(){
+      const cond = Number(condEl.value);
+      const sleep = Number(sleepEl.value);
+      const spend = Number(spendEl.value);
+      const call = Number(callEl.value);
+
+      // それっぽい係数（あくまで演出）
+      let base = cond;
+      base += sleep * 10;
+      base += spend * 6;
+      base -= call * 7; // 連絡が来るほど(？)短くなる演出
+      base = clamp(base + randInt(-12, 12), 0, 100);
+
+      const meter = clamp(
+        Math.round(50 + (100 - base) * 0.7 + randInt(-10, 10)),
+        0, 100
+      );
+
+      return { base, meter, cond, sleep, spend, call };
+    }
+
+    function stampFor(meter){
+      if(meter >= 80) return { txt:"要・備え（大）", cls:"warn" };
+      if(meter >= 55) return { txt:"そろそろ見直し", cls:"accent" };
+      return { txt:"平常運転", cls:"good" };
+    }
+
+    function buildResult(){
+      const nm = (nameEl.value || "").trim();
+      const who = nm ? `${nm} の診断結果` : "あなた の診断結果";
+      const { base, meter, call } = flavorByInputs();
+      const y = makeYomei(base);
+
+      const triggers = [
+        "コンビニに寄るまで",
+        "電車が遅延するまで",
+        "通知が10件たまるまで",
+        "アイスが溶けるまで",
+        "会議が延長されるまで",
+        "Wi-Fiが不安定になるまで",
+      ];
+
+      const callFlavor = [
+        "松村からの連絡は、来たら来たで世界が動く。",
+        "松村からの連絡が来たら、だいたい“まつむらです”で終わる。",
+        "松村からの連絡は、鳴るだけ鳴って切れる可能性がある。",
+      ];
+
+      const advice = [
+        "備えは“今の自分”を助ける仕組み。今日は仕組みだけ整えて寝よう。",
+        "不安をゼロにしない。ゼロに近づける“手順”を持つ。",
+        "大事なのは未来予測じゃなく、想定と準備。",
+        "見直しは気合じゃなく、チェックリストで勝つ。",
+      ];
+
+      const ending = [
+        "結論：まつむらです。",
+        "以上、まつむらです。",
+        "（診断者）まつむらです。",
+      ];
+
+      const lifeLine = `余命：あと <span style="color:var(--accent)">${y.t}${y.unit}</span><br/><small>（＝${pick(triggers)}）</small>`;
+
+      const desc =
+        `※これはジョーク診断です。${pick(advice)} ` +
+        (call > 0 ? ` ${pick(callFlavor)}` : "") +
+        ` ${pick(ending)}`;
+
+      const shareText =
+`【余命メーカー】${who}
+余命：あと${y.t}${y.unit}（＝${pick(triggers)}）
+備えメーター：${meter}%
+#生命保険の日 #余命メーカー #まつむらです`;
+
+      return { who, lifeLine, desc, meter, shareText };
+    }
+
+    function renderResult(){
+      const r = buildResult();
+      whoTxt.textContent = r.who;
+
+      const st = stampFor(r.meter);
+      stampTxt.textContent = st.txt;
+
+      // 色味（class付け替えはせず、軽くテキストだけ）
+      if(r.meter >= 80){
+        stampTxt.style.borderColor = "rgba(251,191,36,.55)";
+      }else if(r.meter >= 55){
+        stampTxt.style.borderColor = "rgba(96,165,250,.55)";
+      }else{
+        stampTxt.style.borderColor = "rgba(52,211,153,.55)";
+      }
+
+      lifeTxt.innerHTML = r.lifeLine;
+      descTxt.textContent = r.desc;
+
+      barEl.style.width = `${r.meter}%`;
+      meterTxt.textContent = `${r.meter}%`;
+
+      lastText = r.shareText;
+
+      resultEl.classList.add("show");
+      // スクロールがない設計なので、見え方のために少し揺らす
+      resultEl.animate(
+        [{ transform:"translateY(6px)", opacity:.85 }, { transform:"translateY(0)", opacity:1 }],
+        { duration: 180, easing:"ease-out" }
+      );
+    }
+
+    btnMake.addEventListener("click", (e)=>{
+      e.preventDefault();
+      renderResult();
+    });
+
+    btnReset.addEventListener("click", (e)=>{
+      e.preventDefault();
+      nameEl.value = "";
+      condEl.value = 50; syncCond();
+      sleepEl.value = "0";
+      spendEl.value = "0";
+      callEl.value = "0";
+      resultEl.classList.remove("show");
+      lastText = "";
+      showToast("リセットしました");
+    });
+
+    async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        showToast("コピーしました");
+      }catch{
+        // フォールバック
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        try{ document.execCommand("copy"); showToast("コピーしました"); }
+        catch{ showToast("コピー失敗"); }
+        finally{ document.body.removeChild(ta); }
+      }
+    }
+
+    btnCopy.addEventListener("click", async ()=>{
+      if(!lastText){ showToast("先に診断して"); return; }
+      await copyText(lastText);
+    });
+
+    btnShare.addEventListener("click", async ()=>{
+      if(!lastText){ showToast("先に診断して"); return; }
+      if(navigator.share){
+        try{
+          await navigator.share({ text: lastText });
+        }catch{
+          // キャンセル等は無視
+        }
+      }else{
+        await copyText(lastText);
+        showToast("コピーして共有して");
+      }
+    });
+
+    // iOSの長押し選択/コールアウト抑制（補助）
+    document.addEventListener("contextmenu", (e)=> e.preventDefault());
+  </script>
+</body>
+</html>
