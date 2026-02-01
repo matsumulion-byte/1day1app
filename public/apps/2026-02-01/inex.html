@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b0f14" />
+  <title>JOAK-TV｜レトロTV写真フィルター</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --ink:#eaf0ff;
+      --muted:rgba(234,240,255,.72);
+      --line:rgba(255,255,255,.12);
+      --panel:rgba(255,255,255,.06);
+      --panel2:rgba(255,255,255,.10);
+      --accent:#60a5fa;
+      --good:#34d399;
+      --bad:#fb7185;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; background:var(--bg); color:var(--ink)}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      overflow:hidden;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .wrap{
+      height:100%;
+      display:grid;
+      grid-template-rows: auto 1fr auto;
+      gap:12px;
+      padding:14px 14px 16px;
+      max-width:980px;
+      margin:0 auto;
+    }
+    header{
+      display:flex; align-items:baseline; justify-content:space-between;
+      gap:10px;
+    }
+    .title{
+      font-weight:800;
+      letter-spacing:.02em;
+      font-size:18px;
+    }
+    .sub{
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+
+    .stage{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border-radius:24px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+      min-height: 360px;
+      display:grid;
+      place-items:center;
+    }
+    canvas{
+      width:100%;
+      height:100%;
+      display:block;
+      background:#05070a;
+    }
+    .hint{
+      position:absolute;
+      inset:auto 14px 14px 14px;
+      padding:10px 12px;
+      border-radius:14px;
+      background:rgba(0,0,0,.38);
+      border:1px solid rgba(255,255,255,.12);
+      color:rgba(234,240,255,.86);
+      font-size:12px;
+      backdrop-filter: blur(10px);
+      display:none;
+    }
+    .hint.show{display:block;}
+
+    .panel{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      border-radius:20px;
+      padding:12px;
+      display:grid;
+      gap:10px;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:center;
+    }
+    .btns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    button, .filebtn, a.dl{
+      appearance:none;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:var(--ink);
+      padding:12px 14px;
+      border-radius:16px;
+      font-weight:700;
+      font-size:14px;
+      cursor:pointer;
+      user-select:none;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      min-height:44px;
+    }
+    button:active, .filebtn:active, a.dl:active{transform: translateY(1px)}
+    .primary{
+      background: linear-gradient(180deg, rgba(96,165,250,.26), rgba(96,165,250,.10));
+      border-color: rgba(96,165,250,.45);
+    }
+    .good{
+      background: linear-gradient(180deg, rgba(52,211,153,.22), rgba(52,211,153,.08));
+      border-color: rgba(52,211,153,.40);
+    }
+    .danger{
+      background: linear-gradient(180deg, rgba(251,113,133,.22), rgba(251,113,133,.08));
+      border-color: rgba(251,113,133,.40);
+    }
+    input[type="file"]{display:none}
+
+    .sliders{
+      display:grid;
+      gap:10px;
+    }
+    .srow{
+      display:grid;
+      grid-template-columns: 120px 1fr 64px;
+      gap:10px;
+      align-items:center;
+    }
+    .label{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+    }
+    input[type="range"]{width:100%}
+    .val{
+      font-variant-numeric: tabular-nums;
+      font-size:12px;
+      color:rgba(234,240,255,.85);
+      text-align:right;
+    }
+
+    footer{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      color:var(--muted);
+      font-size:12px;
+      padding:0 2px;
+    }
+    .chip{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      padding:6px 10px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+
+    @media (max-width:520px){
+      .wrap{padding:12px}
+      .srow{grid-template-columns: 96px 1fr 56px}
+      .stage{min-height: 52vh}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">放送開始：JOAK-TV</div>
+      <div class="sub">白黒 + 走査線 + ノイズ</div>
+    </header>
+
+    <section class="stage">
+      <canvas id="c"></canvas>
+      <div id="hint" class="hint show">「画像を選ぶ / 撮影」→ スライダーで調整 → 「保存」</div>
+    </section>
+
+    <section class="panel">
+      <div class="row">
+        <div class="btns">
+          <label class="filebtn primary" for="file">画像を選ぶ / 撮影</label>
+          <input id="file" type="file" accept="image/*" capture="environment" />
+          <button id="reset" class="danger" type="button">リセット</button>
+          <a id="download" class="dl good" href="#" download="joak-tv.png">保存</a>
+        </div>
+        <div class="chip" id="status">NO SIGNAL</div>
+      </div>
+
+      <div class="sliders">
+        <div class="srow">
+          <div class="label">走査線</div>
+          <input id="scan" type="range" min="0" max="100" value="65" />
+          <div class="val" id="scanV">65</div>
+        </div>
+        <div class="srow">
+          <div class="label">線の密度</div>
+          <input id="spacing" type="range" min="2" max="12" value="5" />
+          <div class="val" id="spacingV">5</div>
+        </div>
+        <div class="srow">
+          <div class="label">ノイズ</div>
+          <input id="noise" type="range" min="0" max="100" value="32" />
+          <div class="val" id="noiseV">32</div>
+        </div>
+        <div class="srow">
+          <div class="label">コントラスト</div>
+          <input id="contrast" type="range" min="60" max="160" value="118" />
+          <div class="val" id="contrastV">118</div>
+        </div>
+        <div class="srow">
+          <div class="label">明るさ</div>
+          <input id="brightness" type="range" min="-30" max="30" value="0" />
+          <div class="val" id="brightnessV">0</div>
+        </div>
+        <div class="srow">
+          <div class="label">ビネット</div>
+          <input id="vignette" type="range" min="0" max="100" value="55" />
+          <div class="val" id="vignetteV">55</div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="chip">JOAK-TV</div>
+      <div>tip: 走査線 70 / 密度 4 / ノイズ 35 がそれっぽい</div>
+    </footer>
+  </div>
+
+  <script type="module">
+    // ✅ 1日1アプリ ルール：動的アセット用ヘルパー（今回は未使用だが常に入れる）
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    const $ = (id) => document.getElementById(id);
+
+    const canvas = $("c");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+    const hint = $("hint");
+    const status = $("status");
+    const file = $("file");
+    const resetBtn = $("reset");
+    const download = $("download");
+
+    const controls = {
+      scan: $("scan"),
+      spacing: $("spacing"),
+      noise: $("noise"),
+      contrast: $("contrast"),
+      brightness: $("brightness"),
+      vignette: $("vignette"),
+    };
+
+    const vals = {
+      scan: $("scanV"),
+      spacing: $("spacingV"),
+      noise: $("noiseV"),
+      contrast: $("contrastV"),
+      brightness: $("brightnessV"),
+      vignette: $("vignetteV"),
+    };
+
+    // オフスクリーン
+    const srcCanvas = document.createElement("canvas");
+    const srcCtx = srcCanvas.getContext("2d", { willReadFrequently: true });
+
+    let img = null;
+    let raf = 0;
+
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+    function fitContain(iw, ih, ow, oh){
+      const s = Math.min(ow / iw, oh / ih);
+      const w = Math.round(iw * s);
+      const h = Math.round(ih * s);
+      const x = Math.round((ow - w) / 2);
+      const y = Math.round((oh - h) / 2);
+      return { x, y, w, h };
+    }
+
+    function resizeCanvasToStage(){
+      // CSS表示サイズを元に解像度を決める（端末負荷を抑えつつ保存もそれなり）
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const w = Math.max(320, Math.floor(rect.width * dpr));
+      const h = Math.max(320, Math.floor(rect.height * dpr));
+      if (canvas.width !== w || canvas.height !== h){
+        canvas.width = w; canvas.height = h;
+      }
+    }
+
+    function setStatus(text){
+      status.textContent = text;
+    }
+
+    function updateLabels(){
+      for (const k in controls){
+        vals[k].textContent = controls[k].value;
+      }
+    }
+
+    function queueRender(){
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(render);
+    }
+
+    function drawNoSignal(){
+      resizeCanvasToStage();
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      // 背景
+      ctx.fillStyle = "#05070a";
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      // 簡易カラーバー風（白黒版）
+      const bars = 7;
+      const bw = canvas.width / bars;
+      for (let i=0;i<bars;i++){
+        const g = Math.round(255 * (i/(bars-1)));
+        ctx.fillStyle = `rgb(${g},${g},${g})`;
+        ctx.fillRect(i*bw, 0, bw+1, canvas.height);
+      }
+
+      // ノイズ少し
+      const imgd = ctx.getImageData(0,0,canvas.width,canvas.height);
+      const d = imgd.data;
+      for (let i=0;i<d.length;i+=4){
+        const n = (Math.random()-0.5) * 20;
+        d[i]   = clamp(d[i] + n, 0, 255);
+        d[i+1] = clamp(d[i+1] + n, 0, 255);
+        d[i+2] = clamp(d[i+2] + n, 0, 255);
+      }
+      ctx.putImageData(imgd, 0, 0);
+
+      // 走査線
+      overlayScanlines(65, 5);
+
+      // テキスト
+      ctx.save();
+      ctx.globalAlpha = 0.75;
+      ctx.fillStyle = "rgba(0,0,0,.55)";
+      ctx.fillRect(canvas.width*0.06, canvas.height*0.72, canvas.width*0.88, canvas.height*0.14);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "rgba(234,240,255,.92)";
+      ctx.font = `${Math.floor(canvas.height*0.06)}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("NO SIGNAL", canvas.width/2, canvas.height*0.79);
+      ctx.restore();
+    }
+
+    function overlayScanlines(amount, spacing){
+      // amount 0..100
+      const a = clamp(amount/100, 0, 1);
+      if (a <= 0) return;
+
+      const s = Math.max(2, spacing|0);
+      ctx.save();
+      ctx.globalCompositeOperation = "multiply";
+      ctx.globalAlpha = 0.55 * a;
+
+      // 1本おきに暗く
+      ctx.fillStyle = "rgba(0,0,0,1)";
+      for (let y=0; y<canvas.height; y+=s){
+        ctx.fillRect(0, y, canvas.width, 1);
+      }
+
+      // 微妙なムラ
+      ctx.globalAlpha = 0.12 * a;
+      for (let y=0; y<canvas.height; y+=s*6){
+        const h = 1 + (Math.random()*2|0);
+        ctx.fillRect(0, y, canvas.width, h);
+      }
+      ctx.restore();
+    }
+
+    function overlayVignette(amount){
+      const a = clamp(amount/100, 0, 1);
+      if (a <= 0) return;
+
+      const w = canvas.width, h = canvas.height;
+      ctx.save();
+      const g = ctx.createRadialGradient(w*0.5, h*0.5, Math.min(w,h)*0.15, w*0.5, h*0.5, Math.max(w,h)*0.62);
+      g.addColorStop(0, "rgba(0,0,0,0)");
+      g.addColorStop(1, `rgba(0,0,0,${0.85*a})`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,w,h);
+      ctx.restore();
+    }
+
+    function applyBWScanNoise(params){
+      // srcCanvas → imageData処理してcanvasに描画
+      const w = canvas.width, h = canvas.height;
+
+      ctx.clearRect(0,0,w,h);
+      ctx.fillStyle = "#05070a";
+      ctx.fillRect(0,0,w,h);
+
+      // 元画像をステージに収めて描画（srcCanvasに先に描いてから読む）
+      srcCanvas.width = w;
+      srcCanvas.height = h;
+      srcCtx.clearRect(0,0,w,h);
+      srcCtx.fillStyle = "#05070a";
+      srcCtx.fillRect(0,0,w,h);
+
+      const fit = fitContain(img.naturalWidth, img.naturalHeight, w, h);
+      srcCtx.drawImage(img, fit.x, fit.y, fit.w, fit.h);
+
+      // 読み取り
+      const imgd = srcCtx.getImageData(0,0,w,h);
+      const d = imgd.data;
+
+      const noiseA = clamp(params.noise/100, 0, 1);
+      const c = params.contrast / 100; // 0.6..1.6
+      const b = params.brightness;     // -30..30
+
+      // コントラスト： (v-128)*c + 128
+      // 白黒：輝度→v
+      for (let i=0;i<d.length;i+=4){
+        const r=d[i], g=d[i+1], bl=d[i+2];
+
+        // 輝度
+        let v = 0.2126*r + 0.7152*g + 0.0722*bl;
+
+        // 明るさ
+        v = v + b;
+
+        // コントラスト
+        v = (v - 128) * c + 128;
+
+        // ノイズ（粒状）
+        if (noiseA > 0){
+          // 粒が強すぎないように二段階
+          const n = (Math.random()-0.5) * (70*noiseA);
+          v += n;
+        }
+
+        v = clamp(v, 0, 255);
+        d[i]=d[i+1]=d[i+2]=v;
+        d[i+3]=255;
+      }
+
+      ctx.putImageData(imgd, 0, 0);
+
+      // ほんの少し滲み（ブラウン管っぽさ）
+      ctx.save();
+      ctx.globalAlpha = 0.12;
+      ctx.filter = "blur(0.8px)";
+      ctx.drawImage(canvas, 0, 0);
+      ctx.restore();
+      ctx.filter = "none";
+
+      // 走査線
+      overlayScanlines(params.scan, params.spacing);
+
+      // ビネット
+      overlayVignette(params.vignette);
+
+      // 角丸＆枠っぽい暗部
+      ctx.save();
+      ctx.globalCompositeOperation = "multiply";
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = "#000";
+      const pad = Math.round(Math.min(w,h)*0.02);
+      ctx.fillRect(0,0,w,pad);
+      ctx.fillRect(0,h-pad,w,pad);
+      ctx.fillRect(0,0,pad,h);
+      ctx.fillRect(w-pad,0,pad,h);
+      ctx.restore();
+    }
+
+    function render(){
+      updateLabels();
+
+      if (!img){
+        drawNoSignal();
+        return;
+      }
+
+      hint.classList.remove("show");
+      setStatus("ON AIR");
+
+      const params = {
+        scan: Number(controls.scan.value),
+        spacing: Number(controls.spacing.value),
+        noise: Number(controls.noise.value),
+        contrast: Number(controls.contrast.value),
+        brightness: Number(controls.brightness.value),
+        vignette: Number(controls.vignette.value),
+      };
+
+      resizeCanvasToStage();
+      applyBWScanNoise(params);
+
+      // DLリンク更新
+      try{
+        download.href = canvas.toDataURL("image/png");
+      }catch(e){
+        // iOSの状況次第で落ちることがあるので握りつぶし
+      }
+    }
+
+    async function loadFile(f){
+      if (!f) return;
+      setStatus("TUNING...");
+      const url = URL.createObjectURL(f);
+      const im = new Image();
+      im.decoding = "async";
+      im.onload = () => {
+        URL.revokeObjectURL(url);
+        img = im;
+        queueRender();
+      };
+      im.onerror = () => {
+        URL.revokeObjectURL(url);
+        setStatus("NO SIGNAL");
+      };
+      im.src = url;
+    }
+
+    function reset(){
+      controls.scan.value = 65;
+      controls.spacing.value = 5;
+      controls.noise.value = 32;
+      controls.contrast.value = 118;
+      controls.brightness.value = 0;
+      controls.vignette.value = 55;
+      updateLabels();
+      queueRender();
+    }
+
+    // イベント
+    file.addEventListener("change", (e) => loadFile(e.target.files?.[0]));
+    resetBtn.addEventListener("click", reset);
+
+    for (const k in controls){
+      controls[k].addEventListener("input", queueRender, { passive:true });
+    }
+
+    // 画面回転・リサイズ
+    window.addEventListener("resize", queueRender, { passive:true });
+
+    // 初期表示
+    updateLabels();
+    drawNoSignal();
+  </script>
+</body>
+</html>
