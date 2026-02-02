@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>ツインテールの日｜松村 間違い探し</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --good:#34d399;
+      --bad:#fb7185;
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+
+    /* ✅ スクロールできるように修正 */
+    html,body{
+      height:100%;
+      background:var(--bg);
+      color:var(--ink);
+      overflow:auto;
+      overflow-x:hidden;
+    }
+
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      -webkit-text-size-adjust: 100%;
+      -webkit-user-select:none;
+      user-select:none;
+      -webkit-touch-callout:none;
+      touch-action: manipulation;
+    }
+
+    .app{
+      min-height:100dvh;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      padding:14px;
+    }
+
+    header{
+      display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+      padding:12px 14px;border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border-radius:var(--r); box-shadow: var(--shadow);
+    }
+    .title{display:flex;flex-direction:column;gap:4px}
+    h1{font-size:16px;letter-spacing:.02em}
+    .sub{font-size:12px;color:var(--muted)}
+    .meta{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+    .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .pill{
+      font-size:12px;color:var(--ink);
+      padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.06);
+    }
+
+    button{
+      appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.08);
+      color:var(--ink);border-radius:12px;padding:10px 12px;font-weight:700;font-size:13px;
+      cursor:pointer;
+      touch-action: manipulation;
+    }
+    button:active{transform:translateY(1px)}
+    button.primary{background:rgba(96,165,250,.22);border-color:rgba(96,165,250,.35)}
+    button.danger{background:rgba(251,113,133,.16);border-color:rgba(251,113,133,.30)}
+    button:disabled{opacity:.5;cursor:not-allowed}
+
+    /* PC: 画面内に収める */
+    main{
+      flex:1;
+      min-height:0;
+      display:grid;
+      gap:12px;
+      grid-template-columns:1fr 1fr;
+    }
+
+    .panel{
+      position:relative;
+      min-height:0;
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      background:rgba(255,255,255,.06);
+      overflow:auto;
+      box-shadow: var(--shadow);
+    }
+    .panel .label{
+      position:absolute;left:10px;top:10px;z-index:3;
+      font-weight:800;font-size:12px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid var(--line);background:rgba(0,0,0,.35);
+      backdrop-filter: blur(6px);
+    }
+
+    /* PCはfit表示のまま、スクロール可能に */
+    .stage{
+      position:absolute;inset:0;
+      padding:44px 10px 10px 10px;
+      overflow:auto;
+    }
+    .wrap{
+      position:relative;
+      width:100%;
+      min-height:100%;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      padding-top:0;
+    }
+    img{
+      max-width:100%;
+      max-height:none;
+      width:auto;height:auto;
+      object-fit:contain;
+      display:block;
+      pointer-events:none;
+      -webkit-user-drag:none;
+    }
+    canvas{
+      position:absolute;inset:0;
+      pointer-events:none;
+    }
+
+    /* ✅ SP: 画像を縦にフル表示してスクロール可能にする */
+    @media (max-width: 900px){
+      main{
+        grid-template-columns:1fr;
+        grid-template-rows:auto auto;
+      }
+      .panel{
+        overflow:visible;
+      }
+      .stage{
+        position:relative;
+        inset:auto;
+        padding:44px 10px 10px 10px;
+      }
+      .wrap{
+        height:auto;
+      }
+      img{
+        width:100%;
+        height:auto;
+        max-height:none;
+        object-fit:initial;
+      }
+      canvas{
+        inset:0;
+      }
+    }
+
+    .toast{
+      position:fixed;left:50%;bottom:14px;transform:translateX(-50%);
+      background:rgba(0,0,0,.55);backdrop-filter: blur(10px);
+      border:1px solid var(--line);
+      padding:10px 12px;border-radius:999px;font-size:13px;color:var(--ink);
+      opacity:0;transition:opacity .18s ease;
+      max-width:min(92vw, 520px);
+      text-align:center;
+      z-index:50;
+    }
+    .toast.show{opacity:1}
+    .shake{animation: shake .2s linear 0s 2}
+    @keyframes shake{
+      0%{transform:translateX(0)}
+      25%{transform:translateX(-4px)}
+      50%{transform:translateX(4px)}
+      75%{transform:translateX(-3px)}
+      100%{transform:translateX(0)}
+    }
+
+    .overlay{
+      position:fixed;inset:0;display:none;place-items:center;
+      background:rgba(0,0,0,.55);z-index:60;
+      padding:16px;
+    }
+    .overlay.show{display:grid}
+    .modal{
+      width:min(560px, 92vw);
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border-radius:20px;
+      box-shadow: var(--shadow);
+      padding:16px;
+      display:flex;flex-direction:column;gap:12px;
+    }
+    .modal h2{font-size:16px}
+    .modal p{font-size:13px;color:var(--muted);line-height:1.6}
+    .modal .actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+  </style>
+</head>
+
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="title">
+        <h1>ツインテールの日｜松村 間違い探し</h1>
+        <div class="sub">左右どちらをタップしてもOK。3つ見つけたらクリア。</div>
+      </div>
+      <div class="meta">
+        <div class="row">
+          <div class="pill">発見: <span id="found">0</span>/3</div>
+          <div class="pill">残り: <span id="time">60.0</span>s</div>
+        </div>
+        <div class="row">
+          <button class="primary" id="startBtn">START</button>
+          <button id="hintBtn" disabled>HINT</button>
+          <button class="danger" id="resetBtn" disabled>RESET</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel" data-side="A">
+        <div class="label">A（元）</div>
+        <div class="stage">
+          <div class="wrap" id="wrapA">
+            <img id="imgA" alt="元画像" />
+            <canvas id="cvA"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" data-side="B">
+        <div class="label">B（間違い）</div>
+        <div class="stage">
+          <div class="wrap" id="wrapB">
+            <img id="imgB" alt="間違い画像" />
+            <canvas id="cvB"></canvas>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2 id="resultTitle">結果</h2>
+      <p id="resultText"></p>
+      <div class="actions">
+        <button id="closeModal">閉じる</button>
+        <button class="primary" id="playAgain">もう一回</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Vercel用のパス解決ヘルパー
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
+    const asset = (p) => {
+      const clean = String(p || "").replace(/^\.?\//, "");
+      return `${DATE_BASE}${clean}`;
+    };
+
+    const IMG_A = asset('./assets/a.png');
+    const IMG_B = asset('./assets/b.png');
+
+    const TOTAL = 3;
+    const TIME_LIMIT = 60.0;
+
+    // 差分（正規化 0..1 座標）
+    // ✅ サックス座標を修正：赤ボタン中心 (0.847, 0.437) 付近
+    const DIFFS = [
+      {
+        id: 'glasses',
+        label: 'メガネ',
+        type: 'rect',
+        rect: [0.24, 0.10, 0.56, 0.26]
+      },
+      {
+        id: 'sax',
+        label: 'サックスの赤ボタン',
+        type: 'circle',
+        circle: [0.847, 0.437, 0.050] // rは押しやすさ優先で大きめ
+      },
+      {
+        id: 'shirt',
+        label: 'Tシャツの柄',
+        type: 'rect',
+        rect: [0.30, 0.41, 0.69, 0.77]
+      }
+    ];
+
+    const els = {
+      imgA: document.getElementById('imgA'),
+      imgB: document.getElementById('imgB'),
+      wrapA: document.getElementById('wrapA'),
+      wrapB: document.getElementById('wrapB'),
+      cvA: document.getElementById('cvA'),
+      cvB: document.getElementById('cvB'),
+      found: document.getElementById('found'),
+      time: document.getElementById('time'),
+      startBtn: document.getElementById('startBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      hintBtn: document.getElementById('hintBtn'),
+      toast: document.getElementById('toast'),
+      overlay: document.getElementById('overlay'),
+      resultTitle: document.getElementById('resultTitle'),
+      resultText: document.getElementById('resultText'),
+      closeModal: document.getElementById('closeModal'),
+      playAgain: document.getElementById('playAgain'),
+    };
+
+    els.imgA.src = IMG_A;
+    els.imgB.src = IMG_B;
+
+    let running = false;
+    let t0 = 0;
+    let raf = 0;
+    let found = new Set();
+    let remaining = TIME_LIMIT;
+    let hintUsed = false;
+
+    const ctxA = els.cvA.getContext('2d');
+    const ctxB = els.cvB.getContext('2d');
+
+    function showToast(msg){
+      els.toast.textContent = msg;
+      els.toast.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=>els.toast.classList.remove('show'), 900);
+    }
+
+    function fitCanvas(){
+      const fitOne = (img, cv, ctx) => {
+        const r = img.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2) return;
+
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        cv.width = Math.round(r.width * dpr);
+        cv.height = Math.round(r.height * dpr);
+        cv.style.width = r.width + 'px';
+        cv.style.height = r.height + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0,0,r.width,r.height);
+      };
+      fitOne(els.imgA, els.cvA, ctxA);
+      fitOne(els.imgB, els.cvB, ctxB);
+      redrawMarks();
+    }
+
+    const ro = new ResizeObserver(() => fitCanvas());
+    ro.observe(els.wrapA);
+    ro.observe(els.wrapB);
+
+    Promise.all([
+      new Promise(res => els.imgA.onload = res),
+      new Promise(res => els.imgB.onload = res),
+    ]).then(() => requestAnimationFrame(fitCanvas));
+
+    function redrawMarks(extraHighlightId=null){
+      drawMarks(ctxA, els.imgA, extraHighlightId);
+      drawMarks(ctxB, els.imgB, extraHighlightId);
+    }
+
+    function drawMarks(ctx, img, extraHighlightId=null){
+      const r = img.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2) return;
+
+      ctx.clearRect(0,0,r.width,r.height);
+
+      for (const d of DIFFS){
+        const isFound = found.has(d.id);
+        const isHilite = (extraHighlightId && extraHighlightId === d.id);
+        if (!isFound && !isHilite) continue;
+
+        ctx.save();
+        ctx.lineWidth = isHilite ? 5 : 4;
+        ctx.strokeStyle = isHilite ? 'rgba(96,165,250,.95)' : 'rgba(52,211,153,.95)';
+        ctx.fillStyle = isHilite ? 'rgba(96,165,250,.20)' : 'rgba(52,211,153,.18)';
+
+        if (d.type === 'rect'){
+          const [x1,y1,x2,y2] = d.rect;
+          const x = x1 * r.width;
+          const y = y1 * r.height;
+          const w = (x2 - x1) * r.width;
+          const h = (y2 - y1) * r.height;
+
+          roundRect(ctx, x, y, w, h, 14);
+          ctx.fill(); ctx.stroke();
+        } else {
+          const [cx,cy,rr] = d.circle;
+          const x = cx * r.width;
+          const y = cy * r.height;
+          const rad = rr * Math.min(r.width, r.height);
+
+          ctx.beginPath();
+          ctx.arc(x, y, rad, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.fill(); ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
+
+    function roundRect(ctx, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+    }
+
+    function getUV(evt, img){
+      const rect = img.getBoundingClientRect();
+      const x = evt.clientX - rect.left;
+      const y = evt.clientY - rect.top;
+      const u = x / rect.width;
+      const v = y / rect.height;
+      return {u, v, w: rect.width, h: rect.height};
+    }
+
+    function hitTest(u, v, w, h){
+      for (const d of DIFFS){
+        if (found.has(d.id)) continue;
+
+        if (d.type === 'rect'){
+          const [x1,y1,x2,y2] = d.rect;
+          if (u>=x1 && u<=x2 && v>=y1 && v<=y2) return d;
+        } else {
+          const [cx,cy,rr] = d.circle;
+          const px = (u - cx) * w;
+          const py = (v - cy) * h;
+          const rad = rr * Math.min(w, h);
+          if ((px*px + py*py) <= rad*rad) return d;
+        }
+      }
+      return null;
+    }
+
+    function onTap(evt){
+      if (!running) return;
+
+      const img = evt.currentTarget === els.wrapA ? els.imgA : els.imgB;
+      const {u,v,w,h} = getUV(evt, img);
+      const hit = hitTest(u,v,w,h);
+
+      if (hit){
+        found.add(hit.id);
+        els.found.textContent = String(found.size);
+        redrawMarks();
+        showToast(`発見！「${hit.label}」`);
+        if (found.size >= TOTAL) finish(true);
+      } else {
+        evt.currentTarget.classList.remove('shake');
+        void evt.currentTarget.offsetWidth;
+        evt.currentTarget.classList.add('shake');
+        showToast('違うかも');
+      }
+    }
+
+    function tick(){
+      if (!running) return;
+      const now = performance.now();
+      const elapsed = (now - t0) / 1000;
+      remaining = Math.max(0, TIME_LIMIT - elapsed);
+      els.time.textContent = remaining.toFixed(1);
+
+      if (remaining <= 0){
+        finish(false);
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    }
+
+    function start(){
+      if (running) return;
+      running = true;
+      found.clear();
+      hintUsed = false;
+      remaining = TIME_LIMIT;
+      els.found.textContent = '0';
+      els.time.textContent = TIME_LIMIT.toFixed(1);
+      els.startBtn.disabled = true;
+      els.resetBtn.disabled = false;
+      els.hintBtn.disabled = false;
+      showToast('スタート！');
+      redrawMarks();
+
+      t0 = performance.now();
+      raf = requestAnimationFrame(tick);
+    }
+
+    function reset(){
+      running = false;
+      cancelAnimationFrame(raf);
+      found.clear();
+      hintUsed = false;
+      remaining = TIME_LIMIT;
+      els.found.textContent = '0';
+      els.time.textContent = TIME_LIMIT.toFixed(1);
+      els.startBtn.disabled = false;
+      els.resetBtn.disabled = true;
+      els.hintBtn.disabled = true;
+      redrawMarks();
+      showToast('リセット');
+    }
+
+    function finish(clear){
+      running = false;
+      cancelAnimationFrame(raf);
+      els.hintBtn.disabled = true;
+
+      if (clear){
+        els.resultTitle.textContent = 'クリア！';
+        const timeUsed = (TIME_LIMIT - remaining);
+        els.resultText.textContent = `3つ発見。タイム ${timeUsed.toFixed(1)} 秒。`;
+      } else {
+        els.resultTitle.textContent = 'タイムアップ';
+        els.resultText.textContent = `見つけた数 ${found.size}/3。`;
+      }
+
+      els.overlay.classList.add('show');
+      els.startBtn.disabled = false;
+      els.resetBtn.disabled = true;
+    }
+
+    function hint(){
+      if (!running) return;
+      if (hintUsed) return;
+
+      const remainingDiff = DIFFS.find(d => !found.has(d.id));
+      if (!remainingDiff) return;
+
+      hintUsed = true;
+      els.hintBtn.disabled = true;
+      showToast('ヒント：一瞬だけ光る');
+
+      redrawMarks(remainingDiff.id);
+      setTimeout(() => redrawMarks(), 1200);
+    }
+
+    els.startBtn.addEventListener('click', start);
+    els.resetBtn.addEventListener('click', reset);
+    els.hintBtn.addEventListener('click', hint);
+
+    els.closeModal.addEventListener('click', () => els.overlay.classList.remove('show'));
+    els.playAgain.addEventListener('click', () => {
+      els.overlay.classList.remove('show');
+      start();
+    });
+
+    els.wrapA.addEventListener('pointerdown', onTap);
+    els.wrapB.addEventListener('pointerdown', onTap);
+
+    for (const el of [document, els.wrapA, els.wrapB]){
+      el.addEventListener('contextmenu', (e)=>e.preventDefault());
+    }
+
+    reset();
+  </script>
+</body>
+</html>
