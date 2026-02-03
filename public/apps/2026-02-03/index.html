@@ -1,0 +1,844 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>豆まきガトリングガン</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --good:#34d399;
+      --bad:#fb7185;
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; overflow:hidden; background:var(--bg); color:var(--ink)}
+    body{font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;}
+
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:14px;
+      gap:12px;
+    }
+
+    .hud{
+      width:min(920px, 100%);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .hud .left, .hud .right{
+      display:flex; align-items:center; gap:10px;
+      flex-wrap:wrap;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      border-radius:999px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size:13px;
+      color:var(--muted);
+    }
+    .pill b{color:var(--ink); font-weight:700}
+    .btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.08);
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:700;
+      cursor:pointer;
+      user-select:none;
+      touch-action:manipulation;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{
+      background:linear-gradient(180deg, rgba(96,165,250,.22), rgba(96,165,250,.10));
+      border-color:rgba(96,165,250,.45);
+    }
+    .btn.ghost{
+      background:transparent;
+    }
+
+    .wrap{
+      width:min(920px, 100%);
+      position:relative;
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      overflow:hidden;
+      background:radial-gradient(1200px 600px at 50% 20%, rgba(96,165,250,.18), transparent 55%),
+                 radial-gradient(900px 500px at 10% 80%, rgba(52,211,153,.10), transparent 55%),
+                 rgba(255,255,255,.03);
+      box-shadow:var(--shadow);
+    }
+
+    /* 9:16-ish */
+    .stage{
+      width:100%;
+      aspect-ratio: 9 / 16;
+      display:block;
+      touch-action:none; /* game controls */
+    }
+
+    .overlay{
+      position:absolute; inset:0;
+      display:flex;
+      align-items:center; justify-content:center;
+      padding:18px;
+      pointer-events:none;
+    }
+    .panel{
+      width:min(520px, 100%);
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding:16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.6);
+      pointer-events:auto;
+    }
+    .panel h1{
+      font-size:18px;
+      margin-bottom:8px;
+      letter-spacing:.02em;
+    }
+    .panel p{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.55;
+    }
+    .panel .row{
+      display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;
+    }
+    .panel .row .btn{flex:1; min-width:160px}
+
+    .hint{
+      margin-top:10px;
+      font-size:12px;
+      color:rgba(243,246,255,.62);
+      line-height:1.45;
+    }
+
+    .foot{
+      width:min(920px, 100%);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      color:rgba(243,246,255,.55);
+      font-size:12px;
+    }
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.06);
+      padding:2px 6px;
+      border-radius:8px;
+      color:rgba(243,246,255,.75);
+    }
+
+    @media (max-width: 520px){
+      .pill{padding:8px 10px}
+      .btn{padding:10px 12px}
+      .panel{padding:14px}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="hud">
+      <div class="left">
+        <div class="pill">残り <b id="time">10.0</b> 秒</div>
+        <div class="pill">撃退 <b id="kills">0</b> 体</div>
+        <div class="pill">連射 <b id="rate">0</b> /s</div>
+      </div>
+      <div class="right">
+        <button class="btn ghost" id="btnPause" type="button">一時停止</button>
+        <button class="btn" id="btnRestart" type="button">リスタート</button>
+      </div>
+    </div>
+
+    <div class="wrap" id="wrap">
+      <canvas class="stage" id="c"></canvas>
+
+      <div class="overlay" id="overlay">
+        <div class="panel" id="panel">
+          <h1 id="panelTitle">豆まきガトリングガン</h1>
+          <p id="panelText">
+            画面を押しっぱなしで豆を連射。鬼を30秒でできるだけ撃退しろ。
+          </p>
+          <div style="margin:12px 0; display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="bgmCheck" checked style="width:18px; height:18px; cursor:pointer;">
+            <label for="bgmCheck" style="font-size:13px; color:var(--muted); cursor:pointer; user-select:none;">BGMを再生</label>
+          </div>
+          <div class="row" id="panelButtons">
+            <button class="btn primary" id="btnStart" type="button">スタート</button>
+            <button class="btn" id="btnHow" type="button">遊び方</button>
+          </div>
+          <div class="hint" id="hint">
+            操作：タップ/押しっぱなし＝連射　ドラッグ＝照準移動（左右）<br>
+            PC：<span class="kbd">Space</span> 連射 / <span class="kbd">←→</span> 移動
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <div id="status">ready</div>
+    </div>
+  </div>
+
+  <script type="module">
+    // ✅ 1日1アプリのルール：動的アセット参照
+    // Vercel用：現在のパスから相対パスを解決
+    const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+    const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : '/';
+    const asset = (p) => {
+      const clean = String(p || '').replace(/^\.?\//, '');
+      return `${DATE_BASE}${clean}`;
+    };
+
+    // ===== Canvas setup =====
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    const elTime = document.getElementById('time');
+    const elKills = document.getElementById('kills');
+    const elRate = document.getElementById('rate');
+    const elStatus = document.getElementById('status');
+
+    const overlay = document.getElementById('overlay');
+    const panelTitle = document.getElementById('panelTitle');
+    const panelText = document.getElementById('panelText');
+    const panelButtons = document.getElementById('panelButtons');
+
+    const btnStart = document.getElementById('btnStart');
+    const btnHow = document.getElementById('btnHow');
+    const btnPause = document.getElementById('btnPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const bgmCheck = document.getElementById('bgmCheck');
+
+    // Resize canvas to match CSS size (devicePixelRatio)
+    function resizeCanvas(){
+      const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+      state.w = rect.width;
+      state.h = rect.height;
+    }
+
+    // ===== Game constants =====
+    const GAME_SECONDS = 30.0;
+
+    // Firing
+    const FIRE_RPS = 28;          // beans per second when holding
+    const BEAN_SPEED = 980;       // px/s
+    const BEAN_R = 4.2;           // radius
+    const SPREAD = 0.06;          // radians-ish factor
+
+    // Oni spawn
+    const ONI_SPAWN_MIN = 0.22;   // seconds
+    const ONI_SPAWN_MAX = 0.55;
+    const ONI_SPEED_MIN = 90;
+    const ONI_SPEED_MAX = 170;
+
+    // Player
+    const PLAYER_Y_PAD = 80;
+    const PLAYER_MOVE_SPEED = 620; // px/s (keyboard)
+    const AIM_SMOOTH = 0.18;
+
+    // ===== Assets =====
+    const oniImage = new Image();
+    oniImage.src = asset('./assets/matsumura_oni.png');
+
+    const bgm = new Audio(asset('./assets/bgm.mp3'));
+    bgm.loop = true;
+    bgm.volume = 0.6;
+
+    // ===== State =====
+    const state = {
+      w: 360,
+      h: 640,
+
+      running: false,
+      paused: false,
+      tLeft: GAME_SECONDS,
+      kills: 0,
+
+      // input
+      firing: false,
+      pointerId: null,
+      pointerX: null,
+
+      // player
+      playerX: 0,
+      targetX: 0,
+
+      // entities
+      beans: [],
+      onis: [],
+
+      // timers
+      spawnT: 0,
+      nextSpawnIn: 0,
+
+      // metrics
+      shotsInLast1s: [],
+      lastTs: 0,
+
+      // audio
+      bgmPlaying: false,
+    };
+
+    function rand(a,b){ return a + Math.random()*(b-a); }
+    function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+    function resetGame(){
+      state.running = false;
+      state.paused = false;
+      state.tLeft = GAME_SECONDS;
+      state.kills = 0;
+
+      state.beans = [];
+      state.onis = [];
+
+      state.firing = false;
+      state.pointerId = null;
+      state.pointerX = null;
+
+      state.playerX = state.w * 0.5;
+      state.targetX = state.playerX;
+
+      state.spawnT = 0;
+      state.nextSpawnIn = rand(ONI_SPAWN_MIN, ONI_SPAWN_MAX);
+
+      state.shotsInLast1s = [];
+      state.lastTs = 0;
+
+      syncHUD();
+      elStatus.textContent = 'ready';
+      btnPause.textContent = '一時停止';
+    }
+
+    function startGame(){
+      resetGame();
+      
+      // BGM再生（チェックボックスの状態を確認）
+      if(bgmCheck.checked){
+        bgm.play().catch(e => {
+          console.warn('BGM再生エラー:', e);
+        });
+        state.bgmPlaying = true;
+      } else {
+        bgm.pause();
+        state.bgmPlaying = false;
+      }
+      
+      state.running = true;
+      overlay.style.display = 'none';
+      elStatus.textContent = 'playing';
+    }
+
+    function endGame(){
+      state.running = false;
+      state.paused = false;
+      bgm.pause();
+      elStatus.textContent = 'result';
+
+      overlay.style.display = 'flex';
+
+      panelTitle.textContent = '結果';
+      panelText.innerHTML =
+        `撃退：<b style="color:var(--ink);font-weight:800;">${state.kills}</b> 体`;
+
+      panelButtons.innerHTML = '';
+      const b1 = document.createElement('button');
+      b1.className = 'btn primary';
+      b1.type = 'button';
+      b1.textContent = 'もう一回';
+      b1.addEventListener('click', () => {
+        panelTitle.textContent = '豆まきガトリングガン';
+        panelText.textContent = '画面を押しっぱなしで豆を連射。鬼を30秒でできるだけ撃退しろ。';
+        panelButtons.innerHTML = '';
+        panelButtons.appendChild(btnStart);
+        panelButtons.appendChild(btnHow);
+        btnStart.textContent = 'スタート';
+        startGame();
+      }, { once:true });
+
+      const b2 = document.createElement('button');
+      b2.className = 'btn';
+      b2.type = 'button';
+      b2.textContent = '遊び方';
+      b2.addEventListener('click', () => showHow());
+
+      panelButtons.appendChild(b1);
+      panelButtons.appendChild(b2);
+    }
+
+    function showHow(){
+      panelTitle.textContent = '遊び方';
+      panelText.innerHTML =
+        `・画面を押しっぱなしで豆を連射<br>` +
+        `・ドラッグで照準（左右）<br>` +
+        `・30秒で鬼をできるだけ撃退`;
+
+      panelButtons.innerHTML = '';
+      const b = document.createElement('button');
+      b.className = 'btn primary';
+      b.type = 'button';
+      b.textContent = state.running ? '戻る' : 'スタートに戻る';
+      b.addEventListener('click', () => {
+        panelTitle.textContent = '豆まきガトリングガン';
+        panelText.textContent = '画面を押しっぱなしで豆を連射。鬼を30秒でできるだけ撃退しろ。';
+        panelButtons.innerHTML = '';
+        panelButtons.appendChild(btnStart);
+        panelButtons.appendChild(btnHow);
+      });
+      panelButtons.appendChild(b);
+    }
+
+    function togglePause(){
+      if(!state.running) return;
+      state.paused = !state.paused;
+      btnPause.textContent = state.paused ? '再開' : '一時停止';
+      elStatus.textContent = state.paused ? 'paused' : 'playing';
+    }
+
+    function syncHUD(){
+      elTime.textContent = state.tLeft.toFixed(1);
+      elKills.textContent = String(state.kills);
+
+      // rate (shots per second)
+      const now = performance.now();
+      state.shotsInLast1s = state.shotsInLast1s.filter(t => now - t <= 1000);
+      elRate.textContent = String(state.shotsInLast1s.length);
+    }
+
+    // ===== Entities =====
+    function spawnBean(){
+      const muzzleY = state.h - PLAYER_Y_PAD;
+      const muzzleX = state.playerX;
+
+      // 画面上の「狙い点」（照準）を作る：プレイヤーより上方向
+      const aimX = (state.pointerX ?? muzzleX);
+      const aimY = muzzleY - 260;
+
+      // muzzle -> aim の方向ベクトル
+      let dx = aimX - muzzleX;
+      let dy = aimY - muzzleY; // マイナスになる（上方向）
+
+      // 正規化
+      const len = Math.hypot(dx, dy) || 1;
+      dx /= len;
+      dy /= len;
+
+      // ばらつき（拡散）
+      const jx = (Math.random() - 0.5) * 0.18;
+      const jy = (Math.random() - 0.5) * 0.08;
+
+      const ndx = dx + jx;
+      const ndy = dy + jy;
+      const nlen = Math.hypot(ndx, ndy) || 1;
+
+      const vx = (ndx / nlen) * BEAN_SPEED;
+      const vy = (ndy / nlen) * BEAN_SPEED;
+
+      state.beans.push({
+        x: muzzleX,
+        y: muzzleY,
+        vx, vy,
+        r: BEAN_R,
+        life: 1.3
+      });
+
+      state.shotsInLast1s.push(performance.now());
+    }
+
+    function spawnOni(){
+      const r = rand(18, 28);
+      const x = rand(r + 10, state.w - r - 10);
+      const y = -r - 10;
+      const vy = rand(ONI_SPEED_MIN, ONI_SPEED_MAX);
+
+      state.onis.push({
+        x, y, r,
+        vy,
+        hp: Math.random() < 0.25 ? 2 : 1, //たまに硬い
+        hitFlash: 0,
+        wobble: rand(0, Math.PI*2)
+      });
+    }
+
+    function circleHit(ax, ay, ar, bx, by, br){
+      const dx = ax - bx, dy = ay - by;
+      return (dx*dx + dy*dy) <= (ar + br) * (ar + br);
+    }
+
+    // ===== Input =====
+    function canvasToLocalX(clientX){
+      const rect = canvas.getBoundingClientRect();
+      return clamp(clientX - rect.left, 0, rect.width);
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      canvas.setPointerCapture(e.pointerId);
+      state.pointerId = e.pointerId;
+      state.firing = true;
+      state.pointerX = canvasToLocalX(e.clientX);
+      state.targetX = state.pointerX;
+      e.preventDefault();
+    }, { passive:false });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if(state.pointerId !== e.pointerId) return;
+      state.pointerX = canvasToLocalX(e.clientX);
+      state.targetX = state.pointerX;
+      e.preventDefault();
+    }, { passive:false });
+
+    function stopPointer(e){
+      if(state.pointerId !== e.pointerId) return;
+      state.firing = false;
+      state.pointerId = null;
+      state.pointerX = null;
+    }
+    canvas.addEventListener('pointerup', stopPointer, { passive:true });
+    canvas.addEventListener('pointercancel', stopPointer, { passive:true });
+    canvas.addEventListener('pointerleave', (e)=>{ if(e.pointerId===state.pointerId) stopPointer(e); }, { passive:true });
+
+    // Prevent long-press selection / double tap zoom issues are largely solved by user-scalable=no + touch-action
+    // but we also block context menu:
+    window.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // Keyboard
+    const keys = new Set();
+    window.addEventListener('keydown', (e) => {
+      if(e.code === 'Space'){ state.firing = true; e.preventDefault(); }
+      if(['ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+      keys.add(e.code);
+      if(e.code === 'KeyP') togglePause();
+    }, { passive:false });
+
+    window.addEventListener('keyup', (e) => {
+      if(e.code === 'Space') state.firing = false;
+      keys.delete(e.code);
+    }, { passive:true });
+
+    // Buttons
+    btnStart.addEventListener('click', startGame);
+    btnHow.addEventListener('click', showHow);
+    btnPause.addEventListener('click', togglePause);
+    btnRestart.addEventListener('click', () => {
+      panelTitle.textContent = '豆まきガトリングガン';
+      panelText.textContent = '画面を押しっぱなしで豆を連射。鬼を30秒でできるだけ撃退しろ。';
+      panelButtons.innerHTML = '';
+      panelButtons.appendChild(btnStart);
+      panelButtons.appendChild(btnHow);
+      btnStart.textContent = 'スタート';
+      overlay.style.display = 'flex';
+      resetGame();
+    });
+
+    // ===== Loop =====
+    let fireAcc = 0;
+
+    function step(ts){
+      requestAnimationFrame(step);
+      if(!state.lastTs) state.lastTs = ts;
+      const dt = Math.min(0.033, (ts - state.lastTs) / 1000);
+      state.lastTs = ts;
+
+      if(!state.running){
+        render(dt);
+        return;
+      }
+      if(state.paused){
+        render(dt);
+        return;
+      }
+
+      // timer
+      state.tLeft = Math.max(0, state.tLeft - dt);
+      if(state.tLeft <= 0){
+        syncHUD();
+        endGame();
+        return;
+      }
+
+      // move player (keyboard)
+      if(keys.has('ArrowLeft')) state.targetX -= PLAYER_MOVE_SPEED * dt;
+      if(keys.has('ArrowRight')) state.targetX += PLAYER_MOVE_SPEED * dt;
+      state.targetX = clamp(state.targetX, 28, state.w - 28);
+
+      // smooth follow
+      state.playerX += (state.targetX - state.playerX) * (1 - Math.pow(1 - AIM_SMOOTH, dt*60));
+
+      // spawning onis
+      state.spawnT += dt;
+      if(state.spawnT >= state.nextSpawnIn){
+        state.spawnT = 0;
+        state.nextSpawnIn = rand(ONI_SPAWN_MIN, ONI_SPAWN_MAX);
+        spawnOni();
+        // たまに2体
+        if(Math.random() < 0.10) spawnOni();
+      }
+
+      // firing beans
+      if(state.firing){
+        fireAcc += dt * FIRE_RPS;
+        while(fireAcc >= 1){
+          spawnBean();
+          fireAcc -= 1;
+        }
+      }else{
+        fireAcc = 0;
+      }
+
+      // update beans
+      for(let i=state.beans.length-1;i>=0;i--){
+        const b = state.beans[i];
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+        b.life -= dt;
+        if(b.life <= 0 || b.y < -40 || b.x < -40 || b.x > state.w + 40){
+          state.beans.splice(i,1);
+        }
+      }
+
+      // update onis
+      for(let i=state.onis.length-1;i>=0;i--){
+        const o = state.onis[i];
+        o.y += o.vy * dt;
+        o.wobble += dt * 4.2;
+        if(o.hitFlash > 0) o.hitFlash = Math.max(0, o.hitFlash - dt * 6);
+
+        // reach bottom -> just remove (failed to expel) but we don't penalize to keep light
+        if(o.y - o.r > state.h + 20){
+          state.onis.splice(i,1);
+        }
+      }
+
+      // collisions
+      for(let bi=state.beans.length-1; bi>=0; bi--){
+        const b = state.beans[bi];
+        let hit = false;
+        for(let oi=state.onis.length-1; oi>=0; oi--){
+          const o = state.onis[oi];
+          if(circleHit(b.x, b.y, b.r, o.x, o.y, o.r)){
+            hit = true;
+            o.hp -= 1;
+            o.hitFlash = 1;
+
+            // knockback
+            o.y += 8;
+            o.x += (b.vx > 0 ? 1 : -1) * 6;
+
+            if(o.hp <= 0){
+              state.onis.splice(oi,1);
+              state.kills += 1;
+            }
+            break;
+          }
+        }
+        if(hit){
+          state.beans.splice(bi,1);
+        }
+      }
+
+      syncHUD();
+      render(dt);
+    }
+
+    // ===== Render =====
+    function render(dt){
+      const w = state.w, h = state.h;
+
+      // clear
+      ctx.clearRect(0,0,w,h);
+
+      // background grid subtle
+      ctx.save();
+      ctx.globalAlpha = 0.35;
+      ctx.strokeStyle = 'rgba(255,255,255,.08)';
+      ctx.lineWidth = 1;
+      const step = 36;
+      for(let x=0; x<w; x+=step){
+        ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+      }
+      for(let y=0; y<h; y+=step){
+        ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+      }
+      ctx.restore();
+
+      // onis
+      for(const o of state.onis){
+        const wob = Math.sin(o.wobble) * 2;
+        ctx.save();
+        ctx.translate(o.x + wob, o.y);
+
+        // flash effect
+        const flash = o.hitFlash > 0 ? o.hitFlash : 0;
+        if(flash > 0){
+          ctx.globalAlpha = 0.5 + flash * 0.5;
+          ctx.filter = 'brightness(1.5)';
+        } else {
+          ctx.filter = 'none';
+        }
+
+        // draw oni image
+        if(oniImage.complete && oniImage.naturalWidth > 0){
+          const size = o.r * 2;
+          ctx.drawImage(oniImage, -size/2, -size/2, size, size);
+        } else {
+          // fallback: draw circle if image not loaded yet
+          ctx.beginPath();
+          ctx.arc(0,0,o.r,0,Math.PI*2);
+          ctx.fillStyle = 'rgba(168,85,247,.85)';
+          ctx.fill();
+        }
+
+        ctx.restore();
+
+        // hp indicator (tiny) - draw separately
+        if(o.hp >= 2){
+          ctx.save();
+          ctx.translate(o.x + wob, o.y);
+          ctx.fillStyle = 'rgba(255,255,255,.75)';
+          ctx.fillRect(-o.r*0.12, -o.r*1.28, o.r*0.24, 4);
+          ctx.restore();
+        }
+      }
+
+      // beans
+      for(const b of state.beans){
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(245, 226, 170, .95)'; // bean color (ok to hardcode)
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,.25)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // player (matsumura placeholder)
+      const py = h - PLAYER_Y_PAD;
+      const px = state.playerX;
+
+      // base shadow
+      ctx.save();
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = 'black';
+      ctx.beginPath();
+      ctx.ellipse(px, py + 42, 46, 14, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+
+      // body
+      ctx.save();
+      ctx.translate(px, py);
+
+      // gun (gatling) placeholder
+      ctx.save();
+      ctx.rotate(-0.05);
+      ctx.fillStyle = 'rgba(96,165,250,.85)';
+      ctx.fillRect(10, -10, 62, 20); // barrel
+      ctx.fillStyle = 'rgba(255,255,255,.22)';
+      ctx.fillRect(18, -6, 46, 12);  // highlight
+      ctx.restore();
+
+      // head (matsumura circle)
+      ctx.beginPath();
+      ctx.arc(0, 0, 26, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(255,255,255,.92)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.18)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // face
+      ctx.fillStyle = 'rgba(0,0,0,.35)';
+      ctx.beginPath(); ctx.arc(-8, -4, 3.5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc( 8, -4, 3.5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc( 0,  8, 6.5, 0, Math.PI); ctx.strokeStyle='rgba(0,0,0,.25)'; ctx.lineWidth=2; ctx.stroke();
+
+      // body block
+      ctx.fillStyle = 'rgba(255,255,255,.10)';
+      ctx.fillRect(-22, 28, 44, 30);
+      ctx.strokeStyle = 'rgba(255,255,255,.14)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-22, 28, 44, 30);
+
+      ctx.restore();
+
+      // reticle line
+      if(state.running){
+        const tx = (state.pointerX ?? state.playerX);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,.12)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(state.playerX, py-6);
+        ctx.lineTo(tx, py-240);
+        ctx.stroke();
+
+        // crosshair
+        ctx.translate(tx, py-240);
+        ctx.strokeStyle = 'rgba(255,255,255,.22)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-10,0); ctx.lineTo(10,0);
+        ctx.moveTo(0,-10); ctx.lineTo(0,10);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // pause veil
+      if(state.paused){
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,.35)';
+        ctx.fillRect(0,0,w,h);
+        ctx.fillStyle = 'rgba(243,246,255,.9)';
+        ctx.font = '700 18px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP"';
+        ctx.textAlign = 'center';
+        ctx.fillText('PAUSED', w/2, h/2);
+        ctx.restore();
+      }
+    }
+
+    // ===== Boot =====
+    const ro = new ResizeObserver(() => {
+      resizeCanvas();
+      // keep player centered after resize
+      state.playerX = state.w * 0.5;
+      state.targetX = state.playerX;
+    });
+    ro.observe(document.getElementById('wrap'));
+
+    window.addEventListener('resize', () => resizeCanvas(), { passive:true });
+
+    resizeCanvas();
+    resetGame();
+    requestAnimationFrame(step);
+  </script>
+</body>
+</html>
