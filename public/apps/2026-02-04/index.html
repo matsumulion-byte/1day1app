@@ -63,16 +63,28 @@
       border:1px solid var(--line);
       border-radius: var(--r);
       box-shadow: var(--shadow);
-      padding:14px;
+      padding:10px;
       display:flex;
       flex-direction:column;
-      gap:12px;
+      gap:8px;
+      overflow-y:auto;
+    }
+    @media (max-width: 859px){
+      .side{
+        padding:8px;
+        gap:6px;
+        max-height:100vh;
+      }
     }
     .title{
-      display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+      display:flex; align-items:baseline; justify-content:space-between; gap:8px;
     }
-    .title h1{ font-size:18px; letter-spacing:.04em }
-    .title .sub{ font-size:12px; color:var(--muted) }
+    .title h1{ font-size:16px; letter-spacing:.04em }
+    .title .sub{ font-size:11px; color:var(--muted) }
+    @media (max-width: 859px){
+      .title h1{ font-size:14px; }
+      .title .sub{ font-size:10px; }
+    }
 
     .stats{
       display:grid;
@@ -82,11 +94,18 @@
     .card{
       background: rgba(255,255,255,.06);
       border: 1px solid var(--line);
-      border-radius: 14px;
-      padding:10px 12px;
+      border-radius: 12px;
+      padding:8px 10px;
     }
-    .k{font-size:12px;color:var(--muted)}
-    .v{font-size:20px;font-weight:800;margin-top:2px}
+    .k{font-size:11px;color:var(--muted)}
+    .v{font-size:18px;font-weight:800;margin-top:2px}
+    @media (max-width: 859px){
+      .card{
+        padding:6px 8px;
+      }
+      .k{font-size:10px}
+      .v{font-size:16px}
+    }
 
     .btnrow{
       display:grid;
@@ -98,21 +117,35 @@
       border:1px solid var(--line);
       background: rgba(255,255,255,.08);
       color:var(--ink);
-      border-radius: 14px;
-      padding:10px 12px;
+      border-radius: 12px;
+      padding:8px 10px;
       font-weight:700;
+      font-size:13px;
       cursor:pointer;
+    }
+    @media (max-width: 859px){
+      button{
+        padding:6px 8px;
+        font-size:12px;
+      }
     }
     button:hover{ background: rgba(255,255,255,.12) }
     button:active{ transform: translateY(1px) }
     .primary{ border-color: rgba(96,165,250,.55); background: rgba(96,165,250,.18) }
 
     .help{
-      font-size:12px;
+      font-size:11px;
       color:var(--muted);
-      line-height:1.6;
+      line-height:1.5;
       border-top: 1px dashed rgba(255,255,255,.18);
-      padding-top:10px;
+      padding-top:6px;
+    }
+    @media (max-width: 859px){
+      .help{
+        font-size:10px;
+        line-height:1.4;
+        padding-top:4px;
+      }
     }
 
     /* Mobile control pad */
@@ -120,10 +153,16 @@
       margin-top:auto;
       display:grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap:10px;
+      gap:6px;
       user-select:none;
     }
-    .pad button{ padding:14px 10px; font-size:14px; }
+    .pad button{ padding:10px 8px; font-size:13px; }
+    @media (max-width: 859px){
+      .pad{
+        gap:5px;
+      }
+      .pad button{ padding:8px 6px; font-size:12px; }
+    }
     .pad .wide{ grid-column: 1 / -1; }
     .badge{
       position:absolute; inset:auto 12px 12px auto;
@@ -197,14 +236,6 @@
           <div class="card">
             <div class="k">RENDA</div>
             <div class="v" id="chain">0</div>
-          </div>
-          <div class="card">
-            <div class="k">消した数</div>
-            <div class="v" id="cleared">0</div>
-          </div>
-          <div class="card">
-            <div class="k">落下</div>
-            <div class="v" id="drops">0</div>
           </div>
         </div>
 
@@ -305,8 +336,6 @@
 
     const scoreEl = document.getElementById("score");
     const chainEl = document.getElementById("chain");
-    const clearedEl = document.getElementById("cleared");
-    const dropsEl = document.getElementById("drops");
 
     const btnStart = document.getElementById("btnStart");
     const btnHow = document.getElementById("btnHow");
@@ -405,7 +434,7 @@
         running = false;
         overlay.classList.add("show");
         overlay.querySelector("h2").textContent = "ゲームオーバー";
-        overlay.querySelector("p").innerHTML = `詰んだ。<br>スコア <b>${score}</b> / 消した数 <b>${cleared}</b>`;
+        overlay.querySelector("p").innerHTML = `詰んだ。<br>スコア <b>${score}</b>`;
         btnStart.textContent = "もう一回";
         toast("詰み（松）");
       }
@@ -591,8 +620,6 @@
     function syncUI(){
       scoreEl.textContent = score.toString();
       chainEl.textContent = chain.toString();
-      clearedEl.textContent = cleared.toString();
-      dropsEl.textContent = drops.toString();
       btnPause.textContent = paused ? "再開" : "一時停止";
     }
 
