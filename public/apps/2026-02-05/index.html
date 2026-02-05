@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>ピカ松（ピカピカ）</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --accent:#facc15; /* ピカっぽい */
+      --good:#34d399;
+      --bad:#fb7185;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; overflow:hidden; background:var(--bg); color:var(--ink)}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .wrap{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      padding:16px;
+      position:relative;
+    }
+
+    .card{
+      width:min(520px, 96vw);
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(250,204,21,.14), rgba(255,255,255,.06));
+      border-radius:24px;
+      box-shadow: var(--shadow);
+      padding:16px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:10px;
+    }
+
+    .title{
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .title h1{
+      font-size:18px; line-height:1.2; letter-spacing:.02em;
+    }
+    .title p{
+      font-size:12px; color:var(--muted);
+    }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.22);
+      color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+      user-select:none;
+    }
+    .dot{
+      width:8px;height:8px;border-radius:999px;background:var(--bad);
+      box-shadow:0 0 0 4px rgba(251,113,133,.18);
+    }
+    .dot.on{ background:var(--good); box-shadow:0 0 0 4px rgba(52,211,153,.18); }
+
+    .stage{
+      position:relative;
+      border-radius:20px;
+      border:1px solid var(--line);
+      background:radial-gradient(1200px 500px at 50% 0%, rgba(250,204,21,.18), transparent 55%),
+                 radial-gradient(900px 450px at 50% 110%, rgba(96,165,250,.10), transparent 55%),
+                 rgba(255,255,255,.04);
+      overflow:hidden;
+      min-height: 360px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:14px;
+      user-select:none;
+    }
+
+    .char{
+      width:min(340px, 70vw);
+      aspect-ratio: 1/1;
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transform: translateZ(0);
+    }
+    .char img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      filter: drop-shadow(0 18px 30px rgba(0,0,0,.55));
+      transform-origin:50% 70%;
+    }
+
+    .bubble{
+      position:absolute;
+      left:50%;
+      bottom:18px;
+      transform:translateX(-50%);
+      max-width:90%;
+      padding:10px 12px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(0,0,0,.40);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-weight:700;
+      letter-spacing:.04em;
+      text-align:center;
+      box-shadow:0 16px 40px rgba(0,0,0,.35);
+      opacity:0;
+      translate: 0 8px;
+      transition: opacity .18s ease, translate .18s ease;
+      pointer-events:none;
+    }
+    .bubble.show{ opacity:1; translate:0 0; }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      margin-top:12px;
+      flex-wrap:wrap;
+    }
+    button{
+      appearance:none;
+      border:none;
+      border-radius:16px;
+      padding:12px 12px;
+      font-weight:700;
+      color:var(--ink);
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.16);
+      cursor:pointer;
+      box-shadow:0 12px 30px rgba(0,0,0,.25);
+    }
+    button:active{ transform: translateY(1px); }
+    .primary{
+      background:linear-gradient(180deg, rgba(250,204,21,.95), rgba(250,204,21,.70));
+      color:#111;
+      border:1px solid rgba(0,0,0,.15);
+    }
+    .ghost{
+      background:rgba(0,0,0,.20);
+    }
+    .small{
+      padding:10px 10px;
+      font-size:13px;
+    }
+
+    .hint{
+      margin-top:10px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+
+    canvas.fx{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      pointer-events:none;
+    }
+
+    /* タップ時のぷるん */
+    .pop img{
+      animation: pop .22s ease-out;
+    }
+    @keyframes pop{
+      0%{ transform: scale(1) rotate(0deg); }
+      45%{ transform: scale(1.03) rotate(-1deg); }
+      100%{ transform: scale(1) rotate(0deg); }
+    }
+
+    /* iOSのダブルタップ拡大対策：実害減らす */
+    .no-select{
+      -webkit-user-select:none; user-select:none;
+      -webkit-touch-callout:none;
+    }
+  </style>
+</head>
+<body class="no-select">
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div class="title">
+          <h1>ピカ松</h1>
+          <p>タップ or 話しかけると「ピカピカ」</p>
+        </div>
+        <div class="pill" id="micPill" title="音声入力の状態">
+          <span class="dot" id="micDot"></span>
+          <span id="micLabel">Mic: OFF</span>
+        </div>
+      </div>
+
+      <div class="stage" id="stage">
+        <canvas class="fx" id="fx"></canvas>
+
+        <div class="char" id="char" aria-label="ピカ松">
+          <img id="charImg" alt="ピカチュウっぽい松村" />
+          <div class="bubble" id="bubble">ピカピカ</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="primary" id="tapBtn">ピカピカ（タップ）</button>
+        <button class="ghost" id="micBtn">話しかける（開始/停止）</button>
+        <button class="ghost small" id="soundBtn">Sound: ON</button>
+      </div>
+
+      <div class="hint">
+        ・音声入力は対応ブラウザのみ（主にChrome系）。iPhone Safariだと効かないことが多い。<br/>
+        ・それでも「タップでピカピカ」は必ず動く仕様にしてある。
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // 1日1アプリ: 動的アセット参照ヘルパー（Vercel用に絶対パス）
+    const asset = (p) => {
+      // Vercelでは /apps/2026-02-05/ として配信される
+      const base = window.location.pathname.replace(/\/index\.html$/, "").replace(/\/$/, "") || "/apps/2026-02-05";
+      return p.startsWith("/") ? p : `${base}/${p.replace(/^\.\//, "")}`;
+    };
+
+    // 画像：あなたが作ったやつをここに置く
+    // 例）/app/YYYY-MM-DD/assets/matsumura_pika.png
+    const CHAR_SRC = asset("./assets/matsumura_pika.png");
+
+    const $ = (q) => document.querySelector(q);
+    const stage = $("#stage");
+    const char = $("#char");
+    const charImg = $("#charImg");
+    const bubble = $("#bubble");
+    const tapBtn = $("#tapBtn");
+    const micBtn = $("#micBtn");
+    const soundBtn = $("#soundBtn");
+    const micDot = $("#micDot");
+    const micLabel = $("#micLabel");
+
+    charImg.src = CHAR_SRC;
+
+    // --- ランダムボイス（複数ファイル） ---
+    const VOICES = [
+      asset("./assets/pika1.m4a"),
+      asset("./assets/pika2.m4a"),
+      asset("./assets/pika3.m4a"),
+      asset("./assets/pika4.m4a"),
+    ];
+
+    let soundOn = true;
+    let audioUnlocked = false;
+
+    // 連打で同時発音しないように、前のを止めて差し替える方式
+    let currentAudio = null;
+
+    // 同じの連続を避けたいならこの2つを使う
+    let lastVoiceIndex = -1;
+
+    function pickVoiceIndex(){
+      if (VOICES.length <= 1) return 0;
+      let i = Math.floor(Math.random() * VOICES.length);
+      if (i === lastVoiceIndex) i = (i + 1) % VOICES.length; // 連続回避
+      lastVoiceIndex = i;
+      return i;
+    }
+
+    async function unlockAudioOnce(){
+      if (audioUnlocked) return;
+      // iOS対策：ユーザー操作中に1回だけ「無音再生」相当の流れを作る
+      try{
+        const a = new Audio();
+        a.muted = true;
+        a.src = VOICES[0];
+        await a.play().catch(()=>{});
+        a.pause();
+        a.currentTime = 0;
+      }catch(e){}
+      audioUnlocked = true;
+    }
+
+    function stopCurrentVoice(){
+      if (!currentAudio) return;
+      try{
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      }catch(e){}
+      currentAudio = null;
+    }
+
+    async function playRandomVoice(){
+      if (!soundOn) return;
+      await unlockAudioOnce();
+
+      const idx = pickVoiceIndex();
+      const src = VOICES[idx];
+
+      stopCurrentVoice();
+
+      const a = new Audio(src);
+      a.preload = "auto";
+      a.playsInline = true;
+
+      currentAudio = a;
+
+      // play() は失敗する場合があるので握りつぶす（ユーザー操作外など）
+      await a.play().catch(()=>{});
+    }
+
+    // --- WebAudio（ピカッっぽい短い音） ---
+    let audioCtx = null;
+
+    function ensureAudio(){
+      if (!soundOn) return null;
+      if (!audioCtx){
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playPika(){
+      const ctx = ensureAudio();
+      if (!ctx) return;
+
+      const t0 = ctx.currentTime;
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.0001, t0);
+      master.gain.exponentialRampToValueAtTime(0.22, t0 + 0.01);
+      master.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+      master.connect(ctx.destination);
+
+      // キラキラ：短い高音2発 + ノイズちょい
+      const o1 = ctx.createOscillator();
+      const o2 = ctx.createOscillator();
+      o1.type = "triangle";
+      o2.type = "sine";
+      o1.frequency.setValueAtTime(1240, t0);
+      o1.frequency.exponentialRampToValueAtTime(1720, t0 + 0.06);
+      o2.frequency.setValueAtTime(1560, t0 + 0.02);
+      o2.frequency.exponentialRampToValueAtTime(1980, t0 + 0.10);
+
+      const g1 = ctx.createGain(); g1.gain.setValueAtTime(0.0001, t0);
+      g1.gain.exponentialRampToValueAtTime(0.18, t0 + 0.01);
+      g1.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
+
+      const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.0001, t0);
+      g2.gain.exponentialRampToValueAtTime(0.12, t0 + 0.03);
+      g2.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.16);
+
+      o1.connect(g1); g1.connect(master);
+      o2.connect(g2); g2.connect(master);
+
+      // ノイズ（超短）
+      const noise = ctx.createBufferSource();
+      const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.12, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i=0;i<data.length;i++){
+        data[i] = (Math.random()*2-1) * (1 - i/data.length);
+      }
+      noise.buffer = buffer;
+      const nf = ctx.createBiquadFilter();
+      nf.type = "highpass";
+      nf.frequency.value = 800;
+      const ng = ctx.createGain();
+      ng.gain.setValueAtTime(0.0001, t0);
+      ng.gain.exponentialRampToValueAtTime(0.06, t0 + 0.02);
+      ng.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
+      noise.connect(nf); nf.connect(ng); ng.connect(master);
+
+      o1.start(t0);
+      o2.start(t0);
+      noise.start(t0);
+
+      o1.stop(t0 + 0.20);
+      o2.stop(t0 + 0.20);
+      noise.stop(t0 + 0.20);
+    }
+
+    // --- SpeechSynthesis（しゃべる：ピカピカ） ---
+    function say(text){
+      if (!("speechSynthesis" in window)) return;
+      try{
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = "ja-JP";
+        u.rate = 1.05;
+        u.pitch = 1.35;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+      }catch(e){}
+    }
+
+    // --- きらきらFX（Canvas） ---
+    const fx = $("#fx");
+    const ctx2d = fx.getContext("2d");
+    let dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    let W=0,H=0;
+    const sparks = [];
+
+    function resize(){
+      const r = fx.getBoundingClientRect();
+      W = Math.max(1, Math.floor(r.width));
+      H = Math.max(1, Math.floor(r.height));
+      fx.width = Math.floor(W * dpr);
+      fx.height = Math.floor(H * dpr);
+      ctx2d.setTransform(dpr,0,0,dpr,0,0);
+    }
+    window.addEventListener("resize", resize, {passive:true});
+    resize();
+
+    function spawn(x,y, n=14){
+      for(let i=0;i<n;i++){
+        const a = Math.random()*Math.PI*2;
+        const sp = 1.2 + Math.random()*3.2;
+        sparks.push({
+          x,y,
+          vx: Math.cos(a)*sp,
+          vy: Math.sin(a)*sp - (0.6 + Math.random()*0.8),
+          life: 18 + Math.floor(Math.random()*16),
+          t:0,
+          r: 1.5 + Math.random()*2.2
+        });
+      }
+    }
+
+    function draw(){
+      ctx2d.clearRect(0,0,W,H);
+
+      for(let i=sparks.length-1;i>=0;i--){
+        const p = sparks[i];
+        p.t++;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.10; // gravity
+        const k = 1 - (p.t / p.life);
+        if (k <= 0){ sparks.splice(i,1); continue; }
+
+        // きらきら星っぽい十字
+        ctx2d.globalAlpha = Math.max(0, k);
+        ctx2d.lineWidth = 2;
+        ctx2d.strokeStyle = "rgba(250,204,21,0.95)";
+        const s = p.r * (1 + (1-k)*1.2);
+
+        ctx2d.beginPath();
+        ctx2d.moveTo(p.x - s*2, p.y);
+        ctx2d.lineTo(p.x + s*2, p.y);
+        ctx2d.moveTo(p.x, p.y - s*2);
+        ctx2d.lineTo(p.x, p.y + s*2);
+        ctx2d.stroke();
+
+        ctx2d.globalAlpha = Math.max(0, k*0.45);
+        ctx2d.fillStyle = "rgba(255,255,255,0.9)";
+        ctx2d.beginPath();
+        ctx2d.arc(p.x, p.y, s*0.85, 0, Math.PI*2);
+        ctx2d.fill();
+      }
+      ctx2d.globalAlpha = 1;
+
+      requestAnimationFrame(draw);
+    }
+    draw();
+
+    // --- UIリアクション ---
+    let bubbleTimer = null;
+    function showBubble(text="ピカピカ"){
+      bubble.textContent = text;
+      bubble.classList.add("show");
+      clearTimeout(bubbleTimer);
+      bubbleTimer = setTimeout(()=> bubble.classList.remove("show"), 700);
+    }
+
+    function pop(){
+      char.classList.remove("pop");
+      // reflow
+      void char.offsetWidth;
+      char.classList.add("pop");
+      setTimeout(()=> char.classList.remove("pop"), 260);
+    }
+
+    function pikaAt(clientX, clientY, phrase="ピカピカ"){
+      const rect = stage.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+
+      if (navigator.vibrate) navigator.vibrate([12, 18, 10]);
+
+      playRandomVoice(); // ← ランダムボイスに切り替え
+      // テキスト/合成音声は好みで：ボイスがあるなら speech は消すのが自然
+      // say(phrase);
+
+      showBubble(phrase);
+      pop();
+      spawn(x, y, 18);
+    }
+
+    function centerPika(phrase="ピカピカ"){
+      const rect = stage.getBoundingClientRect();
+      pikaAt(rect.left + rect.width/2, rect.top + rect.height*0.45, phrase);
+    }
+
+    // タップ操作
+    char.addEventListener("pointerdown", (e)=>{
+      e.preventDefault();
+      pikaAt(e.clientX, e.clientY, "ピカピカ");
+    }, {passive:false});
+
+    tapBtn.addEventListener("click", ()=>{
+      centerPika("ピカピカ");
+    });
+
+    // サウンドON/OFF
+    function updateSoundBtn(){
+      soundBtn.textContent = `Sound: ${soundOn ? "ON" : "OFF"}`;
+    }
+    updateSoundBtn();
+
+    soundBtn.addEventListener("click", ()=>{
+      soundOn = !soundOn;
+      if (!soundOn) stopCurrentVoice();
+      updateSoundBtn();
+      showBubble(soundOn ? "ピカ！（音あり）" : "…（無音）");
+    });
+
+    // --- 音声入力（Web Speech API） ---
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let rec = null;
+    let listening = false;
+
+    function setMic(on){
+      listening = on;
+      micDot.classList.toggle("on", on);
+      micLabel.textContent = `Mic: ${on ? "ON" : "OFF"}`;
+      micBtn.textContent = `話しかける（${on ? "停止" : "開始"}）`;
+    }
+
+    function startRec(){
+      if (!SpeechRecognition){
+        showBubble("このブラウザは音声入力非対応");
+        return;
+      }
+      if (!rec){
+        rec = new SpeechRecognition();
+        rec.lang = "ja-JP";
+        rec.interimResults = true;
+        rec.continuous = true;
+
+        rec.onresult = (ev)=>{
+          // 最後の結果を拾う
+          let text = "";
+          for (let i=ev.resultIndex; i<ev.results.length; i++){
+            text += ev.results[i][0].transcript;
+          }
+          text = (text || "").trim();
+
+          // 反応ワード：ゆるく
+          // 「ピカ」「光」「雷」「かわいい」「松村」などで返す
+          const hit =
+            /ぴか|ピカ|光|ひか|雷|かみなり|かわいい|松村|まつむら|充電|でんき/i.test(text);
+
+          if (hit){
+            // 文脈でちょい変える
+            let phrase = "ピカピカ";
+            if (/雷|かみなり|でんき|充電/i.test(text)) phrase = "ピカァ！（でんき！）";
+            else if (/かわいい/i.test(text)) phrase = "ピカ…？（照）";
+            else if (/松村|まつむら/i.test(text)) phrase = "ピカピカ（俺が松村）";
+
+            centerPika(phrase);
+          }
+        };
+
+        rec.onerror = ()=>{
+          setMic(false);
+          try{ rec.stop(); }catch(e){}
+          showBubble("音声入力エラー");
+        };
+
+        rec.onend = ()=>{
+          // 手動停止でなければ、勝手に終わる端末もあるのでOFFにする
+          setMic(false);
+        };
+      }
+
+      // iOS/Chrome等：ユーザー操作でAudioも起こす
+      ensureAudio();
+
+      try{
+        rec.start();
+        setMic(true);
+        showBubble("話しかけてOK");
+      }catch(e){
+        // start連打対策など
+        setMic(false);
+        showBubble("音声入力を開始できません");
+      }
+    }
+
+    function stopRec(){
+      if (!rec) return;
+      try{ rec.stop(); }catch(e){}
+      setMic(false);
+      showBubble("停止");
+    }
+
+    micBtn.addEventListener("click", ()=>{
+      if (!SpeechRecognition){
+        showBubble("音声入力はChrome推奨");
+        return;
+      }
+      if (!listening) startRec();
+      else stopRec();
+    });
+
+    // 最初のユーザー操作でAudioタグ側をアンロック
+    window.addEventListener("pointerdown", ()=>{
+      unlockAudioOnce();
+    }, {once:true, passive:true});
+  </script>
+</body>
+</html>
