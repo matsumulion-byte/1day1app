@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>風呂の日｜曇りガラス松村</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --good:#34d399;
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; background:var(--bg); color:var(--ink); overflow:hidden}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+      -webkit-user-select:none; user-select:none;
+      -webkit-touch-callout:none;
+      touch-action:none; /* 重要：拭き操作でスクロールさせない */
+    }
+    .wrap{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+      gap:12px;
+    }
+    header{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .title h1{font-size:16px; letter-spacing:.02em}
+    .title p{font-size:12px; color:var(--muted)}
+    .btns{display:flex; gap:8px}
+    button{
+      border:1px solid var(--line);
+      background:var(--panel);
+      color:var(--ink);
+      padding:10px 12px;
+      border-radius:12px;
+      font-size:12px;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:active{transform: translateY(1px)}
+    .card{
+      flex:1;
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+      min-height: 360px;
+    }
+    .stage{
+      position:absolute; inset:0;
+      display:grid;
+      place-items:center;
+      background:#000;
+    }
+    .photo{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      object-fit:contain;
+      filter: saturate(1.02) contrast(1.02);
+    }
+    canvas#fog{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+    }
+    .hud{
+      position:absolute;
+      left:12px; right:12px; bottom:12px;
+      display:flex; flex-direction:column; gap:8px;
+      pointer-events:none;
+    }
+    .meter{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(10,16,32,.55);
+      backdrop-filter: blur(10px);
+    }
+    .meter .label{font-size:12px; color:var(--muted)}
+    .meter .val{font-size:12px}
+    .bar{
+      height:10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      overflow:hidden;
+      background: rgba(255,255,255,.06);
+    }
+    .bar > i{
+      display:block;
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(96,165,250,.9), rgba(52,211,153,.9));
+    }
+    .badge{
+      position:absolute;
+      top:12px; left:12px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(10,16,32,.55);
+      backdrop-filter: blur(10px);
+      font-size:12px;
+      color:var(--muted);
+    }
+    .overlay{
+      position:absolute; inset:0;
+      display:none;
+      place-items:center;
+      background: rgba(0,0,0,.45);
+      backdrop-filter: blur(6px);
+    }
+    .overlay.on{display:grid;}
+    .modal{
+      width:min(520px, 92vw);
+      border-radius:18px;
+      border:1px solid var(--line);
+      background: rgba(10,16,32,.92);
+      box-shadow:var(--shadow);
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .modal h2{font-size:14px}
+    .modal p{font-size:12px; color:var(--muted); line-height:1.6}
+    .modal .row{display:flex; gap:8px; justify-content:flex-end; margin-top:4px}
+    .good{color:var(--good)}
+    .small{font-size:11px; color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>風呂の日｜曇りガラス松村</h1>
+        <p>指で拭いて、松村を見つけろ</p>
+      </div>
+      <div class="btns">
+        <button id="btnReset" type="button">リセット</button>
+        <button id="btnHint" type="button">ヒント</button>
+      </div>
+    </header>
+
+    <div class="card" id="card">
+      <div class="stage">
+        <img id="photo" class="photo" alt="matsumura" />
+        <canvas id="fog"></canvas>
+
+        <div class="badge" id="status">拭け：0%</div>
+
+        <div class="hud">
+          <div class="meter">
+            <div>
+              <div class="label">拭いた割合</div>
+              <div class="val"><span id="pct">0</span>% / <span id="goal">65</span>%</div>
+            </div>
+            <div class="small">※擦るほど見える</div>
+          </div>
+          <div class="bar"><i id="bar"></i></div>
+        </div>
+
+        <div class="overlay" id="overlay">
+          <div class="modal">
+            <h2 class="good" id="resultTitle">クリア！</h2>
+            <p id="resultText">松村が見えた。いい湯だった。</p>
+            <div class="row">
+              <button id="btnAgain" type="button">もう一回</button>
+            </div>
+            <p class="small">コツ：細かく塗るより、大きく円を描くように拭くと速い</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="small">長押し選択・ズーム防止済み。SPでもそのまま拭ける。</p>
+  </div>
+
+<script type="module">
+  // Vercel用のパス解決ヘルパー
+  const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+  const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : '/';
+  const asset = (p) => {
+    const clean = String(p || '').replace(/^\.?\//, '');
+    return `${DATE_BASE}${clean}`;
+  };
+
+  // ===== 設定 =====
+  const IMG_PATH = asset("./assets/matsu_bath.png"); // ここをあなたのファイル名に合わせる
+  const GOAL = 65; // 何%拭いたらクリア
+  const BRUSH_MIN = 26; // ブラシ半径（px）最小
+  const BRUSH_MAX = 46; // ブラシ半径（px）最大
+  const CHECK_INTERVAL_MS = 220; // %計測の頻度（重いので間引く）
+  const SAMPLE_W = 220; // 計測用ダウンサンプル幅
+
+  // ===== DOM =====
+  const photo = document.getElementById("photo");
+  const fog = document.getElementById("fog");
+  const card = document.getElementById("card");
+  const status = document.getElementById("status");
+  const pctEl = document.getElementById("pct");
+  const goalEl = document.getElementById("goal");
+  const bar = document.getElementById("bar");
+  const overlay = document.getElementById("overlay");
+  const resultTitle = document.getElementById("resultTitle");
+  const resultText = document.getElementById("resultText");
+  const btnReset = document.getElementById("btnReset");
+  const btnHint = document.getElementById("btnHint");
+  const btnAgain = document.getElementById("btnAgain");
+
+  goalEl.textContent = String(GOAL);
+
+  // ===== canvas setup =====
+  const ctx = fog.getContext("2d", { willReadFrequently: true });
+
+  let dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+  let cw = 0, ch = 0;
+  let isDown = false;
+  let last = null;
+  let revealed = 0;
+  let lastCheck = 0;
+  let cleared = false;
+
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+  function resize(){
+    const r = card.getBoundingClientRect();
+    cw = Math.floor(r.width);
+    ch = Math.floor(r.height);
+
+    fog.width = Math.floor(cw * dpr);
+    fog.height = Math.floor(ch * dpr);
+    fog.style.width = cw + "px";
+    fog.style.height = ch + "px";
+
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+
+    // 霧（曇り）を再生成
+    drawFog();
+    revealed = 0;
+    updateUI();
+    cleared = false;
+    overlay.classList.remove("on");
+  }
+
+  function drawFog(){
+    // ベースの曇り（半透明）
+    ctx.globalCompositeOperation = "source-over";
+    ctx.clearRect(0,0,cw,ch);
+
+    // うっすら青みの曇り
+    ctx.fillStyle = "rgba(245,250,255,0.92)";
+    ctx.fillRect(0,0,cw,ch);
+
+    // ノイズっぽいムラ（軽量）
+    const step = 10;
+    for(let y=0; y<ch; y+=step){
+      for(let x=0; x<cw; x+=step){
+        const a = 0.03 + Math.random()*0.06;
+        ctx.fillStyle = `rgba(160,190,220,${a})`;
+        ctx.fillRect(x,y,step,step);
+      }
+    }
+
+    // ぼかし感のハイライト
+    const g = ctx.createRadialGradient(cw*0.35, ch*0.25, 20, cw*0.35, ch*0.25, Math.max(cw,ch)*0.8);
+    g.addColorStop(0, "rgba(255,255,255,0.18)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,cw,ch);
+
+    // これ以降は“拭く”で削る
+    ctx.globalCompositeOperation = "destination-out";
+  }
+
+  function getPos(e){
+    const r = fog.getBoundingClientRect();
+    const t = (e.touches && e.touches[0]) ? e.touches[0] : e;
+    return {
+      x: (t.clientX - r.left),
+      y: (t.clientY - r.top),
+    };
+  }
+
+  function brushRadius(v){
+    // 速度で少し太さを変える（気持ちよさ）
+    const speed = clamp(v, 0, 40);
+    const k = speed / 40;
+    return BRUSH_MIN + (BRUSH_MAX - BRUSH_MIN) * k;
+  }
+
+  function wipeDot(x,y,r){
+    // ふちが柔らかいブラシ
+    ctx.globalCompositeOperation = "destination-out";
+    const grad = ctx.createRadialGradient(x,y,0, x,y,r);
+    grad.addColorStop(0, "rgba(0,0,0,0.85)");
+    grad.addColorStop(1, "rgba(0,0,0,0.00)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fill();
+
+    // "拭いた跡"のわずかなツヤ（演出：削った後にsource-overで薄く）
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = "rgba(255,255,255,0.03)";
+    ctx.beginPath();
+    ctx.arc(x,y,r*1.15,0,Math.PI*2);
+    ctx.fill();
+
+    // 次の拭きへ戻す
+    ctx.globalCompositeOperation = "destination-out";
+  }
+
+  function wipeLine(a,b){
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const dist = Math.hypot(dx,dy);
+    const steps = Math.max(1, Math.floor(dist / 6));
+    const speed = dist; // ざっくり
+    const r = brushRadius(speed);
+
+    for(let i=0;i<=steps;i++){
+      const t = i/steps;
+      wipeDot(a.x + dx*t, a.y + dy*t, r);
+    }
+  }
+
+  function updateUI(){
+    const p = Math.floor(revealed);
+    pctEl.textContent = String(p);
+    status.textContent = `拭け：${p}%`;
+    bar.style.width = `${clamp((revealed/GOAL)*100, 0, 100)}%`;
+  }
+
+  function computeRevealedPercent(){
+    // ダウンサンプルしてアルファ（曇りの残り）を見る
+    // fogのアルファが 0 に近いほど"拭けた"と判定
+    const sw = SAMPLE_W;
+    const sh = Math.max(1, Math.round(sw * (ch / cw)));
+
+    const tmp = document.createElement("canvas");
+    tmp.width = sw;
+    tmp.height = sh;
+    const tctx = tmp.getContext("2d", { willReadFrequently: true });
+
+    // fog（実際のピクセルサイズ）を縮小描画
+    tctx.clearRect(0,0,sw,sh);
+    tctx.drawImage(fog, 0,0, fog.width, fog.height, 0,0, sw, sh);
+
+    const img = tctx.getImageData(0,0,sw,sh).data;
+    let clearCount = 0;
+    const total = sw * sh;
+
+    // アルファが小さい=曇りが消えてる
+    // 元のアルファが約235(0.92*255)なので、削除後は低くなる
+    for(let i=0; i<img.length; i+=4){
+      const a = img[i+3];
+      if(a < 100) clearCount++; // 判定を緩和（元は28）
+    }
+    return (clearCount / total) * 100;
+  }
+
+  function tryCheck(){
+    const now = performance.now();
+    if(now - lastCheck < CHECK_INTERVAL_MS) return;
+    lastCheck = now;
+
+    revealed = computeRevealedPercent();
+    updateUI();
+
+    if(!cleared && revealed >= GOAL){
+      cleared = true;
+      onClear();
+    }
+  }
+
+  function onClear(){
+    overlay.classList.add("on");
+    resultTitle.textContent = "クリア！";
+    resultText.textContent = "松村が見えた。いい湯だった。";
+    if(navigator.vibrate) navigator.vibrate([40, 30, 40]);
+  }
+
+  // ===== input =====
+  function down(e){
+    if(cleared) return;
+    e.preventDefault();
+    isDown = true;
+    last = getPos(e);
+    wipeDot(last.x, last.y, BRUSH_MAX*0.85);
+    tryCheck();
+  }
+
+  function move(e){
+    if(!isDown || cleared) return;
+    e.preventDefault();
+    const p = getPos(e);
+    wipeLine(last, p);
+    last = p;
+    tryCheck();
+  }
+
+  function up(e){
+    if(!isDown) return;
+    e.preventDefault();
+    isDown = false;
+    last = null;
+    tryCheck();
+  }
+
+  // pointer（iOSも最近はOKだが、保険でtouchも付ける）
+  fog.addEventListener("pointerdown", down, { passive:false });
+  fog.addEventListener("pointermove", move, { passive:false });
+  window.addEventListener("pointerup", up, { passive:false });
+  window.addEventListener("pointercancel", up, { passive:false });
+
+  // touch fallback
+  fog.addEventListener("touchstart", down, { passive:false });
+  fog.addEventListener("touchmove", move, { passive:false });
+  window.addEventListener("touchend", up, { passive:false });
+  window.addEventListener("touchcancel", up, { passive:false });
+
+  // ===== buttons =====
+  function reset(){
+    drawFog();
+    revealed = 0;
+    cleared = false;
+    overlay.classList.remove("on");
+    updateUI();
+  }
+  btnReset.addEventListener("click", reset);
+  btnAgain.addEventListener("click", reset);
+
+  btnHint.addEventListener("click", () => {
+    // 一瞬だけ“曇り薄くする”ヒント（ズル）
+    const prev = ctx.globalCompositeOperation;
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.fillStyle = "rgba(0,0,0,0.18)";
+    ctx.fillRect(0,0,cw,ch);
+    ctx.globalCompositeOperation = prev;
+    tryCheck();
+  });
+
+  // ===== load =====
+  async function boot(){
+    photo.src = IMG_PATH;
+
+    // 画像が来ない時に気づけるよう、エラー出す
+    photo.addEventListener("error", () => {
+      status.textContent = "画像が読めない（assets/に置いた？）";
+    });
+
+    // 初期レイアウト確定後にサイズ合わせ
+    requestAnimationFrame(() => {
+      resize();
+      // 何も触らないと0のままなので一回UI更新
+      updateUI();
+    });
+  }
+
+  window.addEventListener("resize", () => {
+    // 回転やUI変化で再計算
+    dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    resize();
+  });
+
+  boot();
+</script>
+</body>
+</html>
