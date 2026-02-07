@@ -1,0 +1,810 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>BIG AIR MATSUMURA｜めっちゃ飛べ</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --good:#34d399;
+      --bad:#fb7185;
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; overflow:hidden; background:var(--bg); color:var(--ink)}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      touch-action:none;
+    }
+    .wrap{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding:max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+      gap:10px;
+    }
+    header{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+    }
+    .title{display:flex; flex-direction:column; gap:4px}
+    .title h1{font-size:16px; font-weight:900; letter-spacing:.02em}
+    .title p{font-size:12px; color:var(--muted); line-height:1.35}
+    .hud{display:flex; gap:10px; align-items:stretch; flex-wrap:wrap; justify-content:flex-end;}
+    .chip{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:7px 10px;
+      font-size:12px;
+      color:var(--muted);
+      display:flex; gap:8px; align-items:center;
+      white-space:nowrap;
+    }
+    .chip b{color:var(--ink); font-weight:900}
+    .btn{
+      appearance:none; border:1px solid var(--line);
+      background:linear-gradient(180deg, var(--panel2), var(--panel));
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:900;
+      font-size:13px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.35);
+      cursor:pointer;
+    }
+    .btn:active{transform: translateY(1px)}
+    .stage{
+      position:relative;
+      flex:1;
+      min-height: 420px;
+      background:
+        radial-gradient(900px 500px at 50% 10%, rgba(96,165,250,.18), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    canvas{display:block; width:100%; height:100%;}
+    .overlay{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      pointer-events:none;
+    }
+    .card{
+      width:min(560px, calc(100% - 24px));
+      border-radius: 20px;
+      border:1px solid var(--line);
+      background: rgba(10,14,28,.74);
+      backdrop-filter: blur(10px);
+      padding: 16px 16px 14px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      pointer-events:auto;
+    }
+    .card h2{font-size:16px; margin-bottom:6px}
+    .card p{font-size:13px; color:var(--muted); line-height:1.45}
+    .row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap}
+    .row .btn{flex:1}
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1.2fr;
+      gap:10px;
+      align-items:stretch;
+      margin-top:2px;
+    }
+    .pad{
+      background:rgba(0,0,0,.22);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:10px;
+      user-select:none;
+      -webkit-user-select:none;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:6px;
+      text-align:center;
+    }
+    .pad b{font-size:14px}
+    .pad small{font-size:11px; color:var(--muted)}
+    .pad:active{transform: translateY(1px)}
+    .pad.jump{
+      background:linear-gradient(180deg, rgba(96,165,250,.22), rgba(0,0,0,.22));
+    }
+    .meter{
+      height:10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.12);
+      overflow:hidden;
+    }
+    .fill{height:100%; width:0%; background: rgba(96,165,250,.85);}
+    .toast{
+      position:absolute; top:12px; left:12px;
+      font-size:12px; color:var(--muted);
+      background:rgba(0,0,0,.28);
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px 12px;
+      pointer-events:none;
+      max-width:min(520px, calc(100% - 24px));
+    }
+    .toast b{color:var(--ink)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>BIG AIR MATSUMURA</h1>
+        <p><b>長押し→離す</b>で踏切。空中は左右で回転。着地を決めてスコア稼げ。</p>
+      </div>
+      <div class="hud">
+        <div class="chip">スコア <b id="score">0</b></div>
+        <div class="chip">ベスト <b id="best">0</b></div>
+        <button class="btn" id="restart">リセット</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c"></canvas>
+      <div class="toast" id="toast" style="display:none"></div>
+
+      <div class="overlay" id="overlay">
+        <div class="card">
+          <h2>スノボでめっちゃ飛ぶやつ</h2>
+          <p>
+            右下の<b>JUMP</b>を長押ししてパワーを溜め、離して踏切。<br/>
+            空中は<b>LEFT/RIGHT</b>で回転。着地時に角度を0°付近に戻せると成功。
+          </p>
+          <div class="row">
+            <button class="btn" id="start">スタート</button>
+            <button class="btn" id="how">操作確認</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="pad" id="left">
+        <b>LEFT</b><small>反時計回り</small>
+      </button>
+      <button class="pad" id="right">
+        <b>RIGHT</b><small>時計回り</small>
+      </button>
+      <button class="pad jump" id="jump">
+        <b>JUMP</b><small>長押し→離す</small>
+        <div class="meter"><div class="fill" id="powerFill"></div></div>
+      </button>
+    </div>
+  </div>
+
+  <script type="module">
+    // 1日1アプリ：動的アセット用（Vercel用に絶対パス）
+    const asset = (p) => {
+      // 相対パスの場合は絶対パスに変換
+      if (p.startsWith('./')) {
+        return '/apps/2026-02-07' + p.slice(1);
+      }
+      return p;
+    };
+
+    // === images ===
+    const IMG = {
+      ride: new Image(),
+      air: new Image(),
+      ready: false,
+    };
+
+    IMG.ride.src = asset('./assets/ride.png');
+    IMG.air.src  = asset('./assets/air.png');
+
+    await Promise.all([
+      new Promise((res, rej) => { IMG.ride.onload = res; IMG.ride.onerror = rej; }),
+      new Promise((res, rej) => { IMG.air.onload  = res; IMG.air.onerror  = rej; }),
+    ]).then(()=>{ IMG.ready = true; })
+      .catch(()=>{ IMG.ready = false; /* 画像読み込み失敗時は従来の図形描画にフォールバック */ });
+
+    const stage = document.getElementById('stage');
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    const elScore = document.getElementById('score');
+    const elBest = document.getElementById('best');
+    const btnRestart = document.getElementById('restart');
+    const overlay = document.getElementById('overlay');
+    const btnStart = document.getElementById('start');
+    const btnHow = document.getElementById('how');
+    const toast = document.getElementById('toast');
+
+    const btnLeft = document.getElementById('left');
+    const btnRight = document.getElementById('right');
+    const btnJump = document.getElementById('jump');
+    const powerFill = document.getElementById('powerFill');
+
+    function resize(){
+      const r = stage.getBoundingClientRect();
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      canvas.width = Math.floor(r.width * dpr);
+      canvas.height = Math.floor(r.height * dpr);
+      canvas.style.width = r.width + 'px';
+      canvas.style.height = r.height + 'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    window.addEventListener('resize', resize, {passive:true});
+    resize();
+
+    function showToast(html, ms=1400){
+      toast.innerHTML = html;
+      toast.style.display = 'block';
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=> toast.style.display='none', ms);
+    }
+
+    const clamp = (v,min,max)=>Math.max(min, Math.min(max, v));
+    const clamp01 = (v)=>clamp(v,0,1);
+
+    // ===== Game Model =====
+    const G = {
+      running:false,
+      score:0,          // 今回のジャンプのスコア
+      best:0,
+
+      // world
+      w:0,h:0,
+      groundY:0,
+      rampX:0,
+      rampW:0,
+      rampH:0,
+
+      // rider state
+      state:'ready',    // ready | run | air | land | crash
+      x:0,y:0,
+      vx:0, vy:0,
+      ang:0,            // radians
+      angV:0,           // rad/s-ish
+      airtime:0,
+
+      // input
+      rotInput:0,       // -1..+1
+      charging:false,
+      charge:0,         // 0..1
+      canJump:true,
+
+      // landing target line
+      landingY:0,
+
+      // camera
+      camX:0
+    };
+
+    function layout(){
+      G.w = stage.clientWidth;
+      G.h = stage.clientHeight;
+      G.groundY = G.h * 0.78;
+      G.rampW = Math.min(240, G.w*0.42);
+      G.rampH = Math.min(140, G.h*0.22);
+      G.rampX = G.w*0.18;
+      G.landingY = G.groundY + 14; // landing plane slightly below ground line (visual)
+    }
+    layout();
+    window.addEventListener('resize', layout, {passive:true});
+
+    function reset(){
+      G.running = false;
+      G.score = 0;
+      elScore.textContent = '0';
+
+      G.state = 'ready';
+      G.x = G.w*0.08;
+      G.y = G.groundY - 18;
+      G.vx = 0;
+      G.vy = 0;
+      G.ang = 0;
+      G.angV = 0;
+      G.airtime = 0;
+
+      G.rotInput = 0;
+      G.charging = false;
+      G.charge = 0;
+      G.canJump = true;
+      powerFill.style.width = '0%';
+
+      G.camX = 0;
+
+      overlay.style.display = 'flex';
+      btnStart.textContent = 'スタート';
+      overlay.querySelector('h2').textContent = 'スノボでめっちゃ飛ぶやつ';
+      overlay.querySelector('p').innerHTML =
+        `右下の<b>JUMP</b>を長押しで溜め、離して踏切。<br/>空中は<b>LEFT/RIGHT</b>で回転。着地で角度を戻すと成功。`;
+    }
+
+    function start(){
+      overlay.style.display = 'none';
+      G.running = true;
+      G.state = 'run';
+      // auto run-in
+      G.vx = 4.2;
+      showToast('溜めて…離せ！', 900);
+    }
+
+    // ===== Input =====
+    function setRot(v){ G.rotInput = v; }
+
+    function holdJump(on){
+      if (!G.running) return;
+      if (G.state !== 'run') return;
+      if (!G.canJump) return;
+
+      G.charging = on;
+      if (!on){
+        // release -> jump if on ramp area
+        const onRamp = (G.x > G.rampX + G.rampW*0.35 && G.x < G.rampX + G.rampW*0.95);
+        if (onRamp){
+          doJump();
+        } else {
+          // release outside ramp = just cancel
+          G.charge = Math.max(0, G.charge - 0.15);
+        }
+      }
+    }
+
+    function doJump(){
+      G.state = 'air';
+      G.canJump = false;
+
+      // BIG AIR: charge affects vertical impulse + a little horizontal boost
+      const p = clamp01(G.charge);
+      const vUp = 9.0 + p * 9.5;      // vertical impulse
+      const vFwd = 4.2 + p * 1.8;     // forward speed
+      G.vx = vFwd;
+      G.vy = -vUp;
+
+      // spin starter: slightly influenced by how much you charged
+      G.angV = (Math.random()<0.5?-1:1) * (1.6 + p*1.2);
+      G.airtime = 0;
+
+      showToast(`BIG AIR：パワー <b>${Math.round(p*100)}</b>`, 900);
+
+      // drain charge
+      G.charge = 0;
+      powerFill.style.width = '0%';
+      G.charging = false;
+    }
+
+    function bindHold(btn, onDown, onUp){
+      const down = (e)=>{ if(e.cancelable)e.preventDefault(); onDown(); };
+      const up = (e)=>{ if(e.cancelable)e.preventDefault(); onUp(); };
+      btn.addEventListener('pointerdown', down, {passive:false});
+      btn.addEventListener('pointerup', up, {passive:false});
+      btn.addEventListener('pointercancel', up, {passive:false});
+      btn.addEventListener('touchstart', down, {passive:false});
+      btn.addEventListener('touchend', up, {passive:false});
+      btn.addEventListener('touchcancel', up, {passive:false});
+    }
+
+    bindHold(btnLeft, ()=>setRot(-1), ()=>setRot(0));
+    bindHold(btnRight, ()=>setRot(+1), ()=>setRot(0));
+    bindHold(btnJump, ()=>holdJump(true), ()=>holdJump(false));
+
+    // keyboard
+    window.addEventListener('keydown', (e)=>{
+      if (e.repeat) return;
+      if (e.key === 'ArrowLeft') setRot(-1);
+      if (e.key === 'ArrowRight') setRot(+1);
+      if (e.key === ' ' || e.key === 'Enter') holdJump(true);
+    });
+    window.addEventListener('keyup', (e)=>{
+      if (e.key === 'ArrowLeft' && G.rotInput < 0) setRot(0);
+      if (e.key === 'ArrowRight' && G.rotInput > 0) setRot(0);
+      if (e.key === ' ' || e.key === 'Enter') holdJump(false);
+    });
+
+    // ===== UI =====
+    btnRestart.addEventListener('click', reset);
+    btnStart.addEventListener('click', () => {
+      reset();
+      start();
+    });
+    btnHow.addEventListener('click', ()=>{
+      showToast(
+        `・RUN中：JUMP長押しで溜め<br/>`+
+        `・ランプで離すと踏切（パワーで高さUP）<br/>`+
+        `・空中：LEFT/RIGHTで回転<br/>`+
+        `・着地：角度が0°付近で成功`, 2600
+      );
+    });
+
+    // ===== Loop =====
+    let last = performance.now();
+    function loop(now){
+      const dt = Math.min(33, now - last); // ms
+      last = now;
+
+      step(dt/1000);
+      draw();
+
+      requestAnimationFrame(loop);
+    }
+
+    function step(dt){
+      // charge
+      if (G.charging && G.state === 'run'){
+        // quick ramp-up, soft cap
+        G.charge = clamp01(G.charge + dt*0.85);
+        powerFill.style.width = `${Math.round(G.charge*100)}%`;
+      } else {
+        // slight decay so "溜めっぱなし放置"にならない
+        G.charge = Math.max(0, G.charge - dt*0.25);
+        powerFill.style.width = `${Math.round(G.charge*100)}%`;
+      }
+
+      if (!G.running) return;
+
+      if (G.state === 'run'){
+        // auto accelerate a bit
+        G.vx = clamp(G.vx + dt*0.8, 4.2, 6.0);
+        G.x += G.vx;
+
+        // follow ground / ramp
+        const rx0 = G.rampX;
+        const rx1 = G.rampX + G.rampW;
+
+        if (G.x < rx0){
+          G.y = G.groundY - 18;
+        } else if (G.x <= rx1){
+          // ramp curve (ease-out)
+          const t = (G.x - rx0) / (rx1 - rx0);
+          const curve = 1 - Math.pow(1 - t, 2.2);
+          G.y = (G.groundY - 18) - curve * G.rampH;
+          // slight pitch up visual
+          G.ang = -0.15 * curve;
+        } else {
+          // after ramp without jumping: drop back to ground
+          G.y = G.groundY - 18;
+          G.ang *= 0.92;
+        }
+
+        // recycle track
+        if (G.x > G.w + 120){
+          G.x = G.w*0.08;
+          G.canJump = true;
+          // little randomness each run-in
+          G.rampX = clamp(G.rampX + (Math.random()*80-40), G.w*0.10, G.w*0.35);
+        }
+      }
+
+      if (G.state === 'air'){
+        // physics
+        const g = 18.0; // gravity (big)
+        G.vy += g * dt;
+        G.x += G.vx;
+        G.y += G.vy;
+
+        G.airtime += dt;
+
+        // rotation control
+        const control = 5.4; // rad/s^2
+        G.angV += G.rotInput * control * dt;
+        // air drag on spin
+        G.angV *= (1 - dt*0.28);
+        G.ang += G.angV * dt;
+
+        // camera: ライダーを中心にスムーズに追従
+        const targetCamX = G.x - G.w * 0.5;
+        // lerpで滑らかに移動（係数は調整可能、大きいほど速く追従）
+        G.camX += (targetCamX - G.camX) * Math.min(1, dt * 8.0);
+
+        // landing check
+        const landLine = G.groundY - 18;
+        if (G.y >= landLine){
+          G.y = landLine;
+          resolveLanding();
+        }
+      } else {
+        // run状態の時はカメラをリセット（滑らかに）
+        G.camX += (0 - G.camX) * Math.min(1, dt * 6.0);
+      }
+    }
+
+    function normAngle(a){
+      // normalize to [-pi, pi]
+      a = (a + Math.PI) % (Math.PI*2);
+      if (a < 0) a += Math.PI*2;
+      return a - Math.PI;
+    }
+
+    function resolveLanding(){
+      // success if near 0 angle (board flat)
+      const a = Math.abs(normAngle(G.ang));
+      const ok = a < 0.35; // ~20 degrees
+
+      // compute points:
+      // distance based on airtime + forward speed, trick based on rotations
+      const rotations = Math.abs(G.ang) / (Math.PI*2);
+      const rotScore = Math.floor(rotations * 100); // 0.01 rotations -> 1pt-ish
+      const airScore = Math.floor(G.airtime * 120);
+      const base = airScore + rotScore;
+
+      if (ok){
+        const bonus = 150 + Math.min(250, Math.floor((0.35 - a) * 900));
+        const pts = base + bonus;
+        G.score = pts;
+        elScore.textContent = String(G.score);
+        showToast(`success！ <b>${pts}</b>（回転 ${rotations.toFixed(2)}）`, 2000);
+      } else {
+        const pts = Math.max(0, Math.floor(base * 0.25));
+        G.score = pts;
+        elScore.textContent = String(G.score);
+        showToast(`コケた… <b>${pts}</b>（角度 ${Math.round(a*57.3)}°）`, 2000);
+      }
+
+      G.airtime = 0;
+      G.running = false;
+      // 結果を表示
+      endGame();
+    }
+
+    function endGame(){
+      G.best = Math.max(G.best, G.score);
+      elBest.textContent = String(G.best);
+
+      overlay.style.display = 'flex';
+      overlay.querySelector('h2').textContent = '結果';
+      overlay.querySelector('p').innerHTML = `スコア：<b>${G.score}</b><br/>ベスト：<b>${G.best}</b>`;
+      btnStart.textContent = 'もう一回';
+      G.state = 'ready';
+    }
+
+    // ===== Draw =====
+    function draw(){
+      const w = stage.clientWidth, h = stage.clientHeight;
+      ctx.clearRect(0,0,w,h);
+
+      // カメラオフセット：スムーズに補間された位置を使用
+      ctx.save();
+      ctx.translate(-G.camX, 0);
+
+      // sky particles (cheap)
+      ctx.save();
+      ctx.globalAlpha = 0.20;
+      ctx.fillStyle = '#fff';
+      for (let i=0;i<24;i++){
+        const x = (i*97 + (performance.now()*0.03)) % (w+40) - 20;
+        const y = 20 + (i*31)%120;
+        ctx.fillRect(x, y, 2, 2);
+      }
+      ctx.restore();
+
+      // ground
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, G.groundY);
+      ctx.lineTo(w, G.groundY);
+      ctx.stroke();
+      ctx.restore();
+
+      // ramp
+      drawRamp();
+
+      // landing marker (show when in air)
+      if (G.state === 'air'){
+        drawLandingMarker();
+      }
+
+      // rider
+      drawRider();
+
+      ctx.restore(); // カメラオフセット解除
+
+      // big air text while in air (画面固定位置)
+      if (G.state === 'air'){
+        ctx.save();
+        ctx.globalAlpha = 0.18;
+        ctx.fillStyle = '#fff';
+        ctx.font = '800 34px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP"';
+        ctx.fillText('BIG AIR', 18, 70);
+        ctx.restore();
+      }
+    }
+
+    function drawRamp(){
+      const rx0 = G.rampX;
+      const rx1 = G.rampX + G.rampW;
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+      ctx.lineWidth = 2;
+
+      ctx.beginPath();
+      ctx.moveTo(rx0, G.groundY);
+      // curve up
+      for (let i=0;i<=40;i++){
+        const t = i/40;
+        const x = rx0 + t*(rx1-rx0);
+        const curve = 1 - Math.pow(1 - t, 2.2);
+        const y = G.groundY - curve * G.rampH;
+        ctx.lineTo(x,y);
+      }
+      ctx.lineTo(rx1, G.groundY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // takeoff zone marker
+      ctx.globalAlpha = 0.45;
+      ctx.strokeStyle = 'rgba(96,165,250,0.8)';
+      ctx.setLineDash([8,10]);
+      const zx = rx0 + (rx1-rx0)*0.82;
+      ctx.beginPath();
+      ctx.moveTo(zx, G.groundY);
+      ctx.lineTo(zx, G.groundY - G.rampH*0.9);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+
+      ctx.restore();
+    }
+
+    function drawLandingMarker(){
+      const w = stage.clientWidth;
+      const landY = G.groundY - 18; // 着地点のY座標
+
+      ctx.save();
+
+      // 着地点ライン（目立つように太く、点線で）
+      ctx.strokeStyle = 'rgba(52,211,153,0.85)'; // 緑系の色
+      ctx.lineWidth = 3;
+      ctx.setLineDash([12, 8]);
+      ctx.beginPath();
+      ctx.moveTo(0, landY);
+      ctx.lineTo(w, landY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 着地点マーカー（左右に矢印やマーカー）
+      const markerSize = Math.min(24, w * 0.06);
+      const markerX1 = markerSize;
+      const markerX2 = w - markerSize;
+
+      // 左側マーカー
+      ctx.fillStyle = 'rgba(52,211,153,0.9)';
+      ctx.beginPath();
+      ctx.moveTo(markerX1, landY);
+      ctx.lineTo(markerX1 - markerSize * 0.6, landY - markerSize * 0.4);
+      ctx.lineTo(markerX1 - markerSize * 0.6, landY + markerSize * 0.4);
+      ctx.closePath();
+      ctx.fill();
+
+      // 右側マーカー
+      ctx.beginPath();
+      ctx.moveTo(markerX2, landY);
+      ctx.lineTo(markerX2 + markerSize * 0.6, landY - markerSize * 0.4);
+      ctx.lineTo(markerX2 + markerSize * 0.6, landY + markerSize * 0.4);
+      ctx.closePath();
+      ctx.fill();
+
+      // 中央に「LANDING」テキスト（スマホでも見えるサイズ）
+      ctx.fillStyle = 'rgba(52,211,153,0.95)';
+      ctx.font = `bold ${Math.min(16, w * 0.04)}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP"`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('LANDING', w / 2, landY - 20);
+
+      ctx.restore();
+    }
+
+    function drawRider(){
+      const x = G.x;
+      const y = G.y;
+
+      // fallback（画像がない/読み込み失敗）
+      if (!IMG.ready){
+        drawRiderFallback();
+        return;
+      }
+
+      const inAir = (G.state === 'air');
+      const img = inAir ? IMG.air : IMG.ride;
+
+      ctx.save();
+      ctx.translate(x, y);
+
+      // 空中は回転が主役なので回す。滑走中は少しだけ傾ける。
+      const rot = inAir ? G.ang : (G.ang * 0.35);
+      ctx.rotate(rot);
+
+      // 影（空中は薄く）
+      ctx.save();
+      ctx.globalAlpha = inAir ? 0.10 : 0.22;
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.ellipse(0, 22, 18, 8, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+
+      // 画像サイズ：ステージ幅に合わせて自動スケール
+      // ※元画像が大きくても縮小される
+      const targetW = Math.min(90, G.w * 0.18); // 見た目の横幅
+      const scale = targetW / img.naturalWidth;
+      const w = img.naturalWidth * scale;
+      const h = img.naturalHeight * scale;
+
+      // アンカー：足元（ボード中心）を (0, 10) あたりに合わせる想定
+      // 画像に合わせてこの offset を微調整すると一気に「ハマる」
+      const ox = -w/2;
+      const oy = -h + 18;
+
+      ctx.drawImage(img, ox, oy, w, h);
+      ctx.restore();
+    }
+
+    // 以前のシンプル描画を退避（任意）
+    function drawRiderFallback(){
+      const x = G.x, y = G.y;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(G.ang);
+
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.ellipse(0, 22, 16, 7, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.fillStyle = 'rgba(96,165,250,0.75)';
+      roundRect(ctx, -24, 10, 48, 10, 999);
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx.lineWidth = 1; ctx.stroke();
+
+      ctx.fillStyle = 'rgba(255,255,255,0.70)';
+      ctx.beginPath(); ctx.arc(0, -2, 14, 0, Math.PI*2); ctx.fill();
+
+      ctx.fillStyle = 'rgba(11,16,32,0.88)';
+      ctx.font = '900 14px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP"';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('松', 0, -2);
+
+      ctx.restore();
+    }
+
+    function roundRect(ctx, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+    }
+
+    // ===== Boot =====
+    reset();
+    requestAnimationFrame(loop);
+
+    // double-tap zoom抑止（best-effort）
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, {passive:false});
+  </script>
+</body>
+</html>
