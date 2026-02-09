@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>マツムラ会｜スローガンルーレット</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.70);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --good:#34d399;
+      --accent:#60a5fa;
+      --danger:#fb7185;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; background:var(--bg); color:var(--ink)}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+      overflow:hidden;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding: calc(env(safe-area-inset-top) + 14px) 14px calc(env(safe-area-inset-bottom) + 14px);
+      gap:12px;
+      position:relative;
+    }
+
+    /* subtle background */
+    .app:before{
+      content:"";
+      position:absolute; inset:-120px;
+      background:
+        radial-gradient(closest-side, rgba(96,165,250,.14), transparent 70%) 10% 10%/520px 520px no-repeat,
+        radial-gradient(closest-side, rgba(52,211,153,.12), transparent 70%) 90% 30%/560px 560px no-repeat,
+        radial-gradient(closest-side, rgba(251,113,133,.10), transparent 70%) 40% 95%/620px 620px no-repeat;
+      filter: blur(0px);
+      pointer-events:none;
+    }
+
+    header{
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:54px;
+      z-index:1;
+    }
+    .logo{
+      height:44px;
+      width:auto;
+      max-width:min(88vw, 520px);
+      object-fit:contain;
+      filter: drop-shadow(0 10px 25px rgba(0,0,0,.45));
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+
+    .main{
+      position:relative;
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      z-index:1;
+      min-height:0;
+    }
+
+    .stage{
+      flex:1;
+      display:grid;
+      grid-template-rows: auto 1fr auto;
+      gap:12px;
+      min-height:0;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .topRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 12px 0;
+      gap:10px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+      color:var(--muted);
+      font-size:12px;
+      letter-spacing:.02em;
+      user-select:none;
+    }
+    .dot{
+      width:8px;height:8px;border-radius:50%;
+      background:var(--good);
+      box-shadow:0 0 0 4px rgba(52,211,153,.12);
+    }
+    .hint{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.2;
+      text-align:right;
+      user-select:none;
+    }
+
+    .figure{
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      padding:10px 10px 0;
+      min-height:0;
+    }
+    .pose{
+      width:min(72vw, 360px);
+      max-height:42vh;
+      height:auto;
+      object-fit:contain;
+      filter: drop-shadow(0 24px 40px rgba(0,0,0,.55));
+      user-select:none;
+      -webkit-user-drag:none;
+      transform: translateY(8px);
+    }
+
+    .roulette{
+      margin:0 12px 12px;
+      border-radius: calc(var(--r) - 4px);
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.25);
+      overflow:hidden;
+      position:relative;
+    }
+
+    /* slot window */
+    .window{
+      height:92px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:12px 12px;
+      position:relative;
+    }
+    .window:before, .window:after{
+      content:"";
+      position:absolute; left:0; right:0; height:18px;
+      pointer-events:none;
+      background: linear-gradient(to bottom, rgba(11,16,32,.92), transparent);
+    }
+    .window:after{
+      bottom:0;
+      transform: rotate(180deg);
+    }
+    .window:before{ top:0; }
+
+    .slogan{
+      font-weight:900;
+      font-size: clamp(22px, 3.2vh, 34px);
+      letter-spacing:.02em;
+      text-align:center;
+      line-height:1.15;
+      padding:2px 6px;
+      text-shadow: 0 10px 30px rgba(0,0,0,.55);
+      word-break: keep-all;
+      white-space: pre-wrap;
+    }
+
+    .subline{
+      padding:0 12px 12px;
+      color:var(--muted);
+      font-size:12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .subline .mini{
+      display:flex; gap:8px; align-items:center;
+    }
+
+    .btnRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      padding:12px;
+    }
+
+    button{
+      appearance:none;
+      border:none;
+      border-radius:16px;
+      padding:14px 12px;
+      font-weight:800;
+      font-size:16px;
+      color:var(--ink);
+      background: rgba(255,255,255,.10);
+      border:1px solid var(--line);
+      box-shadow: 0 14px 30px rgba(0,0,0,.35);
+      cursor:pointer;
+      user-select:none;
+      touch-action: manipulation;
+    }
+    button:active{ transform: translateY(1px); }
+    .primary{
+      background: linear-gradient(180deg, rgba(96,165,250,.95), rgba(96,165,250,.55));
+      border-color: rgba(96,165,250,.45);
+      color:#061022;
+    }
+    .ghost{
+      background: rgba(255,255,255,.08);
+    }
+    .disabled{
+      opacity:.55;
+      cursor:not-allowed;
+    }
+
+    .footer{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      color:var(--muted);
+      font-size:12px;
+      z-index:1;
+    }
+    .history{
+      display:none;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      max-width:66%;
+    }
+    .chip{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      color:var(--muted);
+      max-width: 100%;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    /* toast */
+    .toast{
+      position:absolute;
+      left:50%;
+      bottom: calc(env(safe-area-inset-bottom) + 18px);
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.18);
+      color:var(--ink);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:13px;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      z-index:5;
+      box-shadow: 0 18px 40px rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+      white-space:nowrap;
+    }
+    .toast.show{
+      opacity:1;
+      transform: translateX(-50%) translateY(-2px);
+    }
+
+    /* reduce motion */
+    @media (prefers-reduced-motion: reduce){
+      button:active{ transform:none; }
+      .toast{ transition:none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <!-- ./assets に配置して使う -->
+      <img class="logo" id="logo" alt="マツムラ会" />
+    </header>
+
+    <section class="main">
+      <div class="stage card">
+        <div class="topRow">
+          <div class="badge"><span class="dot"></span>LIVE MODE</div>
+          <div class="hint">ボタンで回す / 長押し禁止（押すだけ）</div>
+        </div>
+
+        <div class="figure">
+          <img class="pose" id="pose" alt="松村" />
+        </div>
+
+        <div class="roulette">
+          <div class="window" aria-live="polite" aria-atomic="true">
+            <div class="slogan" id="slogan">回して決めよう。</div>
+          </div>
+
+          <div class="subline">
+            <div class="mini">
+              <span>現在：</span>
+              <strong id="indexLabel">—</strong>
+            </div>
+            <div class="mini">
+              <span>タップでコピー</span>
+            </div>
+          </div>
+
+          <div class="btnRow">
+            <button class="primary" id="spinBtn">回す</button>
+            <button class="ghost" id="shareBtn">共有（コピー）</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>マツムラ会 スローガンルーレット</div>
+        <div class="history" id="history"></div>
+      </div>
+    </section>
+
+    <div class="toast" id="toast">コピーしました</div>
+  </div>
+
+  <script type="module">
+    // 1日1アプリ：動的アセット用（Vercel用に絶対パス）
+    const asset = (p) => {
+      const s = String(p || "");
+      if (s.startsWith("./")) {
+        return "/apps/2026-02-09" + s.slice(1);
+      }
+      return s;
+    };
+
+    // 画像（/apps/YYYY-MM-DD/assets/ に配置）
+    const logoUrl = asset("./assets/matsumura_logo.png");
+    const poseUrl = asset("./assets/matsumura_pose.png");
+
+    const $ = (s) => document.querySelector(s);
+
+    const logoEl = $("#logo");
+    const poseEl = $("#pose");
+    const sloganEl = $("#slogan");
+    const indexLabelEl = $("#indexLabel");
+    const spinBtn = $("#spinBtn");
+    const shareBtn = $("#shareBtn");
+    const toastEl = $("#toast");
+    const historyEl = $("#history");
+
+    logoEl.src = logoUrl;
+    poseEl.src = poseUrl;
+
+    // ここを好きに増やす（改行もOK）
+    const SLOGANS = [
+      "ロックンロール以外は全部嘘",
+      "今日も まつむらです",
+      "音で殴って、笑って帰る",
+      "うまい／早い／うるさい",
+      "とりあえず鳴らす",
+      "酒とサックスと反省",
+      "最終的にグルーヴで解決",
+      "早く吹け、強く吹け、容赦なく",
+      "譜面は読める、空気は読むな",
+      "人生はリハ、本番はライブ",
+      "呼吸してる限りソロは続く",
+      "間違えても、ノリで正解にする",
+      "お客さんが優勝",
+      "今日は“いい日”にして帰る",
+      "テンションは上げる、音程も上げる",
+      "やりすぎくらいでちょうどいい"
+    ];
+
+    // state
+    let isSpinning = false;
+    let currentIndex = -1;
+    let history = [];
+
+    // utilities
+    const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
+    function setSlogan(index, announce = true){
+      currentIndex = clamp(index, 0, SLOGANS.length - 1);
+      const text = SLOGANS[currentIndex];
+      sloganEl.textContent = text;
+      indexLabelEl.textContent = `${currentIndex + 1} / ${SLOGANS.length}`;
+      if (announce) addHistory(text);
+    }
+
+    function addHistory(text){
+      history = [text, ...history.filter(x => x !== text)].slice(0, 6);
+      historyEl.innerHTML = "";
+      for (const t of history){
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.textContent = t.replace(/\s+/g, " ").trim();
+        chip.title = t;
+        chip.addEventListener("click", () => {
+          copyText(t);
+          showToast("コピーしました");
+        });
+        historyEl.appendChild(chip);
+      }
+    }
+
+    function showToast(msg){
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      window.clearTimeout(showToast._t);
+      showToast._t = window.setTimeout(() => toastEl.classList.remove("show"), 900);
+    }
+
+    async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        return true;
+      }catch(e){
+        // fallback
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        try{
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          return true;
+        }catch(err){
+          document.body.removeChild(ta);
+          return false;
+        }
+      }
+    }
+
+    // 特定のスローガンだけ出現確率を下げるための重み付きランダム
+    function pickRandomIndex(){
+      if (SLOGANS.length <= 1) return 0;
+
+      const targetText = "早く吹け、強く吹け、容赦なく";
+      const targetIndex = SLOGANS.indexOf(targetText);
+
+      // 基本重み1、対象だけ軽く（例: 0.3倍）
+      const weights = SLOGANS.map((_, idx) => {
+        if (idx === targetIndex) return 0.3;
+        return 1;
+      });
+
+      // currentIndex は避ける（できるだけ同じのが続かないように）
+      if (currentIndex >= 0) {
+        weights[currentIndex] = 0;
+      }
+
+      const total = weights.reduce((a, b) => a + b, 0);
+      if (total === 0) return 0;
+
+      let r = Math.random() * total;
+      for (let i = 0; i < weights.length; i++){
+        r -= weights[i];
+        if (r <= 0){
+          return i;
+        }
+      }
+      // 端数誤差フォールバック
+      return 0;
+    }
+
+    // roulette animation: fast cycling -> easing stop
+    async function spin(){
+      if (isSpinning) return;
+      isSpinning = true;
+      spinBtn.classList.add("disabled");
+      shareBtn.classList.add("disabled");
+      spinBtn.disabled = true;
+      shareBtn.disabled = true;
+
+      const finalIndex = pickRandomIndex();
+
+      const totalMs = 1250;            // 全体時間
+      const minStepMs = 42;            // 最速
+      const maxStepMs = 140;           // 最遅（止まる直前）
+      const start = performance.now();
+
+      let shown = currentIndex >= 0 ? currentIndex : 0;
+
+      const step = () => {
+        const now = performance.now();
+        const t = clamp((now - start) / totalMs, 0, 1);
+
+        // easeOutCubic
+        const e = 1 - Math.pow(1 - t, 3);
+
+        // step interval grows as it nears the end
+        const stepMs = minStepMs + (maxStepMs - minStepMs) * e;
+
+        if (!step._next) step._next = now;
+
+        if (now >= step._next){
+          shown = (shown + 1) % SLOGANS.length;
+          sloganEl.textContent = SLOGANS[shown];
+          indexLabelEl.textContent = "…";
+          step._next = now + stepMs;
+        }
+
+        if (t < 1){
+          requestAnimationFrame(step);
+        }else{
+          // snap to final
+          setSlogan(finalIndex, true);
+
+          isSpinning = false;
+          spinBtn.classList.remove("disabled");
+          shareBtn.classList.remove("disabled");
+          spinBtn.disabled = false;
+          shareBtn.disabled = false;
+
+          // micro feedback
+          if (navigator.vibrate) navigator.vibrate([12, 22, 12]);
+        }
+      };
+      step._next = null;
+      requestAnimationFrame(step);
+    }
+
+    // interactions
+    spinBtn.addEventListener("click", spin);
+
+    shareBtn.addEventListener("click", async () => {
+      const text = currentIndex >= 0 ? SLOGANS[currentIndex] : sloganEl.textContent;
+      const ok = await copyText(text);
+      showToast(ok ? "共有用にコピーしました" : "コピーできませんでした");
+    });
+
+    // tap slogan to copy
+    sloganEl.addEventListener("click", async () => {
+      const text = currentIndex >= 0 ? SLOGANS[currentIndex] : sloganEl.textContent;
+      const ok = await copyText(text);
+      showToast(ok ? "コピーしました" : "コピーできませんでした");
+    });
+
+    // init
+    setSlogan(pickRandomIndex(), false);
+
+    // iOS: prevent double-tap zoom (extra)
+    let lastTouchEnd = 0;
+    document.addEventListener("touchend", (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive:false });
+  </script>
+</body>
+</html>
