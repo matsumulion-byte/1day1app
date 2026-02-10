@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>2/10 ニートタイピング</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --good:#34d399;
+      --bad:#fb7185;
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --keyH: 52px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; overflow:hidden; background:var(--bg); color:var(--ink)}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      user-select:none;
+      -webkit-user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
+      gap: 12px;
+    }
+
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .title h1{
+      font-size:16px; font-weight:800; letter-spacing:.02em;
+    }
+    .title p{
+      font-size:12px; color:var(--muted); line-height:1.4;
+    }
+
+    .hud{
+      display:flex; gap:10px; align-items:center;
+    }
+    .pill{
+      display:flex; flex-direction:column;
+      align-items:flex-end;
+      min-width: 86px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, var(--panel), rgba(255,255,255,.04));
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+    }
+    .pill .k{font-size:11px;color:var(--muted)}
+    .pill .v{font-size:18px;font-weight:900; letter-spacing:.02em}
+
+    .panel{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, var(--panel), rgba(255,255,255,.04));
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .promptWrap{ display:flex; flex-direction:column; gap:10px; }
+    .promptLabel{ font-size:12px; color: var(--muted); display:flex; align-items:center; justify-content:space-between; gap:10px;}
+    .progress{
+      font-size:12px;
+      padding:6px 10px;
+      border:1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      white-space:nowrap;
+    }
+
+    .phrase{
+      font-size: 22px;
+      line-height: 1.35;
+      font-weight: 900;
+      letter-spacing: .02em;
+      word-break: break-word;
+    }
+    .phrase .done{ color: rgba(243,246,255,.9); }
+    .phrase .todo{ color: rgba(243,246,255,.35); }
+    .phrase .cursor{
+      display:inline-block;
+      width:.55em;
+      border-bottom: 3px solid var(--accent);
+      transform: translateY(-2px);
+      animation: blink 1s steps(2,end) infinite;
+    }
+    @keyframes blink{ 50%{opacity:.25} }
+
+    .msgRow{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      margin-top: 2px;
+    }
+    .msg{
+      font-size: 12px;
+      color: var(--muted);
+      min-height: 1.2em;
+    }
+    .btnRow{
+      display:flex; gap:10px; align-items:center;
+    }
+    button{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, var(--panel2), rgba(255,255,255,.06));
+      color: var(--ink);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    button:active{ transform: translateY(1px); }
+    .ghost{
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+    }
+
+    .kbd{
+      flex: 1;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .keys{
+      display:grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      flex:1;
+      min-height: 0;
+    }
+    .key{
+      height: var(--keyH);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius: 16px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      font-weight: 900;
+      font-size: 18px;
+      box-shadow: 0 12px 28px rgba(0,0,0,.35);
+      position:relative;
+      overflow:hidden;
+    }
+    .key:active{ transform: translateY(1px); }
+    .key.goodFlash::after{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(circle at 50% 40%, rgba(52,211,153,.35), transparent 60%);
+      animation: pop .24s ease-out;
+    }
+    .key.badFlash::after{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(circle at 50% 40%, rgba(251,113,133,.35), transparent 60%);
+      animation: pop .24s ease-out;
+    }
+    @keyframes pop{ from{opacity:0; transform:scale(.98)} to{opacity:1; transform:scale(1)} }
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .big{
+      height: 52px;
+      font-size: 14px;
+    }
+    .danger{
+      border-color: rgba(251,113,133,.35);
+    }
+
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(11,16,32,.72);
+      backdrop-filter: blur(10px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 50;
+    }
+    .modal{
+      width:min(520px, 100%);
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+    .modal h2{
+      font-size: 18px;
+      font-weight: 1000;
+      letter-spacing:.02em;
+      margin-bottom: 8px;
+    }
+    .modal p{
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      margin-bottom: 14px;
+    }
+    .modal .modalBtns{
+      display:flex; gap:10px; flex-wrap:wrap;
+    }
+    .primary{
+      background: linear-gradient(180deg, rgba(96,165,250,.38), rgba(96,165,250,.16));
+      border-color: rgba(96,165,250,.55);
+    }
+
+    /* 小さい端末でキーが詰まるのを軽減 */
+    @media (max-height: 720px){
+      :root{ --keyH: 46px; }
+      .phrase{ font-size: 20px; }
+      .key{ font-size: 17px; border-radius: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="title">
+        <h1>2/10 ニートタイピング（タップ版）</h1>
+        <p>出た文章を、1文字ずつタップで完成させろ。間違えると時間が削れる。</p>
+      </div>
+      <div class="hud">
+        <div class="pill">
+          <div class="k">TIME</div>
+          <div class="v"><span id="time">30.0</span></div>
+        </div>
+        <div class="pill">
+          <div class="k">SCORE</div>
+          <div class="v"><span id="score">0</span></div>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel promptWrap">
+      <div class="promptLabel">
+        <span id="roundLabel">ROUND 1</span>
+        <span class="progress" id="progress">0 / 0</span>
+      </div>
+
+      <div class="phrase" id="phrase"></div>
+
+      <div class="msgRow">
+        <div class="msg" id="msg">スタートで開始。</div>
+        <div class="btnRow">
+          <button class="ghost" id="skipBtn" type="button">スキップ</button>
+          <button class="ghost" id="resetBtn" type="button">リセット</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="kbd">
+      <div class="keys" id="keys"></div>
+      <div class="controls">
+        <button class="big ghost" id="shuffleBtn" type="button">並び替え</button>
+        <button class="big" id="startBtn" type="button">スタート</button>
+        <button class="big danger ghost" id="backBtn" type="button">1文字戻す</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2>ニートタイピング</h2>
+      <p>
+        ・文章を左から順に入力（次に必要な1文字だけが正解）<br>
+        ・ミスすると <b>−0.7秒</b><br>
+        ・1文クリアで +100点、残り時間が多いほどボーナス
+      </p>
+      <div class="modalBtns">
+        <button class="primary" id="playBtn" type="button">開始する</button>
+        <button class="ghost" id="howBtn" type="button">今日の言い訳を見る</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // 1日1アプリ ルール：動的アセットは import.meta.url 経由
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    // ====== ゲーム設定 ======
+    const GAME_SECONDS = 30.0;
+    const MISS_PENALTY = 0.7; // 秒
+    const CLEAR_BASE = 100;
+    const CLEAR_TIME_BONUS = 8; // 1秒あたり
+
+    // 文章（ひらがな中心。伸ばし棒/空白/記号は避ける）
+    const PHRASES = [
+      "あしたからほんきだす",
+      "きょうはたいちょうがわるい",
+      "でんしゃがおくれた",
+      "れんらくしようとおもってた",
+      "ねてないだけ",
+      "しめきりをかんちがいしてた",
+      "すけじゅーるがこわれた",
+      "りそうはたかい",
+      "きぶんがのらない",
+      "じゅんびはしてある",
+      "いまからやる",
+      "しごとはこころのけんこうがだいじ",
+      "きょうはやすむひ",
+      "しゃかいがわるい",
+      "さいてきかしてたらおそくなった",
+      "せいりしてたらよるになった",
+      "まずはへやをかたづける",
+      "ちょっとだけげーむした",
+      "げんじつとうひじゃない",
+      "けいかくてきにだらだらした",
+      "ふあんでうごけない",
+      "たいみんぐがちがう",
+      "きょうはきょうでいそがしい",
+      "あすこそは",
+      "やるきはある",
+    ];
+
+    // かな候補（使うのはこの範囲）
+    const KANA = [
+      ..."あいうえおかきくけこさしすせそたちつてとなにぬねの",
+      ..."はひふへほまみむめもやゆよらりるれろわをん",
+      ..."がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ",
+      ..."ゃゅょっ",
+    ];
+
+    // ====== DOM ======
+    const elTime = document.getElementById("time");
+    const elScore = document.getElementById("score");
+    const elPhrase = document.getElementById("phrase");
+    const elMsg = document.getElementById("msg");
+    const elKeys = document.getElementById("keys");
+    const elProgress = document.getElementById("progress");
+    const elRoundLabel = document.getElementById("roundLabel");
+
+    const overlay = document.getElementById("overlay");
+    const playBtn = document.getElementById("playBtn");
+    const howBtn = document.getElementById("howBtn");
+
+    const startBtn = document.getElementById("startBtn");
+    const shuffleBtn = document.getElementById("shuffleBtn");
+    const backBtn = document.getElementById("backBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const skipBtn = document.getElementById("skipBtn");
+
+    // iOSのダブルタップ拡大っぽい挙動抑制（完全ではないが軽減）
+    let lastTouchEnd = 0;
+    document.addEventListener("touchend", (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 280) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive:false });
+
+    // ====== 状態 ======
+    const rng = (n) => Math.floor(Math.random() * n);
+    const shuffle = (arr) => {
+      const a = arr.slice();
+      for (let i=a.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    };
+
+    let running = false;
+    let tLeft = GAME_SECONDS;
+    let score = 0;
+
+    let current = "";
+    let idx = 0;
+    let usedCount = 0;
+
+    let keys = []; // 表示キー
+    let timerId = null;
+    let lastTick = 0;
+
+    // ====== キー生成 ======
+    function buildKeyboardForPhrase(phrase){
+      // 必須文字（重複排除）
+      const needed = Array.from(new Set([...phrase]));
+      const targetSize = 24; // 6x4
+      const pool = KANA.filter(c => c.trim().length);
+
+      const fill = [];
+      while (needed.length + fill.length < targetSize){
+        const c = pool[rng(pool.length)];
+        if (!needed.includes(c) && !fill.includes(c)) fill.push(c);
+        if (fill.length > 200) break;
+      }
+      keys = shuffle([...needed, ...fill]).slice(0, targetSize);
+      renderKeys();
+    }
+
+    function renderKeys(){
+      elKeys.innerHTML = "";
+      keys.forEach((c) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "key";
+        b.textContent = c;
+        b.addEventListener("click", () => onKey(c, b));
+        elKeys.appendChild(b);
+      });
+    }
+
+    // ====== 文章表示 ======
+    function renderPhrase(){
+      const done = current.slice(0, idx);
+      const next = current[idx] ?? "";
+      const rest = current.slice(idx+1);
+
+      // カーソルは「次の1文字」の位置に置く
+      const html =
+        `<span class="done">${escapeHtml(done)}</span>` +
+        (next ? `<span class="todo">${escapeHtml(next)}</span><span class="cursor"></span><span class="todo">${escapeHtml(rest)}</span>`
+              : `<span class="cursor" style="width:.15em;border-bottom:none"></span>`);
+      elPhrase.innerHTML = html;
+
+      elProgress.textContent = `${idx} / ${current.length}`;
+      elRoundLabel.textContent = `ROUND ${usedCount + 1}`;
+    }
+
+    function escapeHtml(s){
+      return s.replace(/[&<>"']/g, (m) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+    }
+
+    // ====== ゲーム進行 ======
+    function pickPhrase(){
+      current = PHRASES[rng(PHRASES.length)];
+      idx = 0;
+      buildKeyboardForPhrase(current);
+      renderPhrase();
+      elMsg.textContent = "次の1文字をタップ。";
+    }
+
+    function setRunning(on){
+      running = on;
+      startBtn.textContent = on ? "プレイ中" : "スタート";
+      startBtn.disabled = on;
+      shuffleBtn.disabled = !on;
+      backBtn.disabled = !on;
+      skipBtn.disabled = !on;
+      resetBtn.disabled = false;
+    }
+
+    function start(){
+      if (running) return;
+      score = 0;
+      tLeft = GAME_SECONDS;
+      usedCount = 0;
+      elScore.textContent = String(score);
+      elTime.textContent = tLeft.toFixed(1);
+
+      pickPhrase();
+      setRunning(true);
+
+      lastTick = performance.now();
+      timerId = setInterval(tick, 50);
+    }
+
+    function end(){
+      setRunning(false);
+      if (timerId) clearInterval(timerId);
+      timerId = null;
+
+      elMsg.textContent = "終了。リセット or スタートで再挑戦。";
+      overlay.style.display = "flex";
+
+      // リザルト簡易表示
+      const modal = overlay.querySelector(".modal");
+      const h2 = modal.querySelector("h2");
+      const p = modal.querySelector("p");
+      h2.textContent = "リザルト";
+      p.innerHTML =
+        `SCORE：<b>${score}</b><br>` +
+        `クリア数：<b>${usedCount}</b><br>` +
+        `（2/10＝ニート、というだけのゲーム）`;
+      playBtn.textContent = "もう一回";
+    }
+
+    function tick(){
+      const now = performance.now();
+      const dt = (now - lastTick) / 1000;
+      lastTick = now;
+
+      tLeft = Math.max(0, tLeft - dt);
+      elTime.textContent = tLeft.toFixed(1);
+
+      if (tLeft <= 0){
+        end();
+      }
+    }
+
+    function onKey(ch, btn){
+      if (!running) return;
+
+      const need = current[idx];
+      if (!need) return;
+
+      if (ch === need){
+        idx++;
+        btn.classList.remove("badFlash");
+        btn.classList.add("goodFlash");
+        setTimeout(() => btn.classList.remove("goodFlash"), 220);
+
+        if (navigator.vibrate) navigator.vibrate(8);
+
+        renderPhrase();
+
+        if (idx >= current.length){
+          // クリア
+          const bonus = Math.max(0, Math.floor(tLeft * CLEAR_TIME_BONUS));
+          score += CLEAR_BASE + bonus;
+          usedCount++;
+          elScore.textContent = String(score);
+
+          elMsg.textContent = `クリア！ +${CLEAR_BASE}+${bonus}点`;
+          // 次
+          setTimeout(() => {
+            if (!running) return;
+            pickPhrase();
+          }, 260);
+        }
+      } else {
+        // ミス
+        tLeft = Math.max(0, tLeft - MISS_PENALTY);
+        elTime.textContent = tLeft.toFixed(1);
+
+        btn.classList.remove("goodFlash");
+        btn.classList.add("badFlash");
+        setTimeout(() => btn.classList.remove("badFlash"), 220);
+
+        if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+
+        elMsg.textContent = `ちがう（−${MISS_PENALTY.toFixed(1)}秒） 次は「${need}」`;
+        if (tLeft <= 0) end();
+      }
+    }
+
+    function backOne(){
+      if (!running) return;
+      if (idx <= 0) return;
+      idx--;
+      renderPhrase();
+      elMsg.textContent = "1文字戻した。";
+    }
+
+    function resetUI(){
+      setRunning(false);
+      if (timerId) clearInterval(timerId);
+      timerId = null;
+      tLeft = GAME_SECONDS;
+      score = 0;
+      usedCount = 0;
+      elTime.textContent = tLeft.toFixed(1);
+      elScore.textContent = "0";
+      elPhrase.textContent = "";
+      elProgress.textContent = "0 / 0";
+      elRoundLabel.textContent = "ROUND 1";
+      elMsg.textContent = "スタートで開始。";
+      keys = shuffle(KANA).slice(0, 24);
+      renderKeys();
+
+      // モーダル内容も戻す
+      const modal = overlay.querySelector(".modal");
+      modal.querySelector("h2").textContent = "ニートタイピング";
+      modal.querySelector("p").innerHTML =
+        "・文章を左から順に入力（次に必要な1文字だけが正解）<br>・ミスすると <b>−0.7秒</b><br>・1文クリアで +100点、残り時間が多いほどボーナス";
+      playBtn.textContent = "開始する";
+    }
+
+    // ====== イベント ======
+    playBtn.addEventListener("click", () => {
+      overlay.style.display = "none";
+      start();
+    });
+
+    howBtn.addEventListener("click", () => {
+      // 今日の言い訳サンプルを雑に表示
+      const sample = PHRASES.slice().sort(() => Math.random() - 0.5).slice(0, 6).join(" / ");
+      const modal = overlay.querySelector(".modal");
+      const p = modal.querySelector("p");
+      p.innerHTML = `きょうの言い訳：<br><b>${sample}</b>`;
+    });
+
+    startBtn.addEventListener("click", () => {
+      overlay.style.display = "none";
+      start();
+    });
+
+    shuffleBtn.addEventListener("click", () => {
+      if (!running) return;
+      keys = shuffle(keys);
+      renderKeys();
+      elMsg.textContent = "並び替えた。";
+    });
+
+    backBtn.addEventListener("click", backOne);
+
+    resetBtn.addEventListener("click", () => {
+      overlay.style.display = "flex";
+      resetUI();
+    });
+
+    skipBtn.addEventListener("click", () => {
+      if (!running) return;
+      score = Math.max(0, score - 30);
+      elScore.textContent = String(score);
+      elMsg.textContent = "スキップ（−30点）";
+      pickPhrase();
+    });
+
+    // 初期化
+    keys = shuffle(KANA).slice(0, 24);
+    renderKeys();
+    resetUI();
+    overlay.style.display = "flex";
+  </script>
+</body>
+</html>
