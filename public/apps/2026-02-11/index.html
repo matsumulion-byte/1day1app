@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>建国タイプ診断（16タイプ）</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --accent:#60a5fa;
+      --good:#34d399;
+      --bad:#fb7185;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --safeT: env(safe-area-inset-top);
+      --safeB: env(safe-area-inset-bottom);
+      --safeL: env(safe-area-inset-left);
+      --safeR: env(safe-area-inset-right);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; background:var(--bg); color:var(--ink); overflow:hidden}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Meiryo", Arial, sans-serif;
+    }
+
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding: calc(14px + var(--safeT)) calc(14px + var(--safeR)) calc(14px + var(--safeB)) calc(14px + var(--safeL));
+      gap:12px;
+      max-width:720px;
+      margin:0 auto;
+    }
+
+    header{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:6px;
+    }
+    h1{
+      font-size:18px;
+      letter-spacing:.02em;
+    }
+    .sub{
+      font-size:12px; color:var(--muted); line-height:1.4;
+    }
+
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 12px;
+      border-radius:999px;
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border:1px solid var(--line);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      user-select:none;
+    }
+    .badge b{font-size:12px}
+    .badge span{font-size:12px; color:var(--muted)}
+    .dot{
+      width:10px;height:10px;border-radius:99px;background:var(--accent);
+      box-shadow: 0 0 0 4px rgba(96,165,250,.18);
+      margin-top:1px;
+      flex:0 0 auto;
+    }
+
+    .card{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      padding:14px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      min-height:0;
+    }
+
+    .progress{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .bar{
+      flex:1;
+      height:10px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:999px;
+      overflow:hidden;
+    }
+    .bar > i{
+      display:block;
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg, rgba(96,165,250,.9), rgba(52,211,153,.9));
+      border-radius:999px;
+      transition:width .25s ease;
+    }
+    .step{
+      font-size:12px; color:var(--muted);
+      min-width:86px; text-align:right;
+    }
+
+    .q{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:0;
+    }
+    .q h2{
+      font-size:17px;
+      line-height:1.35;
+      letter-spacing:.01em;
+    }
+    .hint{
+      font-size:12px; color:var(--muted); line-height:1.45;
+    }
+
+    .answers{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin-top:6px;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:var(--ink);
+      border-radius:16px;
+      padding:14px 14px;
+      text-align:left;
+      line-height:1.35;
+      font-size:15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      transform: translateZ(0);
+      transition: transform .06s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active{ transform: scale(.99); background:rgba(255,255,255,.09); border-color: rgba(255,255,255,.22); }
+
+    .row{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+    }
+
+    .mini{
+      display:flex; gap:10px;
+    }
+    .ghost{
+      background:transparent;
+      border:1px solid rgba(255,255,255,.14);
+      color:var(--muted);
+      box-shadow:none;
+      padding:12px 12px;
+      border-radius:14px;
+      font-size:13px;
+      text-align:center;
+      flex:1;
+    }
+    .ghost:active{ background:rgba(255,255,255,.06); color:var(--ink); }
+    .primary{
+      background:rgba(96,165,250,.16);
+      border:1px solid rgba(96,165,250,.42);
+      color:var(--ink);
+      box-shadow: 0 14px 45px rgba(96,165,250,.18);
+      padding:12px 12px;
+      border-radius:14px;
+      font-size:13px;
+      text-align:center;
+      flex:1;
+    }
+    .primary:active{ background:rgba(96,165,250,.22); }
+
+    .result{
+      display:flex; flex-direction:column; gap:10px;
+      min-height:0;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      width:fit-content;
+    }
+    .pill b{font-size:12px}
+    .pill span{font-size:12px; color:var(--muted)}
+    .big{
+      font-size:22px;
+      line-height:1.2;
+      letter-spacing:.01em;
+    }
+    .desc{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.55;
+    }
+    .box{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      border-radius:16px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .kv{
+      display:flex; flex-direction:column; gap:4px;
+      font-size:13px;
+    }
+    .kv .k{ color:var(--muted); font-size:12px; }
+    .kv .v{ color:var(--ink); font-size:13px; line-height:1.45; }
+
+    footer{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding:2px 2px 0;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom: calc(14px + var(--safeB));
+      transform:translateX(-50%);
+      background:rgba(10,15,30,.92);
+      border:1px solid rgba(255,255,255,.16);
+      color:var(--ink);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:12px;
+      box-shadow: 0 16px 50px rgba(0,0,0,.55);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .toast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(-4px);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="title">
+        <h1>建国タイプ診断（16タイプ）</h1>
+        <div class="sub">12問の2択に答えるだけ。建国のクセがバレます。</div>
+      </div>
+      <div class="badge" aria-label="today">
+        <i class="dot"></i>
+        <div>
+          <b>2/11</b><div><span>建国モード</span></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="card" id="card">
+      <!-- injected -->
+    </main>
+
+    <footer>
+      <div>※歴史上の国は「近いイメージ例」</div>
+      <div id="footerRight"></div>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module">
+    // 1日1アプリ：動的アセット参照ヘルパー（ルール準拠）
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    // ---- Data ----
+    const AXES = [
+      { key:"C", neg:"D", labelA:"中央集権", labelB:"分権", idx:0 },
+      { key:"O", neg:"F", labelA:"秩序",   labelB:"自由", idx:1 },
+      { key:"R", neg:"E", labelA:"理性",   labelB:"情",   idx:2 },
+      { key:"X", neg:"S", labelA:"拡張",   labelB:"保守", idx:3 },
+    ];
+
+    // Each question: axisIdx (0..3), A gives +1 to that axis, B gives -1
+    const QUESTIONS = [
+      // Centralization
+      {
+        axis:0,
+        q:"新しいルールを作るとき、しっくりくるのは？",
+        a:"まず中央で方針を決めて、全国に展開",
+        b:"地域ごとに試しつつ、良い形を広げる",
+        hint:"“正しさ”より“好きな進め方”でOK"
+      },
+      {
+        axis:0,
+        q:"行政の形として好きなのは？",
+        a:"役割がはっきりした“縦の組織”で進める",
+        b:"横の連携が強い“ネットワーク型”で進める",
+        hint:"どちらが“ストレスが少ないか”で選ぶ"
+      },
+      {
+        axis:0,
+        q:"予想外の事態が起きたときの動き方は？",
+        a:"全体の足並みを揃えることを優先",
+        b:"現場が動きやすいことを優先",
+        hint:"危機対応の“第一手”の感覚"
+      },
+
+      // Order vs Freedom
+      {
+        axis:1,
+        q:"国づくりで「最初に固めたい」のは？",
+        a:"安心して暮らせる“安定”の土台",
+        b:"選べる幅がある“自由”の土台",
+        hint:"最初に握る“価値”の優先度"
+      },
+      {
+        axis:1,
+        q:"暮らしのルール、心地いいのは？",
+        a:"最低限の約束を決めて、迷いを減らす",
+        b:"基本は任せて、工夫の余地を残す",
+        hint:"暮らしの“余白”の持たせ方"
+      },
+      {
+        axis:1,
+        q:"文化や価値観の違いについて近いのは？",
+        a:"共通のマナーを大事にしたい",
+        b:"いろんな流儀が混ざるのが楽しい",
+        hint:"“統一感”と“多様性”のどっちが気持ちいい？"
+      },
+
+      // Reason vs Emotion
+      {
+        axis:2,
+        q:"予算配分で悩んだら、より頼りたいのは？",
+        a:"効果やデータを見て決める",
+        b:"困っている度合いを見て決める",
+        hint:"迷ったときの“最終判断軸”"
+      },
+      {
+        axis:2,
+        q:"新しい制度を導入するときは？",
+        a:"小さく試して、数字で判断して広げる",
+        b:"まず意義を共有して、納得感を作って進める",
+        hint:"“進め方”の好み"
+      },
+      {
+        axis:2,
+        q:"国民への説明、自然なのは？",
+        a:"根拠・条件・見通しを整理して伝える",
+        b:"背景・想い・目指す姿を物語として伝える",
+        hint:"“伝え方”のスタイル"
+      },
+
+      // Expansion vs Preservation
+      {
+        axis:3,
+        q:"国のエネルギーの向け先は？",
+        a:"外とつながって可能性を広げたい",
+        b:"内側を整えて暮らしを厚くしたい",
+        hint:"伸ばすか、厚くするか"
+      },
+      {
+        axis:3,
+        q:"お金を使うならどっちが好き？",
+        a:"新しい産業・技術に投資して伸ばす",
+        b:"教育・医療・基盤整備で底上げする",
+        hint:"投資配分の気分"
+      },
+      {
+        axis:3,
+        q:"国の変化のさせ方として近いのは？",
+        a:"変えるべきところは思い切って変える",
+        b:"守るべきところは丁寧に守りながら変える",
+        hint:"変化への距離感"
+      },
+    ];
+
+    // Types: code -> {name, example, desc, matsumura}
+    const TYPES = {
+      "CORX": {
+        name:"帝国の司令塔",
+        example:"ローマ帝国（五賢帝期）／ナポレオン体制（制度×拡張のイメージ）",
+        desc:"制度で固めて速く決める。秩序を作って前に進めるタイプ。強みはスピードと再現性。",
+        matsumura:"号令が出た瞬間、もう建国してる。"
+      },
+      "CORS": {
+        name:"堅牢な官僚国家",
+        example:"江戸幕府（統制と安定のイメージ）／清（安定統治のイメージ）",
+        desc:"まず穴を塞いで守る。混乱を嫌い、長く続く仕組みを作るタイプ。強みは安定運用。",
+        matsumura:"派手さより“事故らない”が正義。"
+      },
+      "COEX": {
+        name:"旗印の征服王",
+        example:"モンゴル帝国（初期の拡張イメージ）／マケドニア（アレクサンドロス期のイメージ）",
+        desc:"意思と勢いで統一して押し切る。秩序を作りつつも、前進の熱量が武器のタイプ。",
+        matsumura:"演説一発で国境が伸びる。"
+      },
+      "COES": {
+        name:"父性的な保護国家",
+        example:"儒教的王朝像（一般イメージ）／宗教的秩序国家（一般イメージ）",
+        desc:"秩序と安心を“面倒見”で支える。守りを固め、暮らしの安全を整えるタイプ。",
+        matsumura:"守ってるつもりで、だいたい抱え込む。"
+      },
+      "CFRX": {
+        name:"改革で自由を拡げる国",
+        example:"明治期日本（近代化改革の側面イメージ）／近代化プロジェクト国家（一般イメージ）",
+        desc:"自由を“制度”で実現し、外へ広げる。改革推進が得意で、未来志向のタイプ。",
+        matsumura:"改革案、出す量が多い。"
+      },
+      "CFRS": {
+        name:"権利を守る立憲国家",
+        example:"イギリス（立憲・議会政治の伝統イメージ）",
+        desc:"自由の枠組みを丁寧に整える。急がず、合意と手続きを積んで守るタイプ。",
+        matsumura:"議事録が国宝になりがち。"
+      },
+      "CFEX": {
+        name:"革命の火付け役",
+        example:"フランス革命期（理念と動員のイメージ）",
+        desc:"熱量で自由を押し広げる。共感と勢いで変えるタイプ。強みは人を動かす力。",
+        matsumura:"一言で空気を変える。"
+      },
+      "CFES": {
+        name:"文化の守護国家",
+        example:"アテネ（古典期の市民文化イメージ）",
+        desc:"自由を守るために“守る”。文化・表現・多様な価値を丁寧に維持するタイプ。",
+        matsumura:"守備範囲が広すぎて寝不足。"
+      },
+
+      "DORX": {
+        name:"連邦の最適化国家",
+        example:"共和制の拡張運用（一般イメージ）／連邦的な効率運用（一般イメージ）",
+        desc:"現場×データで伸ばす。分散の強みを活かし、最適化で前進するタイプ。",
+        matsumura:"現場の声を拾うのが速い。"
+      },
+      "DORS": {
+        name:"自治の管理国家",
+        example:"スイス連邦（安定運用のイメージ）",
+        desc:"分散運用で安定させる。ルールを整え、各地が無理なく回る仕組みを作るタイプ。",
+        matsumura:"地味に強い。地味に。"
+      },
+      "DOEX": {
+        name:"共同体の遠征国",
+        example:"共同体理念の動員（一般イメージ）",
+        desc:"仲間意識でまとまって前へ。秩序は“関係性”で作り、勢いを出すタイプ。",
+        matsumura:"絆で動く。議題より飲み会で決まる。"
+      },
+      "DOES": {
+        name:"地域見守り国家",
+        example:"自治都市・自由都市（運用イメージ）",
+        desc:"小さな安心を積み上げる。暮らしの手触りを大事にし、無理をしないタイプ。",
+        matsumura:"困ってる人を放っておけない。"
+      },
+      "DFRX": {
+        name:"実験する自由連邦",
+        example:"アメリカ合衆国（建国〜拡張期の側面イメージ）",
+        desc:"自由×試行錯誤で広げる。まず試し、うまくいけば横展開するタイプ。",
+        matsumura:"PoCの回数が国力。"
+      },
+      "DFRS": {
+        name:"自由を壊さない職人国家",
+        example:"オランダ共和国（商業・寛容の運用イメージ）",
+        desc:"自由を守るための運用に強い。目立たず調整し、破綻しない形に落とすタイプ。",
+        matsumura:"最終的に“ちょうどよく”なる。"
+      },
+      "DFEX": {
+        name:"共創ムーブ国家",
+        example:"民主化運動（一般イメージ）／ポリス的連帯（比喩）",
+        desc:"人の熱量で自由を広げる。巻き込みが得意で、動きながら形を作るタイプ。",
+        matsumura:"気づいたら人が増えてる。"
+      },
+      "DFES": {
+        name:"信じて任せる国",
+        example:"高信頼社会（北欧の一般イメージ）",
+        desc:"任せることで回す。余白を残し、信頼を前提に暮らしの質を守るタイプ。",
+        matsumura:"細かく言わない。でも見てる。"
+      },
+    };
+
+    // A light, consistent fallback if somehow missing
+    function fallbackType(code){
+      return {
+        name:"未定義の建国者",
+        example:"（例は未設定）",
+        desc:"診断は出たが、辞書にないタイプ。コード: " + code,
+        matsumura:"まつむらです"
+      };
+    }
+
+    // ---- State ----
+    const state = {
+      i: 0,
+      scores: [0,0,0,0], // + -> A-side, - -> B-side
+      answers: [],       // store 'A'/'B'
+    };
+
+    // ---- UI ----
+    const card = document.getElementById("card");
+    const footerRight = document.getElementById("footerRight");
+    const toast = document.getElementById("toast");
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add("show");
+      window.clearTimeout(showToast._t);
+      showToast._t = window.setTimeout(()=>toast.classList.remove("show"), 1100);
+    }
+
+    function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+
+    function renderStart(){
+      const total = QUESTIONS.length;
+      footerRight.textContent = `${total}問`;
+      card.innerHTML = `
+        <div class="q">
+          <h2>12問で、あなたの建国グセを判定します。</h2>
+          <div class="hint">直感でOK。良い／悪いはありません。結果は歴史上の国に“近いイメージ”も出します。</div>
+          <div style="height:6px"></div>
+          <div class="box">
+            <div class="kv">
+              <div class="k">診断の軸</div>
+              <div class="v">中央集権 / 分権 ・ 秩序 / 自由 ・ 理性 / 情 ・ 拡張 / 保守</div>
+            </div>
+          </div>
+          <div class="answers">
+            <button class="btn" id="startBtn">診断をはじめる</button>
+          </div>
+          <div class="row">
+            <div class="mini" style="width:100%">
+              <button class="ghost" id="howBtn">診断の仕組み</button>
+              <button class="ghost" id="resetBtn">リセット</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById("startBtn").addEventListener("click", () => {
+        resetState(false);
+        renderQuestion();
+      });
+      document.getElementById("howBtn").addEventListener("click", () => {
+        showToast("各軸3問。Aがプラス、Bがマイナス。合計で16タイプに分類。");
+      });
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        resetState(true);
+        showToast("リセットしました");
+      });
+    }
+
+    function renderQuestion(){
+      const total = QUESTIONS.length;
+      const q = QUESTIONS[state.i];
+      const pct = ((state.i)/total)*100;
+
+      footerRight.textContent = `${state.i+1}/${total}`;
+
+      card.innerHTML = `
+        <div class="progress">
+          <div class="bar" aria-label="progress"><i style="width:${pct.toFixed(1)}%"></i></div>
+          <div class="step">${state.i+1}/${total}</div>
+        </div>
+
+        <div class="q">
+          <h2>${escapeHtml(q.q)}</h2>
+          <div class="hint">${escapeHtml(q.hint || "直感で選んでOK")}</div>
+
+          <div class="answers">
+            <button class="btn" id="aBtn">A：${escapeHtml(q.a)}</button>
+            <button class="btn" id="bBtn">B：${escapeHtml(q.b)}</button>
+          </div>
+
+          <div class="row">
+            <div class="mini" style="width:100%">
+              <button class="ghost" id="backBtn" ${state.i===0 ? "disabled" : ""}>ひとつ戻る</button>
+              <button class="ghost" id="restartBtn">最初から</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const backBtn = document.getElementById("backBtn");
+      const restartBtn = document.getElementById("restartBtn");
+      const aBtn = document.getElementById("aBtn");
+      const bBtn = document.getElementById("bBtn");
+
+      backBtn?.addEventListener("click", onBack);
+      restartBtn.addEventListener("click", () => { resetState(false); renderStart(); });
+
+      aBtn.addEventListener("click", () => onAnswer("A"));
+      bBtn.addEventListener("click", () => onAnswer("B"));
+    }
+
+    function onAnswer(which){
+      const q = QUESTIONS[state.i];
+      // apply scoring
+      if(which === "A") state.scores[q.axis] += 1;
+      else state.scores[q.axis] -= 1;
+
+      state.answers[state.i] = which;
+      state.i++;
+
+      if(state.i >= QUESTIONS.length){
+        renderResult();
+      }else{
+        renderQuestion();
+      }
+    }
+
+    function onBack(){
+      if(state.i <= 0) return;
+
+      // step back index
+      const prevIdx = state.i - 1;
+      const prevQ = QUESTIONS[prevIdx];
+      const prevAns = state.answers[prevIdx];
+
+      // revert score
+      if(prevAns === "A") state.scores[prevQ.axis] -= 1;
+      else if(prevAns === "B") state.scores[prevQ.axis] += 1;
+
+      state.answers.pop();
+      state.i = prevIdx;
+      renderQuestion();
+    }
+
+    function computeCode(){
+      // >=0 goes to A-side (key), <0 goes to neg
+      const letters = [];
+      for(let k=0;k<AXES.length;k++){
+        const axis = AXES[k];
+        letters.push(state.scores[k] >= 0 ? axis.key : axis.neg);
+      }
+      return letters.join("");
+    }
+
+    function axisSummary(){
+      const lines = [];
+      for(let k=0;k<AXES.length;k++){
+        const axis = AXES[k];
+        const v = state.scores[k];
+        const side = v >= 0 ? axis.labelA : axis.labelB;
+        const strength = Math.abs(v); // 0..3
+        const meter = ["低","中","高","極"][clamp(strength,0,3)];
+        lines.push(`${side}（${meter}）`);
+      }
+      return lines.join(" / ");
+    }
+
+    function renderResult(){
+      const code = computeCode();
+      const t = TYPES[code] || fallbackType(code);
+
+      footerRight.textContent = "結果";
+
+      const shareText =
+`建国タイプ診断：${t.name}
+タイプコード：${code}
+傾向：${axisSummary()}
+松村評：${t.matsumura}
+#建国タイプ診断 #まつむらです`;
+
+      card.innerHTML = `
+        <div class="result">
+          <div class="pill"><b>あなたの建国タイプ</b><span>16タイプ</span></div>
+          <div class="big">${escapeHtml(t.name)}</div>
+          <div class="desc">${escapeHtml(t.desc)}</div>
+
+          <div class="box">
+            <div class="kv">
+              <div class="k">近い歴史イメージ</div>
+              <div class="v">${escapeHtml(t.example)}</div>
+            </div>
+            <div class="kv">
+              <div class="k">タイプコード</div>
+              <div class="v"><b>${escapeHtml(code)}</b>（C/D・O/F・R/E・X/S）</div>
+            </div>
+            <div class="kv">
+              <div class="k">傾向</div>
+              <div class="v">${escapeHtml(axisSummary())}</div>
+            </div>
+            <div class="kv">
+              <div class="k">松村評</div>
+              <div class="v">${escapeHtml(t.matsumura)} <b>まつむらです</b></div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="mini" style="width:100%">
+              <button class="primary" id="copyBtn">結果をコピー</button>
+              <button class="ghost" id="againBtn">もう一回</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="mini" style="width:100%">
+              <button class="ghost" id="breakdownBtn">内訳を見る</button>
+              <button class="ghost" id="homeBtn">タイトルへ</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("copyBtn").addEventListener("click", async () => {
+        try{
+          await navigator.clipboard.writeText(shareText);
+          showToast("コピーしました");
+        }catch(e){
+          // fallback
+          const ta = document.createElement("textarea");
+          ta.value = shareText;
+          ta.style.position="fixed";
+          ta.style.left="-9999px";
+          document.body.appendChild(ta);
+          ta.select();
+          try{ document.execCommand("copy"); showToast("コピーしました"); }
+          catch(_){ showToast("コピーできませんでした"); }
+          finally{ document.body.removeChild(ta); }
+        }
+      });
+
+      document.getElementById("againBtn").addEventListener("click", () => {
+        resetState(false);
+        renderQuestion();
+      });
+
+      document.getElementById("homeBtn").addEventListener("click", () => {
+        resetState(false);
+        renderStart();
+      });
+
+      document.getElementById("breakdownBtn").addEventListener("click", () => {
+        const rows = AXES.map((a, idx) => {
+          const v = state.scores[idx];
+          const side = v >= 0 ? a.labelA : a.labelB;
+          const other = v >= 0 ? a.labelB : a.labelA;
+          const strength = Math.abs(v);
+          const meter = ["低","中","高","極"][clamp(strength,0,3)];
+          return `・${side} 寄り（${meter}）／反対：${other}`;
+        }).join("\n");
+        showToast("内訳を表示しました");
+        // simple modal via alert to keep it lightweight
+        alert(`内訳\\n\\n${rows}\\n\\nタイプ：${code}`);
+      });
+    }
+
+    function resetState(hard){
+      state.i = 0;
+      state.scores = [0,0,0,0];
+      state.answers = [];
+      if(hard){
+        try{ localStorage.removeItem("nation_diag_state"); }catch(_){}
+      }
+    }
+
+    // Optional: persist (light)
+    function save(){
+      try{
+        localStorage.setItem("nation_diag_state", JSON.stringify({
+          i: state.i, scores: state.scores, answers: state.answers
+        }));
+      }catch(_){}
+    }
+    function load(){
+      try{
+        const raw = localStorage.getItem("nation_diag_state");
+        if(!raw) return false;
+        const obj = JSON.parse(raw);
+        if(!obj || !Array.isArray(obj.scores) || !Array.isArray(obj.answers)) return false;
+        state.i = obj.i|0;
+        state.scores = obj.scores.map(n=>Number(n)||0).slice(0,4);
+        while(state.scores.length<4) state.scores.push(0);
+        state.answers = obj.answers.slice(0, QUESTIONS.length);
+        state.i = clamp(state.i, 0, QUESTIONS.length);
+        return true;
+      }catch(_){ return false; }
+    }
+
+    // Escape helper
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    // Save on changes
+    window.addEventListener("beforeunload", save);
+    document.addEventListener("visibilitychange", () => {
+      if(document.visibilityState === "hidden") save();
+    });
+
+    // Boot
+    const has = load();
+    if(has && state.i > 0 && state.i < QUESTIONS.length){
+      // resume in question flow
+      renderQuestion();
+      showToast("途中から再開しました");
+    }else{
+      // if finished previously, start fresh title
+      resetState(false);
+      renderStart();
+    }
+  </script>
+</body>
+</html>
