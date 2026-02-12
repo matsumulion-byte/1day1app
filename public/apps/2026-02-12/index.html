@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>ダーウィンの日｜松村進化</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --accent:#60a5fa;
+      --good:#34d399;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --r:18px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{
+      min-height:100%;
+      background:var(--bg);
+      color:var(--ink);
+    }
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      touch-action: manipulation;
+      overflow-y:auto;
+      overflow-x:hidden;
+    }
+    button{font:inherit}
+    .app{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      padding:16px 14px calc(16px + env(safe-area-inset-bottom));
+      gap:12px;
+      max-width:640px;
+      margin:0 auto;
+    }
+
+    header{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    }
+    .title{display:flex; flex-direction:column; gap:4px;}
+    .title h1{font-size:16px; letter-spacing:.02em;}
+    .title p{font-size:12px; color:var(--muted); line-height:1.35;}
+
+    .pillRow{display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+    .pill{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      padding:7px 10px;
+      border-radius:999px;
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .pill strong{color:var(--ink); font-weight:900}
+
+    .panel{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+      border-radius:var(--r);
+      box-shadow: var(--shadow);
+      padding:12px;
+    }
+
+    .hero{
+      width:100%;
+      max-width:420px;
+      margin:0 auto;
+      aspect-ratio: 4 / 5;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.25);
+      overflow:hidden;
+      position:relative;
+    }
+    .hero img{width:100%;height:100%;object-fit:cover;display:block;}
+    .badge{
+      position:absolute;
+      left:10px; top:10px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.38);
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      color:var(--ink);
+      backdrop-filter: blur(6px);
+    }
+
+    .meta{display:flex; flex-direction:column; gap:3px; margin-top:10px;}
+    .meta .name{font-size:15px; font-weight:900}
+    .meta .latin{font-size:12px; color:var(--muted)}
+    .meta .route{font-size:12px; color:rgba(52,211,153,.92)}
+
+    .choices{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .q{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      border-radius:16px;
+    }
+    .q .label{font-size:12px; color:var(--muted);}
+    .q .step{
+      font-size:12px; color:var(--muted);
+      border:1px solid var(--line);
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.04);
+      white-space:nowrap;
+    }
+    .choiceRow{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .choiceBtn{
+      border-radius:16px;
+      padding:12px 12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.08);
+      color:var(--ink);
+      font-weight:900;
+      letter-spacing:.02em;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      align-items:flex-start;
+      justify-content:center;
+      min-height:66px;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .choiceBtn small{color:var(--muted); font-size:11px; font-weight:700}
+    .choiceBtn:active{transform: translateY(1px)}
+    .choiceBtn.primary{
+      border-color: rgba(96,165,250,.55);
+      background: rgba(96,165,250,.18);
+    }
+
+    .actions{
+      display:flex; gap:10px;
+    }
+    .btn{
+      flex:1;
+      border-radius:16px;
+      padding:12px 12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.08);
+      color:var(--ink);
+      font-weight:900;
+      letter-spacing:.02em;
+      display:flex; align-items:center; justify-content:center;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active{transform: translateY(1px)}
+    .btnSub{flex:0 0 auto; min-width:96px;}
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:calc(18px + env(safe-area-inset-bottom));
+      transform:translateX(-50%);
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.55);
+      color:var(--ink);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:12px;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      backdrop-filter: blur(6px);
+    }
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px);}
+
+    .modal{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.62);
+      display:none;
+      align-items:flex-end;
+      padding:14px 14px calc(14px + env(safe-area-inset-bottom));
+    }
+    .modal.show{display:flex}
+    .sheet{
+      width:100%;
+      max-width:520px;
+      margin:0 auto;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(16,22,40,.92);
+      box-shadow: var(--shadow);
+      padding:12px;
+      max-height: 82vh;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .sheetTop{display:flex; justify-content:space-between; align-items:center; gap:10px;}
+    .xbtn{
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:var(--ink);
+      padding:10px 12px;
+      font-weight:900;
+    }
+    .sheetBody{
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      padding-right:2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <h1>松村進化（ダーウィンの日）</h1>
+        <p>選択で進化が決まる：環境 → 形質。Gen2で終了。</p>
+      </div>
+      <div class="pillRow">
+        <div class="pill" id="genPill"><strong>Gen0</strong></div>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="hero" id="hero">
+        <div class="badge" id="heroBadge">Gen0 / 原種</div>
+        <img id="heroImg" alt="">
+      </div>
+
+      <div class="meta">
+        <div class="name" id="heroName">—</div>
+        <div class="latin" id="heroLatin">—</div>
+        <div class="route" id="heroRoute">—</div>
+      </div>
+    </section>
+
+    <section class="panel choices" aria-label="選択">
+      <div class="q">
+        <div class="label" id="questionLabel">環境を選べ</div>
+        <div class="step" id="stepPill">Step 1/2</div>
+      </div>
+      <div class="choiceRow" id="choiceRow"></div>
+    </section>
+
+    <section class="actions">
+      <button class="btn btnSub" id="detailBtn">詳細</button>
+      <button class="btn btnSub" id="copyBtn">コピー</button>
+      <button class="btn btnSub" id="resetBtn">リセット</button>
+    </section>
+  </div>
+
+  <div class="toast" id="toast">コピーしました</div>
+
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="個体詳細">
+    <div class="sheet">
+      <div class="sheetTop">
+        <div class="title">
+          <h1 style="font-size:14px">個体詳細</h1>
+          <p id="sheetSub" style="font-size:12px;color:rgba(243,246,255,.72)">—</p>
+        </div>
+        <button class="xbtn" id="closeModal">閉じる</button>
+      </div>
+      <div class="sheetBody">
+        <div class="hero" style="aspect-ratio: 4/5;">
+          <div class="badge" id="sheetBadge">—</div>
+          <img id="sheetImg" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">
+        </div>
+        <div style="height:10px"></div>
+        <div class="meta">
+          <div class="name" id="sheetName">—</div>
+          <div class="latin" id="sheetLatin">—</div>
+          <div class="route" id="sheetRoute">—</div>
+          <p id="sheetDesc" style="margin-top:8px;font-size:12px;line-height:1.6;color:rgba(243,246,255,.72)"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // assets helper（Vercel の日付ルート / ローカル両対応）
+    const asset = (p) => {
+      const raw = window.location.pathname || '/';
+      // ディレクトリ部分だけ取り出す（/apps/2026-02-12/ or /2026-02-12/ など）
+      const dir = raw.endsWith('/') ? raw : raw.slice(0, raw.lastIndexOf('/') + 1);
+      const clean = String(p).replace(/^\.\//, '');
+      return dir + clean;
+    };
+
+    // iOS double-tap zoom / gesture
+    document.addEventListener('dblclick', (e) => e.preventDefault(), { passive:false });
+    document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive:false });
+
+    const $ = (sel) => document.querySelector(sel);
+
+    const genPill = $('#genPill');
+    const heroImg = $('#heroImg');
+    const heroBadge = $('#heroBadge');
+    const heroName = $('#heroName');
+    const heroLatin = $('#heroLatin');
+    const heroRoute = $('#heroRoute');
+
+    const questionLabel = $('#questionLabel');
+    const stepPill = $('#stepPill');
+    const choiceRow = $('#choiceRow');
+
+    const detailBtn = $('#detailBtn');
+    const copyBtn = $('#copyBtn');
+    const resetBtn = $('#resetBtn');
+    const toast = $('#toast');
+
+    const modal = $('#modal');
+    const closeModal = $('#closeModal');
+    const sheetImg = $('#sheetImg');
+    const sheetBadge = $('#sheetBadge');
+    const sheetName = $('#sheetName');
+    const sheetLatin = $('#sheetLatin');
+    const sheetRoute = $('#sheetRoute');
+    const sheetDesc = $('#sheetDesc');
+    const sheetSub = $('#sheetSub');
+
+    // ---- Data (ファイル名は必要に応じて変更) ----
+    const GEN0 = {
+      id: 'gen0',
+      stage: 0,
+      name: 'タンクトップ松村',
+      latin: 'Matsumura primus',
+      route: '—',
+      desc: '原種。ここから環境適応が始まる。',
+      img: asset('./assets/gen0_base.png'),
+    };
+
+    const GEN1 = {
+      warm: {
+        id: 'warm',
+        stage: 1,
+        name: '厚着松村',
+        latin: 'Matsumura thermal-coatus',
+        route: '寒冷・防寒ルート',
+        desc: '寒さに耐える方向へ適応した個体。',
+        img: asset('./assets/gen1_warm.png'),
+      },
+      short: {
+        id: 'short',
+        stage: 1,
+        name: '短パン松村',
+        latin: 'Matsumura shortus',
+        route: '温暖・軽装ルート',
+        desc: '暑さに耐える方向へ適応した個体。',
+        img: asset('./assets/gen1_short.png'),
+      }
+    };
+
+    const GEN2 = {
+      warm_afro: {
+        id: 'warm_afro',
+        stage: 2,
+        gen1: 'warm',
+        name: 'アフロ防寒松村',
+        latin: 'Matsumura arctic-afroensis',
+        route: '厚着 → 突然変異（ふさふさ）',
+        desc: '寒冷地に適応。保温性能より見た目が先に進化した個体。',
+        img: asset('./assets/gen2_winter_afro.png'),
+      },
+      warm_bald: {
+        id: 'warm_bald',
+        stage: 2,
+        gen1: 'warm',
+        name: 'ツルツル防寒松村',
+        latin: 'Matsumura arctic-baldensis',
+        route: '厚着 → 突然変異（ツルツル）',
+        desc: '寒冷地に適応。空気抵抗を減らす方向に最適化された個体。',
+        img: asset('./assets/gen2_winter_bald.png'),
+      },
+      short_donut: {
+        id: 'short_donut',
+        stage: 2,
+        gen1: 'short',
+        name: 'ドーナツ海遊ルート松村',
+        latin: 'Matsumura aquatic-donutensis',
+        route: '短パン → 浮遊適応（遊ぶ）',
+        desc: '温暖地に適応。浮力を得ることで移動効率が上がった個体。',
+        img: asset('./assets/gen2_summer_donut.png'),
+      },
+      short_muscle: {
+        id: 'short_muscle',
+        stage: 2,
+        gen1: 'short',
+        name: 'ムキムキ短パン松村',
+        latin: 'Matsumura gym-musculus',
+        route: '短パン → 筋肥大適応（鍛える）',
+        desc: '競技環境に適応。筋量で全てを解決する方向に進化した個体。',
+        img: asset('./assets/gen2_gym_muscle.png'),
+      },
+    };
+
+    // ---- State ----
+    const state = {
+      stage: 0,     // 0,1,2
+      gen1: null,   // 'warm'|'short'
+      unit: GEN0,
+    };
+
+    function setHero(unit){
+      state.unit = unit;
+      state.stage = unit.stage;
+
+      genPill.innerHTML = `<strong>Gen${state.stage}</strong>`;
+      heroBadge.textContent = unit.stage === 0 ? 'Gen0 / 原種' : unit.stage === 1 ? 'Gen1 / 環境適応' : 'Gen2 / 最終形態';
+      heroName.textContent = unit.name;
+      heroLatin.textContent = unit.latin;
+      heroRoute.textContent = `ルート：${unit.route}`;
+      heroImg.src = unit.img;
+      heroImg.alt = unit.name;
+
+      renderChoices();
+      // 詳細ボタンはGen2で強く使うが、常時OK
+      detailBtn.disabled = false;
+      detailBtn.style.opacity = 1;
+    }
+
+    function renderChoices(){
+      choiceRow.innerHTML = '';
+
+      if(state.stage === 0){
+        questionLabel.textContent = '環境を選べ';
+        stepPill.textContent = 'Step 1/2';
+
+        const choices = [
+          { key:'warm', title:'寒い', sub:'厚着に適応する', primary:true },
+          { key:'short', title:'暑い', sub:'短パンに適応する', primary:false },
+        ];
+
+        choices.forEach(c => {
+          const btn = document.createElement('button');
+          btn.className = `choiceBtn ${c.primary ? 'primary':''}`;
+          btn.innerHTML = `<small>${c.sub}</small><div>${c.title}</div>`;
+          btn.addEventListener('click', () => {
+            state.gen1 = c.key;
+            setHero(GEN1[c.key]);
+          }, {passive:true});
+          choiceRow.appendChild(btn);
+        });
+        return;
+      }
+
+      if(state.stage === 1){
+        questionLabel.textContent = '形質を選べ';
+        stepPill.textContent = 'Step 2/2';
+
+        if(state.unit.id === 'warm'){
+          const choices = [
+            { id:'warm_afro', title:'ふさふさ', sub:'突然変異：毛量+', primary:true },
+            { id:'warm_bald', title:'ツルツル', sub:'突然変異：空気抵抗-', primary:false },
+          ];
+          choices.forEach(c => {
+            const btn = document.createElement('button');
+            btn.className = `choiceBtn ${c.primary ? 'primary':''}`;
+            btn.innerHTML = `<small>${c.sub}</small><div>${c.title}</div>`;
+            btn.addEventListener('click', () => setHero(GEN2[c.id]), {passive:true});
+            choiceRow.appendChild(btn);
+          });
+          return;
+        }
+
+        if(state.unit.id === 'short'){
+          const choices = [
+            { id:'short_donut', title:'遊ぶ', sub:'浮遊適応：ドーナツ', primary:true },
+            { id:'short_muscle', title:'鍛える', sub:'筋肥大適応：ムキムキ', primary:false },
+          ];
+          choices.forEach(c => {
+            const btn = document.createElement('button');
+            btn.className = `choiceBtn ${c.primary ? 'primary':''}`;
+            btn.innerHTML = `<small>${c.sub}</small><div>${c.title}</div>`;
+            btn.addEventListener('click', () => setHero(GEN2[c.id]), {passive:true});
+            choiceRow.appendChild(btn);
+          });
+          return;
+        }
+      }
+
+      // stage 2
+      questionLabel.textContent = '進化完了';
+      stepPill.textContent = 'Done';
+
+      const btnA = document.createElement('button');
+      btnA.className = 'choiceBtn primary';
+      btnA.innerHTML = `<small>図鑑表示</small><div>詳細を見る</div>`;
+      btnA.addEventListener('click', () => openModal(state.unit), {passive:true});
+
+      const btnB = document.createElement('button');
+      btnB.className = 'choiceBtn';
+      btnB.innerHTML = `<small>別ルートで</small><div>もう一回</div>`;
+      btnB.addEventListener('click', reset, {passive:true});
+
+      choiceRow.appendChild(btnA);
+      choiceRow.appendChild(btnB);
+    }
+
+    function openModal(unit){
+      sheetSub.textContent = '個体情報';
+      sheetBadge.textContent = unit.stage === 0 ? 'Gen0 / 原種' : unit.stage === 1 ? 'Gen1 / 環境適応' : 'Gen2 / 最終形態';
+      sheetImg.src = unit.img;
+      sheetImg.alt = unit.name;
+      sheetName.textContent = unit.name;
+      sheetLatin.textContent = unit.latin;
+      sheetRoute.textContent = `ルート：${unit.route}`;
+      sheetDesc.textContent = unit.desc || '';
+      modal.classList.add('show');
+    }
+    function closeModalFn(){ modal.classList.remove('show'); }
+
+    function showToast(msg='コピーしました'){
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(()=>toast.classList.remove('show'), 900);
+    }
+
+    function reset(){
+      state.gen1 = null;
+      closeModalFn();
+      setHero(GEN0);
+    }
+
+    detailBtn.addEventListener('click', () => openModal(state.unit), {passive:true});
+
+    copyBtn.addEventListener('click', async () => {
+      const u = state.unit;
+      const label = u.stage === 0 ? 'Gen0' : u.stage === 1 ? 'Gen1' : 'Gen2';
+      const text = `${label}｜${u.name}\n${u.latin}\nルート：${u.route}`;
+      try{
+        await navigator.clipboard.writeText(text);
+        showToast('コピーしました');
+      }catch(e){
+        showToast('コピー失敗');
+      }
+    }, {passive:true});
+
+    resetBtn.addEventListener('click', reset, {passive:true});
+
+    closeModal.addEventListener('click', closeModalFn, {passive:true});
+    modal.addEventListener('click', (e) => { if(e.target === modal) closeModalFn(); }, {passive:true});
+
+    // init
+    setHero(GEN0);
+  </script>
+</body>
+</html>
