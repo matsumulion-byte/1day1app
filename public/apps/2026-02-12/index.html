@@ -291,13 +291,13 @@
   </div>
 
   <script type="module">
-    // assets helper（Vercel の日付ルート / ローカル両対応）
+    // 1日1アプリ：動的アセット用（Vercel用に絶対パス）
     const asset = (p) => {
-      const raw = window.location.pathname || '/';
-      // ディレクトリ部分だけ取り出す（/apps/2026-02-12/ or /2026-02-12/ など）
-      const dir = raw.endsWith('/') ? raw : raw.slice(0, raw.lastIndexOf('/') + 1);
-      const clean = String(p).replace(/^\.\//, '');
-      return dir + clean;
+      const s = String(p || "");
+      if (s.startsWith("./")) {
+        return "/apps/2026-02-12" + s.slice(1);
+      }
+      return s;
     };
 
     // iOS double-tap zoom / gesture
