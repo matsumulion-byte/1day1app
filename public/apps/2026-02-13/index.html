@@ -81,6 +81,38 @@
       font-size:12px;
       line-height:1.5;
     }
+    .fineRow{
+      display:flex;
+      justify-content:flex-end;
+      gap:6px;
+      margin-top:6px;
+      font-size:11px;
+      color:var(--muted);
+      align-items:center;
+    }
+    .fineBtns{
+      display:inline-flex;
+      border-radius:999px;
+      border:1px solid var(--line);
+      overflow:hidden;
+      background:rgba(255,255,255,.05);
+    }
+    .fineBtn{
+      appearance:none;
+      border:none;
+      padding:5px 9px;
+      font-size:11px;
+      color:var(--ink);
+      background:transparent;
+      cursor:pointer;
+    }
+    .fineBtn + .fineBtn{
+      border-left:1px solid var(--line);
+    }
+    .fineBtn:active{
+      background:rgba(255,255,255,.12);
+      transform:translateY(1px);
+    }
     .big{
       font-size:13px; color:var(--muted);
     }
@@ -166,6 +198,13 @@
         <div class="hint">
           かなりシビアです。<span class="mono">LOCK ✓</span> が点灯する付近まで寄せてから、微調整。
         </div>
+        <div class="fineRow">
+          <span>微調整</span>
+          <div class="fineBtns">
+            <button id="btnFineDown" class="fineBtn" type="button">-1</button>
+            <button id="btnFineUp" class="fineBtn" type="button">+1</button>
+          </div>
+        </div>
       </div>
 
       <div class="answerRow">
@@ -196,6 +235,8 @@
   const btnStop  = document.getElementById('btnStop');
   const btnReset = document.getElementById('btnReset');
   const dial     = document.getElementById('dial');
+  const btnFineDown = document.getElementById('btnFineDown');
+  const btnFineUp   = document.getElementById('btnFineUp');
   const freqVal  = document.getElementById('freqVal');
   const meterBar = document.getElementById('meterBar');
   const lockEl   = document.getElementById('lock');
@@ -414,6 +455,15 @@
     }
   }
 
+  function nudgeDial(delta){
+    const cur = Number(dial.value) || 0;
+    let next = cur + delta;
+    if (Number.isNaN(next)) next = 0;
+    next = Math.max(0, Math.min(1000, next));
+    dial.value = String(next);
+    updateUI();
+  }
+
   // events
   dial.addEventListener('input', updateUI, {passive:true});
   btnStart.addEventListener('click', async () => {
@@ -431,6 +481,8 @@
   btnReset.addEventListener('click', reset);
   btnAnswer.addEventListener('click', judge);
   answer.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); judge(); } });
+  btnFineDown.addEventListener('click', () => nudgeDial(-1));
+  btnFineUp.addEventListener('click', () => nudgeDial(1));
 
   // initial
   updateUI();
