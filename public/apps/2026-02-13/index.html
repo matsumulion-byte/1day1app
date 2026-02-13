@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>世界ラジオデー｜松村チューナー</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.7);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --good:#34d399;
+      --bad:#fb7185;
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; overflow:hidden; background:var(--bg); color:var(--ink)}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .wrap{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding: calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+      gap:12px;
+      max-width:520px;
+      margin:0 auto;
+    }
+    header{
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .kicker{color:var(--muted); font-size:12px; letter-spacing:.08em}
+    h1{font-size:20px; line-height:1.2}
+    .card{
+      background:linear-gradient(180deg,var(--panel),rgba(255,255,255,.06));
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+      padding:14px;
+    }
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .btn{
+      appearance:none; border:none;
+      border-radius:14px;
+      padding:12px 14px;
+      background:rgba(255,255,255,.12);
+      color:var(--ink);
+      font-weight:700;
+      cursor:pointer;
+      user-select:none;
+      transition:transform .05s ease, background .15s ease;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{background:rgba(96,165,250,.22); border:1px solid rgba(96,165,250,.45)}
+    .btn.good{background:rgba(52,211,153,.18); border:1px solid rgba(52,211,153,.45)}
+    .btn.bad{background:rgba(251,113,133,.16); border:1px solid rgba(251,113,133,.45)}
+    .btn[disabled]{opacity:.55; cursor:not-allowed}
+    .meter{
+      height:10px;
+      background:rgba(255,255,255,.08);
+      border:1px solid var(--line);
+      border-radius:999px;
+      overflow:hidden;
+    }
+    .meter > i{
+      display:block; height:100%;
+      width:0%;
+      background:linear-gradient(90deg, rgba(96,165,250,.0), rgba(96,165,250,.85));
+    }
+    .hint{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+    }
+    .big{
+      font-size:13px; color:var(--muted);
+    }
+    .dial{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:8px;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--accent);
+    }
+    .freqRow{
+      display:flex; justify-content:space-between; align-items:baseline; gap:10px;
+      font-variant-numeric: tabular-nums;
+    }
+    .freq{
+      font-size:12px; color:var(--muted);
+    }
+    .lock{
+      font-weight:800;
+      color:var(--bad);
+    }
+    .lock.on{color:var(--good)}
+    .answerRow{
+      display:flex; gap:10px; align-items:center; margin-top:8px;
+    }
+    .text{
+      flex:1;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px 12px;
+      color:var(--ink);
+      outline:none;
+      font-size:16px;
+    }
+    .toast{
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.08);
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.4;
+    }
+    .toast.good{border-color:rgba(52,211,153,.45); color:rgba(52,211,153,.95)}
+    .toast.bad{border-color:rgba(251,113,133,.45); color:rgba(251,113,133,.95)}
+    .foot{
+      margin-top:auto;
+      color:rgba(243,246,255,.45);
+      font-size:11px;
+      text-align:center;
+    }
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="kicker">WORLD RADIO DAY / 2.13</div>
+      <h1>松村チューナー</h1>
+      <div class="big">スライダーを合わせてチューニング！聞こえた答えを入力。</div>
+    </header>
+
+    <section class="card">
+      <div class="row">
+        <button id="btnStart" class="btn primary">はじめる（音あり）</button>
+        <button id="btnStop" class="btn bad" disabled>停止</button>
+        <button id="btnReset" class="btn" disabled>リセット</button>
+      </div>
+
+      <div class="dial">
+        <div class="freqRow">
+          <div class="freq mono">FREQ <span id="freqVal">---</span></div>
+          <div class="lock" id="lock">LOCK ×</div>
+        </div>
+
+        <input id="dial" type="range" min="0" max="1000" value="0" disabled />
+
+        <div class="meter" aria-label="clarity meter"><i id="meterBar"></i></div>
+        <div class="hint">
+          かなりシビアです。<span class="mono">LOCK ✓</span> が点灯する付近まで寄せてから、微調整。
+        </div>
+      </div>
+
+      <div class="answerRow">
+        <input id="answer" class="text" type="text" inputmode="text" autocomplete="off" placeholder="聞こえたワードを入力" disabled />
+        <button id="btnAnswer" class="btn good" disabled>判定</button>
+      </div>
+
+      <div id="toast" class="toast" style="margin-top:10px;">
+        「はじめる」を押すと音が鳴ります（音量注意）。周波数が合うと急にクリアになります。
+      </div>
+    </section>
+
+    <div class="foot">シビアなチューニング体験をお楽しみください。</div>
+  </div>
+
+  <script type="module">
+  // --- asset helper (Vercel 用絶対パス) ---
+  const asset = (p) => {
+    const s = String(p || "");
+    if (s.startsWith("./")) {
+      return "/apps/2026-02-13" + s.slice(1);
+    }
+    return s;
+  };
+
+  // --- elements ---
+  const btnStart = document.getElementById('btnStart');
+  const btnStop  = document.getElementById('btnStop');
+  const btnReset = document.getElementById('btnReset');
+  const dial     = document.getElementById('dial');
+  const freqVal  = document.getElementById('freqVal');
+  const meterBar = document.getElementById('meterBar');
+  const lockEl   = document.getElementById('lock');
+  const answer   = document.getElementById('answer');
+  const btnAnswer= document.getElementById('btnAnswer');
+  const toast    = document.getElementById('toast');
+
+  // --- game params (tune here) ---
+  const TARGET = 673;                 // 正解の“周波数” (0..1000) ※毎回固定
+  const LOCK_WINDOW = 1.2;            // LOCK判定幅（超シビア）
+  const CLEAR_WINDOW = 4.0;           // ここを超えるとほぼ聞こえない
+  const CLARITY_EXP = 6.5;            // シビアさ（大きいほど急峻）
+  const ANSWER = 'まつむらです';
+
+  // --- audio ---
+  let ctx, src, voiceGain, noiseGain, masterGain, noiseNode, filter;
+  let isRunning = false;
+
+  function setToast(msg, kind=''){
+    toast.className = 'toast' + (kind ? ' ' + kind : '');
+    toast.textContent = msg;
+  }
+
+  function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+
+  // “近さ”→0..1の明瞭度（シビアに）
+  function calcClarity(val){
+    const d = Math.abs(val - TARGET);
+    if (d >= CLEAR_WINDOW) return 0;
+    // d=0 で 1、d=CLEAR_WINDOWで0 に落ちる曲線
+    const t = 1 - (d / CLEAR_WINDOW);
+    // 急峻化
+    return Math.pow(clamp01(t), CLARITY_EXP);
+  }
+
+  function updateUI(){
+    const v = Number(dial.value);
+    freqVal.textContent = v.toString().padStart(4,'0');
+    const clarity = calcClarity(v);
+
+    // meter
+    meterBar.style.width = (clarity*100).toFixed(1) + '%';
+
+    // lock
+    const locked = Math.abs(v - TARGET) <= LOCK_WINDOW;
+    lockEl.classList.toggle('on', locked);
+    lockEl.textContent = locked ? 'LOCK ✓' : 'LOCK ×';
+
+    // audio mix: clarity が 1に近いほど声が前に出てノイズが消える
+    if (isRunning){
+      // 声：0.02〜1.0へ
+      const vg = 0.02 + clarity * 0.98;
+      // ノイズ：1.0〜0.02へ
+      const ng = 0.02 + (1-clarity) * 0.98;
+
+      voiceGain.gain.setTargetAtTime(vg, ctx.currentTime, 0.02);
+      noiseGain.gain.setTargetAtTime(ng, ctx.currentTime, 0.02);
+
+      // フィルター：合うほど帯域が狭まり“ラジオ感”→最終的に素直に
+      // (Qを上げるとピーキーになる)
+      const q = 1 + clarity * 18;
+      filter.Q.setTargetAtTime(q, ctx.currentTime, 0.02);
+
+      // 合わない時はさらにハイ落ちして聞き取りにくく
+      const cutoff = 600 + clarity * 5200; // 600〜5800
+      filter.frequency.setTargetAtTime(cutoff, ctx.currentTime, 0.02);
+    }
+
+    // 入力解禁：LOCKしてから（“しびあ”を体験させる）
+    answer.disabled = !locked;
+    btnAnswer.disabled = !locked;
+
+    if (!isRunning) return;
+    if (locked){
+      setToast('LOCK！答えを入力して判定。', 'good');
+    } else {
+      setToast('周波数がズレてる。微調整。', '');
+    }
+  }
+
+  function createNoiseNode(audioCtx){
+    // ホワイトノイズ生成（ScriptProcessorは古いが互換重視で）
+    const bufferSize = 2048;
+    const node = audioCtx.createScriptProcessor(bufferSize, 1, 1);
+    node.onaudioprocess = (e) => {
+      const out = e.outputBuffer.getChannelData(0);
+      for (let i=0; i<out.length; i++){
+        out[i] = (Math.random()*2 - 1) * 0.9;
+      }
+    };
+    return node;
+  }
+
+  async function start(){
+    if (isRunning) return;
+
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // master
+    masterGain = ctx.createGain();
+    masterGain.gain.value = 0.9;
+    masterGain.connect(ctx.destination);
+
+    // noise chain
+    noiseNode = createNoiseNode(ctx);
+    noiseGain = ctx.createGain();
+    noiseGain.gain.value = 1.0;
+
+    // voice chain（実体は m4a）
+    const url = asset('./assets/matsumura_desu.m4a');
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('音声ファイルが見つかりません: ' + url);
+    const arr = await res.arrayBuffer();
+    const buf = await ctx.decodeAudioData(arr);
+
+    src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+
+    voiceGain = ctx.createGain();
+    voiceGain.gain.value = 0.02;
+
+    // shared filter (ラジオっぽさ)
+    filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 900;
+    filter.Q.value = 1;
+
+    // wiring
+    noiseNode.connect(noiseGain);
+    noiseGain.connect(filter);
+
+    src.connect(voiceGain);
+    voiceGain.connect(filter);
+
+    filter.connect(masterGain);
+
+    src.start();
+
+    isRunning = true;
+
+    dial.disabled = false;
+    btnStop.disabled = false;
+    btnReset.disabled = false;
+    btnStart.disabled = true;
+
+    setToast('チューニング開始。めっちゃシビア。', '');
+    updateUI();
+  }
+
+  function stop(){
+    if (!isRunning) return;
+    try{
+      src.stop();
+    }catch(e){}
+    try{ ctx.close(); }catch(e){}
+    isRunning = false;
+
+    dial.disabled = true;
+    btnStop.disabled = true;
+    btnStart.disabled = false;
+
+    // 入力はロックが取れるまで不可（停止中は不可）
+    answer.disabled = true;
+    btnAnswer.disabled = true;
+
+    setToast('停止しました。', '');
+  }
+
+  function reset(){
+    // “当てゲーム”感を強めるため、初期位置はランダムにずらす
+    dial.value = String(Math.floor(Math.random()*1001));
+    answer.value = '';
+    setToast('リセット。もう一回合わせろ。', '');
+    updateUI();
+  }
+
+  function normalizeJP(s){
+    // ゆるく：空白除去・全角半角は今回は無視（必要なら追加）
+    return (s ?? '').toString().trim().replace(/\s+/g,'');
+  }
+
+  function judge(){
+    const v = Number(dial.value);
+    const locked = Math.abs(v - TARGET) <= LOCK_WINDOW;
+    if (!locked){
+      setToast('LOCKしてから。', 'bad');
+      return;
+    }
+    const ans = normalizeJP(answer.value);
+    if (ans === ANSWER){
+      setToast('クリア。まつむらです。', 'good');
+      // クリア演出：少しずつノイズ0＆音量下げ
+      if (isRunning){
+        noiseGain.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.05);
+        voiceGain.gain.setTargetAtTime(0.9, ctx.currentTime, 0.05);
+        masterGain.gain.setTargetAtTime(0.65, ctx.currentTime, 0.05);
+      }
+      answer.disabled = true;
+      btnAnswer.disabled = true;
+      dial.disabled = true;
+    } else {
+      setToast('不正解。もう一回聞け。', 'bad');
+    }
+  }
+
+  // events
+  dial.addEventListener('input', updateUI, {passive:true});
+  btnStart.addEventListener('click', async () => {
+    try{
+      await start();
+      // 体験を“シビア”にする：開始時にランダム位置へ
+      reset();
+    }catch(e){
+      console.error(e);
+      setToast('音声の読み込みに失敗。assets配置を確認して。', 'bad');
+      stop();
+    }
+  });
+  btnStop.addEventListener('click', stop);
+  btnReset.addEventListener('click', reset);
+  btnAnswer.addEventListener('click', judge);
+  answer.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); judge(); } });
+
+  // initial
+  updateUI();
+</script>
+</body>
+</html>
