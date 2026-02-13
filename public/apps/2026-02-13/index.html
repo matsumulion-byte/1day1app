@@ -374,8 +374,20 @@
   }
 
   function normalizeJP(s){
-    // ゆるく：空白除去・全角半角は今回は無視（必要なら追加）
-    return (s ?? '').toString().trim().replace(/\s+/g,'');
+    // ゆるく正規化：
+    // - 全角/半角・句読点・スペースを吸収
+    // - カタカナ→ひらがな
+    // - 「松村」→「まつむら」に寄せる
+    let t = (s ?? '').toString();
+    try{
+      t = t.normalize('NFKC');
+    }catch(e){}
+    t = t.toLowerCase();
+    t = t.replace(/\s+/g, '');
+    t = t.replace(/[。、「」、,\.!！?？]/g, '');
+    t = t.replace(/[ァ-ン]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+    t = t.replace(/松村/g, 'まつむら');
+    return t;
   }
 
   function judge(){
