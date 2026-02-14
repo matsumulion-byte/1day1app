@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>松村チョコ鑑定｜本命？義理？</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(172, 92, 92, 0.08);
+      --panel2:rgba(255,255,255,.12);
+      --good:#34d399;
+      --bad:#fb7185;
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; background:var(--bg); color:var(--ink); overflow:hidden}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP",
+        "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+      display:flex; align-items:stretch; justify-content:center;
+    }
+    .wrap{
+      width:min(560px, 100%);
+      height:100%;
+      padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+      display:flex; flex-direction:column; gap:12px;
+    }
+    header{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 14px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+    }
+    .title{
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .title h1{font-size:14px; letter-spacing:.06em}
+    .title .sub{font-size:12px; color:var(--muted)}
+    .hud{
+      display:flex; flex-direction:column; gap:6px; align-items:flex-end;
+      min-width: 140px;
+    }
+    .hudRow{
+      display:flex; gap:10px; font-size:12px; color:var(--muted);
+    }
+    .bar{
+      width:140px; height:8px; border-radius:999px; background:rgba(255,255,255,.10);
+      overflow:hidden; border:1px solid rgba(255,255,255,.12);
+    }
+    .bar > i{display:block; height:100%; width:100%; background:rgba(255,255,255,.22)}
+    main{
+      flex:1;
+      display:flex; flex-direction:column; gap:12px;
+      min-height: 0;
+    }
+    .card{
+      flex:1;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border-radius: calc(var(--r) + 6px);
+      box-shadow: var(--shadow);
+      display:flex; flex-direction:column;
+      overflow:hidden;
+      position:relative;
+    }
+    .stage{
+      flex:1;
+      display:grid;
+      grid-template-rows: minmax(0, 1fr) auto;  /* 上段を縮め可能にして下の文字を確保 */
+      min-height:0;
+    }
+    .imgArea{
+      display:flex; align-items:center; justify-content:center;
+      padding:14px;
+      min-height:0;
+      overflow:hidden;
+      position:relative;
+    }
+    .imgFrame{
+      max-height:100%;           /* 縦スペースに収める */
+      width:auto;
+      aspect-ratio: 4 / 5;
+      max-width:min(92%, 420px);
+      border-radius: 22px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.4);
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden;
+      position:relative;
+      transform: translateZ(0);
+    }
+    .imgFrame img{
+      max-width:100%;
+      max-height:100%;
+      width:auto;
+      height:auto;
+      object-fit: contain;
+      min-width:0;
+      min-height:0;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+    .comment{
+      padding: 14px 14px 16px;
+      border-top:1px solid var(--line);
+      background:rgba(0,0,0,.10);
+    }
+    .bubble{
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.07);
+      padding: 12px 12px;
+      line-height:1.55;
+      font-size: 18px;
+      letter-spacing: .02em;
+      word-break: keep-all;
+      text-align:center;
+    }
+    .actions{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    button{
+      appearance:none; border:0; outline:0;
+      border-radius: 16px;
+      padding: 16px 14px;
+      font-weight: 800;
+      letter-spacing:.08em;
+      font-size: 16px;
+      cursor:pointer;
+      background: rgba(255,255,255,.10);
+      color: var(--ink);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      transition: transform .06s ease, background .12s ease;
+      touch-action: manipulation;
+      user-select:none;
+    }
+    button:active{transform: translateY(1px) scale(.99)}
+    .btnHonmei{background: rgba(96,165,250,.18); border-color: rgba(96,165,250,.35)}
+    .btnGiri{background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.18)}
+    .footer{
+      display:flex; gap:10px; justify-content:space-between; align-items:center;
+      padding: 10px 2px 0;
+      color: var(--muted);
+      font-size:12px;
+    }
+    .pill{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      display:inline-flex; gap:8px; align-items:center;
+      white-space:nowrap;
+    }
+    .modal{
+      position:absolute; inset:0;
+      display:none;
+      align-items:center; justify-content:center;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+      padding: 16px;
+    }
+    .modal.on{display:flex}
+    .panel{
+      width:min(520px, 100%);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      box-shadow: var(--shadow);
+      padding: 16px;
+      display:flex; flex-direction:column; gap:12px;
+    }
+    .panel h2{font-size:16px; letter-spacing:.08em}
+    .score{
+      display:grid; grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .box{
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      padding: 12px;
+    }
+    .box .k{font-size:12px; color:var(--muted)}
+    .box .v{font-size:22px; font-weight:900; margin-top:4px}
+    .rowBtns{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
+    .small{font-size:12px; color:var(--muted); line-height:1.5}
+    .toast{
+      position:absolute; left:50%; bottom: 14px;
+      transform: translateX(-50%);
+      padding:10px 12px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(10,16,32,.75);
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      font-size: 13px;
+      color: var(--ink);
+      opacity:0; pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      max-width: 92%;
+      text-align:center;
+    }
+    .toast.on{opacity:1; transform: translateX(-50%) translateY(-6px)}
+    .flash{
+      position:absolute; inset:0;
+      pointer-events:none;
+      opacity:0;
+      transition: opacity .12s ease;
+    }
+    .flash.good{background: rgba(52,211,153,.18)}
+    .flash.bad{background: rgba(251,113,133,.18)}
+    .flash.on{opacity:1}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>松村チョコ鑑定</h1>
+        <div class="sub">一言だけで「本命 / 義理」を当てろ</div>
+      </div>
+      <div class="hud">
+        <div class="hudRow">
+          <span id="qLabel">0/10</span>
+          <span id="tLabel">0.0s</span>
+        </div>
+        <div class="bar"><i id="tBar"></i></div>
+      </div>
+    </header>
+
+    <main>
+      <div class="card" id="card">
+        <div class="stage">
+          <div class="imgArea">
+            <div class="imgFrame" id="imgFrame">
+              <img id="mImg" alt="松村" />
+              <div class="flash good" id="flashGood"></div>
+              <div class="flash bad" id="flashBad"></div>
+            </div>
+          </div>
+
+          <div class="comment">
+            <div class="bubble" id="line">（はじめるを押してね）</div>
+
+            <div class="actions" style="margin-top:12px;">
+              <button class="btnHonmei" id="btnHonmei">本命</button>
+              <button class="btnGiri" id="btnGiri">義理</button>
+            </div>
+
+            <div class="footer">
+              <div class="pill" id="statusPill">▶ 準備中</div>
+              <div class="pill" id="scorePill">Score: 0</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal" id="modal">
+          <div class="panel">
+            <h2 id="resultTitle">結果</h2>
+            <div class="score">
+              <div class="box">
+                <div class="k">正解</div>
+                <div class="v"><span id="rCorrect">0</span>/10</div>
+              </div>
+              <div class="box">
+                <div class="k">スコア</div>
+                <div class="v" id="rScore">0</div>
+              </div>
+            </div>
+            <div class="box">
+              <div class="k">ランク</div>
+              <div class="v" id="rRank">—</div>
+            </div>
+            <div class="small" id="rComment">
+              「義理っぽいのが本命」ルールを理解してからが本番。
+            </div>
+            <div class="rowBtns">
+              <button id="btnRetry">もう一回</button>
+              <button id="btnShare">シェア</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="toast" id="toast"></div>
+      </div>
+    </main>
+  </div>
+
+<script type="module">
+  // Vercel用パス解決（/YYYY-MM-DD/ でアクセス → /YYYY-MM-DD/assets/... に解決）
+  const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
+  const asset = (p) => {
+    const clean = String(p || "").replace(/^\.?\//, "");
+    return DATE_SEGMENT ? `/${DATE_SEGMENT}/${clean}` : `/${clean}`;
+  };
+
+  // ---- 設定 ----
+  const TOTAL_Q = 10;
+  const SEC_PER_Q = 4.0; // 1問の制限時間
+  const HONMEI_RATE = 0.48; // 本命の出現率（微妙に義理多めでもOK）
+
+  // 「義理っぽい台詞ほど本命」というルールを強化するため、
+  // 台詞は "見た目カテゴリ" を持ち、実ラベルは逆転させる。
+  // ただし、完全に固定だと作業になるので、少しだけ例外（フェイント）を混ぜる。
+  const FEINT_RATE = 0.18; // 例外で逆転しない確率（学習後も少し外す）
+
+  // 台詞プール：見た目カテゴリごと
+  const lines = {
+    giriLike: [
+      "余ってたから…",
+      "たまたま買いすぎただけ",
+      "配る用のやつ、はい",
+      "ついで。ほんとについで",
+      "義理とかじゃないけど、義理みたいなやつ",
+      "別に深い意味ないから",
+      "家にあったから持ってきただけ",
+      "たまたま。たまたまだから",
+      "え、重い？ いや軽いほうのやつ",
+      "うるさいから渡す（静かにして）",
+      "これでチャラね",
+      "（目が合わない）…はい"
+    ],
+    honmeiLike: [
+      "あなたのために用意しました",
+      "受け取ってくれますか？",
+      "今日、渡したくて",
+      "これ、ずっと渡すタイミング探してた",
+      "開けるの、あとでね",
+      "一番好きなの選んだ",
+      "ほんとは緊張してる",
+      "…ちゃんと意味あるやつ",
+      "これ、特別だから",
+      "なんでもない顔してるけど特別"
+    ],
+    neutral: [
+      "はい、どうぞ",
+      "今日だからね",
+      "一応…",
+      "渡す",
+      "受け取って",
+      "持って帰って",
+      "食べて",
+      "捨てないで",
+      "あとで感想ちょうだい",
+      "黙って受け取って"
+    ]
+  };
+
+  // 実ラベル生成（本命/義理）→ 見た目カテゴリを割り当て
+  // ルール：giriLike は基本 本命、honmeiLike は基本 義理（逆転世界）
+  // neutral はランダム（ノイズ役）
+  function makeQuestion() {
+    const isHonmei = Math.random() < HONMEI_RATE;
+
+    // 見た目カテゴリ決め（neutralは少しだけ混ぜる）
+    const r = Math.random();
+    let appearance;
+    if (r < 0.12) appearance = "neutral";
+    else appearance = isHonmei ? "giriLike" : "honmeiLike";
+
+    // 例外：たまに「逆転しない」フェイント（学習後のスパイス）
+    // ＝ appearance を実ラベル側に寄せ直す（giriLike→義理に、honmeiLike→本命に）
+    if (Math.random() < FEINT_RATE && appearance !== "neutral") {
+      appearance = isHonmei ? "honmeiLike" : "giriLike";
+    }
+
+    const pool = lines[appearance];
+    const line = pool[(Math.random() * pool.length) | 0];
+
+    // appearanceはあくまで見た目。実ラベルは isHonmei。
+    return { isHonmei, appearance, line };
+  }
+
+  // ---- 状態 ----
+  const state = {
+    playing: false,
+    qIndex: 0,
+    score: 0,
+    correct: 0,
+    streak: 0,
+    current: null,
+    t0: 0,
+    timer: null,
+    raf: null
+  };
+
+  // ---- DOM ----
+  const mImg = document.querySelector("#mImg");
+  const lineEl = document.querySelector("#line");
+  const qLabel = document.querySelector("#qLabel");
+  const tLabel = document.querySelector("#tLabel");
+  const tBar = document.querySelector("#tBar");
+  const statusPill = document.querySelector("#statusPill");
+  const scorePill = document.querySelector("#scorePill");
+  const btnHonmei = document.querySelector("#btnHonmei");
+  const btnGiri = document.querySelector("#btnGiri");
+  const toast = document.querySelector("#toast");
+  const flashGood = document.querySelector("#flashGood");
+  const flashBad = document.querySelector("#flashBad");
+
+  const modal = document.querySelector("#modal");
+  const rCorrect = document.querySelector("#rCorrect");
+  const rScore = document.querySelector("#rScore");
+  const rRank = document.querySelector("#rRank");
+  const rComment = document.querySelector("#rComment");
+  const btnRetry = document.querySelector("#btnRetry");
+  const btnShare = document.querySelector("#btnShare");
+  const resultTitle = document.querySelector("#resultTitle");
+
+  // 画像は1枚固定
+  // assets/matsumura.png を置いてね
+  mImg.src = asset("./assets/matsumura.png");
+
+  // BGM（assets/bgm.mp3 を置いてね）
+  const bgm = new Audio(asset("./assets/bgm.mp3"));
+  bgm.loop = true;
+
+  function setToast(msg){
+    toast.textContent = msg;
+    toast.classList.add("on");
+    clearTimeout(setToast._t);
+    setToast._t = setTimeout(()=>toast.classList.remove("on"), 750);
+  }
+
+  function flash(ok){
+    const el = ok ? flashGood : flashBad;
+    el.classList.add("on");
+    setTimeout(()=>el.classList.remove("on"), 140);
+  }
+
+  function setPlayingUI(){
+    btnHonmei.textContent = "本命";
+    btnGiri.textContent = "義理";
+    statusPill.textContent = state.playing ? "▶ 鑑定中" : "▶ はじめる（どっちか押す）";
+    scorePill.textContent = `Score: ${state.score}`;
+  }
+
+  function startGame(){
+    state.playing = true;
+    state.qIndex = 0;
+    state.score = 0;
+    state.correct = 0;
+    state.streak = 0;
+    modal.classList.remove("on");
+    bgm.currentTime = 0;
+    bgm.play().catch(() => {});  // 自動再生ポリシーでブロックされても無視
+    nextQuestion();
+  }
+
+  function stopTimers(){
+    if (state.timer) { clearTimeout(state.timer); state.timer = null; }
+    if (state.raf) { cancelAnimationFrame(state.raf); state.raf = null; }
+  }
+
+  function updateTimer(){
+    const now = performance.now();
+    const elapsed = (now - state.t0) / 1000;
+    const left = Math.max(0, SEC_PER_Q - elapsed);
+    tLabel.textContent = `${left.toFixed(1)}s`;
+    const p = Math.max(0, Math.min(1, left / SEC_PER_Q));
+    tBar.style.width = `${p*100}%`;
+
+    if (left > 0 && state.playing) {
+      state.raf = requestAnimationFrame(updateTimer);
+    }
+  }
+
+  function nextQuestion(){
+    stopTimers();
+    state.current = makeQuestion();
+    state.qIndex += 1;
+
+    qLabel.textContent = `${state.qIndex}/${TOTAL_Q}`;
+    lineEl.textContent = state.current.line;
+    scorePill.textContent = `Score: ${state.score}`;
+
+    state.t0 = performance.now();
+    state.raf = requestAnimationFrame(updateTimer);
+
+    state.timer = setTimeout(()=>{
+      // タイムアウト：不正解
+      judge(null, true);
+    }, SEC_PER_Q * 1000);
+  }
+
+  function judge(choice, isTimeout=false){
+    if (!state.playing) return;
+
+    stopTimers();
+
+    const ansHonmei = !!state.current.isHonmei;
+    const ok = (choice === null) ? false : (choice === ansHonmei);
+
+    if (ok) {
+      state.correct += 1;
+      state.streak += 1;
+      // スコア：基礎10 + 連続ボーナス（最大+20）
+      const bonus = Math.min(20, (state.streak - 1) * 5);
+      state.score += (10 + bonus);
+      flash(true);
+      setToast(`正解  +${10+bonus}`);
+    } else {
+      state.streak = 0;
+      flash(false);
+      if (isTimeout) setToast("時間切れ");
+      else setToast("不正解");
+    }
+
+    scorePill.textContent = `Score: ${state.score}`;
+
+    // 次へ or 終了
+    if (state.qIndex >= TOTAL_Q) {
+      endGame();
+    } else {
+      setTimeout(nextQuestion, 420);
+    }
+  }
+
+  function rankOf(correct){
+    if (correct >= 9) return "S";
+    if (correct >= 7) return "A";
+    if (correct >= 5) return "B";
+    if (correct >= 3) return "C";
+    return "D";
+  }
+
+  function endGame(){
+    state.playing = false;
+    bgm.pause();
+    setPlayingUI();
+
+    const rank = rankOf(state.correct);
+    rCorrect.textContent = state.correct;
+    rScore.textContent = state.score;
+    rRank.textContent = rank;
+
+    // コメント：結果画面で匂わせ
+    const tips = [
+      "松村の言葉は、そのまま信じるな。",
+      "雑なほど、重いときがある。",
+      "言い訳が多い日は危ない。"
+    ];
+    rComment.textContent = tips[(Math.random() * tips.length) | 0];
+
+    resultTitle.textContent = "鑑定結果";
+    modal.classList.add("on");
+  }
+
+  // --- 入力 ---
+  btnHonmei.addEventListener("click", ()=>{
+    if (!state.playing) return startGame();
+    judge(true);
+  });
+  btnGiri.addEventListener("click", ()=>{
+    if (!state.playing) return startGame();
+    judge(false);
+  });
+
+  btnRetry.addEventListener("click", startGame);
+
+  btnShare.addEventListener("click", async ()=>{
+    const text = `松村チョコ鑑定：${state.correct}/${TOTAL_Q} 正解｜Score ${state.score}｜ランク ${rankOf(state.correct)}\n#1日1アプリ`;
+    try{
+      if (navigator.share) {
+        await navigator.share({ text });
+      } else {
+        await navigator.clipboard.writeText(text);
+        setToast("結果をコピーした");
+      }
+    } catch (e) {
+      // 共有キャンセル等は黙る
+      setToast("共有できなかった");
+    }
+  });
+
+  // 初期UI
+  qLabel.textContent = `0/${TOTAL_Q}`;
+  tLabel.textContent = `${SEC_PER_Q.toFixed(1)}s`;
+  tBar.style.width = "100%";
+  setPlayingUI();
+</script>
+</body>
+</html>
