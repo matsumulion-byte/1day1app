@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>ツクールの日｜タイトル画面だけツクール</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.16);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --accent:#60a5fa;
+      --good:#34d399;
+      --bad:#fb7185;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; background:var(--bg); color:var(--ink); overflow:hidden;}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .wrap{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding:14px;
+      gap:12px;
+      max-width:960px;
+      margin:0 auto;
+    }
+
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .hgroup{display:flex; flex-direction:column; gap:4px;}
+    h1{font-size:15px; letter-spacing:.02em;}
+    .sub{font-size:12px; color:var(--muted); line-height:1.35;}
+    .pill{
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      padding:7px 10px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+
+    .grid{
+      flex:1;
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:12px;
+      min-height:0;
+    }
+
+    .card{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      min-height:0;
+    }
+
+    /* preview */
+    .preview{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+    .canvasWrap{
+      position:relative;
+      flex:1;
+      min-height:0;
+      padding:12px;
+    }
+    canvas{
+      width:100%;
+      height:100%;
+      display:block;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background:#050813;
+    }
+    .previewBar{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 12px;
+      border-top:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+    }
+    .meta{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .dot{opacity:.7}
+    .kbd{
+      padding:2px 6px;
+      border:1px solid rgba(255,255,255,.18);
+      border-bottom-color: rgba(255,255,255,.10);
+      border-radius:8px;
+      background:rgba(255,255,255,.06);
+      color:var(--ink);
+      font-size:11px;
+    }
+
+    /* controls */
+    .controls{
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+    .controlsInner{
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:0;
+      overflow:auto;
+    }
+    .controlsInner::-webkit-scrollbar{width:10px}
+    .controlsInner::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14); border-radius:999px}
+    .controlsInner::-webkit-scrollbar-track{background:transparent}
+
+    label{font-size:12px; color:var(--muted); display:flex; justify-content:space-between; gap:10px;}
+    label span{opacity:.9}
+    input[type="text"], textarea, select{
+      width:100%;
+      padding:10px 11px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.20);
+      color:var(--ink);
+      outline:none;
+      font-size:14px;
+    }
+    textarea{min-height:70px; resize:vertical}
+    input[type="text"]:focus, textarea:focus, select:focus{
+      border-color: rgba(96,165,250,.65);
+      box-shadow: 0 0 0 3px rgba(96,165,250,.18);
+    }
+
+    .row2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .rangeWrap{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--accent);
+    }
+    .rangeVal{
+      min-width:52px;
+      text-align:right;
+      font-size:12px;
+      color:var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .btnRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      padding:12px;
+      border-top:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+    }
+    button{
+      appearance:none;
+      border:none;
+      border-radius:14px;
+      padding:11px 12px;
+      font-size:14px;
+      color:var(--ink);
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.14);
+      cursor:pointer;
+      user-select:none;
+      touch-action: manipulation;
+    }
+    button:hover{background:rgba(255,255,255,.12)}
+    button:active{transform:translateY(1px)}
+    .primary{
+      background:linear-gradient(180deg, rgba(96,165,250,.95), rgba(96,165,250,.65));
+      border-color: rgba(96,165,250,.85);
+      color:#061027;
+      font-weight:700;
+    }
+    .ghost{
+      background:transparent;
+      border-color: rgba(255,255,255,.14);
+      color:var(--muted);
+    }
+    .danger{
+      background:linear-gradient(180deg, rgba(251,113,133,.9), rgba(251,113,133,.55));
+      border-color: rgba(251,113,133,.75);
+      color:#22030a;
+      font-weight:700;
+    }
+
+    .note{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+    .hr{
+      height:1px;
+      background:rgba(255,255,255,.10);
+      margin:2px 0 4px;
+    }
+
+    @media (max-width: 900px){
+      body{overflow:auto}
+      html,body{overflow:auto}
+      .wrap{height:auto; min-height:100%;}
+      .grid{grid-template-columns:1fr;}
+      .canvasWrap{height:56vh;}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="hgroup">
+        <h1>ツクールの日｜タイトル画面だけツクール</h1>
+        <div class="sub">入力→生成で“それっぽい”タイトル画面を作る。PNG保存可。</div>
+      </div>
+      <div class="pill">2/15</div>
+    </header>
+
+    <div class="grid">
+      <!-- Preview -->
+      <section class="card preview">
+        <div class="canvasWrap">
+          <canvas id="c" aria-label="title-screen"></canvas>
+        </div>
+        <div class="previewBar">
+          <div class="meta">
+            <span class="kbd">PRESS START</span><span class="dot">•</span>
+            <span id="metaLine">STYLE: RETRO / BG: H210 T18</span>
+          </div>
+          <div class="meta">
+            <span class="kbd" id="seedView">SEED: 0000</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Controls -->
+      <section class="card controls">
+        <div class="controlsInner">
+          <div>
+            <label><span>タイトル</span><span class="note">（大）</span></label>
+            <input id="title" type="text" maxlength="28" value="MATSUMURA QUEST" />
+          </div>
+
+          <div>
+            <label><span>サブタイトル</span><span class="note">（中）</span></label>
+            <input id="subtitle" type="text" maxlength="36" value="TITLE SCREEN MAKER" />
+          </div>
+
+          <div>
+            <label><span>コピー / 注意書き</span><span class="note">（小）</span></label>
+            <textarea id="tagline" maxlength="140">※このゲームは存在しません。存在するのはタイトル画面だけです。</textarea>
+          </div>
+
+          <div class="row2">
+            <div>
+              <label><span>スタイル</span><span class="note">質感</span></label>
+              <select id="style">
+                <option value="retro" selected>Retro（王道）</option>
+                <option value="horror">Horror（不穏）</option>
+                <option value="cute">Cute（甘め）</option>
+                <option value="scifi">Sci-Fi（青白い）</option>
+                <option value="noir">Noir（硬派）</option>
+              </select>
+            </div>
+            <div>
+              <label><span>ロゴの縁取り</span><span class="note">ON/OFF</span></label>
+              <select id="stroke">
+                <option value="on" selected>ON</option>
+                <option value="off">OFF</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label><span>背景色（色相）</span><span class="note">0–359</span></label>
+            <div class="rangeWrap">
+              <input id="bgHue" type="range" min="0" max="359" step="1" value="210" />
+              <div class="rangeVal" id="bgHueVal">210</div>
+            </div>
+          </div>
+
+          <div>
+            <label><span>背景の暗さ（トーン）</span><span class="note">暗いほど深い</span></label>
+            <div class="rangeWrap">
+              <input id="bgTone" type="range" min="10" max="30" step="1" value="18" />
+              <div class="rangeVal" id="bgToneVal">18</div>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div>
+              <label><span>ノイズ</span><span class="note">OFFで綺麗</span></label>
+              <select id="noise">
+                <option value="on" selected>ON</option>
+                <option value="off">OFF</option>
+              </select>
+            </div>
+            <div>
+              <label><span>色プリセット</span><span class="note">一発で寄せる</span></label>
+              <select id="bgPreset">
+                <option value="" selected>—</option>
+                <option value="retroBlue">レトロ青</option>
+                <option value="vapor">バイオレット</option>
+                <option value="horrorRed">ホラー赤</option>
+                <option value="forest">深緑</option>
+                <option value="amber">アンバー</option>
+                <option value="mono">モノクロ</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+          <div class="note">
+            使い方：入力→<b>生成</b>。<b>ランダム</b>で文言/種が変わる。<b>PNG保存</b>で共有素材にできる。
+          </div>
+        </div>
+
+        <div class="btnRow">
+          <button class="primary" id="btnGenerate">生成</button>
+          <button id="btnRandom">ランダム</button>
+          <button class="ghost" id="btnReset">リセット</button>
+          <button id="btnSave">PNG保存</button>
+          <button class="danger" id="btnGlitch">バグる</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    const asset = (p) => new URL(p, import.meta.url).toString(); // project rule
+
+    const $ = (id) => document.getElementById(id);
+    const c = $("c");
+    const ctx = c.getContext("2d");
+
+    const state = {
+      seed: 2150,
+      t0: performance.now(),
+      glitchUntil: 0,
+    };
+
+    function xorshift32(seed){
+      let x = seed >>> 0;
+      return function(){
+        x ^= x << 13; x >>>= 0;
+        x ^= x >>> 17; x >>>= 0;
+        x ^= x << 5;  x >>>= 0;
+        return (x >>> 0) / 4294967296;
+      };
+    }
+
+    function resize(){
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const r = c.getBoundingClientRect();
+      const w = Math.max(320, Math.floor(r.width * dpr));
+      const h = Math.max(480, Math.floor(r.height * dpr));
+      if (c.width !== w || c.height !== h){
+        c.width = w;
+        c.height = h;
+      }
+    }
+    new ResizeObserver(()=>{ resize(); draw(); }).observe(c);
+    window.addEventListener("resize", ()=>{ resize(); draw(); }, {passive:true});
+
+    const RANDOM_TITLES = [
+      "MATSUMURA QUEST","PRESS START MATSUMURA","TITLE ONLY","NO GAME JUST TITLE",
+      "OMOROI BUILDER","RPG?","PROJECT: MATSUMURA","THE ENDLESS BUILD"
+    ];
+    const RANDOM_SUBS = [
+      "MADE IN 60 SECONDS","A GAME THAT DOES NOT EXIST","TAKE YOUR TIME","BUILD. RUN. FIX.",
+      "TODAY IS TSUKU-RU DAY","RETRO TITLE SCREEN","THIS IS ONLY THE BEGINNING"
+    ];
+    const RANDOM_TAGS = [
+      "※このゲームは存在しません。存在するのはタイトル画面だけです。",
+      "※実装は明日。今日はタイトルだけ。",
+      "※BGMは脳内再生でお願いします。",
+      "※“開始”しても始まりません。仕様です。",
+      "※生成物はあなたの責任でご使用ください。"
+    ];
+
+    function ui(){
+      return {
+        title: $("title").value.trim() || "UNTITLED",
+        subtitle: $("subtitle").value.trim() || "",
+        tagline: $("tagline").value.trim() || "",
+        style: $("style").value,
+        stroke: $("stroke").value === "on",
+        noise: $("noise").value === "on",
+        bgHue: parseInt($("bgHue").value, 10),
+        bgTone: parseInt($("bgTone").value, 10),
+        bgPreset: $("bgPreset").value || "",
+      };
+    }
+
+    function applyPreset(preset){
+      // hue: 0-359, tone: 10-30 (smaller = brighter)
+      const set = (h, t) => {
+        $("bgHue").value = String(h);
+        $("bgTone").value = String(t);
+        $("bgHueVal").textContent = String(h);
+        $("bgToneVal").textContent = String(t);
+      };
+      if(preset === "retroBlue") set(210, 18);
+      if(preset === "vapor")    set(275, 17);
+      if(preset === "horrorRed")set(350, 16);
+      if(preset === "forest")   set(140, 19);
+      if(preset === "amber")    set(35,  18);
+      if(preset === "mono")     set(220, 22); // hue not used much in mono
+    }
+
+    function palette(u, rng){
+      const mono = (u.bgPreset === "mono");
+      const hue = u.bgHue;
+      const tone = u.bgTone; // 10..30
+
+      // Base background colors derived from hue/tone
+      // L values intentionally low to keep “title screen” vibe.
+      const a = `hsl(${hue} 45% ${Math.max(4, tone-10)}%)`;
+      const b = `hsl(${hue} 60% ${tone}%)`;
+
+      // Accent depends on style but still tied to hue
+      let accentHue = hue;
+      let accentSat = 85;
+      let accentLum = 62;
+
+      if(u.style === "horror"){ accentHue = (hue + 18) % 360; accentSat = 90; accentLum = 58; }
+      if(u.style === "cute"){  accentHue = (hue + 55) % 360; accentSat = 80; accentLum = 70; }
+      if(u.style === "scifi"){ accentHue = (hue + 140) % 360; accentSat = 85; accentLum = 60; }
+      if(u.style === "noir"){  accentHue = hue; accentSat = 10; accentLum = 85; }
+
+      if(mono){
+        // force grayscale-ish
+        return {a:"#05060a", b:"#111827", c:"rgba(255,255,255,.85)", d:"#f3f6ff", e:"rgba(255,255,255,.70)"};
+      }
+
+      const c = `hsl(${accentHue} ${accentSat}% ${accentLum}%)`;
+      const d = "#f3f6ff";
+      const e = `hsl(${(accentHue + 110) % 360} 80% 55%)`;
+
+      return {a,b,c,d,e};
+    }
+
+    function drawBackground(pal, rng, w, h, style){
+      // base gradient
+      const g = ctx.createLinearGradient(0, 0, w, h);
+      g.addColorStop(0, pal.a);
+      g.addColorStop(0.55, pal.b);
+      g.addColorStop(1, pal.a);
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,w,h);
+
+      // vignette
+      const vg = ctx.createRadialGradient(w*0.5, h*0.45, Math.min(w,h)*0.15, w*0.5, h*0.5, Math.max(w,h)*0.7);
+      vg.addColorStop(0, "rgba(0,0,0,0)");
+      vg.addColorStop(1, "rgba(0,0,0,.68)");
+      ctx.fillStyle = vg;
+      ctx.fillRect(0,0,w,h);
+
+      // stars / dust
+      ctx.globalAlpha = (style === "noir") ? 0.25 : 0.55;
+      const dots = (style === "horror") ? 70 : 120;
+      for(let i=0;i<dots;i++){
+        const x = rng()*w;
+        const y = rng()*h;
+        const r = (rng()*1.8+0.4);
+        ctx.fillStyle = `rgba(255,255,255,${0.12 + rng()*0.28})`;
+        ctx.fillRect(x, y, r, r);
+      }
+      ctx.globalAlpha = 1;
+
+      // scanlines
+      ctx.globalAlpha = (style === "cute") ? 0.10 : 0.14;
+      ctx.fillStyle = "rgba(255,255,255,.08)";
+      const step = Math.max(2, Math.floor(h/220));
+      for(let y=0;y<h;y+=step){
+        ctx.fillRect(0, y, w, 1);
+      }
+      ctx.globalAlpha = 1;
+
+      // horizon grid (retro feel) - keep for all styles but reduce for horror/noir
+      const gridAlpha = (style === "horror") ? 0.10 : (style === "noir" ? 0.08 : 0.18);
+      ctx.save();
+      ctx.globalAlpha = gridAlpha;
+      ctx.strokeStyle = pal.c;
+      ctx.lineWidth = Math.max(1, Math.floor(w/540));
+      const baseY = h*0.72;
+      const gridH = h*0.38;
+      for(let i=0;i<10;i++){
+        const t = i/9;
+        const y = baseY + t*gridH;
+        ctx.beginPath();
+        ctx.moveTo(w*0.08, y);
+        ctx.lineTo(w*0.92, y);
+        ctx.stroke();
+      }
+      for(let i=0;i<9;i++){
+        const t = i/8;
+        const x = w*0.12 + t*w*0.76;
+        ctx.beginPath();
+        ctx.moveTo(x, baseY);
+        ctx.lineTo(w*0.5 + (x-w*0.5)*2.3, baseY+gridH);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function fitText(text, maxW, base, min, weight=800){
+      let s = base;
+      ctx.font = `${weight} ${s}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif`;
+      while(s > min && ctx.measureText(text).width > maxW){
+        s -= 2;
+        ctx.font = `${weight} ${s}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif`;
+      }
+      return s;
+    }
+
+    function roundRect(ctx, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.moveTo(x+rr,y);
+      ctx.arcTo(x+w,y,x+w,y+h,rr);
+      ctx.arcTo(x+w,y+h,x,y+h,rr);
+      ctx.arcTo(x,y+h,x,y,rr);
+      ctx.arcTo(x,y,x+w,y,rr);
+      ctx.closePath();
+    }
+
+    function wrapText(ctx, text, maxWidth, maxLines){
+      // Japanese-friendly: char wrap
+      const chars = [...text];
+      const lines = [];
+      let line = "";
+      for(const ch of chars){
+        const t = line + ch;
+        if(ctx.measureText(t).width > maxWidth && line){
+          lines.push(line);
+          line = ch;
+          if(lines.length === maxLines-1) break;
+        }else{
+          line = t;
+        }
+      }
+      const consumed = lines.join("").length;
+      let rest = chars.slice(consumed).join("");
+      if(lines.length === maxLines-1 && rest.length){
+        while(rest.length && ctx.measureText(rest + "…").width > maxWidth) rest = rest.slice(0,-1);
+        lines.push(rest + "…");
+      }else{
+        lines.push(line);
+      }
+      return lines.slice(0, maxLines);
+    }
+
+    function draw(){
+      resize();
+      const u = ui();
+
+      $("bgHueVal").textContent = String(u.bgHue);
+      $("bgToneVal").textContent = String(u.bgTone);
+
+      const w = c.width, h = c.height;
+      const rng = xorshift32(state.seed ^ 0x9e3779b9);
+
+      const pal = palette(u, rng);
+
+      ctx.clearRect(0,0,w,h);
+      drawBackground(pal, rng, w, h, u.style);
+
+      const now = performance.now();
+      const glitch = now < state.glitchUntil;
+
+      // top badge (style / bg)
+      const badge = `STYLE: ${u.style.toUpperCase()}  BG: H${u.bgHue} T${u.bgTone}`;
+      ctx.save();
+      ctx.globalAlpha = 0.92;
+      ctx.fillStyle = "rgba(0,0,0,.32)";
+      ctx.strokeStyle = "rgba(255,255,255,.18)";
+      ctx.lineWidth = Math.max(1, Math.floor(w/520));
+      const pad = Math.floor(w*0.028);
+      ctx.beginPath();
+      roundRect(ctx, pad, pad, w - pad*2, Math.floor(h*0.085), Math.floor(Math.min(w,h)*0.03));
+      ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = pal.d;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.font = `700 ${Math.floor(h*0.03)}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif`;
+      ctx.fillText(badge, pad*1.6, pad + Math.floor(h*0.042));
+      ctx.restore();
+
+      // logo title
+      const titleY = h*0.30;
+      const maxW = w*0.88;
+
+      const title = u.title.toUpperCase();
+      const sub = u.subtitle.toUpperCase();
+      const tSize = fitText(title, maxW, Math.floor(h*0.12), Math.floor(h*0.07), 900);
+      const sSize = fitText(sub, maxW, Math.floor(h*0.045), Math.floor(h*0.028), 800);
+
+      ctx.save();
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      const shadowOff = Math.max(2, Math.floor(h*0.006));
+      ctx.font = `900 ${tSize}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif`;
+
+      const gx = glitch ? (rng()*10-5) * (w/700) : 0;
+      const gy = glitch ? (rng()*10-5) * (h/700) : 0;
+
+      ctx.fillStyle = "rgba(0,0,0,.55)";
+      ctx.fillText(title, w*0.5 + shadowOff + gx, titleY + shadowOff + gy);
+
+      ctx.fillStyle = pal.d;
+      ctx.fillText(title, w*0.5 + gx, titleY + gy);
+
+      if(u.stroke){
+        ctx.lineWidth = Math.max(2, Math.floor(tSize*0.06));
+        ctx.strokeStyle = pal.c;
+        ctx.strokeText(title, w*0.5 + gx, titleY + gy);
+      }
+
+      if(sub){
+        ctx.font = `800 ${sSize}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif`;
+        ctx.fillStyle = "rgba(255,255,255,.82)";
+        ctx.fillText(sub, w*0.5 + gx, titleY + Math.floor(tSize*0.78) + gy);
+      }
+
+      ctx.globalAlpha = 0.6;
+      ctx.strokeStyle = "rgba(255,255,255,.22)";
+      ctx.lineWidth = Math.max(1, Math.floor(w/600));
+      ctx.beginPath();
+      ctx.moveTo(w*0.14, titleY + Math.floor(tSize*1.15));
+      ctx.lineTo(w*0.86, titleY + Math.floor(tSize*1.15));
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      if(u.tagline){
+        const tx = w*0.5;
+        const ty = h*0.56;
+        const boxW = w*0.88;
+        const font = Math.floor(h*0.027);
+        ctx.font = `600 ${font}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif`;
+        ctx.fillStyle = "rgba(255,255,255,.75)";
+        const lines = wrapText(ctx, u.tagline, boxW, 2);
+        for(let i=0;i<lines.length;i++){
+          ctx.fillText(lines[i], tx, ty + i*Math.floor(font*1.55));
+        }
+      }
+
+      const blink = Math.floor((now - state.t0)/450) % 2 === 0;
+      if(blink){
+        const ps = "PRESS START";
+        const psSize = Math.floor(h*0.042);
+        ctx.font = `900 ${psSize}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif`;
+        const y = h*0.83;
+        ctx.fillStyle = pal.e;
+        ctx.fillText(ps, w*0.5 + (glitch?gx*0.4:0), y + (glitch?gy*0.4:0));
+      }
+
+      ctx.font = `700 ${Math.floor(h*0.024)}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif`;
+      ctx.fillStyle = "rgba(255,255,255,.55)";
+      ctx.fillText("© 2026 TITLE ONLY STUDIO", w*0.5, h*0.93);
+
+      if(u.noise){
+        ctx.save();
+        ctx.globalAlpha = 0.18;
+        const nW = Math.max(140, Math.floor(w/5));
+        const nH = Math.max(140, Math.floor(h/5));
+        const off = document.createElement("canvas");
+        off.width = nW; off.height = nH;
+        const octx = off.getContext("2d");
+        const rr = xorshift32((state.seed*1664525+1013904223)>>>0);
+        const img = octx.createImageData(nW, nH);
+        const d = img.data;
+        for(let i=0;i<d.length;i+=4){
+          const v = Math.floor(rr()*255);
+          d[i]=v; d[i+1]=v; d[i+2]=v; d[i+3]=Math.floor(255*(0.18*rr()));
+        }
+        octx.putImageData(img,0,0);
+        const pat = ctx.createPattern(off, "repeat");
+        ctx.fillStyle = pat;
+        ctx.fillRect(0,0,w,h);
+        ctx.restore();
+      }
+
+      if(glitch){
+        const slices = 10;
+        for(let i=0;i<slices;i++){
+          const y = Math.floor(rng()*h);
+          const hh = Math.floor((rng()*10+2) * (h/700));
+          const dx = Math.floor((rng()*24-12) * (w/700));
+          ctx.drawImage(c, 0, y, w, hh, dx, y, w, hh);
+        }
+      }
+
+      $("metaLine").textContent = `STYLE: ${u.style.toUpperCase()} / BG: H${u.bgHue} T${u.bgTone}`;
+      $("seedView").textContent = `SEED: ${String(state.seed).padStart(4,"0")}`;
+      ctx.restore();
+    }
+
+    function setSeed(n){
+      state.seed = (n >>> 0) % 10000;
+      draw();
+    }
+
+    function randomizeText(){
+      const r = xorshift32((Date.now() & 0xffffffff) >>> 0);
+      $("title").value = RANDOM_TITLES[Math.floor(r()*RANDOM_TITLES.length)];
+      $("subtitle").value = RANDOM_SUBS[Math.floor(r()*RANDOM_SUBS.length)];
+      $("tagline").value = RANDOM_TAGS[Math.floor(r()*RANDOM_TAGS.length)];
+      const styles = ["retro","horror","cute","scifi","noir"];
+      $("style").value = styles[Math.floor(r()*styles.length)];
+      $("stroke").value = r() < 0.7 ? "on" : "off";
+      $("noise").value = r() < 0.8 ? "on" : "off";
+      // bg
+      $("bgHue").value = String(Math.floor(r()*360));
+      $("bgTone").value = String(14 + Math.floor(r()*12));
+      $("bgPreset").value = "";
+      setSeed(Math.floor(r()*10000));
+    }
+
+    function reset(){
+      $("title").value = "MATSUMURA QUEST";
+      $("subtitle").value = "TITLE SCREEN MAKER";
+      $("tagline").value = "※このゲームは存在しません。存在するのはタイトル画面だけです。";
+      $("style").value = "retro";
+      $("stroke").value = "on";
+      $("noise").value = "on";
+      $("bgHue").value = "210";
+      $("bgTone").value = "18";
+      $("bgPreset").value = "";
+      $("bgHueVal").textContent = "210";
+      $("bgToneVal").textContent = "18";
+      setSeed(2150);
+    }
+
+    function savePng(){
+      const a = document.createElement("a");
+      const u = ui();
+      const safe = (u.title || "TITLE").replace(/[^\w\-]+/g, "_").slice(0,32);
+      a.download = `title_${safe}_h${u.bgHue}_t${u.bgTone}_seed${String(state.seed).padStart(4,"0")}.png`;
+      a.href = c.toDataURL("image/png");
+      a.click();
+    }
+
+    function glitch(){
+      state.glitchUntil = performance.now() + 900;
+      draw();
+    }
+
+    // inputs
+    const onAnyInput = () => draw();
+    ["title","subtitle","tagline","style","stroke","noise"].forEach(id=>{
+      $(id).addEventListener("input", onAnyInput, {passive:true});
+      $(id).addEventListener("change", onAnyInput, {passive:true});
+    });
+
+    $("bgHue").addEventListener("input", ()=>{
+      $("bgHueVal").textContent = $("bgHue").value;
+      $("bgPreset").value = "";
+      draw();
+    }, {passive:true});
+
+    $("bgTone").addEventListener("input", ()=>{
+      $("bgToneVal").textContent = $("bgTone").value;
+      $("bgPreset").value = "";
+      draw();
+    }, {passive:true});
+
+    $("bgPreset").addEventListener("change", ()=>{
+      const v = $("bgPreset").value;
+      if(v) applyPreset(v);
+      draw();
+    }, {passive:true});
+
+    // buttons
+    $("btnGenerate").addEventListener("click", ()=>{
+      const r = xorshift32(((state.seed+1)*1103515245 + 12345)>>>0);
+      setSeed(Math.floor(r()*10000));
+    });
+    $("btnRandom").addEventListener("click", randomizeText);
+    $("btnReset").addEventListener("click", reset);
+    $("btnSave").addEventListener("click", savePng);
+    $("btnGlitch").addEventListener("click", glitch);
+
+    // keyboard shortcuts (PC)
+    window.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter"){ e.preventDefault(); $("btnGenerate").click(); }
+      if(e.key.toLowerCase() === "r"){ $("btnRandom").click(); }
+      if(e.key.toLowerCase() === "s"){ $("btnSave").click(); }
+      if(e.key.toLowerCase() === "g"){ $("btnGlitch").click(); }
+    });
+
+    function tick(){
+      draw();
+      requestAnimationFrame(tick);
+    }
+
+    resize();
+    draw();
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>
