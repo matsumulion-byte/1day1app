@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>松村前線｜雨か？晴れか？</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ink:#f3f6ff;
+      --muted:rgba(243,246,255,.72);
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
+      --good:#34d399;
+      --bad:#fb7185;
+      --accent:#60a5fa;
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%; background:var(--bg); color:var(--ink); overflow:hidden}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    .wrap{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      padding:14px 14px calc(14px + env(safe-area-inset-bottom));
+      max-width:520px;
+      margin:0 auto;
+    }
+    header{
+      display:flex; align-items:flex-end; justify-content:space-between;
+      gap:12px;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:4px;
+    }
+    h1{font-size:18px; letter-spacing:.02em}
+    .sub{font-size:12px; color:var(--muted)}
+    .meta{
+      display:flex; flex-direction:column; align-items:flex-end; gap:6px;
+      font-variant-numeric: tabular-nums;
+    }
+    .pill{
+      padding:6px 10px;
+      border-radius:999px;
+      background:var(--panel);
+      border:1px solid var(--line);
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .stage{
+      flex:1;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+      display:flex;
+      flex-direction:column;
+    }
+    canvas{width:100%; height:auto; display:block; touch-action:none; background:transparent}
+    .legend{
+      position:absolute;
+      left:12px; top:12px;
+      display:flex; flex-direction:column; gap:6px;
+      pointer-events:none;
+    }
+    .legend .tag{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px;
+      background:rgba(11,16,32,.55);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:999px;
+      font-size:12px;
+      color:var(--muted);
+      backdrop-filter: blur(8px);
+    }
+    .tag b{color:var(--ink); font-weight:700}
+    .controls{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    button{
+      appearance:none; border:0;
+      background:var(--panel);
+      border:1px solid var(--line);
+      color:var(--ink);
+      padding:14px 12px;
+      border-radius:16px;
+      font-size:16px;
+      font-weight:700;
+      letter-spacing:.02em;
+      touch-action: manipulation;
+      user-select:none;
+      transition: transform .06s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
+    }
+    button:active{transform: translateY(1px) scale(.99)}
+    .btn-rain{border-color: rgba(96,165,250,.35)}
+    .btn-sun{border-color: rgba(52,211,153,.35)}
+    .toast{
+      margin-top:10px;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px 12px;
+      min-height:58px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .toast .line1{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      font-variant-numeric: tabular-nums;
+    }
+    .badge{
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .badge.good{border-color: rgba(52,211,153,.45); color: rgba(52,211,153,.95)}
+    .badge.bad{border-color: rgba(251,113,133,.55); color: rgba(251,113,133,.95)}
+    .toast .msg{font-size:13px; color:var(--muted); line-height:1.45}
+    .footer{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      margin-top:10px;
+    }
+    .smallbtn{
+      font-size:12px; font-weight:700;
+      padding:10px 12px;
+      border-radius:14px;
+      background:rgba(255,255,255,.06);
+    }
+    .smallbtn.secondary{color:var(--muted)}
+    .hidden{display:none !important}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>松村前線｜雨か？晴れか？</h1>
+        <div class="sub">天気図1枚で「明日の松村」を当てろ（2択×3問）</div>
+      </div>
+      <div class="meta">
+        <div class="pill" id="qPill">Q 1 / 3</div>
+        <div class="pill" id="scorePill">SCORE 0</div>
+      </div>
+    </header>
+
+    <section class="stage">
+      <div class="legend">
+        <div class="tag"><b>ルール</b> 前線が「松村地点」に当たる（接近して通過）なら雨</div>
+        <div class="tag" id="typeTag"><b>前線</b> ——</div>
+      </div>
+      <canvas id="cv" width="960" height="720" aria-label="天気図"></canvas>
+    </section>
+
+    <div class="controls">
+      <button class="btn-rain" id="btnRain">☔ 雨（しっとり松村）</button>
+      <button class="btn-sun" id="btnSun">☀ 晴（カラッ松村）</button>
+    </div>
+
+    <div class="toast" id="toast">
+      <div class="line1">
+        <div class="badge" id="badge">実況</div>
+        <div class="badge" id="timer">15.0s</div>
+      </div>
+      <div class="msg" id="msg">天気図を読め。前線は矢印方向へ移動する。</div>
+    </div>
+
+    <div class="footer">
+      <button class="smallbtn secondary" id="btnSkip">スキップ</button>
+      <button class="smallbtn" id="btnRestart">最初から</button>
+    </div>
+  </div>
+
+  <script type="module">
+    // 1日1アプリ：動的アセット参照ヘルパー（今回は未使用だがルールとして常に同梱）
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+
+    const qPill = document.getElementById('qPill');
+    const scorePill = document.getElementById('scorePill');
+    const typeTag = document.getElementById('typeTag');
+    const badge = document.getElementById('badge');
+    const timerEl = document.getElementById('timer');
+    const msg = document.getElementById('msg');
+
+    const btnRain = document.getElementById('btnRain');
+    const btnSun  = document.getElementById('btnSun');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnSkip = document.getElementById('btnSkip');
+
+    const W = cv.width, H = cv.height;
+    const center = { x: W*0.56, y: H*0.52 }; // 観測点（松村地点）
+    const pointR = 16;
+
+    // ========= 幾何：点と線分の最短距離 =========
+    function distPointToSegment(px, py, ax, ay, bx, by){
+      const abx = bx - ax, aby = by - ay;
+      const apx = px - ax, apy = py - ay;
+      const ab2 = abx*abx + aby*aby;
+      let t = 0;
+      if (ab2 > 1e-6) t = (apx*abx + apy*aby)/ab2;
+      t = Math.max(0, Math.min(1, t));
+      const cx = ax + abx*t, cy = ay + aby*t;
+      const dx = px - cx, dy = py - cy;
+      return Math.hypot(dx, dy);
+    }
+
+    // ========= 問題セット（3問固定） =========
+    // 前線は線分 + 記号（寒冷/温暖/停滞） + 移動ベクトル（矢印）で表現
+    // 判定：線分を矢印方向に "shift" だけ動かした後、観測点との距離が閾値以下なら「雨」
+    const QUESTIONS = [
+      {
+        type: "停滞前線",
+        flavor: "居座る松村。ジワジワ湿る。",
+        // front line segment (ax,ay)-(bx,by)
+        a:{x:W*0.24,y:H*0.58}, b:{x:W*0.70,y:H*0.46},
+        // arrow direction (normalized-ish) and shift
+        v:{x:+1.0,y:-0.15}, shift: 70,
+        threshold: 26,
+      },
+      {
+        type: "寒冷前線",
+        flavor: "通過後、概ねカラッと松村。",
+        a:{x:W*0.20,y:H*0.28}, b:{x:W*0.62,y:H*0.62},
+        v:{x:+0.85,y:+0.30}, shift: 90,
+        threshold: 26,
+      },
+      {
+        type: "温暖前線",
+        flavor: "しとしと。静かに湿る松村。",
+        a:{x:W*0.26,y:H*0.66}, b:{x:W*0.78,y:H*0.66},
+        v:{x:-0.95,y:-0.10}, shift: 110,
+        threshold: 26,
+      }
+    ];
+
+    // ========= 状態 =========
+    let qi = 0;
+    let score = 0;
+    let locked = false;
+
+    // 1問の制限時間
+    const LIMIT_SEC = 15.0;
+    let tLeft = LIMIT_SEC;
+    let raf = 0;
+    let lastTS = 0;
+
+    function setControlsEnabled(on){
+      btnRain.disabled = !on;
+      btnSun.disabled  = !on;
+      btnRain.style.opacity = on ? 1 : .55;
+      btnSun.style.opacity  = on ? 1 : .55;
+    }
+
+    function norm(v){
+      const l = Math.hypot(v.x, v.y) || 1;
+      return {x:v.x/l, y:v.y/l};
+    }
+
+    function isRain(q){
+      const vv = norm(q.v);
+      const dx = vv.x * q.shift;
+      const dy = vv.y * q.shift;
+
+      const ax = q.a.x + dx, ay = q.a.y + dy;
+      const bx = q.b.x + dx, by = q.b.y + dy;
+
+      const d = distPointToSegment(center.x, center.y, ax, ay, bx, by);
+      return d <= q.threshold;
+    }
+
+    function renderPaper(){
+      // 背景（紙っぽいグリッド）
+      ctx.clearRect(0,0,W,H);
+      ctx.fillStyle = "rgba(255,255,255,0.02)";
+      ctx.fillRect(0,0,W,H);
+
+      // グリッド
+      ctx.lineWidth = 1;
+      for(let x=0; x<=W; x+=48){
+        ctx.strokeStyle = "rgba(255,255,255,0.04)";
+        ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+      }
+      for(let y=0; y<=H; y+=48){
+        ctx.strokeStyle = "rgba(255,255,255,0.04)";
+        ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+      }
+      // 少し太い罫線
+      for(let x=0; x<=W; x+=240){
+        ctx.strokeStyle = "rgba(255,255,255,0.07)";
+        ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+      }
+      for(let y=0; y<=H; y+=240){
+        ctx.strokeStyle = "rgba(255,255,255,0.07)";
+        ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+      }
+    }
+
+    function drawIsobars(seed=0){
+      // 等圧線っぽい波線（飾り）
+      const lines = [
+        {cx:W*0.32, cy:H*0.40, r:170},
+        {cx:W*0.34, cy:H*0.40, r:230},
+        {cx:W*0.72, cy:H*0.52, r:190},
+        {cx:W*0.74, cy:H*0.52, r:250},
+      ];
+      ctx.save();
+      ctx.strokeStyle = "rgba(243,246,255,0.10)";
+      ctx.lineWidth = 2;
+      for(const L of lines){
+        ctx.beginPath();
+        ctx.ellipse(L.cx, L.cy, L.r*1.1, L.r*0.75, 0, 0, Math.PI*2);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // H/L 記号
+      ctx.save();
+      ctx.font = "700 44px ui-sans-serif, system-ui";
+      ctx.fillStyle = "rgba(243,246,255,0.16)";
+      ctx.fillText("H", W*0.16, H*0.24);
+      ctx.fillText("L", W*0.82, H*0.30);
+      ctx.restore();
+    }
+
+    function drawArrow(x, y, vx, vy, len=70){
+      const v = norm({x:vx,y:vy});
+      const ex = x + v.x*len;
+      const ey = y + v.y*len;
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(96,165,250,0.70)";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(x,y);
+      ctx.lineTo(ex,ey);
+      ctx.stroke();
+
+      // arrow head
+      const a = Math.atan2(v.y, v.x);
+      const h = 16;
+      ctx.beginPath();
+      ctx.moveTo(ex,ey);
+      ctx.lineTo(ex - Math.cos(a-0.6)*h, ey - Math.sin(a-0.6)*h);
+      ctx.lineTo(ex - Math.cos(a+0.6)*h, ey - Math.sin(a+0.6)*h);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(96,165,250,0.70)";
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawFrontSymbolAlong(ax, ay, bx, by, kind){
+      // 前線記号を線分に沿って一定間隔で描く（三角/半円/交互）
+      const dx = bx-ax, dy = by-ay;
+      const L = Math.hypot(dx,dy) || 1;
+      const ux = dx/L, uy = dy/L;
+      const nx = -uy, ny = ux; // 法線（片側に記号を出す）
+      const step = 44;
+      const count = Math.floor(L/step);
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(243,246,255,0.70)";
+      ctx.fillStyle   = "rgba(243,246,255,0.70)";
+      ctx.lineWidth = 3;
+
+      for(let i=1;i<=count;i++){
+        const t = (i*step)/L;
+        const px = ax + dx*t;
+        const py = ay + dy*t;
+
+        if(kind === "寒冷前線"){
+          // 三角
+          const s = 16;
+          const tipx = px + nx*s;
+          const tipy = py + ny*s;
+          const b1x  = px - ux*10;
+          const b1y  = py - uy*10;
+          const b2x  = px + ux*10;
+          const b2y  = py + uy*10;
+          ctx.beginPath();
+          ctx.moveTo(tipx, tipy);
+          ctx.lineTo(b1x, b1y);
+          ctx.lineTo(b2x, b2y);
+          ctx.closePath();
+          ctx.fill();
+        } else if(kind === "温暖前線"){
+          // 半円
+          const r = 12;
+          const cx = px + nx*r;
+          const cy = py + ny*r;
+          const ang = Math.atan2(ny, nx); // 法線方向
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, ang - Math.PI/2, ang + Math.PI/2, false);
+          ctx.stroke();
+        } else {
+          // 停滞：交互（三角/半円）
+          if(i%2===0){
+            const s = 16;
+            const tipx = px + nx*s;
+            const tipy = py + ny*s;
+            const b1x  = px - ux*10;
+            const b1y  = py - uy*10;
+            const b2x  = px + ux*10;
+            const b2y  = py + uy*10;
+            ctx.beginPath();
+            ctx.moveTo(tipx, tipy);
+            ctx.lineTo(b1x, b1y);
+            ctx.lineTo(b2x, b2y);
+            ctx.closePath();
+            ctx.fill();
+          } else {
+            const r = 12;
+            const cx = px + nx*r;
+            const cy = py + ny*r;
+            const ang = Math.atan2(ny, nx);
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, ang - Math.PI/2, ang + Math.PI/2, false);
+            ctx.stroke();
+          }
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawFront(q){
+      // 線分本体
+      ctx.save();
+      ctx.strokeStyle = "rgba(243,246,255,0.75)";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(q.a.x, q.a.y);
+      ctx.lineTo(q.b.x, q.b.y);
+      ctx.stroke();
+      ctx.restore();
+
+      // 記号
+      drawFrontSymbolAlong(q.a.x, q.a.y, q.b.x, q.b.y, q.type);
+
+      // 移動矢印（線分の中点付近）
+      const mx = (q.a.x+q.b.x)/2, my = (q.a.y+q.b.y)/2;
+      drawArrow(mx - q.v.x*10, my - q.v.y*10, q.v.x, q.v.y, 78);
+
+      // “次の位置”のゴースト（薄く）＝予報っぽさ
+      const vv = norm(q.v);
+      const dx = vv.x*q.shift, dy = vv.y*q.shift;
+      ctx.save();
+      ctx.setLineDash([10,10]);
+      ctx.strokeStyle = "rgba(96,165,250,0.30)";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(q.a.x+dx, q.a.y+dy);
+      ctx.lineTo(q.b.x+dx, q.b.y+dy);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawMatsumuraPoint(){
+      ctx.save();
+      // 外枠
+      ctx.fillStyle = "rgba(11,16,32,0.70)";
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, pointR+7, 0, Math.PI*2);
+      ctx.fill();
+      ctx.stroke();
+
+      // 中（●松）
+      ctx.fillStyle = "rgba(243,246,255,0.92)";
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, pointR, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(11,16,32,0.95)";
+      ctx.font = "900 20px ui-sans-serif, system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("松", center.x, center.y+1);
+
+      // ラベル
+      ctx.fillStyle = "rgba(243,246,255,0.70)";
+      ctx.font = "700 14px ui-sans-serif, system-ui";
+      ctx.textAlign = "left";
+      ctx.fillText("松村地点（観測）", center.x + 26, center.y - 22);
+      ctx.restore();
+    }
+
+    function render(){
+      const q = QUESTIONS[qi];
+      renderPaper();
+      drawIsobars(qi);
+      drawFront(q);
+      drawMatsumuraPoint();
+
+      // 時間表示
+      timerEl.textContent = `${tLeft.toFixed(1)}s`;
+    }
+
+    function setToast(kind, title, detail){
+      badge.className = "badge";
+      if(kind === "good") badge.classList.add("good");
+      if(kind === "bad") badge.classList.add("bad");
+      badge.textContent = title;
+      msg.textContent = detail;
+    }
+
+    function commentaryForStreak(streak){
+      if(streak >= 3) return "松村気象庁レベル。解析、完全に合ってる。";
+      if(streak === 2) return "解析精度が上がっています。概ね松村。";
+      if(streak === 1) return "予報的中。雲行き、読めてる。";
+      return "天気図を読め。前線は矢印方向へ移動する。";
+    }
+
+    let streak = 0;
+
+    function loadQuestion(){
+      locked = false;
+      tLeft = LIMIT_SEC;
+      lastTS = 0;
+
+      qPill.textContent = `Q ${qi+1} / ${QUESTIONS.length}`;
+      scorePill.textContent = `SCORE ${score}`;
+      typeTag.innerHTML = `<b>前線</b> ${QUESTIONS[qi].type}`;
+
+      setControlsEnabled(true);
+      setToast("neutral", "実況", `${QUESTIONS[qi].flavor}（矢印方向に前線が移動する）`);
+
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(tick);
+      render();
+    }
+
+    function finishGame(){
+      locked = true;
+      setControlsEnabled(false);
+      cancelAnimationFrame(raf);
+
+      const rank =
+        score === 3 ? "松村気象庁・長官" :
+        score === 2 ? "松村気象台・主任" :
+        score === 1 ? "松村気象台・見習い" :
+                      "気象図、だいたい雰囲気で見てる";
+
+      setToast(
+        score >= 2 ? "good" : (score === 1 ? "neutral" : "bad"),
+        "結果",
+        `3問中 ${score} 正解。称号：${rank}。`
+      );
+
+      // 結果オーバーレイ（簡易）
+      ctx.save();
+      ctx.fillStyle = "rgba(11,16,32,0.62)";
+      ctx.fillRect(0,0,W,H);
+      ctx.fillStyle = "rgba(243,246,255,0.94)";
+      ctx.font = "900 44px ui-sans-serif, system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText(`SCORE ${score} / 3`, W/2, H*0.42);
+      ctx.font = "700 22px ui-sans-serif, system-ui";
+      ctx.fillStyle = "rgba(243,246,255,0.78)";
+      ctx.fillText(rank, W/2, H*0.50);
+      ctx.font = "700 16px ui-sans-serif, system-ui";
+      ctx.fillStyle = "rgba(243,246,255,0.62)";
+      ctx.fillText("「最初から」で再予報", W/2, H*0.58);
+      ctx.restore();
+    }
+
+    function answer(userSaysRain){
+      if(locked) return;
+      locked = true;
+      setControlsEnabled(false);
+
+      const q = QUESTIONS[qi];
+      const correctIsRain = isRain(q);
+      const ok = (userSaysRain === correctIsRain);
+
+      if(ok){
+        score++;
+        streak++;
+        setToast("good", "的中", commentaryForStreak(streak));
+      } else {
+        streak = 0;
+        const short = correctIsRain ? "前線が当たる→雨" : "当たらない→晴";
+        setToast("bad", "ハズレ", `判定：${short}。${q.flavor}`);
+      }
+
+      scorePill.textContent = `SCORE ${score}`;
+      // 1.0秒だけ結果を見せて次へ
+      setTimeout(() => {
+        qi++;
+        if(qi >= QUESTIONS.length){
+          finishGame();
+        } else {
+          loadQuestion();
+        }
+      }, 1000);
+    }
+
+    function skip(){
+      if(locked) return;
+      // スキップは不正解扱い（ streak リセット）
+      locked = true;
+      setControlsEnabled(false);
+      streak = 0;
+      setToast("bad", "スキップ", "予報拒否。松村地点、見逃し。");
+      setTimeout(() => {
+        qi++;
+        if(qi >= QUESTIONS.length) finishGame();
+        else loadQuestion();
+      }, 650);
+    }
+
+    function restart(){
+      cancelAnimationFrame(raf);
+      qi = 0;
+      score = 0;
+      streak = 0;
+      loadQuestion();
+    }
+
+    function tick(ts){
+      if(!lastTS) lastTS = ts;
+      const dt = Math.min(0.05, (ts - lastTS) / 1000);
+      lastTS = ts;
+
+      if(!locked){
+        tLeft -= dt;
+        if(tLeft <= 0){
+          tLeft = 0;
+          // タイムアップ＝不正解扱い
+          streak = 0;
+          locked = true;
+          setControlsEnabled(false);
+          setToast("bad", "時間切れ", "前線、読めず。松村地点、無防備。");
+          setTimeout(() => {
+            qi++;
+            if(qi >= QUESTIONS.length) finishGame();
+            else loadQuestion();
+          }, 650);
+        }
+      }
+
+      render();
+      raf = requestAnimationFrame(tick);
+    }
+
+    // ========= イベント =========
+    btnRain.addEventListener('click', () => answer(true));
+    btnSun.addEventListener('click',  () => answer(false));
+    btnRestart.addEventListener('click', restart);
+    btnSkip.addEventListener('click', skip);
+
+    // 画面サイズに応じてキャンバス比率維持（CSS側は100%）
+    function fitCanvas(){
+      // ここでは固定解像度のまま描画（retinaはブラウザ任せ）
+      render();
+    }
+    window.addEventListener('resize', fitCanvas);
+
+    // 初期化
+    restart();
+  </script>
+</body>
+</html>
