@@ -181,8 +181,23 @@
     }
     @media (max-width:480px){
       main{padding:14px}
-      .big{font-size:20px}
-      .kv{grid-template-columns: 92px 1fr}
+      .big{font-size:19px}
+      .outBody{padding:14px 12px}
+      .outHead{
+        padding:12px 12px 10px;
+        flex-direction:column;
+        align-items:flex-start;
+      }
+      .outHead .label{font-size:11px}
+      .kv{
+        grid-template-columns: 1fr;
+        gap:8px;
+      }
+      .k{
+        font-size:11px;
+        padding-top:0;
+      }
+      .v{font-size:13px}
     }
   </style>
 </head>
@@ -224,12 +239,12 @@
           <div class="outBody">
             <div class="big" id="ringName">—</div>
             <div class="kv">
-              <div class="k">キャッチ</div><div class="v" id="catch">—</div>
-              <div class="k">得意技</div><div class="v" id="finisher">—</div>
-              <div class="k">属性</div><div class="v" id="style">—</div>
+              <div class="k">キャッチフレーズ</div><div class="v" id="catch">—</div>
+              <div class="k">フィニッシュ・ホールド</div><div class="v" id="finisher">—</div>
+              <div class="k">スタイル</div><div class="v" id="style">—</div>
               <div class="k">入場</div><div class="v" id="entrance">—</div>
             </div>
-            <div class="note">※「同名で別案」は、同じ名前でも別の候補を出すための“揺らし”です（SNS向け）。</div>
+            <div class="note">※「同名で別案」を押せば同じ名前でも別の候補を出せるよ。</div>
           </div>
         </section>
       </main>
@@ -417,7 +432,7 @@
         `元の名前：${n}`,
         `リングネーム：${lastProfile.ringName}`,
         `キャッチ：${lastProfile.catchphrase}`,
-        `得意技：${lastProfile.finisher}`,
+        `フィニッシュホールド：${lastProfile.finisher}`,
         `属性：${lastProfile.style}`,
       ].join("\n");
     };
