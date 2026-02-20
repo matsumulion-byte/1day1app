@@ -90,8 +90,29 @@
       setStatus("検出中");
     }
 
-    // ベース映像がミラー表示なので、ランドマーク座標も左右反転して合わせる
-    function xy(lm){ return { x: (1 - lm.x) * canvas.width, y: lm.y * canvas.height }; }
+    function getCoverTransform() {
+      const vw = video.videoWidth || 720;
+      const vh = video.videoHeight || 960;
+      const cw = canvas.width;
+      const ch = canvas.height;
+      const scale = Math.max(cw / vw, ch / vh);
+      const dw = vw * scale;
+      const dh = vh * scale;
+      const dx = (cw - dw) / 2;
+      const dy = (ch - dh) / 2;
+      return { vw, vh, cw, scale, dx, dy, dw, dh };
+    }
+
+    // ベース映像と同じcover変換 + ミラー反転をランドマークにも適用する
+    function xy(lm){
+      const { vw, vh, cw, scale, dx, dy } = getCoverTransform();
+      const vx = lm.x * vw;
+      const vy = lm.y * vh;
+      return {
+        x: cw - (dx + vx * scale),
+        y: dy + vy * scale
+      };
+    }
 
     // ランドマークに合わせて kumadori.png を重ねる
     function drawKumadori(landmarks){
@@ -112,7 +133,8 @@
       const angle = Math.atan2(Reye.y - Leye.y, Reye.x - Leye.x);
 
       const drawW = eyeW * 2.35;
-      const drawH = faceH * 1.35;
+      const imgAspect = kumadoriImg.naturalWidth / kumadoriImg.naturalHeight;
+      const drawH = drawW / imgAspect;
       const centerX = (eyeMidX + Nose.x) * 0.5;
       const centerY = (eyeMidY + Nose.y) * 0.5 + faceH * 0.06;
 
@@ -131,12 +153,7 @@
       ctx.clearRect(0,0,canvas.width,canvas.height);
 
       // 画面フィットでビデオ描画（cover）
-      const vw = video.videoWidth || 720;
-      const vh = video.videoHeight || 960;
-      const cw = canvas.width, ch = canvas.height;
-      const scale = Math.max(cw/vw, ch/vh);
-      const dw = vw*scale, dh = vh*scale;
-      const dx = (cw - dw)/2, dy = (ch - dh)/2;
+      const { cw, dx, dy, dw, dh } = getCoverTransform();
 
       ctx.translate(cw, 0);
       ctx.scale(-1, 1);
