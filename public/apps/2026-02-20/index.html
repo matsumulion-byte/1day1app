@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>隈取フィルター</title>
+  <style>
+    html,body{height:100%;margin:0;background:#0b1020;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .wrap{position:fixed;inset:0;display:grid;place-items:center}
+    canvas{width:min(92vw,520px);height:auto;border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.55);background:#111}
+    .ui{position:fixed;left:0;right:0;bottom:0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));display:flex;gap:10px;justify-content:center}
+    button{appearance:none;border:0;border-radius:999px;padding:12px 16px;font-weight:700;cursor:pointer}
+    .pri{background:#ef4444;color:#fff}
+    .sec{background:rgba(255,255,255,.12);color:#fff}
+    .badge{position:fixed;top:12px;left:12px;background:rgba(255,255,255,.12);padding:8px 10px;border-radius:999px;font-size:12px}
+    video{display:none}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs"
+    type="module" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="badge" id="status">待機中</div>
+    <video id="video" playsinline></video>
+    <canvas id="c" width="720" height="960"></canvas>
+  </div>
+  <div class="ui">
+    <button class="pri" id="start">開始</button>
+    <button class="sec" id="shot">撮影</button>
+    <button class="sec" id="toggle">隈取: ON</button>
+  </div>
+
+  <script type="module">
+    // Vercelでもローカルでも壊れにくいアセットURL解決
+    const APP_BASE = location.pathname.endsWith("/")
+      ? location.pathname
+      : location.pathname.endsWith(".html")
+        ? location.pathname.replace(/[^/]+$/, "")
+        : `${location.pathname}/`;
+    const asset = (p) => new URL(String(p).replace(/^\.?\//, ""), `${location.origin}${APP_BASE}`).toString();
+
+    const $ = (id) => document.getElementById(id);
+    const video = $("video");
+    const canvas = $("c");
+    const ctx = canvas.getContext("2d");
+    const statusEl = $("status");
+
+    let running = false;
+    let kumadoriOn = true;
+    let freeze = false;
+    let loopStarted = false;
+    let lastTime = -1;
+    let faceLandmarker = null;
+    const kumadoriImg = new Image();
+    kumadoriImg.src = asset("assets/kumadori.png");
+
+    // 環境により window.vision が未定義のことがあるため import フォールバック
+    const vision = window.vision ?? await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs");
+    const { FaceLandmarker, FilesetResolver } = vision;
+
+    function setStatus(t){ statusEl.textContent = t; }
+
+    async function initFaceLandmarker() {
+      if (faceLandmarker) return faceLandmarker;
+      const fileset = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+      );
+      faceLandmarker = await FaceLandmarker.createFromOptions(fileset, {
+        baseOptions: {
+          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+          delegate: "GPU"
+        },
+        runningMode: "VIDEO",
+        numFaces: 1
+      });
+      return faceLandmarker;
+    }
+
+    async function startCamera() {
+      // フロントカメラ優先
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 960 } },
+        audio: false
+      });
+      video.srcObject = stream;
+      await video.play();
+      await initFaceLandmarker();
+      lastTime = -1;
+      running = true;
+      setStatus("検出中");
+    }
+
+    // ベース映像がミラー表示なので、ランドマーク座標も左右反転して合わせる
+    function xy(lm){ return { x: (1 - lm.x) * canvas.width, y: lm.y * canvas.height }; }
+
+    // ランドマークに合わせて kumadori.png を重ねる
+    function drawKumadori(landmarks){
+      if (!kumadoriImg.complete || !kumadoriImg.naturalWidth) return;
+
+      // 指標点（FaceMesh index）
+      // 33:左目外側 / 263:右目外側 / 1:鼻先 / 152:顎先 / 10:額上
+      const Leye = xy(landmarks[33]);
+      const Reye = xy(landmarks[263]);
+      const Nose = xy(landmarks[1]);
+      const Chin = xy(landmarks[152]);
+      const Fore = xy(landmarks[10]);
+      const eyeMidX = (Leye.x + Reye.x) * 0.5;
+      const eyeMidY = (Leye.y + Reye.y) * 0.5;
+
+      const eyeW = Math.hypot(Reye.x - Leye.x, Reye.y - Leye.y);
+      const faceH = Math.hypot(Chin.x - Fore.x, Chin.y - Fore.y);
+      const angle = Math.atan2(Reye.y - Leye.y, Reye.x - Leye.x);
+
+      const drawW = eyeW * 2.35;
+      const drawH = faceH * 1.35;
+      const centerX = (eyeMidX + Nose.x) * 0.5;
+      const centerY = (eyeMidY + Nose.y) * 0.5 + faceH * 0.06;
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(angle);
+      ctx.scale(1, -1);
+      ctx.globalAlpha = 0.92;
+      ctx.drawImage(kumadoriImg, -drawW / 2, -drawH * 0.52, drawW, drawH);
+      ctx.restore();
+    }
+
+    function drawFrameBase(){
+      // ミラー表示で“自撮り”感
+      ctx.save();
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      // 画面フィットでビデオ描画（cover）
+      const vw = video.videoWidth || 720;
+      const vh = video.videoHeight || 960;
+      const cw = canvas.width, ch = canvas.height;
+      const scale = Math.max(cw/vw, ch/vh);
+      const dw = vw*scale, dh = vh*scale;
+      const dx = (cw - dw)/2, dy = (ch - dh)/2;
+
+      ctx.translate(cw, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, dx, dy, dw, dh);
+      ctx.restore();
+    }
+
+    function renderFromResult(res){
+      drawFrameBase();
+      const faces = res?.faceLandmarks || [];
+      if (faces.length === 0) {
+        setStatus("顔が見つかりません");
+        return;
+      }
+      setStatus("検出OK");
+
+      if (kumadoriOn) {
+        // 少し“絵の具”っぽく
+        ctx.save();
+        ctx.globalCompositeOperation = "source-over";
+        drawKumadori(faces[0]);
+        ctx.restore();
+      }
+    }
+
+    function loop(){
+      if (!running || freeze) return requestAnimationFrame(loop);
+      if (video.currentTime !== lastTime && faceLandmarker) {
+        const nowMs = performance.now();
+        const res = faceLandmarker.detectForVideo(video, nowMs);
+        renderFromResult(res);
+        lastTime = video.currentTime;
+      }
+      requestAnimationFrame(loop);
+    }
+
+    $("start").addEventListener("click", async () => {
+      try {
+        if (!running) await startCamera();
+        running = true;
+        freeze = false;
+        if (!loopStarted) {
+          loopStarted = true;
+          requestAnimationFrame(loop);
+        }
+        setStatus("検出中");
+      } catch (e) {
+        console.error(e);
+        setStatus("カメラ起動に失敗");
+        alert("カメラ権限を許可してください（HTTPS配下で動作します）");
+      }
+    });
+
+    $("toggle").addEventListener("click", () => {
+      kumadoriOn = !kumadoriOn;
+      $("toggle").textContent = `隈取: ${kumadoriOn ? "ON" : "OFF"}`;
+    });
+
+    $("shot").addEventListener("click", () => {
+      // “撮影”はフリーズして canvas を画像として保存できるように
+      freeze = !freeze;
+      if (freeze) {
+        setStatus("撮影（静止）");
+        const a = document.createElement("a");
+        a.download = "kumadori.png";
+        a.href = canvas.toDataURL("image/png");
+        a.click();
+      } else {
+        setStatus("検出中");
+      }
+    });
+  </script>
+</body>
+</html>
