@@ -188,9 +188,13 @@
   </div>
 
   <script type="module">
-    // このHTMLがあるディレクトリを基準にする（末尾スラッシュなしだと new URL(".") が親になるため明示的に / を付ける）
-    const baseDir = import.meta.url.endsWith("/") ? import.meta.url : import.meta.url + "/";
-    const asset = (p) => new URL((p.startsWith("./") ? p.slice(1) : p), baseDir).href;
+    // Vercel用: location.pathname を基準にアセットを解決（2026-02-20 と同じ方式）
+    const APP_BASE = location.pathname.endsWith("/")
+      ? location.pathname
+      : location.pathname.endsWith(".html")
+        ? location.pathname.replace(/[^/]+$/, "")
+        : `${location.pathname}/`;
+    const asset = (p) => new URL(String(p).replace(/^\.?\//, ""), `${location.origin}${APP_BASE}`).toString();
 
     const DEFAULT_WORDS = [
       "不機嫌","寝不足","二日酔い","筋肉痛","花粉症",
