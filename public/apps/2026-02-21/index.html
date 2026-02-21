@@ -188,9 +188,9 @@
   </div>
 
   <script type="module">
-    // Vercel/サブパス対応: 現在のパスを基準にアセットURLを解決
-    const base = document.location.pathname.replace(/\/index\.html$/i, "").replace(/\/?$/, "/");
-    const asset = (p) => new URL((p.startsWith("./") ? p.slice(1) : p), document.location.origin + base).toString();
+    // このHTMLがあるディレクトリを基準にする（末尾スラッシュなしだと new URL(".") が親になるため明示的に / を付ける）
+    const baseDir = import.meta.url.endsWith("/") ? import.meta.url : import.meta.url + "/";
+    const asset = (p) => new URL((p.startsWith("./") ? p.slice(1) : p), baseDir).href;
 
     const DEFAULT_WORDS = [
       "不機嫌","寝不足","二日酔い","筋肉痛","花粉症",
