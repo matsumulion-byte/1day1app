@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>吾輩は〇〇であるジェネレーター</title>
+  <meta name="description" content="吾輩は〇〇である、をランダム生成します。" />
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --panel:#14161d;
+      --text:#e9edf2;
+      --muted:#a6b0be;
+      --accent:#ffffff;
+      --border:rgba(255,255,255,.12);
+      --shadow: 0 20px 60px rgba(0,0,0,.35);
+      --radius:16px;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      background: radial-gradient(1200px 800px at 20% 0%, rgba(255,255,255,.08), transparent 55%),
+                  radial-gradient(1000px 700px at 90% 10%, rgba(255,255,255,.06), transparent 50%),
+                  var(--bg);
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .app{
+      width:min(720px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    @media (min-width: 768px){
+      .app{ width: min(880px, 100%); }
+      .hero{
+        display: grid;
+        grid-template-columns: minmax(0, 320px) minmax(280px, 1fr);
+        gap: 0 32px;
+        align-items: center;
+      }
+      .hero .portrait{ grid-column: 1; margin-bottom: 0; justify-content: flex-end; }
+      .hero .portrait img{ width: 100%; max-width: 280px; }
+      .hero .phrase,
+      .hero .sub,
+      .hero .row,
+      .hero .toast{ grid-column: 2; }
+      .hero .phrase{ font-size: clamp(28px, 2.8vw, 42px); margin-bottom: 4px; }
+      .hero .row{ margin-top: 12px; }
+    }
+    header{
+      padding:18px 18px 12px;
+      border-bottom:1px solid var(--border);
+      background: rgba(0,0,0,.12);
+    }
+    header h1{
+      margin:0;
+      font-size:16px;
+      letter-spacing:.02em;
+      color:var(--muted);
+      font-weight:600;
+    }
+    main{ padding:18px; }
+    .hero{
+      background: rgba(0,0,0,.22);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:18px;
+    }
+    .portrait{
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+    .portrait img{
+      width: min(360px, 80%);
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: 0 18px 45px rgba(0,0,0,.35);
+      filter: saturate(.9) contrast(1.05);
+    }
+    .phrase{
+      font-family: ui-serif, "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+      font-size: clamp(26px, 5vw, 40px);
+      line-height:1.25;
+      margin:0;
+      letter-spacing:.02em;
+      word-break: break-word;
+    }
+    .sub{
+      margin:10px 0 0;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      margin-top:14px;
+      flex-wrap:wrap;
+    }
+    @media (max-width: 767px){
+      body{ padding: 10px; }
+      main{ padding: 14px; }
+      .hero{ padding: 16px; }
+      .portrait{ margin-bottom: 12px; }
+      .portrait img{ width: min(260px, 72%); }
+      .phrase{ font-size: clamp(22px, 6vw, 32px); }
+      .sub{ margin-top: 8px; font-size: 12px; }
+      .row{
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .row button{ padding: 14px 10px; font-size: 14px; }
+      .row button.primary{ grid-column: 1 / -1; }
+      .toast{ margin-top: 8px; min-height: 1em; }
+    }
+    button{
+      appearance:none;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:12px 14px;
+      border-radius:12px;
+      font-weight:700;
+      cursor:pointer;
+      transition: transform .06s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    button:hover{ background: rgba(255,255,255,.10); }
+    button:active{ transform: translateY(1px); }
+    button.primary{
+      background: rgba(255,255,255,.14);
+      border-color: rgba(255,255,255,.22);
+    }
+    button.primary:hover{ background: rgba(255,255,255,.18); }
+    .toast{
+      margin-top:10px;
+      font-size:13px;
+      color:var(--muted);
+      min-height:1.2em;
+    }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.25);
+      padding:2px 7px;
+      border-radius:8px;
+      color:rgba(233,237,242,.9);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>吾輩は〇〇であるジェネレーター</h1>
+    </header>
+
+    <main>
+      <section class="hero" aria-live="polite">
+        <div class="portrait">
+          <img id="portraitImg" alt="夏目漱石風 松村" />
+        </div>
+        <p id="phrase" class="phrase">吾輩は〇〇である。</p>
+        <p class="sub">Enter で生成 / <span class="kbd">C</span> でコピー</p>
+
+        <div class="row">
+          <button id="btnGen" class="primary" type="button">生成する</button>
+          <button id="btnCopy" type="button">コピー</button>
+        </div>
+
+        <div id="toast" class="toast" role="status"></div>
+      </section>
+    </main>
+
+  </div>
+
+  <script type="module">
+    // Vercel/サブパス対応: 現在のパスを基準にアセットURLを解決
+    const base = document.location.pathname.replace(/\/index\.html$/i, "").replace(/\/?$/, "/");
+    const asset = (p) => new URL((p.startsWith("./") ? p.slice(1) : p), document.location.origin + base).toString();
+
+    const DEFAULT_WORDS = [
+      "不機嫌","寝不足","二日酔い","筋肉痛","花粉症",
+      "風邪気味","低血糖","人見知り","反抗期",
+      "無気力","空腹","満腹",
+      "焦り","猫","猫背","松村","松本","犬","チベットスナギツネ",
+      "オオアリクイ","センザンコウ","ジャコウネコ","ビントロング","マヌルネコ","クオッカ",
+    ];
+
+    const $ = (id) => document.getElementById(id);
+
+    const elPhrase = $("phrase");
+    const elToast  = $("toast");
+
+    const btnGen = $("btnGen");
+    const btnCopy = $("btnCopy");
+
+    const storageKey = "wagahai_state_words_v1";
+
+    function loadWords() {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return [...DEFAULT_WORDS];
+        const arr = JSON.parse(raw);
+        if (!Array.isArray(arr)) return [...DEFAULT_WORDS];
+        const cleaned = arr
+          .map(s => (typeof s === "string" ? s.trim() : ""))
+          .filter(Boolean);
+        return cleaned.length ? cleaned : [...DEFAULT_WORDS];
+      } catch {
+        return [...DEFAULT_WORDS];
+      }
+    }
+
+    function saveWords(words) {
+      localStorage.setItem(storageKey, JSON.stringify(words));
+    }
+
+    let words = loadWords();
+
+    function setToast(msg) {
+      elToast.textContent = msg;
+      if (!msg) return;
+      window.clearTimeout(setToast._t);
+      setToast._t = window.setTimeout(() => (elToast.textContent = ""), 1200);
+    }
+
+    function randInt(n) {
+      return Math.floor(Math.random() * n);
+    }
+
+    function generate() {
+      if (!words.length) {
+        setToast("ワードが空です。");
+        return;
+      }
+      const w = words[randInt(words.length)];
+      elPhrase.textContent = `吾輩は${w}である`;
+      setToast("生成しました");
+    }
+
+    async function copyPhrase() {
+      const text = elPhrase.textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        setToast("コピーしました");
+      } catch {
+        // fallback
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand("copy");
+          setToast("コピーしました");
+        } catch {
+          setToast("コピーに失敗しました");
+        } finally {
+          ta.remove();
+        }
+      }
+    }
+
+    // events
+    btnGen.addEventListener("click", generate);
+    btnCopy.addEventListener("click", copyPhrase);
+
+    window.addEventListener("keydown", (e) => {
+      const active = document.activeElement;
+      const typing = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA");
+      if (e.key === "Enter" && !typing) {
+        e.preventDefault();
+        generate();
+      }
+      if ((e.key === "c" || e.key === "C") && !typing) {
+        e.preventDefault();
+        copyPhrase();
+      }
+    });
+
+    // init
+    const portraitImg = document.getElementById("portraitImg");
+    portraitImg.src = asset("./assets/soseki-matsumura.png");
+  </script>
+</body>
+</html>
