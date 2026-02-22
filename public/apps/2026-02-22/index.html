@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>忍者松村、潜む。</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:rgba(0,0,0,.55);
+      --text:#e8eef6;
+      --muted:rgba(232,238,246,.75);
+      --ok:#7CFF8A;
+      --ng:#ff5f6b;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; background:var(--bg); color:var(--text); font-family: ui-sans-serif, system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Segoe UI", Roboto, Arial, sans-serif; }
+    button{ font: inherit; color:inherit; }
+    .app{
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:12px;
+      gap:12px;
+    }
+
+    .stage-wrap{
+      width:min(92vw, 520px);
+      aspect-ratio: 9 / 16;
+      position:relative;
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow: 0 18px 60px rgba(0,0,0,.5);
+      background:#111;
+      touch-action: manipulation;
+      user-select:none;
+    }
+    .stage-img{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      object-fit:cover;
+      filter: saturate(1.02) contrast(1.02);
+      transform: translateZ(0);
+    }
+    .stage-overlay{
+      position:absolute; inset:0;
+      pointer-events:none;
+      background: radial-gradient(80% 60% at 50% 20%, rgba(255,255,255,.06), transparent 65%),
+                  linear-gradient(to bottom, rgba(0,0,0,.25), rgba(0,0,0,.45));
+      opacity:.9;
+    }
+
+    .hud{
+      position:absolute; left:10px; right:10px; top:10px;
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      pointer-events:none;
+    }
+    .pill{
+      pointer-events:none;
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      background:var(--panel);
+      border:1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(6px);
+      font-size:13px;
+      letter-spacing:.02em;
+      white-space:nowrap;
+    }
+    .pill strong{ font-weight:700; }
+    .timerbar{
+      pointer-events:none;
+      width:160px; max-width:42vw;
+      height:10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.10);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .timerbar > i{
+      display:block;
+      height:100%;
+      width:100%;
+      background: linear-gradient(90deg, rgba(124,255,138,.9), rgba(124,255,138,.55));
+      transform-origin:left center;
+      transform: scaleX(1);
+    }
+
+    .controls{
+      width:min(92vw, 520px);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      transition: transform .08s ease, background .12s ease;
+    }
+    .btn:active{ transform: translateY(1px) scale(.99); }
+    .btn.primary{
+      background: rgba(124,255,138,.14);
+      border-color: rgba(124,255,138,.35);
+    }
+    .btn[disabled]{ opacity:.5; cursor:not-allowed; }
+
+    .sheet{
+      width:min(92vw, 520px);
+      padding:14px 14px;
+      border-radius:18px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+    }
+    .sheet h1{
+      margin:0 0 6px;
+      font-size:18px;
+      letter-spacing:.02em;
+    }
+    .sheet p{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.55;
+    }
+    .sheet .row{
+      margin-top:10px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .sheet .row .btn{ flex:1 1 140px; }
+
+    .stamp{
+      position:absolute;
+      left:50%; top:46%;
+      transform: translate(-50%,-50%) scale(.9);
+      padding:12px 16px;
+      border-radius:16px;
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(8px);
+      font-weight:800;
+      letter-spacing:.12em;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      text-shadow: 0 6px 22px rgba(0,0,0,.6);
+      text-align:center;
+      white-space:pre-line;
+    }
+    .stamp.show{
+      opacity:1;
+      transform: translate(-50%,-50%) scale(1);
+    }
+    .stamp.ok{ color: var(--ok); }
+    .stamp.ng{ color: var(--ng); }
+
+    .ripple{
+      position:absolute;
+      width:18px; height:18px;
+      border-radius:999px;
+      border:2px solid rgba(255,255,255,.85);
+      transform: translate(-50%,-50%) scale(.6);
+      opacity:0;
+      pointer-events:none;
+    }
+    .ripple.show{
+      animation: ripple .35s ease-out forwards;
+    }
+    @keyframes ripple{
+      0%{ opacity:.75; transform: translate(-50%,-50%) scale(.6); }
+      100%{ opacity:0; transform: translate(-50%,-50%) scale(2.8); }
+    }
+
+    /* Clear Overlay */
+    .clear{
+      position:absolute; inset:0;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      padding:14px;
+      pointer-events:auto;
+      opacity:0;
+      transform: translateY(10px);
+      transition: opacity .22s ease, transform .22s ease;
+    }
+    .clear.show{
+      opacity:1;
+      transform: translateY(0);
+    }
+    .clear-card{
+      width:100%;
+      border-radius:18px;
+      padding:14px 14px 12px;
+      background: rgba(0,0,0,.62);
+      border:1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.45);
+    }
+    .clear-title{
+      margin:0 0 6px;
+      font-size:18px;
+      letter-spacing:.08em;
+      font-weight:900;
+      color: var(--ok);
+    }
+    .clear-meta{
+      margin:0 0 10px;
+      color: rgba(232,238,246,.82);
+      font-size:13px;
+      line-height:1.55;
+    }
+    .clear-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:6px;
+    }
+    .clear-actions .btn{ flex:1 1 140px; }
+
+    .note{
+      width:min(92vw, 520px);
+      color: rgba(232,238,246,.55);
+      font-size:11px;
+      line-height:1.45;
+      text-align:center;
+    }
+
+    @supports (padding: max(0px)){
+      .app{ padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="sheet" id="startSheet">
+      <h1>忍者松村、潜む。</h1>
+      <p>
+        3つの背景のどこかに忍者松村が隠れています。<br/>
+        画面をタップして見つけてください。各面 <strong>12秒</strong>。
+      </p>
+      <div class="row">
+        <button class="btn primary" id="btnStart">スタート</button>
+        <button class="btn" id="btnSound">サウンド：OFF</button>
+      </div>
+    </div>
+
+    <div class="stage-wrap" id="stage" aria-label="game stage" hidden>
+      <img class="stage-img" id="bg" alt="background" />
+      <div class="stage-overlay"></div>
+
+      <div class="hud">
+        <div class="pill"><span>面</span><strong id="levelLabel">1/3</strong></div>
+        <div class="timerbar" aria-hidden="true"><i id="bar"></i></div>
+        <div class="pill"><span>残り</span><strong id="timeLabel">12.0</strong><span>秒</span></div>
+      </div>
+
+      <div class="stamp" id="stamp">ニン！</div>
+      <div class="ripple" id="ripple"></div>
+
+      <!-- Clear overlay -->
+      <div class="clear" id="clearOverlay" hidden>
+        <div class="clear-card">
+          <h2 class="clear-title">任務完了</h2>
+          <p class="clear-meta" id="clearMeta">
+            忍者松村をすべて発見しました。
+          </p>
+          <div class="clear-actions">
+            <button class="btn primary" id="btnAgain">もう一回</button>
+            <button class="btn" id="btnShare">Xでシェア</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls" id="controls" hidden>
+      <button class="btn" id="btnRestart">最初から</button>
+      <button class="btn" id="btnSound2">サウンド：OFF</button>
+    </div>
+
+    <div class="note">
+      assets：<code>/app/2026-02-22/assets/</code> に <code>level1_9x16.png</code>, <code>level2_9x16.png</code>, <code>level3_9x16.png</code>
+    </div>
+  </div>
+
+  <script type="module">
+    // 1日1アプリ ルール：動的アセット参照
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    const LEVELS = [
+      { id: 1, image: "./assets/level1_9x16.png", hitbox: { x: 0.6440972222222222, y: 0.5498046875, w: 0.10590277777777778, h: 0.126953125 } },
+      { id: 2, image: "./assets/level2_9x16.png", hitbox: { x: 0.4600694444444444, y: 0.43994140625, w: 0.0798611111111111, h: 0.095703125 } },
+      { id: 3, image: "./assets/level3_9x16.png", hitbox: { x: 0.5199652777777778, y: 0.1796875, w: 0.0920138888888889, h: 0.1103515625 } }
+    ];
+
+    const SECONDS_PER_LEVEL = 12.0;
+
+    // Elements
+    const startSheet = document.getElementById("startSheet");
+    const btnStart = document.getElementById("btnStart");
+    const btnSound = document.getElementById("btnSound");
+    const btnSound2 = document.getElementById("btnSound2");
+    const btnRestart = document.getElementById("btnRestart");
+
+    const stage = document.getElementById("stage");
+    const controls = document.getElementById("controls");
+
+    const bg = document.getElementById("bg");
+    const levelLabel = document.getElementById("levelLabel");
+    const timeLabel = document.getElementById("timeLabel");
+    const bar = document.getElementById("bar");
+    const stamp = document.getElementById("stamp");
+    const ripple = document.getElementById("ripple");
+
+    const clearOverlay = document.getElementById("clearOverlay");
+    const clearMeta = document.getElementById("clearMeta");
+    const btnAgain = document.getElementById("btnAgain");
+    const btnShare = document.getElementById("btnShare");
+
+    // Audio (no external files)
+    let audioCtx = null;
+    let soundOn = false;
+
+    function ensureAudio(){
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    function beep({freq=660, dur=0.08, type="sine", gain=0.06} = {}){
+      if (!soundOn) return;
+      ensureAudio();
+      const ctx = audioCtx;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = type;
+      o.frequency.value = freq;
+      g.gain.value = 0;
+      o.connect(g);
+      g.connect(ctx.destination);
+
+      const t = ctx.currentTime;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(gain, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.start(t);
+      o.stop(t + dur + 0.02);
+    }
+    function okSound(){
+      beep({freq:880, dur:0.07, type:"triangle", gain:0.07});
+      setTimeout(()=>beep({freq:1180, dur:0.08, type:"triangle", gain:0.07}), 70);
+    }
+    function ngSound(){
+      beep({freq:220, dur:0.10, type:"sawtooth", gain:0.06});
+    }
+    function endSound(){
+      beep({freq:520, dur:0.10, type:"sine", gain:0.07});
+      setTimeout(()=>beep({freq:660, dur:0.10, type:"sine", gain:0.06}), 120);
+      setTimeout(()=>beep({freq:820, dur:0.12, type:"sine", gain:0.06}), 250);
+    }
+    function setSoundUI(){
+      const label = soundOn ? "サウンド：ON" : "サウンド：OFF";
+      btnSound.textContent = label;
+      btnSound2.textContent = label;
+    }
+
+    // State
+    let idx = 0;
+    let running = false;
+    let startTs = 0;
+    let raf = 0;
+    let found = false;
+
+    // Clear stats
+    let totalFound = 0;
+    let startGameTs = 0;
+    let clearTime = 0;
+
+    function loadLevel(i){
+      const lv = LEVELS[i];
+      bg.src = asset(lv.image);
+      levelLabel.textContent = `${lv.id}/${LEVELS.length}`;
+      found = false;
+      stamp.className = "stamp";
+      stamp.textContent = "ニン！";
+    }
+
+    function showStamp(kind, text){
+      stamp.textContent = text;
+      stamp.classList.remove("ok","ng","show");
+      void stamp.offsetWidth;
+      if (kind) stamp.classList.add(kind);
+      stamp.classList.add("show");
+      setTimeout(()=>stamp.classList.remove("show"), 520);
+    }
+
+    function showRipple(clientX, clientY){
+      const rect = stage.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      ripple.style.left = `${x}px`;
+      ripple.style.top = `${y}px`;
+      ripple.classList.remove("show");
+      void ripple.offsetWidth;
+      ripple.classList.add("show");
+    }
+
+    function withinHitbox(px, py){
+      const rect = stage.getBoundingClientRect();
+      const x = (px - rect.left) / rect.width;
+      const y = (py - rect.top) / rect.height;
+      const hb = LEVELS[idx].hitbox;
+      return (x >= hb.x && x <= hb.x + hb.w && y >= hb.y && y <= hb.y + hb.h);
+    }
+
+    function stopLoop(){
+      cancelAnimationFrame(raf);
+      raf = 0;
+      running = false;
+    }
+
+    function loop(now){
+      if (!running) return;
+      const elapsed = (now - startTs) / 1000;
+      const left = Math.max(0, SECONDS_PER_LEVEL - elapsed);
+
+      timeLabel.textContent = left.toFixed(1);
+      bar.style.transform = `scaleX(${left / SECONDS_PER_LEVEL})`;
+
+      if (left <= 0){
+        ngSound();
+        showStamp("ng", "見失った…");
+        nextLevel(false);
+        return;
+      }
+      raf = requestAnimationFrame(loop);
+    }
+
+    function showClear(){
+      // finalize stats
+      clearTime = (performance.now() - startGameTs) / 1000;
+
+      // UI text
+      const foundText = `発見：${totalFound}/${LEVELS.length}`;
+      const timeText = `タイム：${clearTime.toFixed(1)}秒`;
+      clearMeta.textContent = `${foundText} ／ ${timeText}`;
+
+      // overlay
+      clearOverlay.hidden = false;
+      requestAnimationFrame(() => clearOverlay.classList.add("show"));
+    }
+
+    function hideClear(){
+      clearOverlay.classList.remove("show");
+      setTimeout(() => { clearOverlay.hidden = true; }, 220);
+    }
+
+    function finishGame(){
+      stopLoop();
+      endSound();
+      showStamp("ok", "任務完了");
+      setTimeout(showClear, 520);
+    }
+
+    function nextLevel(wasFound){
+      stopLoop();
+
+      setTimeout(() => {
+        idx++;
+        if (idx >= LEVELS.length){
+          finishGame();
+          return;
+        }
+        loadLevel(idx);
+        startTs = performance.now();
+        running = true;
+        raf = requestAnimationFrame(loop);
+      }, 450);
+    }
+
+    async function startGame(){
+      idx = 0;
+      totalFound = 0;
+      startGameTs = performance.now();
+      hideClear();
+
+      startSheet.hidden = true;
+      stage.hidden = false;
+      controls.hidden = false;
+
+      loadLevel(idx);
+      startTs = performance.now();
+      running = true;
+      raf = requestAnimationFrame(loop);
+    }
+
+    function restartGame(){
+      stopLoop();
+      startGame();
+    }
+
+    // Events
+    btnStart.addEventListener("click", async () => {
+      if (soundOn){
+        try{
+          ensureAudio();
+          if (audioCtx.state === "suspended") await audioCtx.resume();
+        }catch(e){}
+      }
+      startGame();
+    });
+
+    function toggleSound(){
+      soundOn = !soundOn;
+      setSoundUI();
+      if (soundOn){
+        try{
+          ensureAudio();
+          audioCtx.resume?.();
+          beep({freq:740, dur:0.06, type:"sine", gain:0.05});
+        }catch(e){}
+      }
+    }
+    btnSound.addEventListener("click", toggleSound);
+    btnSound2.addEventListener("click", toggleSound);
+
+    btnRestart.addEventListener("click", () => restartGame());
+
+    stage.addEventListener("pointerdown", (e) => {
+      if (!running) return;
+      // if clear overlay is open, ignore taps on stage background
+      if (!clearOverlay.hidden) return;
+
+      e.preventDefault();
+      showRipple(e.clientX, e.clientY);
+
+      if (found) return;
+
+      if (withinHitbox(e.clientX, e.clientY)){
+        found = true;
+        totalFound++;
+        okSound();
+        showStamp("ok", "ニン！");
+        nextLevel(true);
+      } else {
+        ngSound();
+        showStamp("ng", "違う");
+      }
+    }, { passive: false });
+
+    // Clear actions
+    btnAgain.addEventListener("click", () => {
+      hideClear();
+      // immediate restart
+      setTimeout(() => restartGame(), 200);
+    });
+
+    btnShare.addEventListener("click", async () => {
+      const text = `忍者松村、潜む。 任務完了！\n${totalFound}/${LEVELS.length} 発見 / ${clearTime.toFixed(1)}秒\n#1日1アプリ`;
+      const url = location.href;
+      const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+      // Prefer native share if available
+      if (navigator.share){
+        try{
+          await navigator.share({ text, url });
+          return;
+        }catch(e){}
+      }
+      window.open(shareUrl, "_blank", "noopener,noreferrer");
+    });
+
+    window.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    setSoundUI();
+  </script>
+</body>
+</html>
