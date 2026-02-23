@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>甲府UFO目撃</title>
+  <style>
+    :root{
+      --bg:#06070b;
+      --panel: rgba(255,255,255,.08);
+      --panel2: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.7);
+      --danger: rgba(255,80,80,.9);
+      --ok: rgba(90,255,170,.9);
+    }
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;}
+    *{box-sizing:border-box}
+    .wrap{min-height:100%;display:grid;place-items:center;padding:14px}
+
+    .game{
+      width:min(94vw,520px);
+      aspect-ratio: 9 / 16;
+      position:relative;
+      border-radius:22px;
+      overflow:hidden;
+      box-shadow: 0 18px 60px rgba(0,0,0,.45);
+      background: radial-gradient(1200px 900px at 50% 20%, rgba(80,120,255,.12), transparent 55%),
+                  radial-gradient(900px 700px at 20% 80%, rgba(255,120,180,.08), transparent 60%),
+                  linear-gradient(#05060a, #070a12);
+      touch-action:none; /* 重要：ドラッグ中にページスクロールさせない */
+      user-select:none;
+    }
+
+    /* 任意の背景画像 */
+    .bg{
+      position:absolute; inset:0;
+      background-position:center;
+      background-size:cover;
+      opacity:.22;
+      filter: blur(.2px) contrast(1.05);
+      transform: scale(1.03);
+      pointer-events:none;
+    }
+
+    /* 簡易星空（CSS） */
+    .stars{position:absolute;inset:0;pointer-events:none;opacity:.85}
+    .stars::before, .stars::after{
+      content:""; position:absolute; inset:-30px;
+      background:
+        radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,.85) 60%, transparent 62%),
+        radial-gradient(1px 1px at 30% 35%, rgba(255,255,255,.65) 60%, transparent 62%),
+        radial-gradient(1px 1px at 70% 25%, rgba(255,255,255,.75) 60%, transparent 62%),
+        radial-gradient(1px 1px at 85% 55%, rgba(255,255,255,.60) 60%, transparent 62%),
+        radial-gradient(1px 1px at 20% 75%, rgba(255,255,255,.70) 60%, transparent 62%),
+        radial-gradient(1px 1px at 55% 65%, rgba(255,255,255,.55) 60%, transparent 62%);
+      opacity:.75;
+      animation: drift 9s linear infinite;
+    }
+    .stars::after{
+      opacity:.55;
+      filter: blur(.4px);
+      animation-duration: 14s;
+      transform: scale(1.15);
+    }
+    @keyframes drift{
+      from{transform: translateY(0px)}
+      to{transform: translateY(18px)}
+    }
+
+    .hud{
+      position:absolute; left:10px; right:10px; top:10px;
+      display:flex; gap:8px; align-items:center; justify-content:space-between;
+      pointer-events:none;
+    }
+    .pill{
+      pointer-events:auto;
+      display:flex; gap:10px; align-items:center;
+      padding:10px 12px;
+      background: var(--panel);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:999px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-weight:700;
+      font-size:13px;
+      letter-spacing:.02em;
+    }
+    .pill small{color:var(--muted);font-weight:700}
+    .btn{
+      pointer-events:auto;
+      appearance:none; border:1px solid rgba(255,255,255,.14);
+      background: var(--panel2);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:999px;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .field{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+    }
+
+    /* 出現オブジェクト */
+    .spawn{
+      position:absolute;
+      width: 60px; height: 60px;
+      transform: translate(-50%,-50%);
+      opacity:0;
+      pointer-events:none;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.55));
+    }
+    .spawn.visible{opacity:1}
+    .spawn img{width:100%; height:100%; object-fit:contain}
+
+    /* 照準 */
+    .crosshair{
+      position:absolute;
+      width: 110px; height:110px;
+      transform: translate(-50%,-50%);
+      pointer-events:none;
+      opacity:.92;
+    }
+    .crosshair svg{width:100%;height:100%}
+    .crosshair .ring{opacity:.9}
+    .crosshair .tick{opacity:.9}
+    .crosshair .dot{opacity:.95}
+
+    /* フラッシュ/結果 */
+    .toast{
+      position:absolute; left:50%; bottom:14px; transform:translateX(-50%);
+      padding:10px 12px;
+      border-radius:14px;
+      background: rgba(0,0,0,.45);
+      border: 1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-weight:800;
+      opacity:0;
+      transition: opacity .15s linear, transform .15s ease;
+      pointer-events:none;
+      white-space:nowrap;
+    }
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(-2px)}
+    .toast.ok{border-color: rgba(90,255,170,.30)}
+    .toast.ng{border-color: rgba(255,80,80,.30)}
+    .flash{
+      position:absolute; inset:0;
+      background: rgba(255,255,255,.9);
+      opacity:0;
+      pointer-events:none;
+    }
+    .flash.on{animation: flash .25s ease}
+    @keyframes flash{
+      0%{opacity:0}
+      15%{opacity:.8}
+      100%{opacity:0}
+    }
+
+    /* オーバーレイ */
+    .overlay{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      padding:18px;
+      background: radial-gradient(700px 600px at 50% 30%, rgba(0,0,0,.45), rgba(0,0,0,.82));
+    }
+    .card{
+      width:min(420px, 92%);
+      padding:18px;
+      border-radius:18px;
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .title{font-weight:900;font-size:22px;letter-spacing:.02em;margin:0 0 8px}
+    .desc{color:var(--muted);font-weight:700;line-height:1.5;margin:0 0 14px}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .primary{
+      appearance:none;border:0;border-radius:14px;padding:12px 14px;
+      background:#fff;color:#111;font-weight:900;cursor:pointer;
+      flex:1;
+    }
+    .secondary{
+      appearance:none;border:1px solid rgba(255,255,255,.18);border-radius:14px;
+      padding:12px 14px;background:transparent;color:var(--text);font-weight:900;cursor:pointer;
+      flex:1;
+    }
+    .mini{margin-top:10px;font-size:12px;color:var(--muted);font-weight:700}
+
+    /* スナップ写真風（最後） */
+    .resultShot{
+      margin-top:10px;
+      border-radius:14px;
+      background: rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.12);
+      padding:10px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:8px;
+    }
+    .resultLine{font-weight:900}
+    .resultMeta{color:var(--muted);font-weight:700;font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="game" id="game">
+      <div class="bg" id="bg"></div>
+      <div class="stars"></div>
+
+      <div class="hud">
+        <div class="pill"><span>残り</span><span id="time">60</span><small>s</small></div>
+        <div class="pill"><span>証拠</span><span id="score">0</span><small>/3</small></div>
+        <button class="btn" id="restartBtn" title="リスタート">↻</button>
+      </div>
+
+      <div class="field" id="field">
+        <div class="spawn" id="spawn"><img id="spawnImg" alt=""></div>
+
+        <div class="crosshair" id="crosshair" aria-hidden="true">
+          <svg viewBox="0 0 100 100">
+            <circle class="ring" cx="50" cy="50" r="32" fill="none" stroke="white" stroke-width="2"/>
+            <line class="tick" x1="50" y1="8" x2="50" y2="22" stroke="white" stroke-width="2"/>
+            <line class="tick" x1="50" y1="78" x2="50" y2="92" stroke="white" stroke-width="2"/>
+            <line class="tick" x1="8" y1="50" x2="22" y2="50" stroke="white" stroke-width="2"/>
+            <line class="tick" x1="78" y1="50" x2="92" y2="50" stroke="white" stroke-width="2"/>
+            <circle class="dot" cx="50" cy="50" r="2.5" fill="white"/>
+          </svg>
+        </div>
+
+        <div class="flash" id="flash"></div>
+        <div class="toast" id="toast"></div>
+      </div>
+
+      <div class="overlay" id="overlay">
+        <div class="card" id="overlayCard">
+          <h1 class="title">甲府UFO目撃</h1>
+          <p class="desc">
+            指で照準を動かして、<b>出た瞬間</b>にタップして撮れ。<br>
+            たまに<b>松村</b>も出る（それは撮るな）。
+          </p>
+          <div class="row">
+            <button class="primary" id="startBtn">開始</button>
+            <button class="secondary" id="howBtn">遊び方</button>
+          </div>
+          <div class="mini">制限60秒 / UFOを3枚撮れたら勝ち</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module">
+    // Vercel用: location.pathname を基準にアセットを解決（2026-02-21 と同じ方式）
+    const APP_BASE = location.pathname.endsWith("/")
+      ? location.pathname
+      : location.pathname.endsWith(".html")
+        ? location.pathname.replace(/[^/]+$/, "")
+        : `${location.pathname}/`;
+    const asset = (p) =>
+      new URL(String(p).replace(/^\.?\//, ""), `${location.origin}${APP_BASE}`).toString();
+
+    // ====== assets ======
+    const UFO_IMG = asset("./assets/ufo.png");
+    const MAT_IMG = asset("./assets/matsumura.png");
+    const BG_IMG  = asset("./assets/bg.png"); // 任意（無ければコメントアウトしてOK）
+
+    // ====== elements ======
+    const game = document.getElementById("game");
+    const field = document.getElementById("field");
+    const bg = document.getElementById("bg");
+
+    const overlay = document.getElementById("overlay");
+    const overlayCard = document.getElementById("overlayCard");
+    const startBtn = document.getElementById("startBtn");
+    const howBtn = document.getElementById("howBtn");
+    const restartBtn = document.getElementById("restartBtn");
+
+    const timeEl = document.getElementById("time");
+    const scoreEl = document.getElementById("score");
+
+    const crosshair = document.getElementById("crosshair");
+    const spawn = document.getElementById("spawn");
+    const spawnImg = document.getElementById("spawnImg");
+
+    const flash = document.getElementById("flash");
+    const toast = document.getElementById("toast");
+
+    // 背景画像（任意）
+    bg.style.backgroundImage = `url("${BG_IMG}")`;
+
+    // ====== state ======
+    const GAME_SECONDS = 60;
+    const WIN_SCORE = 3;
+
+    let playing = false;
+    let timeLeft = GAME_SECONDS;
+    let score = 0;
+
+    // 出現制御
+    let spawnVisible = false;
+    let spawnKind = "ufo"; // "ufo" | "matsumura"
+    let spawnX = 0.5, spawnY = 0.35;
+    let spawnHideTimer = null;
+    let spawnLoopTimer = null;
+
+    // 照準位置（0..1）
+    let aimX = 0.5, aimY = 0.62;
+
+    // ドラッグ
+    let dragging = false;
+
+    // ====== utils ======
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+    function setToast(msg, kind){
+      toast.textContent = msg;
+      toast.classList.remove("ok","ng","show");
+      if(kind) toast.classList.add(kind);
+      // reflow
+      void toast.offsetWidth;
+      toast.classList.add("show");
+      setTimeout(()=>toast.classList.remove("show"), 650);
+    }
+
+    function doFlash(){
+      flash.classList.remove("on");
+      void flash.offsetWidth;
+      flash.classList.add("on");
+    }
+
+    function setCrosshairPos(){
+      const r = field.getBoundingClientRect();
+      crosshair.style.left = `${aimX * r.width}px`;
+      crosshair.style.top  = `${aimY * r.height}px`;
+    }
+
+    function setSpawnPos(){
+      const r = field.getBoundingClientRect();
+      spawn.style.left = `${spawnX * r.width}px`;
+      spawn.style.top  = `${spawnY * r.height}px`;
+    }
+
+    function showSpawn(kind){
+      spawnKind = kind;
+      spawnImg.src = kind === "ufo" ? UFO_IMG : MAT_IMG;
+      spawnImg.alt = kind === "ufo" ? "UFO" : "松村";
+      spawnVisible = true;
+      spawn.classList.add("visible");
+      setSpawnPos();
+
+      // 表示時間（短め）
+      clearTimeout(spawnHideTimer);
+      const visibleMs = kind === "ufo" ? 850 : 700;
+      spawnHideTimer = setTimeout(hideSpawn, visibleMs);
+    }
+
+    function hideSpawn(){
+      spawnVisible = false;
+      spawn.classList.remove("visible");
+    }
+
+    function scheduleNextSpawn(){
+      clearTimeout(spawnLoopTimer);
+
+      // 次の出現までの間隔：ランダム（さらにゆっくりめ）
+      const nextMs = 2000 + Math.random() * 3000;
+
+      spawnLoopTimer = setTimeout(()=>{
+        if(!playing) return;
+
+        // 位置：端すぎると見切れるので中央寄りに
+        const padX = 0.12;
+        const padY = 0.16;
+        spawnX = padX + Math.random() * (1 - padX*2);
+        spawnY = padY + Math.random() * (1 - padY*2);
+
+        // 松村が混ざる確率（たまに）
+        const isMatsumura = Math.random() < 0.22; // 22%
+        showSpawn(isMatsumura ? "matsumura" : "ufo");
+
+        // 次を予約
+        scheduleNextSpawn();
+      }, nextMs);
+    }
+
+    function distanceNorm(){
+      // 照準中心と出現中心の距離（正規化）
+      const dx = (aimX - spawnX);
+      const dy = (aimY - spawnY);
+      return Math.hypot(dx, dy);
+    }
+
+    function tryShoot(){
+      if(!playing) return;
+
+      doFlash();
+
+      if(!spawnVisible){
+        setToast("いまのは空振り。", "ng");
+        return;
+      }
+
+      const d = distanceNorm();
+      const hit = d < 0.08; // 判定（調整可）
+
+      if(!hit){
+        setToast("外した。記憶が曖昧に…", "ng");
+        return;
+      }
+
+      if(spawnKind === "ufo"){
+        score = Math.min(WIN_SCORE, score + 1);
+        scoreEl.textContent = String(score);
+        setToast("撮れた。証拠だ。", "ok");
+        hideSpawn();
+
+        if(score >= WIN_SCORE){
+          endGame(true);
+        }
+      }else{
+        // 松村を撮るとペナルティ
+        score = Math.max(0, score - 1);
+        scoreEl.textContent = String(score);
+        setToast("それ松村。信用失墜。", "ng");
+        hideSpawn();
+      }
+    }
+
+    // ====== time loop ======
+    let tickTimer = null;
+    function startTimer(){
+      clearInterval(tickTimer);
+      tickTimer = setInterval(()=>{
+        if(!playing) return;
+        timeLeft -= 1;
+        timeEl.textContent = String(timeLeft);
+
+        if(timeLeft <= 0){
+          endGame(false);
+        }
+      }, 1000);
+    }
+
+    function stopAll(){
+      clearInterval(tickTimer);
+      clearTimeout(spawnHideTimer);
+      clearTimeout(spawnLoopTimer);
+      tickTimer = null;
+      spawnHideTimer = null;
+      spawnLoopTimer = null;
+      hideSpawn();
+    }
+
+    function startGame(){
+      playing = true;
+      timeLeft = GAME_SECONDS;
+      score = 0;
+      timeEl.textContent = String(timeLeft);
+      scoreEl.textContent = String(score);
+
+      overlay.style.display = "none";
+
+      // 初期位置
+      aimX = 0.5; aimY = 0.62;
+      setCrosshairPos();
+
+      startTimer();
+      scheduleNextSpawn();
+      setToast("目を凝らせ。", null);
+    }
+
+    function endGame(win){
+      playing = false;
+      stopAll();
+
+      overlay.style.display = "flex";
+
+      const title = win ? "あなたは目撃者です" : "誰も信じてくれない。";
+      const sub = win
+        ? `証拠写真：${score}/${WIN_SCORE}　提出完了。`
+        : `証拠写真：${score}/${WIN_SCORE}　証拠が足りない。`;
+
+      overlayCard.innerHTML = `
+        <h1 class="title">${title}</h1>
+        <p class="desc">${sub}<br>（たまに出る松村を撮ると減点）</p>
+        <div class="row">
+          <button class="primary" id="againBtn">もう一回</button>
+          <button class="secondary" id="closeHowBtn">遊び方</button>
+        </div>
+        <div class="resultShot">
+          <div class="resultLine">提出書類：甲府UFO目撃レポート</div>
+          <div class="resultMeta">目撃時刻：${new Date().toLocaleTimeString()} / 記憶の信頼度：${win ? "高" : "低"}</div>
+        </div>
+      `;
+
+      overlayCard.querySelector("#againBtn").addEventListener("click", startGame);
+      overlayCard.querySelector("#closeHowBtn").addEventListener("click", showHow);
+    }
+
+    function showHow(){
+      overlay.style.display = "flex";
+      overlayCard.innerHTML = `
+        <h1 class="title">遊び方</h1>
+        <p class="desc">
+          1) 指でドラッグして照準を動かす<br>
+          2) 何か出たらタップして撮影<br>
+          3) UFOを3枚撮れたら勝ち<br><br>
+          ※松村が出ることがある。撮ると減点。
+        </p>
+        <div class="row">
+          <button class="primary" id="backBtn">戻る</button>
+          <button class="secondary" id="startNowBtn">開始</button>
+        </div>
+        <div class="mini">判定が厳しければ d &lt; 0.08 の値を 0.10 くらいに上げる</div>
+      `;
+      overlayCard.querySelector("#backBtn").addEventListener("click", ()=>{
+        // まだ未開始ならタイトルに戻す
+        if(!playing){
+          overlayCard.innerHTML = `
+            <h1 class="title">甲府UFO目撃</h1>
+            <p class="desc">
+              指で照準を動かして、<b>出た瞬間</b>にタップして撮れ。<br>
+              たまに<b>松村</b>も出る（それは撮るな）。
+            </p>
+            <div class="row">
+              <button class="primary" id="startBtn2">開始</button>
+              <button class="secondary" id="howBtn2">遊び方</button>
+            </div>
+            <div class="mini">制限60秒 / UFOを3枚撮れたら勝ち</div>
+          `;
+          overlayCard.querySelector("#startBtn2").addEventListener("click", startGame);
+          overlayCard.querySelector("#howBtn2").addEventListener("click", showHow);
+        }else{
+          overlay.style.display = "none";
+        }
+      });
+      overlayCard.querySelector("#startNowBtn").addEventListener("click", startGame);
+    }
+
+    // ====== input ======
+    function setAimFromEvent(e){
+      const r = field.getBoundingClientRect();
+      const x = ("touches" in e) ? e.touches[0].clientX : e.clientX;
+      const y = ("touches" in e) ? e.touches[0].clientY : e.clientY;
+      aimX = clamp((x - r.left) / r.width, 0, 1);
+      aimY = clamp((y - r.top) / r.height, 0, 1);
+      setCrosshairPos();
+    }
+
+    field.addEventListener("pointerdown", (e)=>{
+      dragging = true;
+      field.setPointerCapture(e.pointerId);
+      setAimFromEvent(e);
+    });
+    field.addEventListener("pointermove", (e)=>{
+      if(!dragging) return;
+      setAimFromEvent(e);
+    });
+    field.addEventListener("pointerup", ()=>{
+      dragging = false;
+    });
+    field.addEventListener("pointercancel", ()=>{
+      dragging = false;
+    });
+
+    // タップで撮影（クリックでも）
+    field.addEventListener("click", (e)=>{
+      // ドラッグ後のクリック誤爆を軽減したければここで判定を入れる
+      tryShoot();
+    });
+
+    // リサイズ時に再配置
+    window.addEventListener("resize", ()=>{
+      setCrosshairPos();
+      setSpawnPos();
+    });
+
+    // ====== buttons ======
+    startBtn.addEventListener("click", startGame);
+    howBtn.addEventListener("click", showHow);
+    restartBtn.addEventListener("click", ()=>{
+      if(playing) startGame();
+      else{
+        overlay.style.display = "flex";
+      }
+    });
+
+    // 初期配置
+    setCrosshairPos();
+  </script>
+</body>
+</html>
