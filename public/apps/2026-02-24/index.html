@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>ジョブズ名言 真偽クイズ</title>
+  <style>
+    :root{ color-scheme: dark; }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; min-height:100vh; background:#000; color:#fff;
+      font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      display:flex; justify-content:center;
+    }
+    .app{ width:min(820px, 100%); padding:18px 16px 24px; }
+    header{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+    h1{ margin:0; font-size:18px; letter-spacing:.02em; }
+    .pill{
+      display:inline-flex; align-items:center;
+      padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      font-size:12px; opacity:.9; white-space:nowrap;
+    }
+
+    .hero{
+      margin-top:14px;
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:18px;
+      background: rgba(255,255,255,.06);
+      overflow:hidden;
+      display:grid;
+      grid-template-columns: 96px 1fr;
+      gap:12px;
+      align-items:center;
+      padding:12px;
+    }
+    .hero img{ width:96px; height:96px; object-fit:contain; }
+    .heroTitle{ font-weight:900; letter-spacing:.02em; }
+    .heroSub{ margin-top:6px; font-size:12px; opacity:.7; }
+
+    .card{
+      margin-top:12px;
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:18px;
+      background: rgba(255,255,255,.06);
+      backdrop-filter: blur(6px);
+      padding:16px;
+    }
+    .progress{ font-size:12px; opacity:.75; }
+    .quote{
+      font-size:20px; line-height:1.55; letter-spacing:.02em;
+      margin:10px 0 0;
+      white-space:pre-wrap;
+    }
+    .jp{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.05);
+      font-size:14px;
+      line-height:1.55;
+      opacity:.92;
+    }
+    .jpLabel{ font-size:11px; opacity:.65; margin-bottom:4px; }
+
+    .choices{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+    button{
+      appearance:none; border:none; cursor:pointer;
+      border-radius:14px; padding:14px 12px;
+      font-weight:900; font-size:14px;
+      background:#fff; color:#000;
+      touch-action: manipulation;
+      user-select:none;
+    }
+    button.secondary{
+      background: rgba(255,255,255,.14);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.18);
+    }
+    button:disabled{ opacity:.55; cursor:default; }
+
+    .feedback{
+      margin-top:12px; padding:12px; border-radius:14px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      display:none;
+    }
+    .feedback.show{ display:block; }
+    .fbTitle{ font-weight:900; }
+    .fbText{ margin-top:6px; font-size:13px; line-height:1.5; opacity:.9; }
+
+    .bar{
+      margin-top:14px; display:flex; gap:10px; justify-content:space-between; align-items:center;
+    }
+    .smallBtn{
+      padding:10px 12px; border-radius:999px; font-size:12px; font-weight:900;
+    }
+
+    .result{ display:none; margin-top:12px; }
+    .result.show{ display:block; }
+    .score{ font-size:22px; font-weight:900; letter-spacing:.02em; }
+    .list{ margin-top:12px; display:grid; gap:10px; }
+    .item{
+      padding:12px; border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.05);
+    }
+    .itemTop{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .tag{
+      font-size:11px; padding:4px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      white-space:nowrap;
+    }
+    .itemQ{ margin-top:6px; font-size:13px; opacity:.92; line-height:1.45; }
+    .itemJP{ margin-top:6px; font-size:12px; opacity:.8; line-height:1.45; }
+    .itemExp{ margin-top:6px; font-size:12px; opacity:.7; line-height:1.45; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>ジョブズ名言 真偽クイズ</h1>
+      <div class="pill" id="pill">Q 1 / 10</div>
+    </header>
+
+    <section class="hero">
+      <img id="matsumura" alt="ジョブズ風 松村" />
+      <div>
+        <div class="heroTitle">確認できる？真偽不明？</div>
+        <div class="heroSub" id="heroSub">10問（?n=15 で変更）</div>
+      </div>
+    </section>
+
+    <section class="card" id="quizCard">
+      <div class="progress" id="progress">0 / 0</div>
+      <p class="quote" id="quote">…</p>
+
+      <div class="jp">
+        <div class="jpLabel">日本語訳</div>
+        <div id="jpText">…</div>
+      </div>
+
+      <div class="choices">
+        <button id="btnConfirm">確認できる</button>
+        <button class="secondary" id="btnUnknown">真偽不明</button>
+      </div>
+
+      <div class="feedback" id="feedback">
+        <div class="fbTitle" id="fbTitle">—</div>
+        <div class="fbText" id="fbText"></div>
+      </div>
+
+      <div class="bar">
+        <button class="secondary smallBtn" id="btnSkip">スキップ</button>
+        <button class="secondary smallBtn" id="btnNext" disabled>次へ</button>
+      </div>
+    </section>
+
+    <section class="result card" id="result">
+      <div class="score" id="score">—</div>
+      <div class="bar">
+        <button id="btnRetry">もう一回</button>
+        <button class="secondary" id="btnCopy">結果コピー</button>
+      </div>
+      <div class="list" id="detailList"></div>
+    </section>
+
+    <script type="module">
+      // Vercel用: location.pathname を基準にアセットを解決（2026-02-21 と同じ方式）
+      const APP_BASE = location.pathname.endsWith("/")
+        ? location.pathname
+        : location.pathname.endsWith(".html")
+          ? location.pathname.replace(/[^/]+$/, "")
+          : `${location.pathname}/`;
+      const asset = (p) =>
+        new URL(String(p).replace(/^\.?\//, ""), `${location.origin}${APP_BASE}`).toString();
+
+      // 画像（ファイル名は必要に応じて変更）
+      document.getElementById("matsumura").src = asset("./assets/matsumura-jobs.png");
+
+      /**
+       * kind:
+       * - "self"  : 確認できる（本人）
+       * - "quote" : 確認できる（ただし引用）
+       * - "unknown": 真偽不明（一次出典が固まりにくい/文言揺れ等）
+       *
+       * answer:
+       * - true  = 確認できる（self/quote）
+       * - false = 真偽不明
+       */
+      const BANK = [
+        // --- 確認できる（本人）※主に Stanford 2005 の範囲 ---
+        { q:"Your time is limited, so don’t waste it living someone else’s life.", jp:"あなたの時間は限られている。だから他人の人生を生きて無駄にしてはいけない。", kind:"self", answer:true, note:"Stanford 2005で確認しやすい。" },
+        { q:"You can’t connect the dots looking forward; you can only connect them looking backwards.", jp:"未来を見て点をつなぐことはできない。点をつなげるのは、振り返ったときだけだ。", kind:"self", answer:true, note:"Stanford 2005で確認しやすい。" },
+        { q:"You have to trust that the dots will somehow connect in your future.", jp:"点はいつか未来でつながると信じなければならない。", kind:"self", answer:true, note:"Stanford 2005で確認しやすい。" },
+        { q:"The only way to do great work is to love what you do.", jp:"偉大な仕事をする唯一の方法は、自分の仕事を愛することだ。", kind:"self", answer:true, note:"Stanford 2005で確認しやすい。" },
+        { q:"If you haven't found it yet, keep looking. Don't settle.", jp:"まだ見つかっていないなら探し続けて。妥協しないで。", kind:"self", answer:true, note:"Stanford 2005で確認しやすい。" },
+        { q:"Remembering that you are going to die is the best way I know to avoid the trap of thinking you have something to lose.", jp:"自分はいずれ死ぬと意識することは、失うものがあると思い込む罠を避ける最善の方法だ。", kind:"self", answer:true, note:"Stanford 2005で確認しやすい。" },
+        { q:"Death is very likely the single best invention of Life.", jp:"死は、おそらく生命にとって最高の発明だ。", kind:"self", answer:true, note:"Stanford 2005で確認しやすい。" },
+
+        // --- 確認できる（ただし引用） ---
+        { q:"Stay hungry. Stay foolish.", jp:"ハングリーであれ。愚か者であれ。", kind:"quote", answer:true, note:"Stanford 2005でWhole Earth Catalogからの引用として説明。" },
+        { q:"Good artists copy, great artists steal.", jp:"良いアーティストは真似し、偉大なアーティストは盗む。", kind:"quote", answer:true, note:"本人のオリジナルではなく引用として扱われがち。" },
+
+        // --- 真偽不明（広告コピーは入れない） ---
+        { q:"Innovation distinguishes between a leader and a follower.", jp:"イノベーションがリーダーとフォロワーを分ける。", kind:"unknown", answer:false, note:"一次出典が固まりにくい。" },
+        { q:"Design is not just what it looks like and feels like. Design is how it works.", jp:"デザインとは見た目や感触だけではない。デザインとは“どう機能するか”だ。", kind:"unknown", answer:false, note:"文言/出典が揺れやすい。" },
+        { q:"Simple can be harder than complex.", jp:"シンプルにすることは、複雑にすることより難しい場合がある。", kind:"unknown", answer:false, note:"原典が追いづらい形で流通しがち。" },
+        { q:"Creativity is just connecting things.", jp:"創造性とは、物事をつなげることにすぎない。", kind:"unknown", answer:false, note:"一次出典の固定が難しい。" },
+        { q:"Computers are like a bicycle for the mind.", jp:"コンピュータは心のための自転車のようなものだ。", kind:"unknown", answer:false, note:"文言揺れが起きやすい。" },
+        { q:"Sometimes life hits you in the head with a brick. Don’t lose faith.", jp:"人生は時にレンガで頭を殴ってくる。信念を失うな。", kind:"unknown", answer:false, note:"引用は多いが出典整理が必要になりがち。" },
+        { q:"Focus is about saying no.", jp:"フォーカスとは『ノー』と言うことだ。", kind:"unknown", answer:false, note:"短文化された引用として流通しがち。" },
+        { q:"Real artists ship.", jp:"本物のアーティストは、出す（世に出す）。", kind:"unknown", answer:false, note:"出典の文脈が複数で整理が必要になりがち。" },
+        { q:"Innovation is saying no to a thousand things.", jp:"イノベーションとは、千のことに『ノー』と言うことだ。", kind:"unknown", answer:false, note:"一次ソースに当てづらい形で流通しがち。" },
+      ];
+
+      // 出題数：デフォルト10、URLで変更（例：?n=15）
+      const params = new URLSearchParams(location.search);
+      const reqN = parseInt(params.get("n") || "10", 10);
+      const TOTAL = Math.max(1, Math.min(isFinite(reqN) ? reqN : 10, BANK.length));
+      document.getElementById("heroSub").textContent = `${TOTAL}問（?n=15 で変更）`;
+
+      const $pill = document.getElementById("pill");
+      const $progress = document.getElementById("progress");
+      const $quote = document.getElementById("quote");
+      const $jpText = document.getElementById("jpText");
+
+      const $btnConfirm = document.getElementById("btnConfirm");
+      const $btnUnknown = document.getElementById("btnUnknown");
+      const $btnNext = document.getElementById("btnNext");
+      const $btnSkip = document.getElementById("btnSkip");
+
+      const $fb = document.getElementById("feedback");
+      const $fbTitle = document.getElementById("fbTitle");
+      const $fbText = document.getElementById("fbText");
+      const $quizCard = document.getElementById("quizCard");
+
+      const $result = document.getElementById("result");
+      const $score = document.getElementById("score");
+      const $detailList = document.getElementById("detailList");
+      const $btnRetry = document.getElementById("btnRetry");
+      const $btnCopy = document.getElementById("btnCopy");
+
+      const shuffle = (arr) => {
+        const a = arr.slice();
+        for(let i=a.length-1;i>0;i--){
+          const j = Math.floor(Math.random()*(i+1));
+          [a[i],a[j]]=[a[j],a[i]];
+        }
+        return a;
+      };
+
+      const labelAnswer = (item) => {
+        if (item.kind === "quote") return "確認できる（引用）";
+        if (item.kind === "self") return "確認できる";
+        return "真偽不明";
+      };
+
+      let deck=[], idx=0, score=0, answered=0, history=[];
+
+      function start(){
+        deck = shuffle(BANK).slice(0, TOTAL);
+        idx=0; score=0; answered=0; history=[];
+        $result.classList.remove("show");
+        $quizCard.style.display = "";
+        render();
+      }
+
+      function render(){
+        const item = deck[idx];
+        $pill.textContent = `Q ${idx+1} / ${deck.length}`;
+        $progress.textContent = `${score} / ${answered}`;
+        $quote.textContent = `“${item.q}”`;
+        $jpText.textContent = item.jp;
+
+        $fb.classList.remove("show");
+        $btnNext.disabled = true;
+        $btnConfirm.disabled = false;
+        $btnUnknown.disabled = false;
+      }
+
+      function lock(){
+        $btnConfirm.disabled = true;
+        $btnUnknown.disabled = true;
+        $btnNext.disabled = false;
+      }
+
+      function judge(userAnswer){
+        const item = deck[idx];
+        const correct = (userAnswer === item.answer);
+        answered++;
+        if(correct) score++;
+
+        history.push({ ...item, userAnswer, correct });
+
+        $fb.classList.add("show");
+        $fbTitle.textContent = correct ? "正解" : "不正解";
+        $fbText.innerHTML = `判定：<b>${labelAnswer(item)}</b><br>${item.note}`;
+        $progress.textContent = `${score} / ${answered}`;
+        lock();
+      }
+
+      function next(){
+        if(idx < deck.length - 1){ idx++; render(); }
+        else finish();
+      }
+
+      function finish(){
+        $quizCard.style.display = "none";
+        $result.classList.add("show");
+        $score.textContent = `${score} / ${answered}`;
+
+        $detailList.innerHTML = "";
+        history.forEach((h, i) => {
+          const div = document.createElement("div");
+          div.className = "item";
+          div.innerHTML = `
+            <div class="itemTop">
+              <div style="font-weight:900; opacity:.9;">Q${i+1}</div>
+              <div class="tag">${h.correct ? "OK" : "NG"}</div>
+            </div>
+            <div class="itemQ">“${h.q}”</div>
+            <div class="itemJP">訳：${h.jp}</div>
+            <div class="itemExp">判定：${labelAnswer(h)} / ${h.note}</div>
+          `;
+          $detailList.appendChild(div);
+        });
+      }
+
+      async function copyResult(){
+        const lines = [];
+        lines.push(`ジョブズ名言 真偽クイズ：${score}/${answered}`);
+        history.forEach((h, i) => {
+          lines.push(`Q${i+1} ${h.correct ? "OK" : "NG"} / ${labelAnswer(h)}`);
+          lines.push(`EN: ${h.q}`);
+          lines.push(`JP: ${h.jp}`);
+        });
+        try{
+          await navigator.clipboard.writeText(lines.join("\n"));
+          const orig = $btnCopy.textContent;
+          $btnCopy.textContent = "コピーした";
+          setTimeout(()=>($btnCopy.textContent=orig), 900);
+        }catch{
+          alert("コピーに失敗しました");
+        }
+      }
+
+      $btnConfirm.addEventListener("click", ()=>judge(true));
+      $btnUnknown.addEventListener("click", ()=>judge(false));
+      $btnNext.addEventListener("click", next);
+      $btnSkip.addEventListener("click", ()=>{
+        answered++;
+        history.push({ ...deck[idx], userAnswer:null, correct:false });
+        $progress.textContent = `${score} / ${answered}`;
+        next();
+      });
+
+      $btnRetry.addEventListener("click", start);
+      $btnCopy.addEventListener("click", copyResult);
+
+      start();
+    </script>
+  </div>
+</body>
+</html>
