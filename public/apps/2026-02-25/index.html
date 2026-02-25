@@ -1,0 +1,910 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>松村、放水。</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#111a2e;
+      --ink:#e8eefc;
+      --muted:#9bb0da;
+      --accent:#38bdf8;
+      --danger:#fb7185;
+      --ok:#34d399;
+      --tile:#172445;
+      --tile2:#1a2a52;
+      --line:#8bd7ff;
+      --flow:#6ee7ff;
+      --grid-gap:10px;
+      --radius:18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Segoe UI", Arial, sans-serif;
+      background: radial-gradient(1200px 700px at 50% 0%, #162752 0%, var(--bg) 60%);
+      color:var(--ink);
+      overflow:hidden; /* スクロール禁止 */
+      -webkit-user-select:none;
+      user-select:none;
+      touch-action:manipulation;
+    }
+
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+      gap:12px;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .title{
+      line-height:1.1;
+    }
+    .title h1{
+      font-size:20px;
+      margin:0 0 6px 0;
+      letter-spacing:0.02em;
+    }
+    .title .sub{
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .topRight{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .pill{
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--ink);
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .pill b{ font-weight:700; }
+
+    button{
+      appearance:none;
+      border:none;
+      background: rgba(255,255,255,0.08);
+      color:var(--ink);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      cursor:pointer;
+    }
+    button:active{ transform: translateY(1px); }
+    button.primary{
+      background: linear-gradient(180deg, rgba(56,189,248,0.25), rgba(56,189,248,0.12));
+      border-color: rgba(56,189,248,0.35);
+    }
+    button.danger{
+      background: linear-gradient(180deg, rgba(251,113,133,0.22), rgba(251,113,133,0.10));
+      border-color: rgba(251,113,133,0.35);
+    }
+    button.ghost{
+      background: transparent;
+      border-color: rgba(255,255,255,0.14);
+    }
+
+    .boardWrap{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      min-height: 0;
+    }
+
+    .board{
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--radius);
+      padding: 14px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      min-height:0;
+    }
+
+    .hud{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .hud .msg{
+      font-size:12px;
+      color:var(--muted);
+      flex: 1;
+      min-width: 220px;
+    }
+    .hud .actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--grid-gap);
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      min-height: 0;
+    }
+
+    .tile{
+      position:relative;
+      background: linear-gradient(180deg, var(--tile), var(--tile2));
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 16px;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tile.locked{
+      opacity:0.85;
+      border-color: rgba(255,255,255,0.10);
+    }
+
+    /* スタート / ゴール表示 */
+    .badge{
+      position:absolute;
+      top:8px; left:8px;
+      font-size:11px;
+      padding: 5px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.25);
+      color: var(--ink);
+      pointer-events:none;
+    }
+    .badge.goal{ left:auto; right:8px; }
+
+    /* パイプ（SVG） */
+    .pipe{
+      width: 78%;
+      height: 78%;
+      transform-origin: 50% 50%;
+      transition: transform 140ms ease;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.35));
+    }
+    .pipe path{
+      fill:none;
+      stroke: rgba(139,215,255,0.85);
+      stroke-width: 16;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* 流れ演出 */
+    .tile.flowing{
+      outline: 2px solid rgba(110,231,255,0.55);
+      box-shadow: 0 0 0 6px rgba(110,231,255,0.14);
+    }
+    .tile.flowing .pipe path{
+      stroke: rgba(110,231,255,0.98);
+    }
+
+    .footer{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .tiny{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.25;
+    }
+
+    /* オーバーレイ共通 */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background: rgba(3,7,18,0.82);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 100;
+      overflow-y: auto;
+    }
+    .overlay.show{ display:flex; }
+
+    .modal{
+      width:min(520px, 100%);
+      background: rgba(17,26,46,0.92);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 20px 70px rgba(0,0,0,0.55);
+      backdrop-filter: blur(10px);
+    }
+    .modal h2{
+      margin:0 0 8px 0;
+      font-size: 18px;
+    }
+    .modal p{
+      margin:0 0 12px 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .modal .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .modal .row button{
+      flex:1;
+      min-width: 140px;
+    }
+
+    /* 結果（動画） */
+    .videoWrap{
+      width:min(480px, 100%);
+      max-height: min(90vh, 520px);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      overflow-y: auto;
+    }
+    .videoCard{
+      position: relative;
+      background: rgba(17,26,46,0.92);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 22px;
+      overflow:hidden;
+      box-shadow: 0 20px 70px rgba(0,0,0,0.55);
+    }
+    .clearBadge{
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 50%, transparent 100%);
+      font-size: clamp(48px, 12vw, 80px);
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      color: #fff;
+      text-shadow: 0 0 30px rgba(52,211,153,0.8), 0 2px 4px rgba(0,0,0,0.8);
+      animation: clearPop 0.6s ease-out;
+    }
+    @keyframes clearPop{
+      from{ opacity: 0; transform: scale(0.8); }
+      to{ opacity: 1; transform: scale(1); }
+    }
+    .videoCard video{
+      width:100%;
+      height:auto;
+      max-height: min(45vh, 320px);
+      display:block;
+      background:#000;
+      object-fit: contain;
+    }
+    .videoMeta{
+      padding: 12px 14px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .tag{
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(52,211,153,0.35);
+      background: rgba(52,211,153,0.10);
+      color: rgba(220,255,245,0.95);
+      font-weight: 800;
+      letter-spacing:0.02em;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <h1>松村、放水。</h1>
+        <div class="sub">水路をつないで、放水 → 成功で松村ずぶ濡れ</div>
+      </div>
+      <div class="topRight">
+        <div class="pill"><span>STAGE</span> <b id="stageLabel">1</b><span>/3</span></div>
+        <div class="pill"><span>TIME</span> <b id="timeLabel">30</b><span>s</span></div>
+        <button id="soundBtn" class="ghost" aria-label="BGM toggle">BGM: OFF</button>
+      </div>
+    </header>
+
+    <div class="boardWrap">
+      <div class="board">
+        <div class="hud">
+          <div class="msg" id="msg">
+            タイルを回して水路をつないでください。できたら <b>放水</b>。
+          </div>
+          <div class="actions">
+            <button id="resetBtn">やりなおし</button>
+            <button id="flowBtn" class="primary">放水</button>
+          </div>
+        </div>
+
+        <div class="grid" id="grid"></div>
+      </div>
+
+      <div class="footer">
+        <div class="tiny">
+          タップで回転 / 放水で判定。<br/>
+          ※自動再生の都合で、動画はミュート再生になります（必要なら別途SEを足してください）。
+        </div>
+        <button id="helpBtn" class="ghost">遊び方</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 起動時BGM確認 -->
+  <div class="overlay show" id="soundOverlay">
+    <div class="modal">
+      <h2>サウンド設定</h2>
+      <p>BGMを流しますか？（後から切替できます）</p>
+      <div class="row">
+        <button id="soundOnBtn" class="primary">BGM ON</button>
+        <button id="soundOffBtn">BGM OFF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ヘルプ -->
+  <div class="overlay" id="helpOverlay">
+    <div class="modal">
+      <h2>遊び方</h2>
+      <p>
+        タイルをタップして回転し、水路をスタートからゴールへつなげます。<br/>
+        できたら「放水」。水がゴールまで届けば成功です。
+      </p>
+      <div class="row">
+        <button id="closeHelpBtn" class="primary">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 成功（動画はSTAGE3のみ） -->
+  <div class="overlay" id="resultOverlay">
+    <div class="videoWrap">
+      <div class="videoCard">
+        <div id="stageClearMsg" style="display:none; padding:2em; text-align:center;"><p>STAGE <span id="stageClearNum">1</span> クリア！</p></div>
+        <video id="resultVideo" playsinline muted preload="auto"></video>
+        <div id="clearBadge" class="clearBadge" style="display:none;">CLEAR</div>
+        <div class="videoMeta">
+          <div class="tag">潤沢。</div>
+          <div class="row" style="margin:0; gap:8px; display:flex;">
+            <button id="nextBtn" class="primary">次へ</button>
+            <button id="againBtn">もう一回</button>
+          </div>
+        </div>
+      </div>
+      <div class="tiny" style="text-align:center;">（動画が再生されない場合は、端末の省電力設定などをご確認ください）</div>
+    </div>
+  </div>
+
+  <!-- 失敗 -->
+  <div class="overlay" id="failOverlay">
+    <div class="modal">
+      <h2 style="margin-bottom:6px;">断水中</h2>
+      <p id="failText">水が届かなかった。</p>
+      <div class="row">
+        <button id="retryBtn" class="primary">リトライ</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Vercel用: location.pathname を基準にアセットを解決（2026-02-23 と同じ方式）
+    const APP_BASE = location.pathname.endsWith("/")
+      ? location.pathname
+      : location.pathname.endsWith(".html")
+        ? location.pathname.replace(/[^/]+$/, "")
+        : `${location.pathname}/`;
+    const asset = (p) =>
+      new URL(String(p).replace(/^\.?\//, ""), `${location.origin}${APP_BASE}`).toString();
+
+    // ====== Assets (ここだけ差し替えればOK) ======
+    const ASSET_BGM   = asset("./assets/bgm.mp3");
+    const ASSET_VIDEO = asset("./assets/matsumura-water.mp4");
+
+    // ====== Tile defs ======
+    // type:
+    //  "I" = straight, "L" = curve, "T" = tee, "X" = cross (今回は未使用), "E" = empty
+    // rot: 0/1/2/3 => 0deg/90deg/180deg/270deg
+    const SIZE = 4;
+    const MAX_STAGE = 3;
+    const TIME_LIMIT = 30;
+
+    // 接続方向: 0=Up,1=Right,2=Down,3=Left
+    const DIRS = [
+      {dr:-1, dc:0},
+      {dr:0, dc:1},
+      {dr:1, dc:0},
+      {dr:0, dc:-1},
+    ];
+
+    function connections(type, rot){
+      // rotは0..3
+      // 基本形( rot=0 )の接続を定義して回転させる
+      let base = [];
+      if(type === "I") base = [0,2];            // 縦
+      else if(type === "L") base = [0,1];       // 上-右
+      else if(type === "T") base = [0,1,3];     // 上-右-左
+      else if(type === "X") base = [0,1,2,3];
+      else base = [];
+
+      return base.map(d => (d + rot) % 4);
+    }
+
+    // ====== Levels (必ず解ける固定ステージ) ======
+    // start=(0,0), goal=(3,3)
+    // ロック(回転不可)を一部置いてテンポを作る
+    const LEVELS = [
+      // STAGE 1（かなり易しめ：上段→右列）
+      {
+        tiles: [
+          // r0
+          [{t:"L",r:1,lock:true},{t:"I",r:1},{t:"I",r:1},{t:"L",r:2}],
+          // r1
+          [{t:"L",r:0},{t:"T",r:0},{t:"I",r:0},{t:"I",r:0}],
+          // r2
+          [{t:"I",r:0},{t:"L",r:1},{t:"L",r:3},{t:"I",r:0}],
+          // r3
+          [{t:"L",r:0},{t:"I",r:1},{t:"T",r:1},{t:"L",r:3,lock:true}],
+        ],
+      },
+
+      // STAGE 2（ジグザグ）
+      {
+        tiles: [
+          [{t:"L",r:1,lock:true},{t:"T",r:1},{t:"L",r:2},{t:"I",r:0}],
+          [{t:"I",r:0},{t:"L",r:0},{t:"L",r:1},{t:"L",r:2}],
+          [{t:"L",r:0},{t:"I",r:1},{t:"L",r:3},{t:"I",r:0}],
+          [{t:"T",r:0},{t:"L",r:1},{t:"I",r:1},{t:"L",r:3,lock:true}],
+        ],
+      },
+
+      // STAGE 3（T字あり）
+      {
+        tiles: [
+          [{t:"L",r:1,lock:true},{t:"L",r:2},{t:"I",r:1},{t:"L",r:2}],
+          [{t:"I",r:0},{t:"I",r:0},{t:"L",r:1},{t:"I",r:0}],
+          [{t:"L",r:0},{t:"L",r:0},{t:"T",r:2},{t:"L",r:2}],
+          [{t:"T",r:1},{t:"I",r:1},{t:"L",r:0},{t:"L",r:3,lock:true}],
+        ],
+      },
+    ];
+
+    // シャッフル（初期バラし用）
+    function scrambleLevel(level){
+      const out = structuredClone(level);
+      for(let r=0;r<SIZE;r++){
+        for(let c=0;c<SIZE;c++){
+          const cell = out.tiles[r][c];
+          if(cell.lock) continue;
+          // ランダム回転
+          cell.r = Math.floor(Math.random()*4);
+        }
+      }
+      return out;
+    }
+
+    // ====== UI refs ======
+    const gridEl = document.getElementById("grid");
+    const flowBtn = document.getElementById("flowBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const msgEl = document.getElementById("msg");
+
+    const stageLabel = document.getElementById("stageLabel");
+    const timeLabel = document.getElementById("timeLabel");
+
+    const soundOverlay = document.getElementById("soundOverlay");
+    const soundOnBtn = document.getElementById("soundOnBtn");
+    const soundOffBtn = document.getElementById("soundOffBtn");
+    const soundBtn = document.getElementById("soundBtn");
+
+    const helpBtn = document.getElementById("helpBtn");
+    const helpOverlay = document.getElementById("helpOverlay");
+    const closeHelpBtn = document.getElementById("closeHelpBtn");
+
+    const resultOverlay = document.getElementById("resultOverlay");
+    const resultVideo = document.getElementById("resultVideo");
+    const stageClearMsg = document.getElementById("stageClearMsg");
+    const stageClearNum = document.getElementById("stageClearNum");
+    const clearBadge = document.getElementById("clearBadge");
+    const nextBtn = document.getElementById("nextBtn");
+    const againBtn = document.getElementById("againBtn");
+
+    const failOverlay = document.getElementById("failOverlay");
+    const retryBtn = document.getElementById("retryBtn");
+    const failText = document.getElementById("failText");
+
+    // ====== Audio ======
+    const bgm = new Audio(ASSET_BGM);
+    bgm.loop = true;
+    bgm.preload = "auto";
+    let bgmEnabled = false;
+
+    function setBgmEnabled(on){
+      bgmEnabled = on;
+      soundBtn.textContent = `BGM: ${bgmEnabled ? "ON" : "OFF"}`;
+      if(bgmEnabled){
+        // iOS対策：再生はユーザー操作中に呼ぶ
+        bgm.play().catch(()=>{ /* noop */ });
+      }else{
+        bgm.pause();
+        bgm.currentTime = 0;
+      }
+    }
+
+    // ====== Game state ======
+    let stage = 1;
+    let level = null;          // 現在のレベル（scramble済）
+    let baseLevel = null;      // 元レベル
+    let locked = false;        // 放水中など操作禁止
+    let timeLeft = TIME_LIMIT;
+    let timerId = null;
+
+    function startTimer(){
+      stopTimer();
+      timeLeft = TIME_LIMIT;
+      timeLabel.textContent = String(timeLeft);
+      timerId = setInterval(()=>{
+        if(locked) return; // 放水演出中は止める（好みで変えてOK）
+        timeLeft--;
+        timeLabel.textContent = String(timeLeft);
+        if(timeLeft <= 0){
+          stopTimer();
+          onFail("時間切れ。");
+        }
+      }, 1000);
+    }
+    function stopTimer(){
+      if(timerId){
+        clearInterval(timerId);
+        timerId = null;
+      }
+    }
+
+    // ====== Render ======
+    function pipeSvg(type){
+      // rotは外側でtransform
+      // SVGは基本形（rot=0）で描画
+      // I: 縦線 / L: 上-右 / T: 上-右-左
+      if(type === "I"){
+        return `
+          <svg class="pipe" viewBox="0 0 100 100" aria-hidden="true">
+            <path d="M50 12 L50 88"></path>
+          </svg>
+        `;
+      }
+      if(type === "L"){
+        return `
+          <svg class="pipe" viewBox="0 0 100 100" aria-hidden="true">
+            <path d="M50 12 L50 50 L88 50"></path>
+          </svg>
+        `;
+      }
+      if(type === "T"){
+        return `
+          <svg class="pipe" viewBox="0 0 100 100" aria-hidden="true">
+            <path d="M50 12 L50 50"></path>
+            <path d="M12 50 L88 50"></path>
+          </svg>
+        `;
+      }
+      return `
+        <svg class="pipe" viewBox="0 0 100 100" aria-hidden="true">
+          <path d=""></path>
+        </svg>
+      `;
+    }
+
+    function render(){
+      gridEl.innerHTML = "";
+      stageLabel.textContent = String(stage);
+
+      for(let r=0;r<SIZE;r++){
+        for(let c=0;c<SIZE;c++){
+          const cell = level.tiles[r][c];
+          const el = document.createElement("div");
+          el.className = "tile" + (cell.lock ? " locked" : "");
+          el.dataset.r = String(r);
+          el.dataset.c = String(c);
+
+          // start/goal badge
+          if(r===0 && c===0){
+            const b = document.createElement("div");
+            b.className = "badge";
+            b.textContent = "START";
+            el.appendChild(b);
+          }
+          if(r===SIZE-1 && c===SIZE-1){
+            const b = document.createElement("div");
+            b.className = "badge goal";
+            b.textContent = "GOAL";
+            el.appendChild(b);
+          }
+
+          el.insertAdjacentHTML("beforeend", pipeSvg(cell.t));
+          const svg = el.querySelector(".pipe");
+          svg.style.transform = `rotate(${cell.r*90}deg)`;
+
+          el.addEventListener("click", (e)=>{
+            e.preventDefault();
+            if(locked) return;
+            if(cell.lock) return;
+            cell.r = (cell.r + 1) % 4;
+            svg.style.transform = `rotate(${cell.r*90}deg)`;
+          }, {passive:false});
+
+          // 長押しメニュー防止
+          el.addEventListener("contextmenu", (e)=>e.preventDefault());
+
+          gridEl.appendChild(el);
+        }
+      }
+    }
+
+    function clearFlowMarks(){
+      document.querySelectorAll(".tile.flowing").forEach(x=>x.classList.remove("flowing"));
+    }
+
+    // ====== Connectivity / Solve ======
+    function inBounds(r,c){ return r>=0 && r<SIZE && c>=0 && c<SIZE; }
+
+    function canConnect(r1,c1,dir){
+      // (r1,c1) から dir 方向に接続できるか、相手側も逆向き接続があるか
+      const a = level.tiles[r1][c1];
+      const nr = r1 + DIRS[dir].dr;
+      const nc = c1 + DIRS[dir].dc;
+      if(!inBounds(nr,nc)) return false;
+      const b = level.tiles[nr][nc];
+      const aConn = connections(a.t, a.r);
+      const bConn = connections(b.t, b.r);
+      const opp = (dir + 2) % 4;
+      return aConn.includes(dir) && bConn.includes(opp);
+    }
+
+    function computeFlowPath(){
+      // BFSでstart→goalへの到達と、流れる順序（距離順）を返す
+      const start = {r:0,c:0};
+      const goal = {r:SIZE-1,c:SIZE-1};
+
+      const dist = Array.from({length:SIZE}, ()=>Array(SIZE).fill(Infinity));
+      const prev = Array.from({length:SIZE}, ()=>Array(SIZE).fill(null));
+      const q = [];
+
+      dist[start.r][start.c] = 0;
+      q.push(start);
+
+      while(q.length){
+        const cur = q.shift();
+        const d = dist[cur.r][cur.c];
+        for(let dir=0; dir<4; dir++){
+          if(!canConnect(cur.r, cur.c, dir)) continue;
+          const nr = cur.r + DIRS[dir].dr;
+          const nc = cur.c + DIRS[dir].dc;
+          if(dist[nr][nc] > d + 1){
+            dist[nr][nc] = d + 1;
+            prev[nr][nc] = cur;
+            q.push({r:nr,c:nc});
+          }
+        }
+      }
+
+      if(!isFinite(dist[goal.r][goal.c])) return {reached:false, path:[]};
+
+      // goalから復元
+      const path = [];
+      let cur = goal;
+      while(cur){
+        path.push(cur);
+        cur = prev[cur.r][cur.c];
+      }
+      path.reverse();
+      return {reached:true, path};
+    }
+
+    async function animateFlow(path){
+      // 水がじわーっと進む
+      clearFlowMarks();
+      locked = true;
+      msgEl.innerHTML = "放水中…";
+
+      for(const p of path){
+        const idx = p.r * SIZE + p.c;
+        const tileEl = gridEl.children[idx];
+        tileEl.classList.add("flowing");
+        await wait(170);
+      }
+
+      await wait(250); // “つなぎ”の余韻
+      locked = false;
+    }
+
+    function wait(ms){ return new Promise(res=>setTimeout(res, ms)); }
+
+    // ====== Stage control ======
+    function loadStage(n){
+      stage = n;
+      baseLevel = LEVELS[n-1];
+      level = scrambleLevel(baseLevel);
+      clearFlowMarks();
+      locked = false;
+      msgEl.innerHTML = `タイルを回して水路をつないでください。できたら <b>放水</b>。`;
+      render();
+      startTimer();
+    }
+
+    function onFail(reason){
+      locked = true;
+      clearFlowMarks();
+      failText.textContent = reason;
+      failOverlay.classList.add("show");
+    }
+
+    async function onSuccess(){
+      stopTimer();
+      locked = true;
+      clearFlowMarks();
+
+      resultOverlay.classList.add("show");
+
+      if(stage === MAX_STAGE){
+        // STAGE3 クリア時のみ動画再生 + CLEAR表示
+        stageClearMsg.style.display = "none";
+        clearBadge.style.display = "flex";
+        resultVideo.style.display = "";
+        resultVideo.src = ASSET_VIDEO;
+        try{
+          await resultVideo.play();
+        }catch(e){
+          resultVideo.controls = true;
+        }
+      }else{
+        // STAGE1,2: 簡易表示のみ
+        stageClearMsg.style.display = "";
+        stageClearNum.textContent = stage;
+        clearBadge.style.display = "none";
+        resultVideo.removeAttribute("src");
+        resultVideo.style.display = "none";
+      }
+    }
+
+    // ====== Events ======
+    flowBtn.addEventListener("click", async ()=>{
+      if(locked) return;
+
+      // 放水中はタイマー止める（演出優先）
+      locked = true;
+
+      const {reached, path} = computeFlowPath();
+
+      // 演出用にロック解除は animateFlow 内で行うが、
+      // 失敗時は早めに戻す
+      if(path.length === 0){
+        locked = false;
+        onFail("水路がつながっていない。");
+        return;
+      }
+
+      await animateFlow(path);
+
+      if(reached){
+        await onSuccess();
+      }else{
+        onFail("ゴールまで水が届かなかった。");
+      }
+    });
+
+    resetBtn.addEventListener("click", ()=>{
+      if(locked) return;
+      // 同ステージを再シャッフル
+      loadStage(stage);
+    });
+
+    retryBtn.addEventListener("click", ()=>{
+      failOverlay.classList.remove("show");
+      locked = false;
+      loadStage(stage);
+    });
+
+    againBtn.addEventListener("click", ()=>{
+      resultOverlay.classList.remove("show");
+      resultVideo.pause();
+      resultVideo.currentTime = 0;
+      locked = false;
+      loadStage(stage);
+    });
+
+    nextBtn.addEventListener("click", ()=>{
+      resultOverlay.classList.remove("show");
+      resultVideo.pause();
+      resultVideo.currentTime = 0;
+      locked = false;
+
+      if(stage < MAX_STAGE){
+        loadStage(stage + 1);
+      }else{
+        // 全クリ
+        // もう一回最初から
+        loadStage(1);
+      }
+    });
+
+    helpBtn.addEventListener("click", ()=>{
+      helpOverlay.classList.add("show");
+    });
+    closeHelpBtn.addEventListener("click", ()=>{
+      helpOverlay.classList.remove("show");
+    });
+
+    // 起動時サウンド選択（ユーザー操作で再生権限確保）
+    soundOnBtn.addEventListener("click", ()=>{
+      setBgmEnabled(true);
+      soundOverlay.classList.remove("show");
+      loadStage(1);
+    });
+    soundOffBtn.addEventListener("click", ()=>{
+      setBgmEnabled(false);
+      soundOverlay.classList.remove("show");
+      loadStage(1);
+    });
+
+    soundBtn.addEventListener("click", ()=>{
+      setBgmEnabled(!bgmEnabled);
+    });
+
+    // iOS対策：一度でもタップで再生トライ
+    window.addEventListener("pointerdown", ()=>{
+      if(bgmEnabled && bgm.paused){
+        bgm.play().catch(()=>{});
+      }
+    }, {once:false});
+
+    // 画面回転で崩れた時
+    window.addEventListener("resize", ()=>{
+      // 何もしない（CSSで吸収）
+    });
+
+    // 初期：結果動画にsrc入れない（読み込み軽量化）
+    resultVideo.removeAttribute("src");
+  </script>
+</body>
+</html>
