@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>脱出ゲーム</title>
+  <style>
+    :root{
+      --w: min(92vw, 520px);
+      --h: calc(var(--w) * 1.78);
+    }
+    html, body{
+      margin:0; height:100%;
+      background:#0b0b0b; color:#fff;
+      font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+
+      user-select:none;
+      -webkit-user-select:none;
+      -webkit-touch-callout:none;
+      touch-action: manipulation;
+    }
+    .wrap{height:100%;display:grid;place-items:center;padding:12px;box-sizing:border-box;}
+    .stage{
+      width:var(--w); height:var(--h);
+      position:relative; overflow:hidden;
+      border-radius:18px;
+      box-shadow:0 12px 40px rgba(0,0,0,.55);
+      background:#111;
+      isolation:isolate;
+    }
+
+    /* 背景はimgで確定表示領域を作る（contain） */
+    .bg{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      object-fit: contain;
+      object-position: center;
+      pointer-events:none;
+      transform: translateZ(0);
+      z-index: 0;
+    }
+
+    /* 当たり判定 */
+    .hot{
+      position:absolute;
+      border-radius: 12px;
+      touch-action: manipulation;
+      z-index: 2;
+    }
+
+    /* デバッグ可視化 */
+    .debug .hot{
+      outline: 2px solid rgba(255, 0, 200, .85);
+      background: rgba(255, 0, 200, .10);
+    }
+    .debug .hot.knob{
+      outline-color: rgba(0,255,255,.9);
+      background: rgba(0,255,255,.10);
+    }
+
+    /* クリック演出（ネタバレしない） */
+    .pulse{
+      position:absolute; inset:0;
+      pointer-events:none;
+      opacity:0;
+      z-index: 3;
+    }
+    .pulse.on{ animation:pulse .12s ease; }
+    @keyframes pulse{ 0%{opacity:0} 40%{opacity:.18} 100%{opacity:0} }
+
+    /* トースト */
+    .toast{
+      position:absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.50);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.12);
+      font-weight: 700;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+      z-index: 10;
+      white-space: nowrap;
+      max-width: 90%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .toast.on{ opacity: 1; transform: translateX(-50%) translateY(-4px); }
+
+    /* クリア */
+    .msg{
+      position:absolute; inset:0;
+      display:grid; place-items:center;
+      background:rgba(0,0,0,.55);
+      opacity:0; pointer-events:none;
+      transition:opacity .25s ease;
+      z-index: 20;
+    }
+    .msg.on{opacity:1;pointer-events:auto;}
+    .card{
+      width:min(86%,360px);
+      border-radius:18px;
+      padding:18px 16px;
+      background:rgba(20,20,20,.92);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:0 14px 50px rgba(0,0,0,.55);
+      text-align:center;
+    }
+    .card h1{margin:0 0 8px;font-size:20px;}
+    .card p{margin:0;opacity:.9;line-height:1.5;}
+    .btn{
+      margin-top:14px;width:100%;
+      padding:12px 14px;border-radius:14px;border:0;
+      background:#fff;color:#000;font-weight:800;font-size:14px;
+    }
+
+    /* ====== UIパネル（タンス/金庫/モニター） ====== */
+    .panel{
+      position:absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(88%, 360px);
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(20,20,20,.92);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 14px 50px rgba(0,0,0,.55);
+      z-index: 15;
+      display:none;
+    }
+    .panel.on{ display:block; }
+    .panelHead{
+      display:flex; align-items:center; justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .panelTitle{ font-weight: 900; font-size: 14px; opacity:.95; }
+    .panelClose{
+      border:0;
+      background: rgba(255,255,255,.08);
+      color:#fff;
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-weight: 900;
+    }
+
+    /* タンス：4桁表示とテンキー */
+    .digits{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-weight: 900;
+      letter-spacing: .15em;
+      font-size: 26px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.10);
+      text-align:center;
+      margin-bottom: 10px;
+    }
+    .keypad{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .key{
+      border:0;
+      border-radius: 14px;
+      padding: 14px 0;
+      background: rgba(255,255,255,.10);
+      color:#fff;
+      font-weight: 900;
+      font-size: 18px;
+    }
+    .key:active{ transform: translateY(1px); }
+
+    .row2{
+      margin-top: 10px;
+      display:flex; gap: 10px;
+    }
+    .subkey{
+      flex: 1;
+      border:0;
+      border-radius: 14px;
+      padding: 12px 10px;
+      background: rgba(255,255,255,.10);
+      color:#fff;
+      font-weight: 900;
+      font-size: 14px;
+    }
+
+    /* 金庫：赤黄緑ボタン */
+    .rgbWrap{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .rgb{
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      border-radius: 16px;
+      padding: 14px 0;
+      font-weight: 1000;
+      color:#fff;
+    }
+    .rgb[data-c="R"]{ }
+    .rgb[data-c="Y"]{ }
+    .rgb[data-c="G"]{ }
+
+    .rgb.on{
+      background: rgba(255,255,255,.18);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.25);
+    }
+
+    /* モニター：ログ表示 */
+    .log{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      background: rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding: 12px;
+      min-height: 120px;
+      white-space: pre-wrap;
+    }
+
+    /* デバッグ表示 */
+    .dbg{
+      position:absolute;
+      left:10px; bottom:10px;
+      padding:8px 10px;
+      border-radius:12px;
+      background:rgba(0,0,0,.35);
+      backdrop-filter: blur(6px);
+      font-weight:800;
+      font-size:12px;
+      z-index: 30;
+      display:none;
+      max-width: 92%;
+      overflow:auto;
+    }
+    .debug .dbg{display:block;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="stage" id="stage">
+      <img class="bg" id="bg" alt="" />
+
+      <!-- ホットスポット（画像基準で配置） -->
+      <div class="hot knob" id="knob" aria-label="ドアノブ"></div>
+      <div class="hot monitor" id="hotMonitor" aria-label="ドア横の端末"></div>
+      <div class="hot dresser" id="hotDresser" aria-label="左のタンス"></div>
+      <div class="hot safe" id="hotSafe" aria-label="右の金庫"></div>
+
+      <div class="pulse" id="pulse"></div>
+      <div class="toast" id="toast"></div>
+
+      <!-- パネル：タンス（4桁） -->
+      <div class="panel" id="panelDresser" role="dialog" aria-label="タンスのパネル">
+        <div class="panelHead">
+          <div class="panelTitle">タンス（暗証番号）</div>
+          <button class="panelClose" data-close="panelDresser">閉じる</button>
+        </div>
+        <div class="digits" id="dresserDigits">0000</div>
+        <div class="keypad" id="keypad"></div>
+        <div class="row2">
+          <button class="subkey" id="dresserClear">クリア</button>
+          <button class="subkey" id="dresserOk">決定</button>
+        </div>
+      </div>
+
+      <!-- パネル：金庫（RGB） -->
+      <div class="panel" id="panelSafe" role="dialog" aria-label="金庫のパネル">
+        <div class="panelHead">
+          <div class="panelTitle">金庫（ボタン）</div>
+          <button class="panelClose" data-close="panelSafe">閉じる</button>
+        </div>
+        <div class="rgbWrap">
+          <button class="rgb" id="btnR" data-c="R">赤</button>
+          <button class="rgb" id="btnY" data-c="Y">黄</button>
+          <button class="rgb" id="btnG" data-c="G">緑</button>
+        </div>
+        <div class="row2">
+          <button class="subkey" id="safeReset">リセット</button>
+          <button class="subkey" id="safeOk">決定</button>
+        </div>
+      </div>
+
+      <!-- パネル：モニター -->
+      <div class="panel" id="panelMonitor" role="dialog" aria-label="端末のパネル">
+        <div class="panelHead">
+          <div class="panelTitle">端末</div>
+          <button class="panelClose" data-close="panelMonitor">閉じる</button>
+        </div>
+        <div class="log" id="monitorLog"></div>
+        <div class="row2">
+          <button class="subkey" id="monitorNext">画面切替</button>
+          <button class="subkey" id="monitorBeep">テスト</button>
+        </div>
+      </div>
+
+      <!-- クリア -->
+      <div class="msg" id="msg">
+        <div class="card">
+          <h1>脱出成功</h1>
+          <p>力こそパワー</p>
+          <button class="btn" id="retry">もう一回</button>
+        </div>
+      </div>
+
+      <!-- debug 出力（画像基準JSON） -->
+      <div class="dbg" id="dbg"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    // 1日1アプリ: 動的アセット参照ヘルパー（Vercel用：location.pathname 基準）
+    const APP_BASE = location.pathname.endsWith("/")
+      ? location.pathname
+      : location.pathname.endsWith(".html")
+        ? location.pathname.replace(/[^/]+$/, "")
+        : `${location.pathname}/`;
+    const asset = (p) =>
+      new URL(String(p).replace(/^\.?\//, ""), `${location.origin}${APP_BASE}`).toString();
+
+    const stage = document.getElementById('stage');
+    const bg = document.getElementById('bg');
+
+    const knob = document.getElementById('knob');
+    const hotMonitor = document.getElementById('hotMonitor');
+    const hotDresser = document.getElementById('hotDresser');
+    const hotSafe = document.getElementById('hotSafe');
+
+    const msg = document.getElementById('msg');
+    const retry = document.getElementById('retry');
+    const pulse = document.getElementById('pulse');
+    const toast = document.getElementById('toast');
+    const dbg = document.getElementById('dbg');
+
+    const panelDresser = document.getElementById('panelDresser');
+    const panelSafe = document.getElementById('panelSafe');
+    const panelMonitor = document.getElementById('panelMonitor');
+
+    const dresserDigitsEl = document.getElementById('dresserDigits');
+    const keypad = document.getElementById('keypad');
+    const dresserClear = document.getElementById('dresserClear');
+    const dresserOk = document.getElementById('dresserOk');
+
+    const btnR = document.getElementById('btnR');
+    const btnY = document.getElementById('btnY');
+    const btnG = document.getElementById('btnG');
+    const safeReset = document.getElementById('safeReset');
+    const safeOk = document.getElementById('safeOk');
+
+    const monitorLog = document.getElementById('monitorLog');
+    const monitorNext = document.getElementById('monitorNext');
+    const monitorBeep = document.getElementById('monitorBeep');
+
+    // 画像セット（1024x1792想定）
+    bg.src = asset('./assets/room.png');
+
+    // ===== 設定 =====
+    const HOLD_MS = 1200;
+
+    // デバッグ：?debug=1
+    const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+    if (DEBUG) stage.classList.add('debug');
+
+    // 画像の基準サイズ（生成した画像）
+    const IMG_W = 1024;
+    const IMG_H = 1792;
+
+    // --- 画像基準のホットスポット定義（0..1） ---
+    // ※ズレたら ?debug=1 でドラッグ調整 → 下にJSONが出る
+    const HOT = {
+      // ドアノブ：ちょっとだけ左と上に
+      knob:   { x: 0.605, y: 0.425, w: 0.05498798076923077, h: 0.03499313186813187 },
+      // ドア横端末：高さ半分
+      monitor:{ x: 0.665, y: 0.375, w: 0.120, h: 0.082 },
+      // 左タンス：高さ半分
+      dresser:{ x: 0.030, y: 0.478, w: 0.310, h: 0.140 },
+      // 右金庫：高さ半分、もう少し上に
+      safe:   { x: 0.730, y: 0.552, w: 0.250, h: 0.092 },
+    };
+
+    // ===== SPの誤動作抑止 =====
+    document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive:false });
+    document.addEventListener('dblclick', (e) => e.preventDefault(), { passive:false });
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // iOSのダブルタップ拡大保険（全体）
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive:false });
+
+    // ====== レイアウト：contain表示領域へマッピング ======
+    function getContainRect() {
+      const sw = stage.clientWidth;
+      const sh = stage.clientHeight;
+      const scale = Math.min(sw / IMG_W, sh / IMG_H);
+      const dw = IMG_W * scale;
+      const dh = IMG_H * scale;
+      const ox = (sw - dw) / 2;
+      const oy = (sh - dh) / 2;
+      return { ox, oy, dw, dh, sw, sh };
+    }
+
+    function placeHot(el, r) {
+      const { ox, oy, dw, dh } = getContainRect();
+      el.style.left = `${ox + r.x * dw}px`;
+      el.style.top = `${oy + r.y * dh}px`;
+      el.style.width = `${r.w * dw}px`;
+      el.style.height = `${r.h * dh}px`;
+    }
+
+    function layoutAll() {
+      placeHot(knob, HOT.knob);
+      placeHot(hotMonitor, HOT.monitor);
+      placeHot(hotDresser, HOT.dresser);
+      placeHot(hotSafe, HOT.safe);
+
+      if (DEBUG) {
+        dbg.textContent =
+`HOT (image-normalized):
+${JSON.stringify(HOT, null, 2)}`;
+      }
+    }
+
+    window.addEventListener('resize', layoutAll);
+    bg.addEventListener('load', layoutAll);
+
+    // ===== トースト =====
+    const showToast = (text, ms = 900) => {
+      toast.textContent = text;
+      toast.classList.add('on');
+      window.clearTimeout(showToast._t);
+      showToast._t = window.setTimeout(() => toast.classList.remove('on'), ms);
+    };
+
+    const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    // ===== パネル制御 =====
+    function closePanels() {
+      panelDresser.classList.remove('on');
+      panelSafe.classList.remove('on');
+      panelMonitor.classList.remove('on');
+    }
+    function openPanel(p) {
+      closePanels();
+      p.classList.add('on');
+    }
+
+    document.querySelectorAll('[data-close]').forEach(btn => {
+      btn.addEventListener('pointerdown', (e) => { e.preventDefault(); closePanels(); }, { passive:false });
+      btn.addEventListener('click', (e) => { e.preventDefault(); closePanels(); }, { passive:false });
+    });
+
+    // パネル外タップで閉じる（stage全体）
+    stage.addEventListener('pointerdown', (e) => {
+      // クリック元がパネル内部なら無視
+      const inPanel = e.target.closest('.panel');
+      const inHot = e.target.closest('.hot');
+      const inMsg = e.target.closest('.msg');
+      if (inPanel || inHot || inMsg) return;
+      closePanels();
+    });
+
+    // ===== ドアノブ：長押しで脱出 =====
+    let opened = false;
+    let holdTimer = null;
+    let holding = false;
+
+    const startHold = (e) => {
+      if (opened) return;
+      if (panelDresser.classList.contains('on') || panelSafe.classList.contains('on') || panelMonitor.classList.contains('on')) return;
+
+      e.preventDefault();
+      if (holding) return;
+      holding = true;
+
+      pulse.classList.remove('on'); void pulse.offsetWidth; pulse.classList.add('on');
+      if (navigator.vibrate) navigator.vibrate(8);
+
+      holdTimer = window.setTimeout(() => {
+        opened = true;
+        msg.classList.add('on');
+        holding = false;
+        holdTimer = null;
+        if (navigator.vibrate) navigator.vibrate([20, 30, 20]);
+      }, HOLD_MS);
+    };
+
+    const cancelHold = (e) => {
+      if (!holding) return;
+      e.preventDefault();
+      holding = false;
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+    };
+
+    // ノブ上の選択/ドラッグ抑止
+    ['selectstart','dragstart'].forEach((t) => knob.addEventListener(t, (e)=>e.preventDefault()));
+
+    knob.addEventListener('pointerdown', startHold, { passive:false });
+    knob.addEventListener('pointerup', cancelHold, { passive:false });
+    knob.addEventListener('pointercancel', cancelHold, { passive:false });
+    knob.addEventListener('pointerleave', cancelHold, { passive:false });
+
+    retry.addEventListener('click', () => {
+      opened = false;
+      msg.classList.remove('on');
+      closePanels();
+      showToast("……戻された", 800);
+    });
+
+    // ===== ホットスポット：共通 =====
+    const onHot = (el, fn) => {
+      el.addEventListener('pointerdown', (e) => { e.preventDefault(); fn(); }, { passive:false });
+      el.addEventListener('click', (e) => { e.preventDefault(); fn(); }, { passive:false });
+      ['selectstart','dragstart'].forEach((t) => el.addEventListener(t, (e)=>e.preventDefault()));
+    };
+
+    // ===== タンス（4桁入力） =====
+    let dresserCode = "";
+
+    function renderDresser() {
+      dresserDigitsEl.textContent = dresserCode.padEnd(4, "0");
+    }
+
+    // テンキー生成
+    const keys = ["1","2","3","4","5","6","7","8","9","0"];
+    keypad.innerHTML = "";
+    keys.slice(0,9).forEach(k => {
+      const b = document.createElement('button');
+      b.className = "key";
+      b.textContent = k;
+      b.addEventListener('pointerdown', (e) => { e.preventDefault(); pushDigit(k); }, { passive:false });
+      keypad.appendChild(b);
+    });
+    // 0 を中央に置くための埋め
+    const empty = document.createElement('div');
+    keypad.appendChild(empty);
+    const b0 = document.createElement('button');
+    b0.className = "key";
+    b0.textContent = "0";
+    b0.addEventListener('pointerdown', (e) => { e.preventDefault(); pushDigit("0"); }, { passive:false });
+    keypad.appendChild(b0);
+    keypad.appendChild(document.createElement('div'));
+
+    function pushDigit(d) {
+      dresserCode = (dresserCode + d).slice(0, 4);
+      renderDresser();
+      showToast("カチ…", 450);
+      if (navigator.vibrate) navigator.vibrate(4);
+    }
+
+    dresserClear.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      dresserCode = "";
+      renderDresser();
+      showToast("リセットされた", 650);
+    }, { passive:false });
+
+    dresserOk.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      const msgs = [
+        "……違う気がする",
+        "エラー：アクセス拒否",
+        "ピッ（無反応）",
+        "手応えだけある",
+      ];
+      showToast(rand(msgs), 900);
+      closePanels();
+    }, { passive: false });
+
+    onHot(hotDresser, () => {
+      openPanel(panelDresser);
+      renderDresser();
+      showToast("タンスを調べた", 650);
+    });
+
+    // ===== 金庫（RGBボタン選択） =====
+    let safeSeq = [];
+
+    function renderSafe() {
+      const last = safeSeq[safeSeq.length - 1] || null;
+      [btnR, btnY, btnG].forEach(b => b.classList.remove('on'));
+      if (last === "R") btnR.classList.add('on');
+      if (last === "Y") btnY.classList.add('on');
+      if (last === "G") btnG.classList.add('on');
+    }
+
+    function pressColor(c) {
+      safeSeq.push(c);
+      safeSeq = safeSeq.slice(-8);
+      renderSafe();
+      showToast("ピッ", 420);
+      if (navigator.vibrate) navigator.vibrate(4);
+    }
+
+    btnR.addEventListener('pointerdown', (e) => { e.preventDefault(); pressColor("R"); }, { passive: false });
+    btnY.addEventListener('pointerdown', (e) => { e.preventDefault(); pressColor("Y"); }, { passive: false });
+    btnG.addEventListener('pointerdown', (e) => { e.preventDefault(); pressColor("G"); }, { passive: false });
+
+    safeReset.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      safeSeq = [];
+      renderSafe();
+      showToast("……最初から", 650);
+    }, { passive: false });
+
+    safeOk.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      const msgs = [
+        "ロックは解除されない",
+        "（なぜか）沈黙",
+        "惜しい気配だけある",
+      ];
+      showToast(rand(msgs), 900);
+      if (Math.random() < 0.25) safeSeq = [];
+      renderSafe();
+      closePanels();
+    }, { passive: false });
+
+    onHot(hotSafe, () => {
+      openPanel(panelSafe);
+      renderSafe();
+      showToast("金庫を調べた", 650);
+    });
+
+    // ===== ドア横の端末（おすすめ：カードリーダー兼ログ） =====
+    const monitorScreens = [
+`SYS/ACCESS TERMINAL
+STATUS: LOCKED
+CARD: NOT PRESENT
+LOG: 02:26 / SIGNAL LOST`,
+`DIAG MODE
+SENSOR: OK
+NETWORK: ERROR
+NOTE: "26時" は存在しない`,
+`SECURITY LOG
+[WARN] FORCE DETECTED
+[INFO] NO ACTION TAKEN
+…`,
+`HELP
+・カードをかざす
+・PINを入力する
+・（どれもできない）`
+    ];
+    let monIdx = 0;
+
+    function renderMonitor() {
+      monitorLog.textContent = monitorScreens[monIdx % monitorScreens.length];
+    }
+
+    monitorNext.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      monIdx++;
+      renderMonitor();
+      showToast("画面が切り替わった", 650);
+    }, { passive:false });
+
+    monitorBeep.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      const testResults = [
+        ">>> SELF-TEST <<<\nSTATUS: OK\nBEEP",
+        ">>> DIAG <<<\nAUDIO: ---\nDISPLAY: OK",
+        ">>> TEST <<<\nERROR 0x00\n(無視可能)",
+      ];
+      const result = rand(testResults);
+      monitorLog.textContent = result;
+      showToast("ピッ", 500);
+      if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+      setTimeout(() => renderMonitor(), 1200);
+    }, { passive:false });
+
+    onHot(hotMonitor, () => {
+      openPanel(panelMonitor);
+      renderMonitor();
+      showToast("端末を起動した", 650);
+    });
+
+    // ===== デバッグ：全ホットスポットをドラッグで調整（画像基準に変換して出力） =====
+    if (DEBUG) {
+      const allHotEls = [
+        { key: "knob", el: knob },
+        { key: "monitor", el: hotMonitor },
+        { key: "dresser", el: hotDresser },
+        { key: "safe", el: hotSafe },
+      ];
+
+      let dragging = null; // {key, el}
+      let offsetX = 0, offsetY = 0;
+
+      const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+      const toNormalized = (el) => {
+        const { ox, oy, dw, dh } = getContainRect();
+        const r = el.getBoundingClientRect();
+        const rs = stage.getBoundingClientRect();
+        const x = (r.left - rs.left - ox) / dw;
+        const y = (r.top  - rs.top  - oy) / dh;
+        const w = r.width / dw;
+        const h = r.height / dh;
+        return {
+          x: clamp(x, 0, 1),
+          y: clamp(y, 0, 1),
+          w: clamp(w, 0, 1),
+          h: clamp(h, 0, 1),
+        };
+      };
+
+      const applyFromPx = (el, px, py) => {
+        const { ox, oy, dw, dh } = getContainRect();
+        // px/py は stage座標
+        const nx = (px - ox) / dw;
+        const ny = (py - oy) / dh;
+        const cur = toNormalized(el);
+        const next = { x: nx, y: ny, w: cur.w, h: cur.h };
+        // 反映
+        HOT[dragging.key] = {
+          x: clamp(next.x, 0, 1),
+          y: clamp(next.y, 0, 1),
+          w: clamp(next.w, 0, 1),
+          h: clamp(next.h, 0, 1),
+        };
+        layoutAll();
+      };
+
+      const updateDbg = () => {
+        dbg.textContent =
+`HOT (image-normalized):
+${JSON.stringify(HOT, null, 2)}
+`;
+      };
+
+      allHotEls.forEach(({key, el}) => {
+        el.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          dragging = { key, el };
+          const r = el.getBoundingClientRect();
+          offsetX = e.clientX - r.left;
+          offsetY = e.clientY - r.top;
+          el.setPointerCapture(e.pointerId);
+          updateDbg();
+        }, { passive:false });
+
+        el.addEventListener('pointermove', (e) => {
+          if (!dragging || dragging.el !== el) return;
+          e.preventDefault();
+          const rs = stage.getBoundingClientRect();
+          const w = el.getBoundingClientRect().width;
+          const h = el.getBoundingClientRect().height;
+
+          const px = clamp(e.clientX - rs.left - offsetX, 0, rs.width - w);
+          const py = clamp(e.clientY - rs.top  - offsetY, 0, rs.height - h);
+
+          // stage座標を contain領域正規化へ
+          applyFromPx(el, px, py);
+          updateDbg();
+        }, { passive:false });
+
+        el.addEventListener('pointerup', (e) => {
+          if (!dragging || dragging.el !== el) return;
+          e.preventDefault();
+          dragging = null;
+          updateDbg();
+        }, { passive:false });
+      });
+    }
+  </script>
+</body>
+</html>
