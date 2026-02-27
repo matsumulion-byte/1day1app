@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>RETRO QIX (Simple)</title>
+  <style>
+    :root{
+      /* 横・縦どちらもブラウザに収める */
+      --w: min(92vw, 520px, 88vh / 1.78);
+      --h: calc(var(--w) * 1.78);
+      --bg:#070707;
+      --panel: rgba(255,255,255,.06);
+      --line: rgba(255,255,255,.18);
+      --ink:#eaeaea;
+      --mut:#9a9a9a;
+      --accent:#eaeaea;
+    }
+    html,body{
+      margin:0;height:100%;
+      background:var(--bg);color:var(--ink);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Noto Sans JP", monospace;
+      user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+      touch-action:none;
+      overflow:hidden;
+    }
+    .wrap{height:100%;display:grid;place-items:center;padding:12px;box-sizing:border-box;}
+    .stage{
+      width:var(--w); height:var(--h);
+      position:relative; overflow:hidden;
+      border-radius:18px;
+      box-shadow:0 18px 60px rgba(0,0,0,.55);
+      background:#000;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .bg-photo{
+      position:absolute; inset:0; z-index:0;
+      background-size:cover; background-position:center;
+      background-image: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+    }
+    canvas{
+      position:absolute; inset:0; width:100%; height:100%;
+      display:block; image-rendering:pixelated; z-index:1;
+    }
+
+    .ui{
+      position:absolute; inset:0; z-index:3;
+      display:flex; flex-direction:column;
+      padding:12px; box-sizing:border-box;
+      pointer-events:none;
+    }
+    .topbar{
+      display:flex; justify-content:space-between; align-items:center;
+      gap:10px;
+      font-size:12px; letter-spacing:.08em;
+      color:var(--mut);
+      text-shadow:0 0 10px rgba(255,255,255,.06);
+    }
+    .pill{
+      pointer-events:auto;
+      display:flex; align-items:center; gap:10px;
+      padding:8px 10px;
+      border-radius:12px;
+      background:var(--panel);
+      border:1px solid var(--line);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    button{
+      pointer-events:auto;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.06);
+      color:var(--ink);
+      padding:8px 10px;
+      border-radius:10px;
+      font: inherit;
+      letter-spacing:.08em;
+    }
+    button:active{transform:translateY(1px);}
+    input[type="range"]{pointer-events:auto; width:90px;}
+    .center{
+      margin:auto 0;
+      text-align:center;
+      display:grid; gap:10px;
+      pointer-events:none;
+    }
+    .title{
+      font-size:18px;
+      letter-spacing:.18em;
+      text-shadow:0 0 18px rgba(255,255,255,.09);
+    }
+    .desc{
+      font-size:12px; color:rgba(232,232,232,.58);
+      line-height:1.7;
+      padding:0 8px;
+    }
+    .cta{display:flex; gap:10px; justify-content:center; pointer-events:auto;}
+    .badge{
+      display:inline-flex; gap:8px; align-items:center; justify-content:center;
+      padding:8px 10px; border-radius:12px;
+      background:var(--panel);
+      border:1px solid var(--line);
+      font-size:12px; color:var(--mut);
+    }
+    .footer{
+      margin-top:auto;
+      display:flex; justify-content:space-between; align-items:flex-end;
+      gap:10px;
+      font-size:11px; color:rgba(232,232,232,.45);
+      pointer-events:none;
+    }
+    .kbd{border:1px solid rgba(255,255,255,.18); padding:2px 6px; border-radius:8px; background:rgba(255,255,255,.05);}
+
+    .hidden{display:none !important;}
+
+    /* CRT-ish scanline */
+    .scan{
+      position:absolute; inset:-40px 0; z-index:2;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,.05) 0px,
+        rgba(255,255,255,.05) 1px,
+        rgba(0,0,0,0) 2px,
+        rgba(0,0,0,0) 4px
+      );
+      opacity:.12;
+      mix-blend-mode: overlay;
+      pointer-events:none;
+      transform: translateY(0);
+      animation: scan 5.5s linear infinite;
+    }
+    @keyframes scan{
+      from{transform: translateY(-40px);}
+      to{transform: translateY(40px);}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="stage" id="stage">
+    <div class="bg-photo" id="bgPhoto"></div>
+    <canvas id="cv"></canvas>
+    <div class="scan"></div>
+
+    <div class="ui">
+      <div class="topbar">
+        <div class="pill">
+          <div id="hud">FILL 0% / LIVES 3</div>
+        </div>
+        <div class="pill" style="gap:8px;">
+          <button id="btnMute" aria-label="mute">MUTE</button>
+          <span style="font-size:11px;color:var(--mut);">VOL</span>
+          <input id="vol" type="range" min="0" max="1" step="0.01" value="0.65" />
+        </div>
+      </div>
+
+      <div class="center" id="overlay">
+        <div class="title">RETRO QIX / SIMPLE</div>
+        <div class="desc">
+          ドラッグまたはテンキー・矢印キーで方向指定 → 自動で移動。<br/>
+          陣地にしたところは後ろの写真が見える。未塗りは暗い。<br/>
+          敵が線に触れたらアウト（線リセット）。
+        </div>
+        <div class="cta">
+          <button id="btnStart">START</button>
+          <button id="btnRetry" class="hidden">RETRY</button>
+        </div>
+        <div class="badge" id="msg">BGMは START 後に再生。assets/bg.jpg で背景写真変更可</div>
+      </div>
+
+      <div class="footer">
+        <div>DRAG / <span class="kbd">テンキー</span> / <span class="kbd">矢印</span></div>
+        <div>TARGET <span class="kbd" id="targetLabel">70%</span></div>
+      </div>
+    </div>
+
+    <!-- BGM (put your file into /app/2026-02-27/assets/bgm.mp3) -->
+    <audio id="bgm" preload="auto" loop></audio>
+  </div>
+</div>
+
+<script type="module">
+  // Vercel用パス解決（/YYYY-MM-DD/ でアクセス → /YYYY-MM-DD/assets/... に解決）
+  const APP_BASE = location.pathname.endsWith("/")
+    ? location.pathname
+    : location.pathname.endsWith(".html")
+      ? location.pathname.replace(/[^/]+$/, "")
+      : `${location.pathname.replace(/\/*$/, "")}/`;
+  const asset = (p) =>
+    new URL(String(p).replace(/^\.?\//, ""), `${location.origin}${APP_BASE}`).toString();
+
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d', { alpha: false });
+
+  const hud = document.getElementById('hud');
+  const overlay = document.getElementById('overlay');
+  const msg = document.getElementById('msg');
+  const btnStart = document.getElementById('btnStart');
+  const btnRetry = document.getElementById('btnRetry');
+  const btnMute = document.getElementById('btnMute');
+  const vol = document.getElementById('vol');
+  const bgm = document.getElementById('bgm');
+
+  // ---- BGM setup ----
+  bgm.src = asset('./assets/bgm.mp3');
+  bgm.volume = Number(vol.value);
+
+  // ---- 背景写真（assets/bg.jpg があれば使用、なければグラデ）
+  let bgImage = null;
+  const bgImg = new Image();
+  bgImg.onload = () => { bgImage = bgImg; };
+  bgImg.onerror = () => {};
+  bgImg.src = asset('./assets/bg.jpg');
+
+  let muted = false;
+  btnMute.addEventListener('click', () => {
+    muted = !muted;
+    bgm.muted = muted;
+    btnMute.textContent = muted ? 'UNMUTE' : 'MUTE';
+  });
+  vol.addEventListener('input', () => {
+    bgm.volume = Number(vol.value);
+  });
+
+  // ---- Game constants ----
+  const GRID_W = 24;          // 横マス数（縦長向け）
+  const GRID_H = 42;          // 縦マス数
+  const BORDER = 1;           // 外周の厚み（安全地帯）
+  const TARGET = 0.70;        // 70%で勝ち
+  document.getElementById('targetLabel').textContent = Math.round(TARGET*100) + '%';
+
+  const MOVE_INTERVAL = 70;   // ms（プレイヤー移動テンポ）
+  const ENEMY_SPEED = 0.055;  // 1msあたりの速度係数（後で調整しやすい）
+
+  // cell states: 0 empty, 1 filled(safe), 2 trail
+  let g = [];
+  let player = { x: 0, y: 0, dir: {x:0,y:0}, drawing:false };
+  let enemies = [];
+  let lives = 3;
+  let running = false;
+  let ended = false;
+  let lastMoveAt = 0;
+  let t0 = 0;
+
+  // rendering scale
+  function resize() {
+    const dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+    const rect = cv.getBoundingClientRect();
+    cv.width = Math.floor(rect.width * dpr);
+    cv.height = Math.floor(rect.height * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resize, { passive:true });
+  resize();
+
+  // 初回表示用にグリッド初期化（開始前でも盤面を表示）
+  initGrid();
+  spawn();
+
+  // helpers
+  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+  const inb = (x,y)=>x>=0 && x<GRID_W && y>=0 && y<GRID_H;
+
+  function initGrid() {
+    g = new Array(GRID_W * GRID_H).fill(0);
+    const idx = (x,y)=>y*GRID_W+x;
+    // border as filled
+    for (let y=0; y<GRID_H; y++){
+      for (let x=0; x<GRID_W; x++){
+        if (x < BORDER || x >= GRID_W-BORDER || y < BORDER || y >= GRID_H-BORDER){
+          g[idx(x,y)] = 1;
+        }
+      }
+    }
+  }
+
+  function spawn() {
+    // player on bottom border center
+    player.x = Math.floor(GRID_W/2);
+    player.y = GRID_H - 2;
+    player.dir = {x:0,y:0};
+    player.drawing = false;
+
+    // enemies in empty area
+    enemies = [];
+    const count = 1;
+    for (let i=0;i<count;i++){
+      enemies.push({
+        x: (BORDER+2) + Math.random()*(GRID_W-(BORDER+2)*2),
+        y: (BORDER+2) + Math.random()*(GRID_H-(BORDER+2)*2),
+        vx: (Math.random()<0.5?-1:1) * (0.7+Math.random()*0.6),
+        vy: (Math.random()<0.5?-1:1) * (0.7+Math.random()*0.6),
+      });
+    }
+  }
+
+  function startGame() {
+    initGrid();
+    spawn();
+    lives = 3;
+    running = true;
+    ended = false;
+    lastMoveAt = performance.now();
+    t0 = performance.now();
+  }
+
+  function resetTrailAndPlayer() {
+    // clear trail
+    for (let i=0;i<g.length;i++){
+      if (g[i] === 2) g[i] = 0;
+    }
+    // return player to nearest filled on border bottom
+    player.x = Math.floor(GRID_W/2);
+    player.y = GRID_H - 2;
+    player.drawing = false;
+    player.dir = {x:0,y:0};
+  }
+
+  function cell(x,y){ return g[y*GRID_W+x]; }
+  function setCell(x,y,v){ g[y*GRID_W+x]=v; }
+
+  function fillRatio() {
+    let filled = 0;
+    for (let i=0;i<g.length;i++) if (g[i] === 1) filled++;
+    return filled / g.length;
+  }
+
+  // Flood fill reachable empty from enemy positions (keep side with enemies)
+  function captureArea() {
+    // convert trail to filled boundary first (so flood doesn't leak through)
+    for (let i=0;i<g.length;i++) if (g[i] === 2) g[i] = 1;
+
+    // mark reachable from enemies through empty(0)
+    const mark = new Uint8Array(GRID_W * GRID_H);
+    const qx = new Int16Array(GRID_W * GRID_H);
+    const qy = new Int16Array(GRID_W * GRID_H);
+    let qh=0, qt=0;
+
+    const push = (x,y)=>{
+      const id=y*GRID_W+x;
+      if (mark[id]) return;
+      if (g[id] !== 0) return;
+      mark[id]=1;
+      qx[qt]=x; qy[qt]=y; qt++;
+    };
+
+    // seed from enemy cells
+    for (const e of enemies){
+      const ex = clamp(Math.floor(e.x), 0, GRID_W-1);
+      const ey = clamp(Math.floor(e.y), 0, GRID_H-1);
+      // if enemy ends up in filled (rare), skip
+      if (cell(ex,ey) === 0) push(ex,ey);
+    }
+
+    while (qh<qt){
+      const x=qx[qh], y=qy[qh]; qh++;
+      const n = [[1,0],[-1,0],[0,1],[0,-1]];
+      for (const [dx,dy] of n){
+        const nx=x+dx, ny=y+dy;
+        if (!inb(nx,ny)) continue;
+        push(nx,ny);
+      }
+    }
+
+    // any empty not marked becomes captured => filled
+    for (let y=0;y<GRID_H;y++){
+      for (let x=0;x<GRID_W;x++){
+        const id=y*GRID_W+x;
+        if (g[id]===0 && mark[id]===0){
+          g[id]=1;
+        }
+      }
+    }
+  }
+
+  // ---- Input: drag or keyboard to set direction ----
+  let dragging=false;
+  let lastPointer = null;
+  const keys = new Set();  // テンキー・矢印キー用
+
+  function setDirFromDelta(dx,dy){
+    if (!running || ended) return;
+    const ax=Math.abs(dx), ay=Math.abs(dy);
+    if (ax<8 && ay<8) return;
+    if (ax>ay){
+      player.dir = {x: dx>0 ? 1 : -1, y: 0};
+    }else{
+      player.dir = {x: 0, y: dy>0 ? 1 : -1};
+    }
+  }
+
+  const KEY_MAP = {
+    'ArrowUp':{x:0,y:-1}, 'ArrowDown':{x:0,y:1}, 'ArrowLeft':{x:-1,y:0}, 'ArrowRight':{x:1,y:0},
+    'Numpad8':{x:0,y:-1}, 'Numpad2':{x:0,y:1}, 'Numpad4':{x:-1,y:0}, 'Numpad6':{x:1,y:0},
+    'Numpad5':{x:0,y:0}  // 5で停止
+  };
+
+  function updateDirFromKeys(){
+    if (!running || ended) return;
+    let dx=0, dy=0;
+    for (const k of keys){
+      const d = KEY_MAP[k];
+      if (d){ dx += d.x; dy += d.y; }
+    }
+    if (dx!==0 || dy!==0){
+      // 4方向のみ（斜めは未対応）
+      const sx = Math.sign(dx), sy = Math.sign(dy);
+      player.dir = (sx && sy) ? { x: sx, y: 0 } : { x: sx, y: sy };
+    } else {
+      player.dir = {x:0, y:0};
+    }
+  }
+
+  window.addEventListener('keydown', (e)=>{
+    if (KEY_MAP[e.code]){
+      e.preventDefault();
+      keys.add(e.code);
+      updateDirFromKeys();
+    }
+  });
+  window.addEventListener('keyup', (e)=>{
+    if (KEY_MAP[e.code]){
+      e.preventDefault();
+      keys.delete(e.code);
+      updateDirFromKeys();
+    }
+  });
+
+  const stage = document.getElementById('stage');
+
+  stage.addEventListener('pointerdown', (e)=>{
+    if (e.target.closest('button, input')) return;  // ボタン・スライダークリックを妨げない
+    stage.setPointerCapture(e.pointerId);
+    dragging=true;
+    lastPointer = {x:e.clientX, y:e.clientY};
+  });
+  stage.addEventListener('pointermove', (e)=>{
+    if (!dragging || !lastPointer) return;
+    const dx = e.clientX - lastPointer.x;
+    const dy = e.clientY - lastPointer.y;
+    setDirFromDelta(dx,dy);
+    lastPointer = {x:e.clientX, y:e.clientY};
+  });
+  stage.addEventListener('pointerup', ()=>{
+    dragging=false;
+    lastPointer=null;
+  });
+  stage.addEventListener('pointercancel', ()=>{
+    dragging=false;
+    lastPointer=null;
+  });
+
+  // anti long-press/context menu
+  window.addEventListener('contextmenu', (e)=>e.preventDefault());
+
+  // ---- Update loop ----
+  function step(now){
+    if (running && !ended){
+      // move player on grid
+      if (now - lastMoveAt >= MOVE_INTERVAL){
+        lastMoveAt = now;
+        const nx = player.x + player.dir.x;
+        const ny = player.y + player.dir.y;
+
+        if (inb(nx,ny) && (player.dir.x!==0 || player.dir.y!==0)){
+          const cur = cell(player.x, player.y);
+          const nxt = cell(nx, ny);
+
+          // rules:
+          // moving on filled(1) is safe. moving into empty(0) starts drawing.
+          // trail(2) is dangerous (self-cross) => treat as fail.
+          if (nxt === 2){
+            // self-hit
+            lives--;
+            if (lives <= 0){
+              end(false, 'SELF HIT');
+            } else {
+              msg.textContent = '線が交差した';
+              resetTrailAndPlayer();
+            }
+          } else {
+            // leave filled into empty => start drawing
+            if (!player.drawing && cur === 1 && nxt === 0){
+              player.drawing = true;
+            }
+
+            player.x = nx; player.y = ny;
+
+            if (player.drawing){
+              // mark trail on empty
+              if (nxt === 0) setCell(nx, ny, 2);
+
+              // return to filled closes shape
+              if (nxt === 1){
+                player.drawing = false;
+                captureArea();
+                // difficulty up: add enemy at certain thresholds
+                const r = fillRatio();
+                if (r > 0.40 && enemies.length < 2) addEnemy();
+                if (r > 0.58 && enemies.length < 3) addEnemy();
+              }
+            }
+          }
+        }
+      }
+
+      // move enemies (continuous, bounce on filled)
+      const dt = now - (step._lastNow || now);
+      step._lastNow = now;
+
+      for (const e of enemies){
+        const sp = ENEMY_SPEED * dt;
+        let nx = e.x + e.vx * sp;
+        let ny = e.y + e.vy * sp;
+
+        // bounce by sampling next cell occupancy
+        // if next position hits filled, reflect
+        const cx = clamp(Math.floor(nx), 0, GRID_W-1);
+        const cy = clamp(Math.floor(ny), 0, GRID_H-1);
+
+        // collision with trail => fail
+        if (cell(cx,cy) === 2){
+          lives--;
+          if (lives <= 0){
+            end(false, 'CUT');
+          } else {
+            msg.textContent = '線を切られた';
+            resetTrailAndPlayer();
+          }
+          break;
+        }
+
+        // bounce on filled boundary
+        if (cell(cx,cy) === 1){
+          // test separately for x and y to decide reflection
+          const tx = clamp(Math.floor(e.x + e.vx * sp), 0, GRID_W-1);
+          const ty = clamp(Math.floor(e.y), 0, GRID_H-1);
+          if (cell(tx,ty) === 1) e.vx *= -1;
+
+          const ux = clamp(Math.floor(e.x), 0, GRID_W-1);
+          const uy = clamp(Math.floor(e.y + e.vy * sp), 0, GRID_H-1);
+          if (cell(ux,uy) === 1) e.vy *= -1;
+
+          // recompute after reflection
+          nx = e.x + e.vx * sp;
+          ny = e.y + e.vy * sp;
+        }
+
+        e.x = clamp(nx, 0.001, GRID_W-1.001);
+        e.y = clamp(ny, 0.001, GRID_H-1.001);
+      }
+
+      // win check
+      const ratio = fillRatio();
+      if (ratio >= TARGET){
+        end(true, 'CLEAR');
+      }
+
+      // HUD
+      hud.textContent = `FILL ${Math.floor(ratio*100)}% / LIVES ${lives}`;
+    }
+
+    render(now);
+    requestAnimationFrame(step);
+  }
+
+  function addEnemy(){
+    enemies.push({
+      x: (BORDER+2) + Math.random()*(GRID_W-(BORDER+2)*2),
+      y: (BORDER+2) + Math.random()*(GRID_H-(BORDER+2)*2),
+      vx: (Math.random()<0.5?-1:1) * (0.7+Math.random()*0.6),
+      vy: (Math.random()<0.5?-1:1) * (0.7+Math.random()*0.6),
+    });
+  }
+
+  function end(win, label){
+    ended = true;
+    running = false;
+    overlay.classList.remove('hidden');
+    btnStart.classList.add('hidden');
+    btnRetry.classList.remove('hidden');
+    msg.textContent = win ? `✅ ${label}` : `✖ ${label}`;
+  }
+
+  // ---- Rendering ----
+  function render(now){
+    const rect = cv.getBoundingClientRect();
+    const W = rect.width;
+    const H = rect.height;
+
+    const cellW = W / GRID_W;
+    const cellH = H / GRID_H;
+
+    // 1. 背景（写真 or グラデ）を全面に
+    if (bgImage && bgImage.complete){
+      ctx.drawImage(bgImage, 0, 0, W, H);
+    } else {
+      const grd = ctx.createLinearGradient(0,0,W,H);
+      grd.addColorStop(0,'#1a1a2e');
+      grd.addColorStop(0.4,'#16213e');
+      grd.addColorStop(1,'#0f3460');
+      ctx.fillStyle = grd;
+      ctx.fillRect(0,0,W,H);
+    }
+
+    // 2. 未塗り(0)のみ暗くマスク → 陣地(1)は写真が見える
+    ctx.fillStyle = 'rgba(4,4,4,.96)';
+    for (let y=0;y<GRID_H;y++){
+      for (let x=0;x<GRID_W;x++){
+        if (cell(x,y) === 0){
+          ctx.fillRect(x*cellW, y*cellH, cellW+1, cellH+1);
+        }
+      }
+    }
+
+    // 線(2)は明るく表示
+    ctx.fillStyle = 'rgba(232,232,232,.65)';
+    for (let y=0;y<GRID_H;y++){
+      for (let x=0;x<GRID_W;x++){
+        if (cell(x,y) === 2){
+          ctx.fillRect(x*cellW, y*cellH, cellW, cellH);
+        }
+      }
+    }
+
+    // subtle grid（陣地の上に薄く）
+    ctx.globalAlpha = 0.12;
+    ctx.strokeStyle = 'rgba(255,255,255,.15)';
+    ctx.lineWidth = 1;
+    for (let x=0;x<=GRID_W;x++){
+      const px = x*cellW;
+      ctx.beginPath();
+      ctx.moveTo(px,0); ctx.lineTo(px,H);
+      ctx.stroke();
+    }
+    for (let y=0;y<=GRID_H;y++){
+      const py = y*cellH;
+      ctx.beginPath();
+      ctx.moveTo(0,py); ctx.lineTo(W,py);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // enemies
+    for (const e of enemies){
+      const ex = e.x*cellW + cellW*0.5;
+      const ey = e.y*cellH + cellH*0.5;
+      const r = Math.min(cellW,cellH)*0.38;
+      ctx.fillStyle = 'rgba(232,232,232,.95)';
+      ctx.beginPath();
+      ctx.arc(ex,ey,r,0,Math.PI*2);
+      ctx.fill();
+
+      // glow
+      ctx.globalAlpha = 0.20;
+      ctx.beginPath();
+      ctx.arc(ex,ey,r*2.0,0,Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // player
+    {
+      const px = player.x*cellW;
+      const py = player.y*cellH;
+      ctx.fillStyle = player.drawing ? 'rgba(232,232,232,.95)' : 'rgba(232,232,232,.70)';
+      ctx.fillRect(px+cellW*0.12, py+cellH*0.12, cellW*0.76, cellH*0.76);
+    }
+
+    // top-left tiny timer (optional feel)
+    if (!ended){
+      const t = (running ? (now - t0) : 0);
+      ctx.fillStyle = 'rgba(232,232,232,.35)';
+      ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
+      ctx.fillText(`${Math.floor(t/1000)}s`, 12, 40);
+    }
+  }
+
+  // ---- UI ----
+  btnStart.addEventListener('click', async ()=>{
+    // start bgm only from user gesture
+    try{
+      await bgm.play();
+      msg.textContent = 'BGM ON';
+    }catch(e){
+      // If it fails (rare), keep silent
+      msg.textContent = 'BGMが再生できません（端末制限）';
+    }
+    overlay.classList.add('hidden');
+    btnStart.classList.remove('hidden');
+    btnRetry.classList.add('hidden');
+
+    startGame();
+  });
+
+  btnRetry.addEventListener('click', async ()=>{
+    try{
+      if (!bgm.paused) {
+        // keep playing
+      } else {
+        await bgm.play();
+      }
+    }catch(_){}
+    overlay.classList.add('hidden');
+    btnStart.classList.add('hidden');
+    btnRetry.classList.add('hidden');
+    msg.textContent = '';
+    startGame();
+  });
+
+  // start render loop
+  requestAnimationFrame(step);
+</script>
+</body>
+</html>
