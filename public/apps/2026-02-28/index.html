@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ピクロス：松</title>
+  <style>
+    :root{
+      --w: min(92vw, 560px);
+      --bg:#0b0b0b;
+      --ink:#f2f2f2;
+      --muted:#9aa0a6;
+      --good:#57e389;
+      --bad:#ff6b6b;
+
+      --cell: 24px;         /* 15x15なので少し小さめ */
+      --gap: 1px;
+      --radius: 18px;
+
+      /* ヒント領域：JSで自動設定 */
+      --topH: 84px;
+      --leftW: 108px;
+    }
+
+    html,body{
+      margin:0;height:100%;
+      background:var(--bg);color:var(--ink);
+      font-family: system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+      user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+      touch-action: manipulation;
+      overscroll-behavior: none;
+    }
+    .wrap{height:100%;display:grid;place-items:center;padding:12px;box-sizing:border-box;}
+    .stage{
+      width:var(--w);
+      background:linear-gradient(180deg,#161616,#101010);
+      border:1px solid #222;
+      border-radius:var(--radius);
+      box-shadow:0 18px 50px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    header{
+      padding:14px 14px 10px;
+      display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+    }
+    .title{display:flex;flex-direction:column;gap:4px;}
+    .title h1{font-size:16px;margin:0;letter-spacing:.02em;}
+    .title .sub{font-size:12px;color:var(--muted);}
+    .stats{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+    .pill{
+      font-size:12px;color:var(--ink);
+      background:#0f0f0f;border:1px solid #242424;
+      padding:6px 10px;border-radius:999px;
+      display:flex;align-items:center;gap:8px;
+    }
+    .dot{width:8px;height:8px;border-radius:99px;background:var(--good);opacity:.9}
+    .btnrow{
+      padding:0 14px 12px;
+      display:flex;gap:8px;flex-wrap:wrap;
+    }
+    button{
+      appearance:none;border:none;cursor:pointer;
+      background:#1b1b1b;color:var(--ink);
+      border:1px solid #2a2a2a;
+      padding:10px 12px;border-radius:12px;
+      font-weight:700;font-size:13px;
+    }
+    button:active{transform:translateY(1px)}
+    button.primary{ background:#242424;border-color:#3a3a3a; }
+    button.mode{ display:flex;align-items:center;gap:8px; }
+    .modeBadge{
+      font-size:11px;padding:3px 8px;border-radius:999px;
+      background:#0f0f0f;border:1px solid #2a2a2a;color:var(--muted);
+    }
+    .modeBadge.on{color:var(--ink);border-color:#3a3a3a}
+
+    .boardWrap{ padding:10px 12px 14px; display:grid; place-items:center; }
+
+    .nonogram{
+      display:grid;
+      grid-template-columns: var(--leftW) 1fr;
+      grid-template-rows: var(--topH) 1fr;
+      gap:10px;
+      width:100%;
+      justify-content:center;
+    }
+    .corner{
+      width:var(--leftW);
+      height:var(--topH);
+      border-radius:12px;
+      background:#0f0f0f;
+      border:1px solid #242424;
+      display:grid;place-items:center;
+      color:var(--muted);
+      font-size:11px;
+    }
+
+    .topHints{
+      display:grid;
+      grid-auto-flow:column;
+      grid-auto-columns: var(--cell);
+      gap: var(--gap);
+      justify-content:start;
+      align-items:stretch;
+      height:var(--topH);
+      padding-bottom:2px;
+    }
+    .topHints .hcell{
+      width:var(--cell);
+      height:var(--topH);
+      background:#0f0f0f;
+      border:1px solid #242424;
+      border-radius:10px;
+      display:flex;flex-direction:column;justify-content:flex-end;align-items:center;
+      padding:6px 0;
+      box-sizing:border-box;
+      overflow:hidden;
+    }
+    .topHints .hcell span{
+      font-size:11px;line-height:1.05;color:var(--muted);
+    }
+
+    .leftHints{
+      display:grid;
+      grid-auto-rows: var(--cell);
+      gap: var(--gap);
+      justify-content:end;
+      align-items:center;
+      width:var(--leftW);
+      padding-right:2px;
+    }
+    .leftHints .hrow{
+      height:var(--cell);
+      width:var(--leftW);
+      background:#0f0f0f;
+      border:1px solid #242424;
+      border-radius:10px;
+      display:flex;justify-content:flex-end;align-items:center;
+      padding:0 10px;
+      box-sizing:border-box;
+      gap:6px;
+      overflow:hidden;
+      white-space:nowrap;
+    }
+    .leftHints .hrow span{
+      font-size:11px;line-height:1;color:var(--muted);
+      min-width:10px;text-align:center;
+    }
+
+    .grid{
+      display:grid;
+      gap: var(--gap);
+      touch-action:none;
+      background:transparent;
+      width:max-content;
+    }
+    .cell{
+      width:var(--cell);height:var(--cell);
+      background:#111;
+      border:1px solid #232323;
+      border-radius:8px;
+      box-sizing:border-box;
+      display:grid;place-items:center;
+      position:relative;
+    }
+    .cell::after{
+      content:"";
+      position:absolute;inset:0;
+      border-radius:8px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+      pointer-events:none;
+    }
+    .cell.filled{ background:#e9e9e9; border-color:#d8d8d8; }
+    .cell.mark{ background:#141414; }
+    .cell.mark svg{ width:16px;height:16px; opacity:.9; }
+
+    /* 5マスごとの太線（15なら 4,9,14） */
+    .cell[data-c="4"], .cell[data-c="9"], .cell[data-c="14"]{ box-shadow: inset -2px 0 0 rgba(255,255,255,.08); }
+    .cell[data-r="4"], .cell[data-r="9"], .cell[data-r="14"]{ box-shadow: inset 0 -2px 0 rgba(255,255,255,.08); }
+
+    .footer{
+      padding:0 14px 14px;
+      display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .msg{color:var(--muted)}
+    .msg.good{color:var(--good)}
+    .msg.bad{color:var(--bad)}
+    .toast{
+      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
+      background:rgba(20,20,20,.92);
+      border:1px solid #2a2a2a;
+      color:var(--ink);
+      padding:10px 12px;border-radius:14px;
+      font-size:13px;
+      box-shadow:0 12px 30px rgba(0,0,0,.6);
+      display:none;
+      max-width:min(92vw,560px);
+    }
+    .toast.show{display:block}
+
+    @media (max-width:420px){
+      :root{ --cell: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="stage" role="application" aria-label="ピクロス 松">
+      <header>
+        <div class="title">
+          <h1>ピクロス：松</h1>
+          <div class="sub">タップ=塗る / 長押し=×　・　全マス正解でクリア</div>
+        </div>
+        <div class="stats">
+          <div class="pill"><span class="dot" id="dot"></span><span id="status">PLAY</span></div>
+          <div class="pill">TIME <span id="time" style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Courier New', monospace;">00:00</span></div>
+        </div>
+      </header>
+
+      <div class="btnrow">
+        <button class="primary" id="resetBtn">リセット</button>
+        <button class="mode" id="modeBtn">
+          モード <span class="modeBadge on" id="modeBadge">塗る</span>
+        </button>
+        <button id="checkBtn">チェック</button>
+        <button id="shareBtn">シェア文</button>
+      </div>
+
+      <div class="boardWrap">
+        <div class="nonogram">
+          <div class="corner">HINT</div>
+          <div class="topHints" id="topHints"></div>
+          <div class="leftHints" id="leftHints"></div>
+          <div class="grid" id="grid"></div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="msg" id="msg">ヒント通りに塗りつぶして「松」を完成させてください。</div>
+        <div>2/28：松ピクロス</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module">
+    // 1日1アプリ用: 動的アセット参照ヘルパー（今回は未使用）
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    // ====== 「松」15x15（木＋公が読める）======
+    // 1=塗り
+    const PUZZLE = {
+      name: "松",
+      solution: [
+        "000000000000000",
+        "000010000000000",
+        "011111100000000",
+        "000010000010100",
+        "000010000110110",
+        "000111001100011",
+        "001111101000001",
+        "011010100001000",
+        "010010100011000",
+        "000010000110000",
+        "000010001100010",
+        "000010001000011",
+        "000010001111111",
+        "000010000000001",
+        "000000000000000",
+      ].map(r => r.split("").map(ch => ch === "1" ? 1 : 0))
+    };
+
+    const SIZE = PUZZLE.solution.length;
+
+    // --- DOM ---
+    const gridEl = document.getElementById("grid");
+    const topHintsEl = document.getElementById("topHints");
+    const leftHintsEl = document.getElementById("leftHints");
+    const msgEl = document.getElementById("msg");
+    const statusEl = document.getElementById("status");
+    const timeEl = document.getElementById("time");
+    const dotEl = document.getElementById("dot");
+    const toastEl = document.getElementById("toast");
+    const modeBadgeEl = document.getElementById("modeBadge");
+
+    // --- state ---
+    let user = [];         // 0 empty, 1 filled, 2 mark
+    let fillMode = true;
+    let startAt = 0;
+    let timerId = null;
+    let ended = false;
+
+    // --- utils ---
+    const pad2 = (n)=> String(n).padStart(2,"0");
+    const now = ()=> performance.now();
+
+    function toast(text){
+      toastEl.textContent = text;
+      toastEl.classList.add("show");
+      clearTimeout(toastEl._t);
+      toastEl._t = setTimeout(()=>toastEl.classList.remove("show"), 1300);
+    }
+
+    function formatTime(ms){
+      const s = Math.floor(ms/1000);
+      const m = Math.floor(s/60);
+      return `${pad2(m)}:${pad2(s%60)}`;
+    }
+
+    function runs(arr){
+      const out=[];
+      let run=0;
+      for(let i=0;i<arr.length;i++){
+        if(arr[i]===1) run++;
+        else if(run){ out.push(run); run=0; }
+      }
+      if(run) out.push(run);
+      return out.length ? out : [0];
+    }
+
+    function computeHints(sol){
+      const rowHints = sol.map(r => runs(r));
+      const colHints = [];
+      for(let c=0;c<SIZE;c++){
+        const col = [];
+        for(let r=0;r<SIZE;r++) col.push(sol[r][c]);
+        colHints.push(runs(col));
+      }
+      return {rowHints, colHints};
+    }
+
+    function applyHintSizing({rowHints, colHints}){
+      const maxCol = Math.max(...colHints.map(h => h.length));
+      const maxRow = Math.max(...rowHints.map(h => h.length));
+
+      // 上：段数に応じて高さを伸ばす（確実に入り切る）
+      const topH = 22 + maxCol * 12;      // 例: 22 + 5*12 = 82px
+      // 左：個数に応じて幅を伸ばす
+      const leftW = 30 + maxRow * 18;     // 例: 30 + 6*18 = 138px
+
+      document.documentElement.style.setProperty("--topH", `${topH}px`);
+      document.documentElement.style.setProperty("--leftW", `${leftW}px`);
+    }
+
+    function buildHints(){
+      const {rowHints, colHints} = computeHints(PUZZLE.solution);
+      applyHintSizing({rowHints, colHints});
+
+      topHintsEl.innerHTML = "";
+      for(let c=0;c<SIZE;c++){
+        const hc = document.createElement("div");
+        hc.className = "hcell";
+        colHints[c].forEach(n=>{
+          const s = document.createElement("span");
+          s.textContent = n;
+          hc.appendChild(s);
+        });
+        topHintsEl.appendChild(hc);
+      }
+
+      leftHintsEl.innerHTML = "";
+      for(let r=0;r<SIZE;r++){
+        const hr = document.createElement("div");
+        hr.className = "hrow";
+        rowHints[r].forEach(n=>{
+          const s = document.createElement("span");
+          s.textContent = n;
+          hr.appendChild(s);
+        });
+        leftHintsEl.appendChild(hr);
+      }
+    }
+
+    function buildGrid(){
+      gridEl.innerHTML = "";
+      gridEl.style.gridTemplateColumns = `repeat(${SIZE}, var(--cell))`;
+      gridEl.style.gridTemplateRows = `repeat(${SIZE}, var(--cell))`;
+
+      for(let r=0;r<SIZE;r++){
+        for(let c=0;c<SIZE;c++){
+          const d = document.createElement("div");
+          d.className = "cell";
+          d.dataset.r = r;
+          d.dataset.c = c;
+          d.setAttribute("role","button");
+          gridEl.appendChild(d);
+        }
+      }
+    }
+
+    function resetUser(){
+      user = Array.from({length:SIZE}, ()=> Array.from({length:SIZE}, ()=>0));
+      ended = false;
+      statusEl.textContent = "PLAY";
+      msgEl.className = "msg";
+      msgEl.textContent = "ヒント通りに塗りつぶして「松」を完成させてください。";
+      dotEl.style.background = "";
+      renderAll();
+      restartTimer();
+    }
+
+    function restartTimer(){
+      clearInterval(timerId);
+      startAt = now();
+      timeEl.textContent = "00:00";
+      timerId = setInterval(()=>{
+        if(ended) return;
+        timeEl.textContent = formatTime(now()-startAt);
+      }, 200);
+    }
+
+    function renderCell(r,c){
+      const idx = r*SIZE + c;
+      const el = gridEl.children[idx];
+      el.classList.toggle("filled", user[r][c]===1);
+      el.classList.toggle("mark", user[r][c]===2);
+      if(user[r][c]===2){
+        el.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="#b7b7b7" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>`;
+      }else{
+        el.innerHTML = "";
+      }
+    }
+
+    function renderAll(){
+      for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) renderCell(r,c);
+      modeBadgeEl.textContent = fillMode ? "塗る" : "×";
+      modeBadgeEl.classList.toggle("on", true);
+    }
+
+    function applyAction(r,c, actionFill){
+      if(ended) return;
+      const v = user[r][c];
+      if(actionFill){
+        user[r][c] = (v===1) ? 0 : 1;
+      }else{
+        user[r][c] = (v===2) ? 0 : 2;
+      }
+      renderCell(r,c);
+    }
+
+    function isSolved(){
+      for(let r=0;r<SIZE;r++){
+        for(let c=0;c<SIZE;c++){
+          const sol = PUZZLE.solution[r][c];
+          const u = user[r][c]===1 ? 1 : 0; // ×は未塗り扱い
+          if(u !== sol) return false;
+        }
+      }
+      return true;
+    }
+
+    function check(){
+      if(isSolved()){
+        ended = true;
+        const t = formatTime(now()-startAt);
+        statusEl.textContent = "CLEAR";
+        msgEl.className = "msg good";
+        msgEl.textContent = `完成。「松」 TIME ${t}`;
+        dotEl.style.background = "var(--good)";
+        toast("CLEAR");
+      }else{
+        msgEl.className = "msg bad";
+        msgEl.textContent = "まだ違う。どこかにズレがある。";
+        toast("NOT YET");
+      }
+    }
+
+    // --- interaction (tap / long press) ---
+    let pressTimer = null;
+    let pressed = null;
+    let longFired = false;
+
+    function getCellFromEvent(e){
+      const el = e.target.closest(".cell");
+      if(!el) return null;
+      const r = Number(el.dataset.r);
+      const c = Number(el.dataset.c);
+      return {r,c};
+    }
+
+    function onPointerDown(e){
+      const cell = getCellFromEvent(e);
+      if(!cell) return;
+      e.preventDefault();
+      pressed = cell;
+      longFired = false;
+
+      clearTimeout(pressTimer);
+      pressTimer = setTimeout(()=>{
+        if(!pressed) return;
+        longFired = true;
+        applyAction(pressed.r, pressed.c, false); // long press => ×
+        toast("×");
+      }, 320);
+    }
+
+    function onPointerUp(e){
+      if(!pressed) return;
+      e.preventDefault();
+      clearTimeout(pressTimer);
+      if(!longFired){
+        applyAction(pressed.r, pressed.c, fillMode);
+      }
+      pressed = null;
+      longFired = false;
+    }
+
+    function onPointerMove(e){
+      if(!pressed) return;
+      const cell = getCellFromEvent(e);
+      if(!cell) return;
+      if(cell.r!==pressed.r || cell.c!==pressed.c){
+        clearTimeout(pressTimer);
+      }
+    }
+
+    gridEl.addEventListener("pointerdown", onPointerDown, {passive:false});
+    window.addEventListener("pointerup", onPointerUp, {passive:false});
+    window.addEventListener("pointercancel", onPointerUp, {passive:false});
+    gridEl.addEventListener("pointermove", onPointerMove, {passive:false});
+    window.addEventListener("contextmenu", (e)=> e.preventDefault());
+
+    // --- buttons ---
+    document.getElementById("resetBtn").addEventListener("click", ()=> { resetUser(); toast("RESET"); });
+    document.getElementById("modeBtn").addEventListener("click", ()=>{
+      fillMode = !fillMode;
+      modeBadgeEl.textContent = fillMode ? "塗る" : "×";
+      toast(fillMode ? "塗る" : "×");
+    });
+    document.getElementById("checkBtn").addEventListener("click", ()=> check());
+    document.getElementById("shareBtn").addEventListener("click", async ()=>{
+      const t = formatTime(now()-startAt);
+      const text = ended
+        ? `ピクロス「松」クリア！ TIME ${t} #1日1アプリ`
+        : `ピクロス「松」挑戦中… TIME ${t} #1日1アプリ`;
+      try{
+        await navigator.clipboard.writeText(text);
+        toast("シェア文コピー");
+      }catch{
+        toast(text);
+      }
+    });
+
+    // init
+    buildHints();
+    buildGrid();
+    resetUser();
+    toast("問題：松（15x15）");
+  </script>
+</body>
+</html>
