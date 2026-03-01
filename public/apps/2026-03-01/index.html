@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Lights Out（全点灯）</title>
+  <style>
+    :root{
+      --w: min(92vw, 520px);
+      --bg: #0b0b0f;
+      --panel: rgba(255,255,255,.06);
+      --ink: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.62);
+      --ring: rgba(255,255,255,.18);
+      --cell-gap: 10px;
+      --radius: 18px;
+      --cell-radius: 14px;
+    }
+    *{ box-sizing:border-box; }
+    html,body{
+      margin:0; height:100%;
+      background: radial-gradient(1200px 800px at 50% 20%, #171725 0%, var(--bg) 55%, #050508 100%);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      user-select:none;
+      -webkit-user-select:none;
+      -webkit-touch-callout:none;
+      touch-action: manipulation;
+      overflow:hidden;
+    }
+    .wrap{
+      height:100%;
+      display:grid;
+      place-items:center;
+      padding:16px;
+    }
+    .card{
+      width: var(--w);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      box-shadow: 0 18px 40px rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.08);
+      overflow:hidden;
+    }
+    header{
+      padding:14px 14px 10px;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width:0;
+    }
+    .title h1{
+      margin:0;
+      font-size: 16px;
+      letter-spacing: .02em;
+      font-weight: 700;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .title p{
+      margin:0;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .controls{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--ink);
+      font-size: 12px;
+      line-height: 1;
+    }
+    select, button{
+      appearance:none;
+      -webkit-appearance:none;
+      border:none;
+      background: rgba(255,255,255,.10);
+      color: var(--ink);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 12px;
+      padding:10px 12px;
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: .01em;
+      cursor:pointer;
+      outline:none;
+    }
+    button{
+      background: rgba(255,255,255,.12);
+    }
+    button:active{
+      transform: translateY(1px);
+    }
+    .stats{
+      padding: 0 14px 12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      color: var(--muted);
+      font-size:12px;
+    }
+    .gridWrap{
+      padding: 12px 14px 16px;
+    }
+    .grid{
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display:grid;
+      gap: var(--cell-gap);
+      padding: var(--cell-gap);
+      background: rgba(0,0,0,.30);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: calc(var(--radius) - 4px);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+      position: relative;
+      overflow:hidden;
+    }
+    .cell{
+      border-radius: var(--cell-radius);
+      background-size: cover;
+      background-position: center;
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 10px 18px rgba(0,0,0,.35);
+      position: relative;
+      overflow:hidden;
+      cursor:pointer;
+    }
+    .cell::after{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,0) 45%, rgba(0,0,0,.18));
+      opacity:.35;
+      mix-blend-mode: overlay;
+      pointer-events:none;
+    }
+    .cell.off{
+      filter: saturate(.85) contrast(.95) brightness(.78);
+      box-shadow: 0 8px 14px rgba(0,0,0,.42);
+    }
+    .cell.on{
+      filter: saturate(1.05) contrast(1.02) brightness(1.05);
+      border-color: rgba(255,255,255,.18);
+    }
+    .overlay{
+      position: absolute;
+      inset: 0;
+      display:none;
+      place-items:center;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 18px;
+    }
+    .overlay.show{ display:grid; }
+    .modal{
+      width: min(92%, 360px);
+      border-radius: 20px;
+      background: rgba(20,20,28,.92);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 20px 60px rgba(0,0,0,.6);
+      padding: 16px;
+      text-align:center;
+    }
+    .modal h2{
+      margin: 0 0 8px;
+      font-size: 18px;
+      letter-spacing: .02em;
+    }
+    .modal p{
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .row{
+      display:flex; gap:10px; justify-content:center; flex-wrap:wrap;
+    }
+    .hint{
+      padding: 0 14px 14px;
+      color: rgba(255,255,255,.45);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <div class="title">
+          <h1>Lights Out（全点灯）</h1>
+          <p>押したマス＋上下左右が反転。全部明るい松村にすれば勝ち。</p>
+        </div>
+        <div class="controls">
+          <span class="pill">手数: <b id="moves" style="color:var(--ink);font-weight:800;">0</b></span>
+          <select id="size">
+            <option value="3">3×3</option>
+            <option value="5" selected>5×5</option>
+            <option value="7">7×7</option>
+          </select>
+          <button id="new">NEW</button>
+          <button id="reset">RESET</button>
+        </div>
+      </header>
+
+      <div class="stats">
+        <div>目標：<b style="color:var(--ink)">全点灯</b></div>
+        <div>生成手数：<span id="scrambleLabel">14</span></div>
+      </div>
+
+      <div class="gridWrap">
+        <div class="grid" id="grid" aria-label="lights out board"></div>
+        <div class="overlay" id="overlay">
+          <div class="modal">
+            <h2>完全点灯 ✨</h2>
+            <p>松村が全部明るくなった。<br>手数：<b id="winMoves">0</b></p>
+            <div class="row">
+              <button id="again">もう一回</button>
+              <button id="close">閉じる</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint">
+        コツ：角から触ると形が崩れやすい。まずは点灯を「揃える列」を決めて崩していくと楽。
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Vercel用パス解決（/YYYY-MM-DD/ でアクセス → /YYYY-MM-DD/assets/... に解決）
+    const APP_BASE = location.pathname.endsWith("/")
+      ? location.pathname
+      : location.pathname.endsWith(".html")
+        ? location.pathname.replace(/[^/]+$/, "")
+        : `${location.pathname.replace(/\/*$/, "")}/`;
+    const asset = (p) =>
+      new URL(String(p).replace(/^\.?\//, ""), `${location.origin}${APP_BASE}`).toString();
+
+    // 画像（ユーザーが用意）
+    // ※ファイル名は好きに変えてOK
+    const IMG_ON  = asset("./assets/matsumura_on.png");   // 明るい松村
+    const IMG_OFF = asset("./assets/matsumura_off.png");  // 暗い松村
+
+    const $ = (s) => document.querySelector(s);
+
+    const gridEl = $("#grid");
+    const overlayEl = $("#overlay");
+    const movesEl = $("#moves");
+    const winMovesEl = $("#winMoves");
+    const sizeSel = $("#size");
+    const scrambleLabel = $("#scrambleLabel");
+
+    let N = 5;
+    let grid = [];
+    let moves = 0;
+    let startState = null; // RESET用
+
+    // 近傍（自分+上下左右）
+    const neigh = (r,c) => ([
+      [r,c],
+      [r-1,c],
+      [r+1,c],
+      [r,c-1],
+      [r,c+1],
+    ]);
+
+    function inb(r,c){ return r>=0 && r<N && c>=0 && c<N; }
+
+    function clone2D(a){ return a.map(row => row.slice()); }
+
+    function allOn(a){
+      for(let r=0;r<N;r++){
+        for(let c=0;c<N;c++){
+          if(!a[r][c]) return false;
+        }
+      }
+      return true;
+    }
+
+    function setMoves(v){
+      moves = v;
+      movesEl.textContent = String(moves);
+    }
+
+    function hideOverlay(){
+      overlayEl.classList.remove("show");
+    }
+    function showOverlay(){
+      winMovesEl.textContent = String(moves);
+      overlayEl.classList.add("show");
+    }
+
+    function applyToggle(a, r, c){
+      for(const [rr,cc] of neigh(r,c)){
+        if(inb(rr,cc)) a[rr][cc] = a[rr][cc] ? 0 : 1;
+      }
+    }
+
+    function buildEmpty(on=true){
+      const v = on ? 1 : 0;
+      return Array.from({length:N}, () => Array.from({length:N}, () => v));
+    }
+
+    function calcScrambleSteps(){
+      // 盤面サイズに応じてそれっぽい難易度に（固定でもOK）
+      // 3: 6〜10 / 5: 12〜20 / 7: 22〜34
+      if(N===3) return 8;
+      if(N===5) return 14;
+      return 28;
+    }
+
+    function newPuzzle(){
+      hideOverlay();
+      setMoves(0);
+
+      // 目標が「全点灯」なので、正解状態＝全点灯から崩す（必ず解ける盤面になる）
+      grid = buildEmpty(true);
+
+      const steps = calcScrambleSteps();
+      scrambleLabel.textContent = String(steps);
+
+      // 同じマス連打で無駄に戻るのを少し避ける（完全には不要）
+      let last = null;
+      for(let i=0;i<steps;i++){
+        let r,c,key;
+        do{
+          r = Math.floor(Math.random()*N);
+          c = Math.floor(Math.random()*N);
+          key = r + "," + c;
+        }while(key === last && N>1);
+        last = key;
+        applyToggle(grid, r, c);
+      }
+
+      startState = clone2D(grid);
+      renderGrid(true);
+      // 生成直後にすでに全点灯だったらもう一回（稀）
+      if(allOn(grid)) newPuzzle();
+    }
+
+    function resetPuzzle(){
+      hideOverlay();
+      setMoves(0);
+      if(startState) grid = clone2D(startState);
+      renderGrid(false);
+    }
+
+    function renderGrid(rebuild){
+      if(rebuild){
+        gridEl.innerHTML = "";
+        gridEl.style.gridTemplateColumns = `repeat(${N}, 1fr)`;
+        gridEl.style.gridTemplateRows = `repeat(${N}, 1fr)`;
+
+        for(let r=0;r<N;r++){
+          for(let c=0;c<N;c++){
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            cell.setAttribute("role","button");
+            cell.setAttribute("aria-label", `cell ${r+1}-${c+1}`);
+            cell.dataset.r = String(r);
+            cell.dataset.c = String(c);
+
+            // iOS長押し対策 & 触り心地
+            cell.style.webkitTapHighlightColor = "transparent";
+
+            cell.addEventListener("pointerdown", (e) => {
+              e.preventDefault();
+              onCell(Number(cell.dataset.r), Number(cell.dataset.c));
+            });
+
+            gridEl.appendChild(cell);
+          }
+        }
+      }
+
+      // state反映
+      const cells = gridEl.children;
+      let idx = 0;
+      for(let r=0;r<N;r++){
+        for(let c=0;c<N;c++){
+          const on = !!grid[r][c];
+          const el = cells[idx++];
+          el.classList.toggle("on", on);
+          el.classList.toggle("off", !on);
+          el.style.backgroundImage = `url("${on ? IMG_ON : IMG_OFF}")`;
+        }
+      }
+    }
+
+    function onCell(r,c){
+      // クリア画面が出てるときは操作不可
+      if(overlayEl.classList.contains("show")) return;
+
+      applyToggle(grid, r, c);
+      setMoves(moves + 1);
+      renderGrid(false);
+
+      if(allOn(grid)){
+        showOverlay();
+      }
+    }
+
+    // UI wiring
+    $("#new").addEventListener("click", () => newPuzzle());
+    $("#reset").addEventListener("click", () => resetPuzzle());
+    $("#again").addEventListener("click", () => newPuzzle());
+    $("#close").addEventListener("click", () => hideOverlay());
+    overlayEl.addEventListener("pointerdown", (e) => {
+      if(e.target === overlayEl) hideOverlay();
+    });
+
+    sizeSel.addEventListener("change", () => {
+      N = Number(sizeSel.value);
+      newPuzzle();
+    });
+
+    // start
+    N = Number(sizeSel.value);
+    newPuzzle();
+  </script>
+</body>
+</html>
