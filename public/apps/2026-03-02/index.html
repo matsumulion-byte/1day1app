@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>ミニミニ大作戦</title>
+    <style>
+      :root{
+        --bg:#0b0d12; --fg:#e9eef7; --muted:rgba(233,238,247,.7);
+        --card:rgba(255,255,255,.06); --border:rgba(255,255,255,.12);
+        --shadow:0 18px 60px rgba(0,0,0,.55);
+      }
+      *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+      html,body{height:100%}
+      body{
+        margin:0; overflow:hidden; color:var(--fg);
+        font-family:ui-sans-serif,system-ui,-apple-system,"Hiragino Sans","Noto Sans JP","Segoe UI",Roboto,"Helvetica Neue",Arial;
+        background:
+          radial-gradient(1200px 800px at 30% 20%, rgba(120,140,255,.14), transparent 55%),
+          radial-gradient(900px 700px at 80% 80%, rgba(255,160,120,.10), transparent 55%),
+          var(--bg);
+      }
+      .wrap{max-width:520px;height:100%;margin:0 auto;padding:18px 16px 20px;display:flex;flex-direction:column;gap:12px}
+      header{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+      h1{font-size:16px;margin:0;letter-spacing:.06em}
+      .meta{font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center}
+      .chip{
+        font-size:11px;color:var(--fg);
+        border:1px solid rgba(255,255,255,.16);
+        background:rgba(255,255,255,.06);
+        padding:6px 10px;border-radius:999px;
+        user-select:none;
+      }
+      .panel{
+        background:var(--card);
+        border:1px solid var(--border);
+        border-radius:16px;
+        box-shadow:var(--shadow);
+        display:flex;
+        flex-direction:column;
+        flex:1;
+        min-height:0;
+      }
+      .hud{padding:12px 12px 10px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .hud .box{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px}
+      .label{font-size:11px;color:var(--muted);margin-bottom:6px}
+      .value{font-size:18px;font-weight:800;letter-spacing:.02em}
+      .value small{font-size:12px;color:var(--muted);font-weight:600;margin-left:6px}
+
+      .stage{
+        flex:1;
+        min-height:0;
+        display:grid;
+        grid-template-rows:auto minmax(0,1fr) auto;
+      }
+      .hint{padding:10px 12px 0;font-size:12px;color:var(--muted)}
+      .arena{
+        position:relative;
+        padding:10px 12px;
+        min-height:0;
+        overflow:hidden; /* 枠外に出さない */
+      }
+
+      /* 中央固定のコンテナ（縮小はこっちに当てる） */
+      .sprite{
+        position:absolute;
+        left:50%;
+        top:50%;
+        transform:translate(-50%,-50%) scale(1);
+        transform-origin:center center;
+        will-change:transform;
+      }
+      .matsumura{
+        width:min(72vw,360px);
+        height:auto;
+        display:block;
+        user-select:none;
+        -webkit-user-drag:none;
+        filter:drop-shadow(0 14px 35px rgba(0,0,0,.45));
+      }
+
+      .controls{
+        padding:12px;
+        padding-bottom:calc(12px + env(safe-area-inset-bottom));
+        display:grid;
+        grid-template-columns:1fr;
+        gap:10px;
+      }
+      button{
+        appearance:none;border:0;border-radius:14px;padding:14px;font-size:16px;font-weight:900;letter-spacing:.08em;
+        color:var(--fg);
+        background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+        border:1px solid rgba(255,255,255,.16);
+        box-shadow:0 10px 26px rgba(0,0,0,.35);
+        cursor:pointer;
+      }
+      button:active{transform:translateY(1px)}
+      button[disabled]{opacity:.45;cursor:not-allowed}
+      .subrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .ghost{background:transparent;border:1px solid rgba(255,255,255,.16);box-shadow:none}
+      .toast{padding:10px 12px;font-size:12px;color:var(--muted);border-top:1px solid rgba(255,255,255,.10)}
+
+      .overlay{
+        position:absolute;inset:0;display:none;place-items:center;
+        background:radial-gradient(700px 500px at 50% 40%, rgba(255,255,255,.14), rgba(0,0,0,.62));
+        border-radius:16px;
+        z-index:5;
+      }
+      .overlay.show{display:grid}
+      .badge{
+        width:min(92%,420px);
+        background:rgba(0,0,0,.55);
+        border:1px solid rgba(255,255,255,.18);
+        border-radius:18px;padding:16px 14px;text-align:center;box-shadow:var(--shadow);
+      }
+      .badge h2{margin:0 0 6px;font-size:22px;letter-spacing:.08em}
+      .badge p{margin:0;font-size:13px;color:var(--muted);line-height:1.6}
+      .badge .scoreline{margin-top:10px;font-size:18px;color:var(--fg);font-weight:900}
+
+      /* スタート画面（最初に必ず出す） */
+      .start{
+        position:fixed; inset:0;
+        display:grid; place-items:center;
+        background:radial-gradient(900px 650px at 50% 40%, rgba(255,255,255,.12), rgba(0,0,0,.78));
+        z-index:10;
+      }
+      .start.hide{display:none}
+      .startCard{
+        width:min(92%,420px);
+        background:rgba(0,0,0,.55);
+        border:1px solid rgba(255,255,255,.18);
+        border-radius:18px;
+        padding:18px 14px;
+        text-align:center;
+        box-shadow:var(--shadow);
+      }
+      .startCard h2{margin:0 0 8px;font-size:22px;letter-spacing:.08em}
+      .startCard p{margin:0 0 14px;font-size:13px;color:var(--muted);line-height:1.6}
+      .small{font-size:11px;color:var(--muted);margin-top:10px}
+    </style>
+  </head>
+  <body>
+    <!-- START画面（BGM開始のトリガ） -->
+    <div id="startScreen" class="start">
+      <div class="startCard">
+        <h2>ミニミニ大作戦</h2>
+        <p>松村が小さくなる。<br>STOPで目標%に近づけろ（全3R）</p>
+        <button id="startBtn">START</button>
+        <div class="small">※STARTでBGMが鳴ります</div>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <header>
+        <h1>ミニミニ大作戦</h1>
+        <div class="meta">
+          <div id="roundText">R1/3</div>
+          <div id="statusText">待機</div>
+          <div id="bgmChip" class="chip">BGM: OFF</div>
+        </div>
+      </header>
+
+      <section class="panel">
+        <div class="hud">
+          <div class="box">
+            <div class="label">目標サイズ</div>
+            <div class="value"><span id="targetPct">--</span><small>%</small></div>
+          </div>
+          <div class="box">
+            <div class="label">現在サイズ</div>
+            <div class="value"><span id="currentPct">--</span><small>%</small></div>
+          </div>
+          <div class="box">
+            <div class="label">ラウンド得点</div>
+            <div class="value"><span id="roundScore">--</span><small>pt</small></div>
+          </div>
+          <div class="box">
+            <div class="label">合計得点</div>
+            <div class="value"><span id="totalScore">0</span><small>pt</small></div>
+          </div>
+        </div>
+
+        <div class="stage">
+          <div class="hint" id="hintText">STARTで開始</div>
+
+          <div class="arena" id="arena">
+            <div id="sprite" class="sprite">
+              <img id="matsumuraImg" class="matsumura" alt="松村" />
+            </div>
+
+            <div class="overlay" id="overlay">
+              <div class="badge">
+                <h2 id="overlayTitle">結果</h2>
+                <p id="overlayBody"></p>
+                <div class="scoreline" id="overlayScore"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button id="stopBtn" disabled>STOP</button>
+            <div class="subrow">
+              <button id="nextBtn" class="ghost" disabled>次へ</button>
+              <button id="restartBtn" class="ghost">リスタート</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="toast" id="toastText">STARTでBGMが鳴る</div>
+      </section>
+    </div>
+
+    <script type="module">
+      // Vercel用パス解決（/YYYY-MM-DD/ でアクセス → /YYYY-MM-DD/assets/... に解決）
+      const APP_BASE = location.pathname.endsWith("/")
+        ? location.pathname
+        : location.pathname.endsWith(".html")
+          ? location.pathname.replace(/[^/]+$/, "")
+          : `${location.pathname.replace(/\/*$/, "")}/`;
+      const asset = (p) =>
+        new URL(String(p).replace(/^\.?\//, ""), `${location.origin}${APP_BASE}`).toString();
+
+      // ===== アセット =====
+      const ROUND_IMAGES = [
+        asset("./assets/matsumura_r1.png"),
+        asset("./assets/matsumura_r2.png"),
+        asset("./assets/matsumura_r3.png"),
+      ];
+      const BGM_SRC = asset("./assets/bgm.mp3");
+
+      // ===== 設定 =====
+      const TOTAL_ROUNDS = 3;
+      const TARGET_MIN = 18;
+      const TARGET_MAX = 85;
+      const PITARI_EPS = 1;
+
+      // 指数関数っぽい縮小
+      const DURATION_SEC = 3.2;
+      const MIN_SCALE = 0.03;
+      const K = Math.log(1 / MIN_SCALE) / DURATION_SEC;
+
+      // ===== DOM =====
+      const startScreen = document.getElementById("startScreen");
+      const startBtn = document.getElementById("startBtn");
+
+      const sprite = document.getElementById("sprite");
+      const matsumuraImg = document.getElementById("matsumuraImg");
+
+      const targetPctEl = document.getElementById("targetPct");
+      const currentPctEl = document.getElementById("currentPct");
+      const roundScoreEl = document.getElementById("roundScore");
+      const totalScoreEl = document.getElementById("totalScore");
+      const roundTextEl = document.getElementById("roundText");
+      const statusTextEl = document.getElementById("statusText");
+      const hintTextEl = document.getElementById("hintText");
+      const toastTextEl = document.getElementById("toastText");
+
+      const stopBtn = document.getElementById("stopBtn");
+      const nextBtn = document.getElementById("nextBtn");
+      const restartBtn = document.getElementById("restartBtn");
+
+      const overlay = document.getElementById("overlay");
+      const overlayTitle = document.getElementById("overlayTitle");
+      const overlayBody = document.getElementById("overlayBody");
+      const overlayScore = document.getElementById("overlayScore");
+
+      const bgmChip = document.getElementById("bgmChip");
+
+      // ===== BGM =====
+      const bgm = new Audio(BGM_SRC);
+      bgm.loop = true;
+      bgm.preload = "auto";
+      let bgmOn = false;
+
+      function setBgmUI() {
+        bgmChip.textContent = `BGM: ${bgmOn ? "ON" : "OFF"}`;
+      }
+
+      async function startBgm() {
+        bgmOn = true;
+        setBgmUI();
+        try { await bgm.play(); }
+        catch (e) {
+          // ここで失敗するならファイルパスか形式の問題の可能性が高い
+          toastTextEl.textContent = "BGM再生に失敗（形式/パスを確認）";
+        }
+      }
+
+      // ===== 状態 =====
+      let round = 1;
+      let totalScore = 0;
+      let targetPct = 0;
+      let running = false;
+      let stopped = false;
+
+      let rafId = 0;
+      let t0 = 0;
+      let lastScale = 1;
+
+      // ===== util =====
+      const clamp = (x,a,b)=>Math.min(b,Math.max(a,x));
+      const randInt = (a,b)=>Math.floor(a + Math.random()*(b-a+1));
+
+      function scaleAtSeconds(tSec){
+        const s = Math.exp(-K * tSec);
+        return Math.max(MIN_SCALE, s);
+      }
+      function scaleToPct(scale){ return Math.round(scale * 100); }
+
+      function setScale(scale){
+        lastScale = scale;
+        // 中央固定（重要）
+        sprite.style.transform = `translate(-50%, -50%) scale(${scale})`;
+        currentPctEl.textContent = String(scaleToPct(scale));
+      }
+
+      function setOverlay(show){ overlay.classList.toggle("show", show); }
+      function setStatus(text){ statusTextEl.textContent = text; }
+      function setRoundText(){ roundTextEl.textContent = `R${round}/${TOTAL_ROUNDS}`; }
+
+      function computeScore(target, actual){
+        const diff = Math.abs(target - actual);
+        return clamp(Math.round(100 - diff), 0, 100);
+      }
+
+      function showRoundResult({ target, actual, score }){
+        const diff = Math.abs(target - actual);
+        const pitari = diff <= PITARI_EPS;
+
+        overlayTitle.textContent = pitari ? "ピタリ" : "結果";
+        overlayBody.textContent = pitari
+          ? `目標 ${target}% に対して ${actual}%！`
+          : `目標 ${target}% / 実際 ${actual}%（誤差 ${diff}%）`;
+
+        overlayScore.textContent = `+${score} pt`;
+        setOverlay(true);
+      }
+
+      function showFinalResult(){
+        overlayTitle.textContent = "合計得点";
+        overlayBody.textContent = `3ラウンド終了`;
+        overlayScore.textContent = `${totalScore} pt`;
+        setOverlay(true);
+
+        setStatus("完了");
+        hintTextEl.textContent = "リスタートで再挑戦";
+        toastTextEl.textContent = "おつかれ";
+      }
+
+      function endRound(actualPct, reason="stopped"){
+        running = false;
+        stopped = true;
+        cancelAnimationFrame(rafId);
+
+        const score = computeScore(targetPct, actualPct);
+        roundScoreEl.textContent = String(score);
+        totalScore += score;
+        totalScoreEl.textContent = String(totalScore);
+
+        stopBtn.disabled = true;
+        nextBtn.disabled = false;
+
+        showRoundResult({ target: targetPct, actual: actualPct, score });
+
+        setStatus("停止");
+        hintTextEl.textContent = "次へで次ラウンドへ";
+        if (reason === "auto") toastTextEl.textContent = "小さくなりすぎた（自動停止）";
+      }
+
+      function tick(now){
+        if (!running) return;
+        const tSec = (now - t0) / 1000;
+        const s = scaleAtSeconds(tSec);
+        setScale(s);
+
+        if (tSec >= DURATION_SEC){
+          endRound(scaleToPct(s), "auto");
+          return;
+        }
+        rafId = requestAnimationFrame(tick);
+      }
+
+      function setRoundImage(){
+        const idx = clamp(round - 1, 0, ROUND_IMAGES.length - 1);
+        matsumuraImg.src = ROUND_IMAGES[idx];
+      }
+
+      function startRound(){
+        setOverlay(false);
+
+        stopped = false;
+        running = true;
+
+        setRoundImage();
+
+        targetPct = randInt(TARGET_MIN, TARGET_MAX);
+        targetPctEl.textContent = String(targetPct);
+        roundScoreEl.textContent = "--";
+
+        setRoundText();
+        setStatus("進行中");
+        hintTextEl.textContent = "STOPで目標%に近づけろ（ピタリ：±1%）";
+        toastTextEl.textContent = bgmOn ? "BGM: ON" : "BGM: OFF";
+
+        stopBtn.disabled = false;
+        nextBtn.disabled = true;
+
+        setScale(1);
+        t0 = performance.now();
+        rafId = requestAnimationFrame(tick);
+      }
+
+      function next(){
+        setOverlay(false);
+
+        if (round >= TOTAL_ROUNDS){
+          stopBtn.disabled = true;
+          nextBtn.disabled = true;
+          showFinalResult(); // ←最後は必ず合計点表示
+          return;
+        }
+
+        round += 1;
+        startRound();
+      }
+
+      function restart(){
+        cancelAnimationFrame(rafId);
+
+        round = 1;
+        totalScore = 0;
+        totalScoreEl.textContent = "0";
+        targetPctEl.textContent = "--";
+        currentPctEl.textContent = "--";
+        roundScoreEl.textContent = "--";
+        setOverlay(false);
+
+        stopBtn.disabled = true;
+        nextBtn.disabled = true;
+
+        setStatus("待機");
+        hintTextEl.textContent = "STARTで開始";
+        toastTextEl.textContent = "STARTでBGMが鳴る";
+
+        // もう一回スタート画面へ（BGMも一旦止める）
+        bgm.pause();
+        bgm.currentTime = 0;
+        bgmOn = false;
+        setBgmUI();
+        startScreen.classList.remove("hide");
+      }
+
+      // ===== イベント =====
+      startBtn.addEventListener("click", async () => {
+        // STARTは必ずユーザー操作なので、ここでBGMを開始する
+        await startBgm();
+        startScreen.classList.add("hide");
+        startRound();
+      });
+
+      stopBtn.addEventListener("click", () => {
+        if (!running || stopped) return;
+        endRound(scaleToPct(lastScale));
+      });
+
+      nextBtn.addEventListener("click", () => next());
+      restartBtn.addEventListener("click", () => restart());
+
+      matsumuraImg.addEventListener("error", () => {
+        toastTextEl.textContent = "画像が見つからない：assets のファイル名を確認";
+      });
+      bgm.addEventListener("error", () => {
+        toastTextEl.textContent = "BGMが見つからない：./assets/bgm.mp3 を確認（無くてもOK）";
+      });
+
+      // 初期化
+      setBgmUI();
+    </script>
+  </body>
+</html>
