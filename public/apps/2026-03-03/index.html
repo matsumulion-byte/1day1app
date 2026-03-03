@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>ひな壇15パズル</title>
+  <style>
+    :root{
+      --bg:#0b0b0f;
+      --panel:#141422;
+      --text:#f2f2f2;
+      --muted:#b9b9c7;
+      --accent:#ff4d7d;
+      --gap:6px;
+      --radius:16px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      background: radial-gradient(1200px 700px at 50% -10%, #2a1830 0%, var(--bg) 55%);
+      color:var(--text);
+      user-select:none;
+      -webkit-user-select:none;
+      -webkit-touch-callout:none;
+      touch-action: manipulation;
+    }
+    .wrap{
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px 14px 28px;
+    }
+    header{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: 10px;
+    }
+    h1{
+      font-size: 18px;
+      margin:0;
+      letter-spacing: .02em;
+    }
+    .stats{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      padding: 8px 10px;
+      border-radius: 12px;
+      min-width: 90px;
+      text-align:center;
+    }
+    .stat .label{
+      display:block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 2px;
+    }
+    .stat .value{
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .boardCard{
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+    }
+
+    /* 盤面は正方形で安定させる（画像も正方形想定） */
+    .board{
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: var(--gap);
+      background: rgba(0,0,0,.18);
+      padding: var(--gap);
+      border-radius: 14px;
+      position:relative;
+      overflow:hidden;
+      touch-action: manipulation;
+    }
+
+    .tile{
+      border-radius: 10px;
+      background-repeat:no-repeat;
+      background-size: 400% 400%;
+      background-position: 0% 0%;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.15);
+      transition: transform 120ms ease, filter 120ms ease;
+      cursor:pointer;
+      position:relative;
+    }
+    .tile:active{
+      transform: scale(0.98);
+      filter: brightness(1.08);
+    }
+    .tile.blank{
+      background: transparent;
+      border: 1px dashed rgba(255,255,255,.18);
+      box-shadow:none;
+      cursor: default;
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      margin-top: 12px;
+    }
+    button{
+      flex:1;
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 14px;
+      padding: 12px 10px;
+      font-weight: 700;
+      cursor:pointer;
+      touch-action: manipulation;
+    }
+    button.primary{
+      background: linear-gradient(180deg, rgba(255,77,125,.95), rgba(255,77,125,.70));
+      border: 1px solid rgba(255,77,125,.55);
+    }
+    button:disabled{
+      opacity:.5;
+      cursor: not-allowed;
+    }
+
+    .hint{
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 10px;
+      line-height:1.45;
+    }
+
+    .overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.70);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 16px;
+      z-index: 50;
+    }
+    .overlay.show{ display:flex; }
+    .modal{
+      width: min(560px, 100%);
+      background: rgba(20,20,34,.96);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.5);
+    }
+    .modal h2{
+      margin: 4px 0 10px;
+      font-size: 16px;
+    }
+    .refImg{
+      width:100%;
+      aspect-ratio: 1/1;
+      border-radius: 14px;
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.25);
+    }
+    .refImg img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      display:block;
+    }
+    .modal .row{
+      display:flex;
+      gap:10px;
+      margin-top: 12px;
+    }
+    .modal .row button{ flex:1; }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 14px;
+      background: rgba(0,0,0,.72);
+      border: 1px solid rgba(255,255,255,.14);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity 160ms ease;
+      z-index: 60;
+    }
+    .toast.show{ opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>ひな壇15パズル</h1>
+      <div class="stats">
+        <div class="stat">
+          <span class="label">TIME</span>
+          <span class="value" id="time">00:00</span>
+        </div>
+        <div class="stat">
+          <span class="label">MOVES</span>
+          <span class="value" id="moves">0</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="boardCard">
+      <div class="board" id="board" aria-label="15 puzzle board"></div>
+
+      <div class="controls">
+        <button class="primary" id="startBtn">START</button>
+        <button id="restartBtn" disabled>RESTART</button>
+        <button id="refBtn">完成図</button>
+      </div>
+
+      <div class="hint">
+        ・STARTでシャッフルして開始（必ず解ける配置）。<br/>
+        ・空白の上下左右のピースだけ動きます。
+      </div>
+    </div>
+  </div>
+
+  <!-- 完成図オーバーレイ -->
+  <div class="overlay" id="refOverlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h2>完成図</h2>
+      <div class="refImg"><img id="refImg" alt="reference" /></div>
+      <div class="row">
+        <button id="closeRefBtn">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- クリアオーバーレイ -->
+  <div class="overlay" id="winOverlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h2 id="winTitle">完成！</h2>
+      <div class="hint" id="winStats"></div>
+      <div class="row">
+        <button class="primary" id="playAgainBtn">もう一回</button>
+        <button id="showRefFromWinBtn">完成図</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">クリア！</div>
+
+  <script type="module">
+    // Vercel用パス解決（/YYYY-MM-DD/ でアクセス → /YYYY-MM-DD/assets/... に解決）
+    const APP_BASE = location.pathname.endsWith("/")
+      ? location.pathname
+      : location.pathname.endsWith(".html")
+        ? location.pathname.replace(/[^/]+$/, "")
+        : `${location.pathname.replace(/\/*$/, "")}/`;
+    const asset = (p) =>
+      new URL(String(p).replace(/^\.?\//, ""), `${location.origin}${APP_BASE}`).toString();
+
+    // ===== 設定 =====
+    const SIZE = 4;                 // 4x4
+    const SHUFFLE_MOVES = 110;      // 合法手でシャッフル（必ず解ける）
+    const IMG_SRC = asset("./assets/hina.png"); // ←画像をここに置く
+
+    // ===== DOM =====
+    const boardEl = document.getElementById("board");
+    const timeEl = document.getElementById("time");
+    const movesEl = document.getElementById("moves");
+    const startBtn = document.getElementById("startBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const refBtn = document.getElementById("refBtn");
+
+    const refOverlay = document.getElementById("refOverlay");
+    const refImg = document.getElementById("refImg");
+    const closeRefBtn = document.getElementById("closeRefBtn");
+
+    const winOverlay = document.getElementById("winOverlay");
+    const winStats = document.getElementById("winStats");
+    const playAgainBtn = document.getElementById("playAgainBtn");
+    const showRefFromWinBtn = document.getElementById("showRefFromWinBtn");
+
+    const toast = document.getElementById("toast");
+
+    // ===== 状態 =====
+    // state[i] = tileId (0..15), 15を空白扱い
+    // solved: state[i] === i
+    let state = [];
+    let blankIndex = 15;
+    let moves = 0;
+
+    let running = false;
+    let startAt = 0;
+    let rafId = 0;
+
+    // ===== 便利関数 =====
+    const idxToRC = (idx) => ({ r: Math.floor(idx / SIZE), c: idx % SIZE });
+    const rcToIdx = (r, c) => r * SIZE + c;
+
+    function formatTime(ms) {
+      const total = Math.floor(ms / 1000);
+      const mm = String(Math.floor(total / 60)).padStart(2, "0");
+      const ss = String(total % 60).padStart(2, "0");
+      return `${mm}:${ss}`;
+    }
+
+    function setToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 850);
+    }
+
+    function resetToSolved() {
+      state = Array.from({ length: SIZE * SIZE }, (_, i) => i);
+      blankIndex = SIZE * SIZE - 1;
+      moves = 0;
+      movesEl.textContent = String(moves);
+      timeEl.textContent = "00:00";
+      stopTimer();
+      running = false;
+      startBtn.disabled = false;
+      restartBtn.disabled = true;
+      render();
+    }
+
+    function startTimer() {
+      running = true;
+      startAt = performance.now();
+      const tick = () => {
+        if (!running) return;
+        const now = performance.now();
+        timeEl.textContent = formatTime(now - startAt);
+        rafId = requestAnimationFrame(tick);
+      };
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function stopTimer() {
+      running = false;
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+
+    function neighbors(idx) {
+      const { r, c } = idxToRC(idx);
+      const list = [];
+      if (r > 0) list.push(rcToIdx(r - 1, c));
+      if (r < SIZE - 1) list.push(rcToIdx(r + 1, c));
+      if (c > 0) list.push(rcToIdx(r, c - 1));
+      if (c < SIZE - 1) list.push(rcToIdx(r, c + 1));
+      return list;
+    }
+
+    function canMove(tileIndex) {
+      return neighbors(blankIndex).includes(tileIndex);
+    }
+
+    function swap(i, j) {
+      const tmp = state[i];
+      state[i] = state[j];
+      state[j] = tmp;
+    }
+
+    function doMove(tileIndex, countMove = true) {
+      if (!canMove(tileIndex)) return false;
+
+      // tileIndex と blankIndex を交換
+      swap(tileIndex, blankIndex);
+      blankIndex = tileIndex;
+
+      if (countMove) {
+        moves += 1;
+        movesEl.textContent = String(moves);
+      }
+
+      render();
+
+      if (countMove && isSolved()) {
+        onWin();
+      }
+      return true;
+    }
+
+    function isSolved() {
+      for (let i = 0; i < state.length; i++) {
+        if (state[i] !== i) return false;
+      }
+      return true;
+    }
+
+    function shuffle() {
+      // solved から合法手だけで混ぜる（＝必ず解ける）
+      resetToSolved();
+
+      // 逆戻り連発を避ける
+      let prevBlank = -1;
+
+      for (let k = 0; k < SHUFFLE_MOVES; k++) {
+        const opts = neighbors(blankIndex).filter(n => n !== prevBlank);
+        const pick = opts[Math.floor(Math.random() * opts.length)];
+        prevBlank = blankIndex;
+        doMove(pick, false); // カウントしない
+      }
+
+      moves = 0;
+      movesEl.textContent = "0";
+      timeEl.textContent = "00:00";
+      stopTimer();
+      running = false;
+      render();
+    }
+
+    function onWin() {
+      stopTimer();
+      const elapsedMs = Math.max(0, performance.now() - startAt);
+      winStats.innerHTML = `TIME: <b>${formatTime(elapsedMs)}</b><br/>MOVES: <b>${moves}</b>`;
+      winOverlay.classList.add("show");
+      setToast("完成！");
+      startBtn.disabled = false;
+      restartBtn.disabled = false;
+    }
+
+    // ===== 描画 =====
+    function render() {
+      boardEl.innerHTML = "";
+
+      for (let pos = 0; pos < state.length; pos++) {
+        const tileId = state[pos]; // 0..15
+        const isBlank = tileId === (SIZE * SIZE - 1);
+
+        const tile = document.createElement("div");
+        tile.className = "tile" + (isBlank ? " blank" : "");
+        tile.dataset.pos = String(pos);
+
+        if (!isBlank) {
+          // tileId が示す「元の正しい位置」から背景位置を決める
+          const { r, c } = idxToRC(tileId);
+
+          // 背景：16分割
+          tile.style.backgroundImage = `url("${IMG_SRC}")`;
+          tile.style.backgroundSize = `${SIZE * 100}% ${SIZE * 100}%`;
+          tile.style.backgroundPosition = `${(c * 100) / (SIZE - 1)}% ${(r * 100) / (SIZE - 1)}%`;
+        }
+
+        // クリック/タップ
+        tile.addEventListener("pointerdown", (e) => {
+          e.preventDefault();
+          // 開始前は動かさない（誤操作防止）
+          if (startBtn.disabled === false && restartBtn.disabled === true) return;
+          const p = Number(tile.dataset.pos);
+          if (isBlank) return;
+          if (!running) startTimer();
+          doMove(p, true);
+        }, { passive: false });
+
+        boardEl.appendChild(tile);
+      }
+    }
+
+    // ===== UI =====
+    refImg.src = IMG_SRC;
+
+    function openRef() { refOverlay.classList.add("show"); }
+    function closeRef() { refOverlay.classList.remove("show"); }
+
+    refBtn.addEventListener("click", openRef);
+    closeRefBtn.addEventListener("click", closeRef);
+    refOverlay.addEventListener("click", (e) => {
+      if (e.target === refOverlay) closeRef();
+    });
+
+    startBtn.addEventListener("click", () => {
+      winOverlay.classList.remove("show");
+      shuffle();
+      // 開始状態にする（タイマーは初手で開始）
+      startBtn.disabled = true;
+      restartBtn.disabled = false;
+      setToast("START");
+    });
+
+    restartBtn.addEventListener("click", () => {
+      winOverlay.classList.remove("show");
+      shuffle();
+      // タイマーは初手で開始
+      startBtn.disabled = true;
+      restartBtn.disabled = false;
+      setToast("RESTART");
+    });
+
+    playAgainBtn.addEventListener("click", () => {
+      winOverlay.classList.remove("show");
+      shuffle();
+      startBtn.disabled = true;
+      restartBtn.disabled = false;
+      setToast("もう一回");
+    });
+
+    showRefFromWinBtn.addEventListener("click", () => {
+      openRef();
+    });
+
+    // オーバーレイ閉じ
+    winOverlay.addEventListener("click", (e) => {
+      if (e.target === winOverlay) winOverlay.classList.remove("show");
+    });
+
+    // 初期化
+    resetToSolved();
+  </script>
+</body>
+</html>
