@@ -1,0 +1,814 @@
+<!-- /app/2026-03-04/index.html -->
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>バウム職人チャレンジ</title>
+  <style>
+    :root{
+      --bg:#0b0d12;
+      --panel:#121623;
+      --text:#e9eefc;
+      --muted:#9aa6c3;
+      --accent:#ffd37a;
+      --danger:#ff6b6b;
+      --ok:#7dffb2;
+    }
+    html,body{height:100%; margin:0; background:var(--bg); color:var(--text); font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Segoe UI", sans-serif;}
+    .wrap{min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px; box-sizing:border-box;}
+    .hud{
+      width:min(520px, 100%);
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      margin-bottom:10px;
+    }
+    .pill{
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
+      display:flex; gap:8px; align-items:baseline;
+      backdrop-filter: blur(6px);
+    }
+    .pill b{font-size:14px;}
+    .stage{
+      width:min(520px, 100%);
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:18px;
+      padding:12px;
+      box-sizing:border-box;
+    }
+    canvas{
+      width:100%;
+      height:auto;
+      aspect-ratio: 1 / 1.1;
+      display:block;
+      border-radius:14px;
+      background:radial-gradient(120% 120% at 50% 40%, rgba(255,211,122,.10), rgba(0,0,0,0) 55%),
+                 radial-gradient(120% 120% at 50% 70%, rgba(125,255,178,.06), rgba(0,0,0,0) 55%),
+                 rgba(0,0,0,.25);
+    }
+    .controls{
+      width:min(520px, 100%);
+      display:flex;
+      gap:10px;
+      margin-top:12px;
+    }
+    .btn{
+      flex:1;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:14px 14px;
+      font-size:16px;
+      font-weight:700;
+      letter-spacing:.02em;
+      user-select:none;
+      -webkit-user-select:none;
+      touch-action:none;
+    }
+    .btn:active{transform: translateY(1px);}
+    .btn.primary{
+      background:linear-gradient(180deg, rgba(255,211,122,.22), rgba(255,211,122,.10));
+      border-color:rgba(255,211,122,.35);
+    }
+    .btn.danger{
+      background:linear-gradient(180deg, rgba(255,107,107,.20), rgba(255,107,107,.08));
+      border-color:rgba(255,107,107,.35);
+    }
+    .sub{
+      width:min(520px, 100%);
+      margin-top:10px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+      text-align:left;
+    }
+    .overlay{
+      position:fixed; inset:0; display:none;
+      align-items:center; justify-content:center;
+      background:rgba(0,0,0,.6);
+      padding:16px; box-sizing:border-box;
+    }
+    .modal{
+      width:min(520px, 100%);
+      background:rgba(18,22,35,.92);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:18px;
+      padding:16px;
+      box-sizing:border-box;
+      backdrop-filter: blur(10px);
+    }
+    .modal h1{margin:0 0 8px; font-size:18px;}
+    .modal p{margin:8px 0; color:var(--muted); font-size:13px; line-height:1.6;}
+    .row{display:flex; gap:10px; margin-top:12px;}
+    .kpi{
+      display:grid; grid-template-columns: 1fr 1fr;
+      gap:10px; margin-top:10px;
+    }
+    .kpi .card{
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      padding:10px 12px;
+    }
+    .kpi .card .label{font-size:12px; color:var(--muted);}
+    .kpi .card .val{font-size:18px; font-weight:800; margin-top:4px;}
+    .badge{
+      display:inline-flex; align-items:center; gap:6px;
+      font-size:12px; color:var(--muted);
+      margin-top:6px;
+    }
+    .dot{width:8px; height:8px; border-radius:99px; background:var(--accent); display:inline-block;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud">
+    <div class="pill"><span>残り</span><b id="timeLeft">60</b><span>秒</span></div>
+    <div class="pill"><span>層</span><b id="layersCount">0</b></div>
+    <div class="pill"><span>スコア</span><b id="score">0</b></div>
+  </div>
+
+  <div class="stage">
+    <canvas id="c" width="900" height="990" aria-label="バウム描画"></canvas>
+  </div>
+
+  <div class="controls">
+    <button id="pourBtn" class="btn primary" type="button">長押しで生地を流す</button>
+    <button id="startBtn" class="btn" type="button">START</button>
+    <button id="soundBtn" class="btn" type="button">SOUND: ON</button>
+  </div>
+
+  <div class="sub">
+    <div class="badge"><span class="dot"></span>離した瞬間に「1層」確定。厚みが理想に近いほど高得点。</div>
+    <div class="badge"><span class="dot" style="background:var(--ok)"></span>Perfect連続でボーナス +20。</div>
+    <div class="badge"><span class="dot" style="background:var(--danger)"></span>制限時間60秒で終了。</div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h1 id="modalTitle">結果</h1>
+    <p id="modalDesc"></p>
+    <div class="kpi">
+      <div class="card">
+        <div class="label">スコア</div>
+        <div class="val" id="rScore">0</div>
+      </div>
+      <div class="card">
+        <div class="label">層数</div>
+        <div class="val" id="rLayers">0</div>
+      </div>
+      <div class="card">
+        <div class="label">Perfect</div>
+        <div class="val" id="rPerfect">0</div>
+      </div>
+      <div class="card">
+        <div class="label">職人ランク</div>
+        <div class="val" id="rRank">-</div>
+      </div>
+    </div>
+    <p class="badge" id="tip"></p>
+    <div class="row">
+      <button id="retryBtn" class="btn primary" type="button">もう一回</button>
+      <button id="closeBtn" class="btn" type="button">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  // Vercel用パス解決（/YYYY-MM-DD/ でアクセス → /YYYY-MM-DD/assets/... に解決）
+  const APP_BASE = location.pathname.endsWith("/")
+    ? location.pathname
+    : location.pathname.endsWith(".html")
+      ? location.pathname.replace(/[^/]+$/, "")
+      : `${location.pathname.replace(/\/*$/, "")}/`;
+  const asset = (p) =>
+    new URL(String(p).replace(/^\.?\//, ""), `${location.origin}${APP_BASE}`).toString();
+
+  // --------- DOM ---------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+
+  const timeLeftEl = document.getElementById('timeLeft');
+  const layersCountEl = document.getElementById('layersCount');
+  const scoreEl = document.getElementById('score');
+
+  const pourBtn = document.getElementById('pourBtn');
+  const startBtn = document.getElementById('startBtn');
+  const soundBtn = document.getElementById('soundBtn');
+
+  const overlay = document.getElementById('overlay');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalDesc = document.getElementById('modalDesc');
+  const rScore = document.getElementById('rScore');
+  const rLayers = document.getElementById('rLayers');
+  const rPerfect = document.getElementById('rPerfect');
+  const rRank = document.getElementById('rRank');
+  const tip = document.getElementById('tip');
+  const retryBtn = document.getElementById('retryBtn');
+  const closeBtn = document.getElementById('closeBtn');
+
+  // --- BGM ---
+  const bgmUrl = asset("./assets/bgm.mp3"); // ファイル名に合わせて変更
+
+  const bgm = new Audio(bgmUrl);
+  bgm.loop = true;
+  bgm.preload = "auto";
+  bgm.volume = 0.55;
+
+  let soundEnabled = true;
+  let audioUnlocked = false;
+
+  // --------- Game constants ---------
+  const GAME_MS = 60_000;
+
+  // フェーズ制（流し → 焼き）
+  const POUR_WINDOW_MS = 2000; // 流していい最大時間
+  const BAKE_MS = 3000;        // 焼いて固める時間
+
+  // 厚み判定のターゲット：pressTime（秒）で評価する
+  // target 0.60秒前後でちょうど良い厚み、短すぎ/長すぎでブレる想定
+  const THICK_TARGET = 0.60;
+  const THICK_PERF = 0.10;
+  const THICK_GOOD = 0.25;
+
+  // 成長量（px/秒）と上限制御
+  const GROW_PX_PER_SEC = 42;       // 押している間に半径が増える速度
+  const MAX_LAYER_THICK = 44;       // 一層で増える最大半径
+  const MIN_LAYER_THICK = 6;        // 一層で増える最小半径（離した瞬間にこれ以下なら切り捨て）
+
+  // 回転
+  const ROT_BASE = 0.9;             // rad/sec
+  const ROT_ACCEL = 0.55;           // 時間経過で加速
+
+  // --------- Game state ---------
+  let running = false;
+  let startedAt = 0;
+  let lastT = 0;
+
+  let pressing = false;
+  let pressStartT = 0;
+
+  /** layers: { r: number, thick: number, q: "perfect"|"good"|"bad" } */
+  let layers = [];
+  let baseR = 92; // 芯の半径
+  let currentGrow = 0;
+
+  let score = 0;
+  let comboPerfect = 0;
+  let countPerfect = 0;
+
+  // visual
+  let rot = 0;
+
+  // フェーズ："idle" | "pour" | "bake"
+  let phase = "idle";
+  let phaseEndsAt = 0;
+
+  // 焼き中タップフィードバック
+  let bakeTapCoolDownUntil = 0;
+  let bakeFlash = 0;
+
+  // --------- Helpers ---------
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const now = () => performance.now();
+
+  function resetGame(){
+    running = false;
+    startedAt = 0;
+    lastT = 0;
+
+    pressing = false;
+    pressStartT = 0;
+
+    layers = [];
+    currentGrow = 0;
+
+    score = 0;
+    comboPerfect = 0;
+    countPerfect = 0;
+
+    rot = 0;
+
+    phase = "idle";
+    phaseEndsAt = 0;
+
+    updateHUD(60_000);
+    updatePourButtonUI();
+    draw(0);
+  }
+
+  function updateHUD(msLeft){
+    timeLeftEl.textContent = String(Math.ceil(msLeft / 1000));
+    layersCountEl.textContent = String(layers.length);
+    scoreEl.textContent = String(score);
+  }
+
+  function gradeByPressSeconds(t){
+    const d = Math.abs(t - THICK_TARGET);
+    if (d < THICK_PERF) return "perfect";
+    if (d < THICK_GOOD) return "good";
+    return "bad";
+  }
+
+  function addScore(q){
+    if (q === "perfect"){
+      score += 100;
+      comboPerfect += 1;
+      countPerfect += 1;
+      if (comboPerfect >= 2) score += 20; // 連続Perfectボーナス
+    } else if (q === "good"){
+      score += 60;
+      comboPerfect = 0;
+    } else {
+      score += 20;
+      comboPerfect = 0;
+    }
+  }
+
+  function rankFromScore(s){
+    if (s >= 1400) return "S";
+    if (s >= 1100) return "A";
+    if (s >= 800) return "B";
+    if (s >= 500) return "C";
+    return "D";
+  }
+
+  // iOS対策：ユーザー操作で一度だけ「再生→即停止」してアンロック
+  async function unlockAudio(){
+    if (audioUnlocked) return;
+    try{
+      await bgm.play();
+      bgm.pause();
+      bgm.currentTime = 0;
+      audioUnlocked = true;
+    }catch(e){
+      // 端末側制限で失敗することがある（次の操作で再挑戦）
+    }
+  }
+
+  async function playBgm(){
+    if (!soundEnabled) return;
+    await unlockAudio();
+    try{
+      await bgm.play();
+    }catch(e){
+      // 端末によってはここで失敗するので、次のユーザー操作で再試行される
+    }
+  }
+
+  function stopBgm(){
+    try{ bgm.pause(); }catch(e){}
+  }
+
+  function updateSoundUI(){
+    if (!soundBtn) return;
+    soundBtn.textContent = soundEnabled ? "SOUND: ON" : "SOUND: OFF";
+    soundBtn.classList.toggle("danger", !soundEnabled);
+    soundBtn.classList.toggle("primary", soundEnabled);
+  }
+
+  // ミュートボタン
+  if (soundBtn){
+    updateSoundUI();
+    soundBtn.addEventListener("click", async () => {
+      soundEnabled = !soundEnabled;
+      updateSoundUI();
+      if (!soundEnabled) stopBgm();
+      else if (running) await playBgm();
+    });
+  }
+
+  function updatePourButtonUI(){
+    if (!running){
+      pourBtn.textContent = "長押しで生地を流す";
+      pourBtn.classList.add("primary");
+      pourBtn.classList.remove("danger");
+      pourBtn.disabled = false;
+      return;
+    }
+
+    if (phase === "pour"){
+      const sec = Math.max(0, Math.ceil((phaseEndsAt - now()) / 1000));
+      pourBtn.textContent = `長押しで流す（あと${sec}s）`;
+      pourBtn.classList.add("primary");
+      pourBtn.classList.remove("danger");
+      pourBtn.disabled = false;
+    } else if (phase === "bake"){
+      const sec = Math.max(0, Math.ceil((phaseEndsAt - now()) / 1000));
+      pourBtn.textContent = `焼き中…（${sec}s）`;
+      pourBtn.classList.remove("primary");
+      pourBtn.classList.add("danger");
+      pourBtn.disabled = false;
+    }
+  }
+
+  function bakeTapFeedback(){
+    const t = now();
+    if (t < bakeTapCoolDownUntil) return;
+    bakeTapCoolDownUntil = t + 250;
+
+    // 焼きを少し早める
+    phaseEndsAt = Math.max(t, phaseEndsAt - 150);
+
+    // 反応
+    pourBtn.animate(
+      [{ transform: "scale(1)" }, { transform: "scale(0.98)" }, { transform: "scale(1)" }],
+      { duration: 120 }
+    );
+    bakeFlash = 1.0;
+  }
+
+  // --------- Input handling (mouse + touch + pointer) ---------
+  function setPress(on){
+    if (!running) return;
+    if (phase !== "pour"){
+      // 焼き中に押されたらフィードバックだけ返す
+      if (on) bakeTapFeedback();
+      return;
+    }
+    if (on){
+      if (pressing) return;
+      pressing = true;
+      pressStartT = now();
+    } else {
+      if (!pressing) return;
+      pressing = false;
+
+      const tSec = (now() - pressStartT) / 1000;
+      const thick = clamp(currentGrow, 0, MAX_LAYER_THICK);
+
+      // 薄すぎは無効（ミス扱いにしない：単に層を作れない）
+      if (thick < MIN_LAYER_THICK){
+        currentGrow = 0;
+        return;
+      }
+
+      const q = gradeByPressSeconds(tSec);
+
+      layers.push({
+        r: totalRadius(), // 追加前の外径
+        thick,
+        q
+      });
+
+      addScore(q);
+      currentGrow = 0;
+
+      // 1回離したら必ず「焼き」フェーズに入る
+      phase = "bake";
+      phaseEndsAt = now() + BAKE_MS;
+
+      updateHUD(msLeft());
+    }
+  }
+
+  // button press (pointer)
+  pourBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); pourBtn.setPointerCapture(e.pointerId); setPress(true); });
+  pourBtn.addEventListener('pointerup',   (e) => { e.preventDefault(); setPress(false); });
+  pourBtn.addEventListener('pointercancel', (e) => { e.preventDefault(); setPress(false); });
+  pourBtn.addEventListener('pointerleave', (e) => { /* leaving button while pressed on mobile can happen */ });
+
+  // prevent long-press context menu
+  document.addEventListener('contextmenu', (e) => e.preventDefault(), {passive:false});
+
+  startBtn.addEventListener('click', async () => {
+    if (running) return;
+    await playBgm();   // STARTでBGM開始（ユーザー操作なので通りやすい）
+    startGame();
+  });
+
+  retryBtn.addEventListener('click', () => {
+    hideResult();
+    resetGame();
+    startGame();
+  });
+
+  closeBtn.addEventListener('click', () => hideResult());
+
+  function startGame(){
+    running = true;
+    startedAt = now();
+    lastT = startedAt;
+
+    phase = "pour";
+    phaseEndsAt = startedAt + POUR_WINDOW_MS;
+
+    startBtn.textContent = "RUNNING";
+    startBtn.disabled = true;
+
+    updatePourButtonUI();
+    requestAnimationFrame(loop);
+  }
+
+  function msLeft(){
+    if (!running) return GAME_MS;
+    const elapsed = now() - startedAt;
+    return Math.max(0, GAME_MS - elapsed);
+  }
+
+  function totalRadius(){
+    let r = baseR;
+    for (const L of layers) r += L.thick;
+    r += currentGrow;
+    return r;
+  }
+
+  // --------- Drawing ---------
+  function draw(dtSec){
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.clearRect(0,0,w,h);
+
+    // centers
+    const cx = w * 0.5;
+    const cy = h * 0.50;
+
+    // subtle vignette
+    ctx.save();
+    const g = ctx.createRadialGradient(cx, cy, 60, cx, cy, 520);
+    g.addColorStop(0, "rgba(255,255,255,0.06)");
+    g.addColorStop(1, "rgba(0,0,0,0.65)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,w,h);
+    ctx.restore();
+
+    // rotation speed grows over time
+    const t = running ? (now() - startedAt) / 1000 : 0;
+    const rotSpd = ROT_BASE + ROT_ACCEL * (t / 60);
+    rot += dtSec * rotSpd;
+
+    // Draw core (spit/rod)
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rot * 0.2);
+    ctx.fillStyle = "rgba(255,255,255,0.06)";
+    ctx.fillRect(-10, -260, 20, 520);
+    ctx.fillStyle = "rgba(255,211,122,0.20)";
+    ctx.fillRect(-6, -260, 12, 520);
+    ctx.restore();
+
+    // Draw Baum layers (from inner to outer)
+    const base = baseR;
+    let currentR = base;
+
+    // inner “hole”
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.beginPath();
+    ctx.arc(0, 0, base - 18, 0, Math.PI*2);
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.fill();
+    ctx.restore();
+
+    // layers
+    for (let i = 0; i < layers.length; i++){
+      const L = layers[i];
+      const outer = currentR + L.thick;
+      drawBaumRing(cx, cy, currentR, outer, L.q, i);
+      currentR = outer;
+    }
+
+    // current pouring (preview layer)
+    if (running && phase === "pour" && pressing){
+      const thick = clamp(currentGrow, 0, MAX_LAYER_THICK);
+      const outer = currentR + thick;
+      // 液っぽく、透明度高め
+      ctx.save();
+      ctx.globalAlpha = 0.65;
+      drawBaumRing(cx, cy, currentR, outer, "good", layers.length);
+      ctx.restore();
+    }
+
+    // target hint gauge (mini) – shows ideal press time zone by thickness bar
+    drawGauge(w, h);
+
+    // finishing highlight
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    const hg = ctx.createRadialGradient(cx, cy - 40, 60, cx, cy, 520);
+    hg.addColorStop(0, "rgba(255,255,255,0.10)");
+    hg.addColorStop(1, "rgba(255,255,255,0.00)");
+    ctx.fillStyle = hg;
+    ctx.fillRect(0,0,w,h);
+    ctx.restore();
+
+    // 焼き中タップのフラッシュ
+    if (bakeFlash > 0){
+      ctx.save();
+      ctx.globalAlpha = 0.12 * bakeFlash;
+      ctx.fillStyle = "rgba(255, 120, 80, 1)";
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.restore();
+      bakeFlash = Math.max(0, bakeFlash - 0.06);
+    }
+  }
+
+  function drawGauge(w,h){
+    const x = 24, y = 24;
+    const bw = w - 48, bh = 14;
+
+    // background
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+    roundRect(x, y, bw, bh, 999);
+    ctx.fillStyle = "rgba(255,255,255,0.08)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.stroke();
+
+    // ideal zone (Perfect and Good)
+    // Map press seconds to normalized 0..1 around 0..1.2sec for display
+    const maxT = 1.2;
+    const p0 = clamp((THICK_TARGET - THICK_PERF) / maxT, 0, 1);
+    const p1 = clamp((THICK_TARGET + THICK_PERF) / maxT, 0, 1);
+    const g0 = clamp((THICK_TARGET - THICK_GOOD) / maxT, 0, 1);
+    const g1 = clamp((THICK_TARGET + THICK_GOOD) / maxT, 0, 1);
+
+    // good zone
+    ctx.fillStyle = "rgba(125,255,178,0.12)";
+    roundRect(x + bw*g0, y, bw*(g1-g0), bh, 999);
+    ctx.fill();
+
+    // perfect zone
+    ctx.fillStyle = "rgba(255,211,122,0.22)";
+    roundRect(x + bw*p0, y, bw*(p1-p0), bh, 999);
+    ctx.fill();
+
+    // current marker (press duration)
+    let marker = 0;
+    if (running && pressing){
+      const tSec = (now() - pressStartT) / 1000;
+      marker = clamp(tSec / maxT, 0, 1);
+    } else {
+      marker = 0;
+    }
+    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    ctx.fillRect(x + bw*marker - 2, y - 2, 4, bh + 4);
+
+    // label
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = "rgba(233,238,252,0.72)";
+    ctx.font = "700 14px ui-sans-serif, system-ui, -apple-system, 'Noto Sans JP'";
+    ctx.fillText("厚みガイド（長押し時間）", x, y + 34);
+
+    ctx.restore();
+  }
+
+  function drawBaumRing(cx, cy, innerR, outerR, q, idx){
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    // ベース色（層ごとに少し変える）
+    const baseA = 0.22 + Math.min(0.35, idx * 0.018);
+    const c0 = q === "perfect" ? `rgba(255, 220, 150, ${baseA})`
+             : q === "good"    ? `rgba(255, 200, 130, ${baseA})`
+             :                  `rgba(255, 185, 120, ${baseA})`;
+
+    // 層の塗り
+    ctx.beginPath();
+    ctx.arc(0,0,outerR,0,Math.PI*2);
+    ctx.arc(0,0,innerR,0,Math.PI*2,true);
+    ctx.closePath();
+    ctx.fillStyle = c0;
+    ctx.fill();
+
+    // 外周の焼き色（薄いグラデ）
+    const g = ctx.createRadialGradient(0,0, innerR, 0,0, outerR);
+    g.addColorStop(0.00, "rgba(0,0,0,0.00)");
+    g.addColorStop(0.75, "rgba(120,70,20,0.06)");
+    g.addColorStop(1.00, "rgba(120,70,20,0.12)");
+    ctx.fillStyle = g;
+    ctx.fill();
+
+    // 年輪ライン（薄い線を1本）
+    ctx.strokeStyle = "rgba(0,0,0,0.12)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0,0,(innerR+outerR)*0.5,0,Math.PI*2);
+    ctx.stroke();
+
+    // 層の境界（くっきりしすぎない）
+    ctx.strokeStyle = "rgba(0,0,0,0.18)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0,0,outerR,0,Math.PI*2);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // deterministic-ish noise (cheap)
+  function noise1(x){
+    // sine hash
+    const s = Math.sin(x*12.9898) * 43758.5453;
+    return (s - Math.floor(s)) * 2 - 1; // -1..1
+  }
+
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath();
+    const rr = Math.min(r, w/2, h/2);
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+
+  // --------- Loop ---------
+  function loop(){
+    if (!running) return;
+
+    const t = now();
+    const dt = Math.max(0, (t - lastT) / 1000);
+    lastT = t;
+
+    // フェーズの時間切れ処理
+    if (phase !== "idle" && t >= phaseEndsAt){
+      if (phase === "pour"){
+        // 流し時間が終わったら強制的に確定（押しっぱでも終わる）
+        if (pressing) setPress(false);
+        // 何も作れなかった場合でも焼きに入れてテンポ固定
+        phase = "bake";
+        phaseEndsAt = t + BAKE_MS;
+      } else if (phase === "bake"){
+        phase = "pour";
+        phaseEndsAt = t + POUR_WINDOW_MS;
+      }
+    }
+
+    // grow while pressing (pour中のみ)
+    if (phase === "pour" && pressing){
+      currentGrow = clamp(currentGrow + dt * GROW_PX_PER_SEC, 0, MAX_LAYER_THICK);
+    }
+
+    const left = msLeft();
+    updateHUD(left);
+    updatePourButtonUI();
+
+    draw(dt);
+
+    if (left <= 0){
+      endGame();
+      return;
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function endGame(){
+    running = false;
+    pressing = false;
+    stopBgm();
+    startBtn.disabled = false;
+    startBtn.textContent = "START";
+
+    updatePourButtonUI();
+    showResult();
+  }
+
+  function showResult(){
+    const rank = rankFromScore(score);
+    modalTitle.textContent = "完成！バウム焼けた";
+    modalDesc.textContent = "60秒おつかれ。離すたびに1層確定、Perfectを狙って厚みを揃えるほどスコアが伸びる。";
+
+    rScore.textContent = String(score);
+    rLayers.textContent = String(layers.length);
+    rPerfect.textContent = String(countPerfect);
+    rRank.textContent = rank;
+
+    const avg = layers.length ? Math.round(score / layers.length) : 0;
+    tip.textContent = `ヒント：理想は長押し約 ${THICK_TARGET.toFixed(2)} 秒（平均/層 ${avg} 点）`;
+
+    overlay.style.display = "flex";
+  }
+
+  function hideResult(){
+    overlay.style.display = "none";
+  }
+
+  // --------- Init ---------
+  resetGame();
+
+  // Accessibility: Space/Enter to pour when focused
+  pourBtn.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'Enter'){
+      e.preventDefault();
+      setPress(true);
+    }
+  });
+  pourBtn.addEventListener('keyup', (e) => {
+    if (e.code === 'Space' || e.code === 'Enter'){
+      e.preventDefault();
+      setPress(false);
+    }
+  });
+</script>
+</body>
+</html>
