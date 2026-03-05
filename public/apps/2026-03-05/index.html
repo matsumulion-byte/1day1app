@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>巫女松村おみくじ</title>
+  <meta name="description" content="巫女松村が今日の運勢を授けます。" />
+  <style>
+    :root{
+      --bg:#0b0b10;
+      --panel:#12121a;
+      --text:#f3f3f6;
+      --muted:#b9bac6;
+      --accent:#ff3b5c;
+      --accent2:#ffcc00;
+      --line: rgba(255,255,255,.10);
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --radius: 18px;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+      background:
+        radial-gradient(900px 500px at 20% 10%, rgba(255,59,92,.18), transparent 55%),
+        radial-gradient(900px 500px at 80% 20%, rgba(255,204,0,.12), transparent 55%),
+        radial-gradient(900px 700px at 50% 80%, rgba(255,255,255,.05), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 18px 14px 40px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      min-height:100%;
+    }
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 8px 6px 0;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      line-height:1.15;
+    }
+    .title h1{
+      margin:0;
+      font-size: 18px;
+      letter-spacing:.02em;
+      font-weight: 800;
+    }
+    .title p{
+      margin:6px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .pill{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+
+    main{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 14px;
+      align-items:stretch;
+      flex:1;
+    }
+    @media (max-width: 860px){
+      main{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .stage{
+      padding: 16px;
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+      height:100%;
+    }
+
+    .mikoBox{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.15);
+      border-radius: 16px;
+      padding: 10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height: 360px;
+      position:relative;
+      overflow:hidden;
+    }
+    @media (max-width: 860px){
+      .mikoBox{ min-height: 320px; }
+    }
+    .miko{
+      width: min(420px, 92%);
+      height:auto;
+      transform: translateZ(0);
+      filter: drop-shadow(0 22px 30px rgba(0,0,0,.45));
+      user-select:none;
+      -webkit-user-drag:none;
+      pointer-events:none;
+    }
+
+    .hint{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 0 4px;
+    }
+
+    .cta{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    button{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      border-radius: 14px;
+      padding: 14px 14px;
+      font-weight: 800;
+      letter-spacing:.02em;
+      color: #0b0b10;
+      background: linear-gradient(180deg, var(--accent2), #ffb800);
+      box-shadow: 0 10px 30px rgba(255,184,0,.16);
+      transition: transform .08s ease, filter .15s ease;
+      width: 100%;
+    }
+    button:active{ transform: translateY(1px) scale(.99); }
+    .subBtn{
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      color: var(--text);
+      box-shadow:none;
+      font-weight:700;
+    }
+    .subBtn:active{ transform: translateY(1px); }
+    .btnRow{
+      display:grid;
+      grid-template-columns: 1.3fr .7fr;
+      gap:10px;
+    }
+
+    /* Right side */
+    .resultWrap{
+      padding: 16px;
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+      height:100%;
+    }
+    .paperArea{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 6px 0 2px;
+      position:relative;
+    }
+    .paper{
+      width: min(420px, 100%);
+      aspect-ratio: 3 / 4;
+      background: linear-gradient(180deg, #fff, #f2f2f2);
+      color:#101018;
+      border-radius: 18px;
+      border: 1px solid rgba(0,0,0,.12);
+      box-shadow: 0 22px 60px rgba(0,0,0,.35);
+      position:relative;
+      overflow:hidden;
+      transform: translateY(8px) scale(.98);
+      opacity: .0;
+      transition: opacity .28s ease, transform .28s ease;
+    }
+    .paper.show{
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    .paper::before{
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background: radial-gradient(circle at 30% 20%, rgba(255,59,92,.18), transparent 45%),
+                  radial-gradient(circle at 70% 30%, rgba(255,204,0,.16), transparent 50%);
+      transform: rotate(10deg);
+      opacity:.9;
+      pointer-events:none;
+    }
+    .paperInner{
+      position:absolute;
+      inset: 16px;
+      border-radius: 14px;
+      border: 1px dashed rgba(0,0,0,.18);
+      padding: 14px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      background: rgba(255,255,255,.55);
+      backdrop-filter: blur(2px);
+    }
+    .fortune{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .fortune .label{
+      font-size: 12px;
+      color: rgba(0,0,0,.55);
+      font-weight: 800;
+      letter-spacing:.08em;
+    }
+    .fortune .value{
+      font-size: 44px;
+      font-weight: 900;
+      letter-spacing:.06em;
+    }
+    .divider{
+      height:1px;
+      background: rgba(0,0,0,.12);
+      margin: 2px 0;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: max-content 1fr;
+      column-gap: 12px;
+      row-gap: 6px;
+      align-items:baseline;
+      font-size: 13px;
+    }
+    .k{
+      color: rgba(0,0,0,.62);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .v{
+      color: rgba(0,0,0,.88);
+      font-weight: 700;
+      line-height:1.5;
+    }
+
+    .comment{
+      margin-top:auto;
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: rgba(0,0,0,.05);
+      border: 1px solid rgba(0,0,0,.10);
+      font-weight: 800;
+      line-height:1.55;
+    }
+
+    .shareRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .tiny{
+      font-size: 12px;
+      color: var(--muted);
+      line-height:1.45;
+    }
+
+    /* Overlay + animation */
+    .veil{
+      position:absolute;
+      inset:0;
+      background: rgba(0,0,0,.28);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease;
+    }
+    .veil.on{ opacity:1; }
+
+    .shake{
+      animation: shake .45s ease-in-out;
+    }
+    @keyframes shake{
+      0%{ transform: translateX(0) rotate(0deg); }
+      18%{ transform: translateX(-6px) rotate(-1deg); }
+      36%{ transform: translateX(6px) rotate(1deg); }
+      54%{ transform: translateX(-4px) rotate(-.7deg); }
+      72%{ transform: translateX(4px) rotate(.7deg); }
+      100%{ transform: translateX(0) rotate(0deg); }
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(18,18,26,.92);
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      box-shadow: var(--shadow);
+      opacity:0;
+      transition: opacity .18s ease, transform .18s ease;
+      pointer-events:none;
+    }
+    .toast.on{
+      opacity:1;
+      transform: translateX(-50%) translateY(-2px);
+    }
+    a{ color:inherit; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>巫女松村おみくじ</h1>
+      </div>
+      <div class="pill" id="todayPill">3/5 巫女の日</div>
+    </header>
+
+    <main>
+      <!-- Left: stage -->
+      <section class="card">
+        <div class="stage">
+          <div class="mikoBox" id="mikoBox" aria-label="巫女松村">
+            <div class="veil" id="veil"></div>
+            <img class="miko" id="mikoImg" alt="巫女松村" />
+          </div>
+
+          <div class="hint">
+            <div>タップで引く。もう一回も可。</div>
+            <div id="status">待機中</div>
+          </div>
+
+          <div class="btnRow">
+            <button id="drawBtn" type="button">おみくじを引く</button>
+            <button id="resetBtn" class="subBtn" type="button">リセット</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: result -->
+      <section class="card">
+        <div class="resultWrap">
+          <div class="paperArea">
+            <div class="paper" id="paper" aria-live="polite">
+              <div class="paperInner">
+                <div class="fortune">
+                  <div class="label">運勢</div>
+                  <div class="value" id="fortuneValue">—</div>
+                </div>
+                <div class="divider"></div>
+
+                <div class="kv">
+                  <div class="k">ラッキーアイテム</div>
+                  <div class="v" id="lucky">—</div>
+                </div>
+                <div class="kv">
+                  <div class="k">アドバイス</div>
+                  <div class="v" id="todo">—</div>
+                </div>
+
+                <div class="comment" id="comment">引けばわかる。</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="shareRow">
+            <button id="copyBtn" class="subBtn" type="button">結果をコピー</button>
+            <button id="shareBtn" class="subBtn" type="button">共有</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast">コピーしました</div>
+
+  <script type="module">
+    // Vercel用パス解決（/YYYY-MM-DD/ でアクセス → /YYYY-MM-DD/assets/... に解決）
+    const APP_BASE = location.pathname.endsWith("/")
+      ? location.pathname
+      : location.pathname.endsWith(".html")
+        ? location.pathname.replace(/[^/]+$/, "")
+        : `${location.pathname.replace(/\/*$/, "")}/`;
+    const asset = (p) =>
+      new URL(String(p).replace(/^\.?\//, ""), `${location.origin}${APP_BASE}`).toString();
+
+    // 画像差し替え：/assets/miko.png を置く
+    const mikoImg = document.getElementById("mikoImg");
+    mikoImg.src = asset("./assets/miko.png");
+
+    const mikoBox = document.getElementById("mikoBox");
+    const veil = document.getElementById("veil");
+    const paper = document.getElementById("paper");
+    const statusEl = document.getElementById("status");
+
+    const fortuneValue = document.getElementById("fortuneValue");
+    const luckyEl = document.getElementById("lucky");
+    const todoEl = document.getElementById("todo");
+    const commentEl = document.getElementById("comment");
+
+    const drawBtn = document.getElementById("drawBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const copyBtn = document.getElementById("copyBtn");
+    const shareBtn = document.getElementById("shareBtn");
+    const toast = document.getElementById("toast");
+
+    const fortunes = [
+      {
+        name: "大吉",
+        weight: 10,
+        lucky: ["バナナ", "プロテイン", "温かいお茶", "赤い紐", "ガラムマサラ"],
+        todo: ["強気モード", "即レスが吉", "勢いが正義", "ノリで通る", "妙に冴える"],
+        comment: [
+          "神が言ってます。「今日のあなた、仕上がってる」。",
+          "良い。とにかく良い。余計なことは考えるな。",
+          "今日の運は上限突破。調子に乗れ。"
+        ],
+      },
+      {
+        name: "中吉",
+        weight: 18,
+        lucky: ["白い紙", "メトロノーム", "柑橘", "新品のペン", "孫の手"],
+        todo: ["手堅く勝つ", "まあまあ進む", "雑でも崩れない", "普通に強い", "調子は上々"],
+        comment: [
+          "普通に良い日。普通に強い。",
+          "気負わずに勝てる日。",
+          "手堅くいけば全部うまくいく。"
+        ],
+      },
+      {
+        name: "小吉",
+        weight: 22,
+        lucky: ["付箋", "黒いTシャツ", "低音域", "短い休憩", "マウスパッド"],
+        todo: ["丁寧が効く", "段取りが神", "確認で救われる", "一呼吸が吉", "積み上げ日"],
+        comment: [
+          "努力が効く日。努力は裏切らない（たまに裏切る）。",
+          "積み上げが勝つ。とにかく積め。",
+          "丁寧にやれば勝てる。雑にやると負ける。"
+        ],
+      },
+      {
+        name: "吉",
+        weight: 26,
+        lucky: ["静かな場所", "0.7mmのペン", "温泉の素", "おにぎり", "赤ふん"],
+        todo: ["通常運転", "淡々と強い", "今日も平和", "小さく進む", "無風で勝つ"],
+        comment: [
+          "普通。つまり強い。",
+          "大事故はない。小事故は気をつけろ。",
+          "なんとかなるよ"
+        ],
+      },
+      {
+        name: "末吉",
+        weight: 16,
+        lucky: ["予備のケーブル", "多めのメモ", "ニット", "塩", "テンポ落とす勇気"],
+        todo: ["守備寄り", "余白が正解", "保守が安定", "前倒しが楽", "慎重が勝つ"],
+        comment: [
+          "控えめに良い。控えめに勝て。",
+          "今日は守りが正解。攻めるなら明日。",
+          "明日は大丈夫。"
+        ],
+      },
+      {
+        name: "凶",
+        weight: 8,
+        lucky: ["カフェイン控えめ", "一回だけのやり直し", "濡れてない傘", "深夜の送信しない心", "耳栓"],
+        todo: ["今日は守る", "事故りやすい", "深夜テンション注意", "判断バグりがち", "無理しない日"],
+        comment: [
+          "神が言ってます。「今日は無理すんな」。",
+          "凶は「回避すれば吉」。逃げ切れ。",
+          "今日は守備。攻めると刺さる。"
+        ],
+      },
+    ];
+
+    function pickWeighted(items){
+      const total = items.reduce((s, x) => s + x.weight, 0);
+      let r = Math.random() * total;
+      for (const it of items){
+        r -= it.weight;
+        if (r <= 0) return it;
+      }
+      return items[items.length - 1];
+    }
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    let locked = false;
+    let lastResult = null;
+
+    function setStatus(t){ statusEl.textContent = t; }
+
+    function showToast(text){
+      toast.textContent = text;
+      toast.classList.add("on");
+      window.setTimeout(() => toast.classList.remove("on"), 950);
+    }
+
+    async function draw(){
+      if (locked) return;
+      locked = true;
+      setStatus("抽選中…");
+
+      // 演出
+      veil.classList.add("on");
+      mikoBox.classList.remove("shake");
+      // reflow
+      void mikoBox.offsetWidth;
+      mikoBox.classList.add("shake");
+
+      paper.classList.remove("show");
+
+      // ちょい待つ（体感を作る）
+      await new Promise(r => setTimeout(r, 520));
+
+      const f = pickWeighted(fortunes);
+      const result = {
+        fortune: f.name,
+        lucky: pick(f.lucky),
+        todo: pick(f.todo),
+        comment: pick(f.comment),
+      };
+      lastResult = result;
+
+      fortuneValue.textContent = result.fortune;
+      luckyEl.textContent = result.lucky;
+      todoEl.textContent = result.todo;
+      commentEl.textContent = result.comment;
+
+      // 表示
+      await new Promise(r => setTimeout(r, 160));
+      paper.classList.add("show");
+
+      veil.classList.remove("on");
+      setStatus("結果が出ました");
+      locked = false;
+    }
+
+    function reset(){
+      locked = false;
+      lastResult = null;
+      paper.classList.remove("show");
+      fortuneValue.textContent = "—";
+      luckyEl.textContent = "—";
+      todoEl.textContent = "—";
+      commentEl.textContent = "引けばわかる。";
+      setStatus("待機中");
+    }
+
+    function resultText(){
+      if (!lastResult) return "まだ引いてません。";
+      return `【巫女松村おみくじ】\n運勢：${lastResult.fortune}\nラッキー：${lastResult.lucky}\nやること：${lastResult.todo}\n一言：${lastResult.comment}`;
+    }
+
+    async function copy(){
+      const text = resultText();
+      try{
+        await navigator.clipboard.writeText(text);
+        showToast("コピーしました");
+      }catch{
+        // フォールバック
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+        showToast("コピーしました");
+      }
+    }
+
+    async function share(){
+      const text = resultText();
+      if (navigator.share){
+        try{
+          await navigator.share({ text });
+        }catch{
+          // shareキャンセルは無視
+        }
+      }else{
+        await copy();
+        showToast("共有非対応→コピーしました");
+      }
+    }
+
+    // UI events
+    drawBtn.addEventListener("click", draw);
+    resetBtn.addEventListener("click", reset);
+    copyBtn.addEventListener("click", copy);
+    shareBtn.addEventListener("click", share);
+
+    // 画像タップでも引ける
+    mikoBox.addEventListener("click", draw);
+
+    // キーボードでも引ける（PC用）
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") draw();
+      if (e.key.toLowerCase() === "r") reset();
+    });
+
+    // 初期
+    reset();
+  </script>
+</body>
+</html>
