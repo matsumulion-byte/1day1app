@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>夕刊マツムラ</title>
+    <style>
+      :root {
+        --paper: #f4eee0;
+      }
+
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+        background:
+          radial-gradient(circle at top, rgba(255, 255, 255, 0.26), transparent 34%),
+          linear-gradient(180deg, #d7ccb6 0%, #cabd9d 100%);
+        color: #111;
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        padding: 16px 14px 28px;
+      }
+
+      .app {
+        width: min(100%, 520px);
+        display: grid;
+        gap: 12px;
+      }
+
+      .panel {
+        background: rgba(255, 248, 232, 0.92);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+        overflow: hidden;
+        backdrop-filter: blur(4px);
+      }
+
+      .panel-head {
+        padding: 14px 16px 8px;
+      }
+
+      .eyebrow {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: #6b6253;
+      }
+
+      h1 {
+        margin: 4px 0 0;
+        font-size: 28px;
+        line-height: 1.1;
+      }
+
+      .controls {
+        padding: 0 16px 16px;
+        display: grid;
+        gap: 10px;
+      }
+
+      label {
+        font-size: 13px;
+        font-weight: 700;
+        display: grid;
+        gap: 6px;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 84px;
+        resize: vertical;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        border-radius: 12px;
+        padding: 12px 14px;
+        font: inherit;
+        font-size: 18px;
+        line-height: 1.45;
+        background: #fffdf7;
+      }
+
+      .tips {
+        font-size: 12px;
+        color: #5e5647;
+        line-height: 1.5;
+      }
+
+      .buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      button {
+        appearance: none;
+        border: 0;
+        border-radius: 999px;
+        padding: 14px 16px;
+        font: inherit;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      .primary {
+        background: linear-gradient(180deg, #e00000 0%, #b40000 100%);
+        color: #fff;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 8px 18px rgba(140, 0, 0, 0.26);
+      }
+
+      .secondary {
+        background: #221f1a;
+        color: #fff;
+      }
+
+      .stage-wrap {
+        padding: 12px;
+      }
+
+      .canvas-frame {
+        background: #cdbf9d;
+        border-radius: 18px;
+        padding: 10px;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 10px;
+        background: var(--paper);
+      }
+
+      .footer-note {
+        padding: 0 16px 16px;
+        font-size: 12px;
+        color: #6b6253;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="panel">
+        <div class="panel-head">
+          <div class="eyebrow">SPORTS PAPER STYLE GENERATOR</div>
+          <h1>夕刊マツムラ</h1>
+        </div>
+        <div class="controls">
+          <label>
+            見出し
+            <textarea id="headlineInput" maxlength="44" placeholder="例：松村、駅でちょうどいい位置に立てず"></textarea>
+          </label>
+          <div class="tips">
+            見出しを入れると、煽り文・小見出し・画像・紙面ポイントがランダムで変わります。
+          </div>
+          <div class="buttons">
+            <button id="generateBtn" class="primary">号外を出す</button>
+            <button id="saveBtn" class="secondary">画像を保存</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel stage-wrap">
+        <div class="canvas-frame">
+          <canvas id="paperCanvas" width="1080" height="1620" aria-label="夕刊マツムラの紙面"></canvas>
+        </div>
+      </section>
+
+      <div class="footer-note">
+        画像ファイルは <code>./assets/</code> に置いてください。ファイル名は本文内の配列で変更できます。
+      </div>
+    </main>
+
+    <script type="module">
+      const APP_BASE = location.pathname.endsWith("/")
+        ? location.pathname
+        : location.pathname.endsWith(".html")
+          ? location.pathname.replace(/[^/]+$/, "")
+          : `${location.pathname.replace(/\/*$/, "")}/`;
+      const asset = (p) =>
+        new URL(String(p).replace(/^\.?\//, ""), `${location.origin}${APP_BASE}`).toString();
+
+      const canvas = document.getElementById("paperCanvas");
+      const ctx = canvas.getContext("2d");
+
+      const headlineInput = document.getElementById("headlineInput");
+      const generateBtn = document.getElementById("generateBtn");
+      const saveBtn = document.getElementById("saveBtn");
+
+      const imagePaths = [
+        "./assets/matsumura-1.png",
+        "./assets/matsumura-2.png",
+        "./assets/matsumura-3.png",
+        "./assets/matsumura-4.png",
+      ];
+
+      const kickerPool = ["特報", "独自", "緊急", "騒然", "速報", "電撃"];
+      const burstWords = ["大スクープ", "超特報", "激震", "本紙独走", "緊急検証", "独自追跡"];
+      const subPool = [
+        "関係者の証言が交錯",
+        "本紙取材班が現地確認",
+        "周囲に独特の納得感",
+        "夕方以降さらに反響か",
+        "決定打はまだ見えず",
+        "新証言浮上で局面変化も",
+      ];
+      const bodyPool = [
+        "本紙の取材によると、現場では一時ざわめきが広がったものの、本人は終始落ち着いた様子だった。周辺関係者の間では『想定内』『いや想定外』と見方が割れている。",
+        "関係者の証言では、以前からそれらしい気配はあったという。一方で、ここまで大きく扱う話だったのかについては慎重な見方も残っている。",
+        "今回の一件を受け、編集部には驚きと納得の声が相次いだ。現場では大きな混乱はなかったが、紙面の熱量だけが明らかに先行している。",
+        "本紙カメラがとらえた瞬間は、周囲の空気をわずかに変えた。決定的な情報はまだ少ないが、一面級のムードだけはすでに完成している。",
+      ];
+      const sideNotes = ["検証", "速報", "独自", "現地発", "追跡"];
+      const stickerWords = ["独自スクープ", "本紙直撃", "超注目", "決定的瞬間", "大本命"];
+      const ticker1Pool = ["大注目", "本紙独自", "決定的瞬間", "現場騒然", "本人冷静"];
+      const ticker2Pool = ["取材班直撃", "紙面過熱", "周囲ざわつく", "特報体制", "見解分かれる"];
+      const ticker3Pool = ["本紙追跡中", "続報待つ", "新証言浮上か", "なぜか特大扱い", "詳報は2面の気分"];
+      const pointPoolA = ["写真が強い", "一面映え十分", "扱いが大きい", "妙な説得力"];
+      const pointPoolB = ["本紙だけ熱い", "周囲ざわつく", "本人は平常運転", "紙面温度が高い"];
+      const pointPoolC = ["ニュース感だけ十分", "現場の空気変化", "大げさ寄り", "独自感だけ強い"];
+      const pointPoolD = ["詳細は未定", "一報で一面化", "見出し先行型", "夕刊映え優先"];
+
+      const imageCache = new Map();
+
+      function rand(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+
+      function loadImage(src) {
+        if (imageCache.has(src)) return imageCache.get(src);
+        const p = new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = src;
+        });
+        imageCache.set(src, p);
+        return p;
+      }
+
+      function formatDateJP(date = new Date()) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        return `${y}.${m}.${d}`;
+      }
+
+      function fitHeadline(text) {
+        const cleaned = text.trim().replace(/\s+/g, " ");
+        return cleaned || "松村、本日も静かに話題化";
+      }
+
+      function wrapText(context, text, maxWidth) {
+        const lines = [];
+        let line = "";
+        for (const ch of text) {
+          const test = line + ch;
+          if (context.measureText(test).width > maxWidth && line) {
+            lines.push(line);
+            line = ch;
+          } else {
+            line = test;
+          }
+        }
+        if (line) lines.push(line);
+        return lines;
+      }
+
+      function forceHeadlineLines(context, headline) {
+        const chars = [...headline];
+        if (chars.length <= 14) return [headline];
+
+        const breakTargets = ["で", "の", "を", "に", "は", "、", "か", "？"];
+        let bestIndex = -1;
+        let bestScore = Infinity;
+        const center = chars.length / 2;
+
+        for (let i = 6; i < chars.length - 6; i++) {
+          const ch = chars[i - 1];
+          if (!breakTargets.includes(ch)) continue;
+          const score = Math.abs(i - center);
+          if (score < bestScore) {
+            bestScore = score;
+            bestIndex = i;
+          }
+        }
+
+        if (bestIndex === -1) {
+          bestIndex = Math.ceil(chars.length / 2);
+        }
+
+        const line1 = chars.slice(0, bestIndex).join("");
+        const line2 = chars.slice(bestIndex).join("");
+        return [line1, line2];
+      }
+
+      function drawPaperTexture() {
+        ctx.save();
+        ctx.fillStyle = "#f4eee0";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < 2300; i++) {
+          const alpha = Math.random() * 0.045;
+          const gray = Math.floor(120 + Math.random() * 80);
+          ctx.fillStyle = `rgba(${gray}, ${gray}, ${gray}, ${alpha})`;
+          const x = Math.random() * canvas.width;
+          const y = Math.random() * canvas.height;
+          const s = Math.random() * 2.2;
+          ctx.fillRect(x, y, s, s);
+        }
+        const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        grad.addColorStop(0, "rgba(255,255,255,0.2)");
+        grad.addColorStop(0.56, "rgba(0,0,0,0)");
+        grad.addColorStop(1, "rgba(0,0,0,0.08)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+
+      function drawHeader(state) {
+        ctx.save();
+        ctx.fillStyle = "#d50000";
+        ctx.fillRect(0, 0, canvas.width, 132);
+
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "left";
+        ctx.font = "900 108px 'Yu Gothic', sans-serif";
+        ctx.fillText("号外", 46, 103);
+
+        ctx.textAlign = "center";
+        ctx.font = "900 24px 'Yu Gothic', sans-serif";
+        ctx.fillText("夕刊マツムラ", canvas.width / 2, 40);
+        ctx.font = "700 20px 'Yu Gothic', sans-serif";
+        ctx.fillText("スポーツ新聞風超特大1面", canvas.width / 2, 70);
+
+        ctx.textAlign = "right";
+        ctx.font = "700 30px 'Yu Gothic', sans-serif";
+        ctx.fillText(state.dateLabel, canvas.width - 44, 48);
+        ctx.font = "900 38px 'Yu Gothic', sans-serif";
+        ctx.fillText(`第${state.editionNo}号`, canvas.width - 44, 95);
+        ctx.restore();
+
+        ctx.save();
+        ctx.fillStyle = "#111";
+        ctx.fillRect(0, 132, canvas.width, 36);
+        ctx.fillStyle = "#f5d36a";
+        ctx.font = "900 21px 'Yu Gothic', sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText(`  ${state.ticker1}  ｜  ${state.ticker2}  ｜  ${state.ticker3}`, 18, 156);
+        ctx.restore();
+      }
+
+      function drawLeadLabels(state) {
+        ctx.save();
+        ctx.fillStyle = "#111";
+        ctx.fillRect(42, 188, 212, 58);
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.font = "900 34px 'Yu Gothic', sans-serif";
+        ctx.fillText(state.kicker, 148, 228);
+
+        ctx.fillStyle = "#d50000";
+        ctx.fillRect(274, 188, 290, 58);
+        ctx.fillStyle = "#fff";
+        ctx.fillText(state.burstWord, 419, 228);
+        ctx.restore();
+      }
+
+      function drawHeadlineZone(state) {
+        ctx.save();
+        ctx.textAlign = "left";
+        ctx.font = "900 100px 'Yu Gothic', sans-serif";
+
+        const lines = forceHeadlineLines(ctx, state.headline).slice(0, 2);
+        const lineWidths = lines.map((line) => ctx.measureText(line).width);
+        const maxWidth = Math.max(...lineWidths);
+        const availableWidth = 930;
+        const scale = Math.min(1, availableWidth / maxWidth);
+        const lineHeight = 116 * scale;
+        const startX = 58;
+        const startY = 344;
+
+        ctx.translate(startX, startY);
+        ctx.rotate(-0.042);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 15;
+        ctx.strokeStyle = "rgba(255,255,255,0.97)";
+        ctx.fillStyle = "#111";
+
+        let y = 0;
+        lines.forEach((line) => {
+          ctx.strokeText(line, 0, y);
+          ctx.fillText(line, 0, y);
+          y += 116;
+        });
+        ctx.restore();
+
+        const bottom = startY + (lines.length - 1) * lineHeight;
+
+        ctx.save();
+        ctx.fillStyle = "#f0d04f";
+        ctx.beginPath();
+        ctx.moveTo(846, bottom - 78);
+        ctx.lineTo(884, bottom - 44);
+        ctx.lineTo(938, bottom - 66);
+        ctx.lineTo(960, bottom - 12);
+        ctx.lineTo(1010, bottom + 6);
+        ctx.lineTo(976, bottom + 42);
+        ctx.lineTo(992, bottom + 96);
+        ctx.lineTo(934, bottom + 80);
+        ctx.lineTo(890, bottom + 124);
+        ctx.lineTo(874, bottom + 68);
+        ctx.lineTo(818, bottom + 58);
+        ctx.lineTo(852, bottom + 18);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#111";
+        ctx.lineWidth = 6;
+        ctx.stroke();
+        ctx.fillStyle = "#d50000";
+        ctx.textAlign = "center";
+        ctx.font = "900 30px 'Yu Gothic', sans-serif";
+        ctx.fillText("激震", 913, bottom + 18);
+        ctx.fillStyle = "#111";
+        ctx.font = "900 20px 'Yu Gothic', sans-serif";
+        ctx.fillText("本紙騒然", 913, bottom + 48);
+        ctx.restore();
+
+        ctx.save();
+        ctx.fillStyle = "#d50000";
+        ctx.fillRect(42, bottom + 86, 996, 14);
+        ctx.fillStyle = "#111";
+        ctx.textAlign = "left";
+        ctx.font = "900 34px 'Yu Gothic', sans-serif";
+        ctx.fillText(state.sub, 42, bottom + 148);
+        ctx.restore();
+
+        return bottom + 178;
+      }
+
+      function drawPhotoZone(state, img, topY) {
+        const x = 42;
+        const y = topY;
+        const w = 996;
+        const h = 720;
+
+        ctx.save();
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, y - 12, canvas.width, 22);
+        ctx.restore();
+
+        ctx.save();
+        ctx.fillStyle = "#e7decb";
+        ctx.fillRect(x, y, w, h);
+
+        const srcRatio = img.width / img.height;
+        const frameRatio = w / h;
+        let sx = 0;
+        let sy = 0;
+        let sw = img.width;
+        let sh = img.height;
+
+        if (srcRatio > frameRatio) {
+          sw = img.height * frameRatio;
+          sx = (img.width - sw) * state.cropX;
+        } else {
+          sh = img.width / frameRatio;
+          sy = (img.height - sh) * state.cropY;
+        }
+
+        ctx.filter = "grayscale(1) contrast(1.16) brightness(1.04)";
+        ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+        ctx.filter = "none";
+
+        ctx.globalAlpha = 0.13;
+        ctx.fillStyle = "#d50000";
+        for (let yy = y; yy < y + h; yy += 8) {
+          ctx.fillRect(x, yy, w, 2);
+        }
+        ctx.globalAlpha = 1;
+
+        ctx.strokeStyle = "#111";
+        ctx.lineWidth = 5;
+        ctx.strokeRect(x, y, w, h);
+
+        ctx.fillStyle = "#111";
+        ctx.fillRect(x + 18, y + 18, 138, 52);
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.font = "900 28px 'Yu Gothic', sans-serif";
+        ctx.fillText(state.sideNote, x + 87, y + 52);
+
+        ctx.save();
+        ctx.translate(x + 40, y + 370);
+        ctx.rotate(-0.09);
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, 294, 70);
+        ctx.strokeStyle = "#111";
+        ctx.lineWidth = 4;
+        ctx.strokeRect(0, 0, 294, 70);
+        ctx.fillStyle = "#d50000";
+        ctx.font = "900 34px 'Yu Gothic', sans-serif";
+        ctx.fillText(state.sticker, 147, 46);
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(x + 770, y + 34);
+        ctx.rotate(-0.08);
+        ctx.fillStyle = "#d50000";
+        ctx.fillRect(0, 0, 190, 56);
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.font = "900 30px 'Yu Gothic', sans-serif";
+        ctx.fillText(state.corner, 95, 37);
+        ctx.restore();
+
+        return y + h;
+      }
+
+      function drawBottomZone(state, topY) {
+        const bodyTop = topY + 24;
+        const leftX = 42;
+        const leftW = 682;
+        const rightX = 742;
+        const rightW = 296;
+
+        ctx.save();
+        ctx.fillStyle = "#111";
+        ctx.textAlign = "left";
+        ctx.font = "900 30px 'Yu Gothic', sans-serif";
+        ctx.fillText("【本紙総力取材】", leftX, bodyTop + 20);
+
+        ctx.font = "700 27px 'Yu Gothic', sans-serif";
+        const lines = wrapText(ctx, state.body, leftW - 10);
+        let y = bodyTop + 84;
+        lines.slice(0, 6).forEach((line) => {
+          ctx.fillText(line, leftX, y);
+          y += 42;
+        });
+        ctx.restore();
+
+        ctx.save();
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(rightX, bodyTop, rightW, 236);
+        ctx.strokeStyle = "#111";
+        ctx.lineWidth = 4;
+        ctx.strokeRect(rightX, bodyTop, rightW, 236);
+        ctx.fillStyle = "#d50000";
+        ctx.fillRect(rightX, bodyTop, rightW, 48);
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.font = "900 28px 'Yu Gothic', sans-serif";
+        ctx.fillText("紙面ポイント", rightX + rightW / 2, bodyTop + 33);
+
+        ctx.fillStyle = "#111";
+        ctx.textAlign = "left";
+        ctx.font = "900 23px 'Yu Gothic', sans-serif";
+        ctx.fillText(`・${state.point1}`, rightX + 18, bodyTop + 92);
+        ctx.fillText(`・${state.point2}`, rightX + 18, bodyTop + 136);
+        ctx.fillText(`・${state.point3}`, rightX + 18, bodyTop + 180);
+        ctx.fillText(`・${state.point4}`, rightX + 18, bodyTop + 224);
+        ctx.restore();
+
+        const footerY = 1572;
+        ctx.save();
+        ctx.fillStyle = "#e4c53f";
+        ctx.fillRect(42, footerY - 18, 996, 18);
+        ctx.fillStyle = "#111";
+        ctx.fillRect(42, footerY, 996, 40);
+        ctx.fillStyle = "#f5d36a";
+        ctx.textAlign = "center";
+        ctx.font = "900 22px 'Yu Gothic', sans-serif";
+        ctx.fillText("夕刊マツムラ編集部 ｜ SPORTS ｜ スポーツ紙テンションでお届けしています", 540, footerY + 27);
+        ctx.restore();
+      }
+
+      async function render(state) {
+        drawPaperTexture();
+        drawHeader(state);
+        drawLeadLabels(state);
+        const headlineBottom = drawHeadlineZone(state);
+        const img = await loadImage(state.imageSrc);
+        const photoBottom = drawPhotoZone(state, img, headlineBottom);
+        drawBottomZone(state, photoBottom);
+      }
+
+      function createState() {
+        return {
+          headline: fitHeadline(headlineInput.value),
+          kicker: rand(kickerPool),
+          burstWord: rand(burstWords),
+          sub: rand(subPool),
+          body: rand(bodyPool),
+          sideNote: rand(sideNotes),
+          sticker: rand(stickerWords),
+          corner: rand(["大本命", "新証言", "超特大", "本紙直撃", "独走"]),
+          ticker1: rand(ticker1Pool),
+          ticker2: rand(ticker2Pool),
+          ticker3: rand(ticker3Pool),
+          point1: rand(pointPoolA),
+          point2: rand(pointPoolB),
+          point3: rand(pointPoolC),
+          point4: rand(pointPoolD),
+          imageSrc: asset(rand(imagePaths)),
+          dateLabel: formatDateJP(new Date()),
+          editionNo: String(Math.floor(100 + Math.random() * 900)),
+          cropX: Math.random() * 0.32 + 0.34,
+          cropY: Math.random() * 0.16,
+        };
+      }
+
+      async function regenerate() {
+        try {
+          generateBtn.disabled = true;
+          generateBtn.textContent = "発行中...";
+          await render(createState());
+        } catch (error) {
+          console.error(error);
+          alert("画像の読み込みに失敗しました。assets 配下のファイル名を確認してください。");
+        } finally {
+          generateBtn.disabled = false;
+          generateBtn.textContent = "号外を出す";
+        }
+      }
+
+      function saveImage() {
+        const a = document.createElement("a");
+        a.href = canvas.toDataURL("image/png");
+        a.download = `yukan-matsumura-${Date.now()}.png`;
+        a.click();
+      }
+
+      generateBtn.addEventListener("click", regenerate);
+      saveBtn.addEventListener("click", saveImage);
+      headlineInput.addEventListener("keydown", (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === "Enter") regenerate();
+      });
+
+      headlineInput.value = "アマゾンの奥地で新種のマツムラ発見か？";
+      regenerate();
+    </script>
+  </body>
+</html>
