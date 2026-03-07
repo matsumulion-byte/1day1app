@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>限界サウナ松村</title>
+    <meta name="description" content="限界まで耐えて、水風呂へ飛び込め。" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="header">
+        <p class="eyebrow">3/7 サウナの日</p>
+        <h1 class="title">限界サウナ松村</h1>
+        <p class="subtitle">限界まで耐えて、水風呂へ飛び込め。</p>
+      </header>
+
+      <section class="game-card">
+        <div class="status-row">
+          <div class="badge" id="phaseBadge">平常</div>
+          <div class="score">SCORE <span id="scoreValue">0</span></div>
+        </div>
+
+        <div class="image-wrap" id="imageWrap">
+          <img id="matsumuraImage" class="matsumura-image" alt="サウナ中の松村" />
+          <div class="steam steam-1"></div>
+          <div class="steam steam-2"></div>
+          <div class="steam steam-3"></div>
+          <div class="steam steam-4"></div>
+          <div class="danger-text" id="dangerText">限界…！</div>
+          <div class="result-burst" id="resultBurst"></div>
+        </div>
+
+        <div class="meter-area">
+          <div class="meter-label-row">
+            <span>🔥 限界ゲージ</span>
+            <span id="gaugeText">0 / 100</span>
+          </div>
+          <div class="meter">
+            <div id="gaugeFill" class="meter-fill"></div>
+            <div class="meter-safe"></div>
+            <div class="meter-great"></div>
+            <div class="meter-danger"></div>
+          </div>
+        </div>
+
+        <div class="message" id="message">
+          ちょうどいいところで「水風呂へ」を押せ。
+        </div>
+
+        <div class="controls">
+          <button id="startButton" class="button button-primary">スタート</button>
+          <button id="diveButton" class="button button-accent" disabled>水風呂へ</button>
+        </div>
+
+        <div class="guide">
+          <div>60〜79：まあまあ</div>
+          <div>80〜91：ととのい</div>
+          <div>92〜100：のぼせ</div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
