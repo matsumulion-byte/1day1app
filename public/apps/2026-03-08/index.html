@@ -64,13 +64,16 @@
       .screen {
         width: min(100%, 420px);
         min-height: min(680px, calc(100dvh - 36px));
+        max-height: 100dvh;
         background: linear-gradient(180deg, rgba(255,255,255,0.52), rgba(255,255,255,0.28));
         border: 1px solid rgba(255,255,255,0.45);
         border-radius: 30px;
         box-shadow: var(--shadow);
         padding: 14px 16px 14px;
         position: relative;
-        overflow: hidden;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         backdrop-filter: blur(8px);
       }
 
@@ -145,7 +148,8 @@
       .content {
         position: relative;
         z-index: 1;
-        height: calc(100% - 56px);
+        min-height: 0;
+        flex: 1;
         display: flex;
         flex-direction: column;
       }
@@ -162,6 +166,7 @@
       .title-card {
         text-align: center;
         padding-top: 12px;
+        padding-bottom: 20px;
       }
 
       .subtitle {
@@ -493,6 +498,59 @@
         to {
           opacity: 1;
           transform: translateY(0);
+        }
+      }
+
+      /* SP: 縦が短い・狭い画面でタイトル画面がはみ出さないように */
+      @media (max-height: 640px), (max-width: 400px) {
+        .app {
+          align-items: flex-start;
+          padding-top: 12px;
+        }
+
+        .screen {
+          min-height: auto;
+          max-height: calc(100dvh - 24px);
+        }
+
+        .header {
+          margin-bottom: 6px;
+        }
+
+        .title-main h1 {
+          font-size: 26px;
+        }
+
+        .title-main p {
+          font-size: 11px;
+        }
+
+        .title-card {
+          padding-top: 8px;
+          padding-bottom: 16px;
+        }
+
+        .title-card .subtitle {
+          font-size: 12px;
+          line-height: 1.6;
+        }
+
+        .hero-wrap {
+          max-width: 160px;
+          margin: 8px auto 2px;
+        }
+
+        .title-card .cta {
+          margin-top: 10px;
+          gap: 6px;
+        }
+
+        .start-btn,
+        .next-btn,
+        .retry-btn,
+        .share-btn {
+          padding: 10px 16px;
+          font-size: 16px;
         }
       }
 
