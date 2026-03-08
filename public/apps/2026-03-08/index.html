@@ -179,13 +179,15 @@
       }
 
       .hero-wrap {
-        margin: 10px auto 4px;
+        margin: 10px auto 16px;
         width: 100%;
         max-width: 200px;
+        max-height: 180px;
         aspect-ratio: 1 / 1.08;
         display: grid;
         place-items: end center;
         position: relative;
+        overflow: hidden;
       }
 
       .hero-halo {
@@ -205,8 +207,13 @@
         filter: drop-shadow(0 10px 16px rgba(73, 43, 15, 0.18));
       }
 
+      .title-card .hero-wrap .judge-image {
+        max-height: 180px;
+        object-position: bottom center;
+      }
+
       .cta {
-        margin-top: 12px;
+        margin-top: 16px;
         display: grid;
         gap: 8px;
       }
@@ -539,12 +546,17 @@
         }
 
         .hero-wrap {
-          max-width: 160px;
-          margin: 8px auto 2px;
+          max-width: 140px;
+          max-height: 140px;
+          margin: 8px auto 12px;
+        }
+
+        .title-card .hero-wrap .judge-image {
+          max-height: 140px;
         }
 
         .title-card .cta {
-          margin-top: 10px;
+          margin-top: 12px;
           gap: 6px;
         }
 
