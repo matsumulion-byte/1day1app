@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <base href="/2026-03-08/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>雅ジャッジ</title>
+    <style>
+      :root {
+        --bg1: #f6efe1;
+        --bg2: #ead9b6;
+        --paper: rgba(255, 250, 241, 0.88);
+        --ink: #2b1d0e;
+        --sub: #705438;
+        --gold: #c8a44d;
+        --gold-deep: #a27d27;
+        --red: #7a2031;
+        --red-deep: #54121f;
+        --blue: #24354a;
+        --line: rgba(74, 47, 19, 0.18);
+        --shadow: 0 12px 30px rgba(38, 20, 5, 0.16);
+        --radius: 22px;
+      }
+
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background:
+          radial-gradient(circle at top left, rgba(255,255,255,0.48), transparent 30%),
+          linear-gradient(180deg, var(--bg1), var(--bg2));
+        color: var(--ink);
+        font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", serif;
+        overflow: hidden;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.13;
+        background-image:
+          linear-gradient(rgba(125, 95, 56, 0.08) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(125, 95, 56, 0.08) 1px, transparent 1px);
+        background-size: 24px 24px;
+        mask-image: linear-gradient(180deg, rgba(0,0,0,0.8), rgba(0,0,0,0.3));
+      }
+
+      .app {
+        position: relative;
+        min-height: 100dvh;
+        padding: max(16px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .screen {
+        width: min(100%, 420px);
+        min-height: min(680px, calc(100dvh - 36px));
+        background: linear-gradient(180deg, rgba(255,255,255,0.52), rgba(255,255,255,0.28));
+        border: 1px solid rgba(255,255,255,0.45);
+        border-radius: 30px;
+        box-shadow: var(--shadow);
+        padding: 14px 16px 14px;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(8px);
+      }
+
+      .screen::before,
+      .screen::after {
+        content: "";
+        position: absolute;
+        width: 180px;
+        height: 180px;
+        border-radius: 999px;
+        opacity: 0.28;
+        filter: blur(12px);
+        pointer-events: none;
+      }
+
+      .screen::before {
+        background: rgba(200, 164, 77, 0.55);
+        top: -48px;
+        right: -54px;
+      }
+
+      .screen::after {
+        background: rgba(122, 32, 49, 0.22);
+        bottom: -42px;
+        left: -52px;
+      }
+
+      .header {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .crest {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 36px;
+        min-width: 36px;
+        padding: 0 12px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.6);
+        border: 1px solid rgba(162, 125, 39, 0.22);
+        color: var(--gold-deep);
+        font-size: 13px;
+        letter-spacing: 0.12em;
+      }
+
+      .title-main {
+        text-align: center;
+        flex: 1;
+      }
+
+      .title-main h1 {
+        margin: 0;
+        font-size: 32px;
+        letter-spacing: 0.12em;
+        font-weight: 700;
+      }
+
+      .title-main p {
+        margin: 6px 0 0;
+        font-size: 12px;
+        color: var(--sub);
+        letter-spacing: 0.08em;
+      }
+
+      .content {
+        position: relative;
+        z-index: 1;
+        height: calc(100% - 56px);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .panel {
+        margin-top: 4px;
+        background: var(--paper);
+        border: 1px solid rgba(108, 78, 39, 0.14);
+        border-radius: var(--radius);
+        padding: 14px;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
+      }
+
+      .title-card {
+        text-align: center;
+        padding-top: 12px;
+      }
+
+      .subtitle {
+        font-size: 13px;
+        color: var(--sub);
+        line-height: 1.7;
+      }
+
+      .hero-wrap {
+        margin: 10px auto 4px;
+        width: 100%;
+        max-width: 200px;
+        aspect-ratio: 1 / 1.08;
+        display: grid;
+        place-items: end center;
+        position: relative;
+      }
+
+      .hero-halo {
+        position: absolute;
+        inset: 12% 6% 10%;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255,235,180,0.8), rgba(255,235,180,0));
+        filter: blur(2px);
+      }
+
+      .judge-image {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 10px 16px rgba(73, 43, 15, 0.18));
+      }
+
+      .cta {
+        margin-top: 12px;
+        display: grid;
+        gap: 8px;
+      }
+
+      button {
+        appearance: none;
+        border: none;
+        cursor: pointer;
+        font: inherit;
+      }
+
+      .start-btn,
+      .next-btn,
+      .retry-btn,
+      .share-btn {
+        width: 100%;
+        border-radius: 18px;
+        padding: 12px 18px;
+        font-size: 18px;
+        letter-spacing: 0.08em;
+        background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+        color: #fffdf7;
+        box-shadow: 0 10px 18px rgba(162, 125, 39, 0.28);
+      }
+
+      .sub-btn {
+        width: 100%;
+        border-radius: 16px;
+        padding: 14px 16px;
+        font-size: 14px;
+        background: rgba(255,255,255,0.66);
+        color: var(--sub);
+        border: 1px solid rgba(108, 78, 39, 0.16);
+      }
+
+      .game-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .meter,
+      .counter,
+      .score-mini {
+        border-radius: 999px;
+        background: rgba(255,255,255,0.7);
+        border: 1px solid rgba(108, 78, 39, 0.14);
+        padding: 8px 12px;
+        font-size: 12px;
+        color: var(--sub);
+        white-space: nowrap;
+      }
+
+      .card {
+        position: relative;
+        min-height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 18px 16px;
+        overflow: hidden;
+      }
+
+      .question-label {
+        position: absolute;
+        top: 14px;
+        left: 16px;
+        font-size: 11px;
+        color: var(--gold-deep);
+        letter-spacing: 0.14em;
+      }
+
+      .question-text {
+        font-size: clamp(28px, 7vw, 38px);
+        line-height: 1.35;
+        letter-spacing: 0.08em;
+        word-break: keep-all;
+      }
+
+      .judge-stage {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: 132px 1fr;
+        gap: 12px;
+        align-items: stretch;
+      }
+
+      .judge-box,
+      .bubble-box {
+        min-height: 150px;
+      }
+
+      .judge-box {
+        display: flex;
+        align-items: end;
+        justify-content: center;
+        padding: 8px;
+        position: relative;
+      }
+
+      .judge-box .judge-image {
+        max-width: 100%;
+        max-height: 125px;
+      }
+
+      .bubble-box {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .bubble-box::before {
+        content: "";
+        position: absolute;
+        left: -10px;
+        top: 48px;
+        width: 18px;
+        height: 18px;
+        background: var(--paper);
+        border-left: 1px solid rgba(108, 78, 39, 0.14);
+        border-bottom: 1px solid rgba(108, 78, 39, 0.14);
+        transform: rotate(45deg);
+      }
+
+      .judgement {
+        font-size: 15px;
+        color: var(--sub);
+        min-height: 28px;
+      }
+
+      .judgement strong {
+        display: block;
+        font-size: 24px;
+        color: var(--ink);
+        margin-bottom: 4px;
+      }
+
+      .feedback {
+        font-size: 12px;
+        color: var(--sub);
+        min-height: 18px;
+      }
+
+      .choice-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      .choice-btn {
+        min-height: 64px;
+        border-radius: 18px;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+        box-shadow: 0 8px 16px rgba(48, 20, 5, 0.08);
+        transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+      }
+
+      .choice-btn:active {
+        transform: translateY(1px) scale(0.99);
+      }
+
+      .choice-btn small {
+        font-size: 11px;
+        opacity: 0.78;
+        letter-spacing: 0.08em;
+      }
+
+      .choice-miyabi {
+        background: linear-gradient(180deg, #d1a948, #ab7d1e);
+        color: #fffefb;
+      }
+
+      .choice-higa {
+        background: linear-gradient(180deg, #873248, #5e1d2f);
+        color: #fffdfd;
+      }
+
+      .choice-btn[disabled] {
+        cursor: default;
+        opacity: 0.55;
+      }
+
+      .result-wrap {
+        display: grid;
+        gap: 10px;
+        text-align: center;
+      }
+
+      .result-score {
+        font-size: 42px;
+        line-height: 1;
+        color: var(--gold-deep);
+      }
+
+      .result-score span {
+        display: block;
+        font-size: 14px;
+        color: var(--sub);
+        margin-bottom: 8px;
+      }
+
+      .result-rank {
+        font-size: 28px;
+        letter-spacing: 0.08em;
+      }
+
+      .result-comment {
+        font-size: 14px;
+        color: var(--sub);
+        line-height: 1.8;
+      }
+
+      .result-list {
+        display: grid;
+        gap: 8px;
+        text-align: left;
+      }
+
+      .result-list .item {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 13px;
+        padding: 10px 12px;
+        background: rgba(255,255,255,0.55);
+        border-radius: 14px;
+        border: 1px solid rgba(108, 78, 39, 0.08);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .sparkle-layer,
+      .ink-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+
+      .sparkle,
+      .ink {
+        position: absolute;
+        border-radius: 999px;
+        opacity: 0;
+        animation: floatOut 900ms ease forwards;
+      }
+
+      .sparkle {
+        background: radial-gradient(circle, rgba(255,243,191,0.95), rgba(255,243,191,0));
+      }
+
+      .ink {
+        background: radial-gradient(circle, rgba(64,39,20,0.38), rgba(64,39,20,0));
+      }
+
+      @keyframes floatOut {
+        0% {
+          transform: translateY(10px) scale(0.4);
+          opacity: 0;
+        }
+        18% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-40px) scale(1.15);
+          opacity: 0;
+        }
+      }
+
+      .fade-up {
+        animation: fadeUp 280ms ease;
+      }
+
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 370px) {
+        .screen {
+          padding-inline: 12px;
+        }
+
+        .judge-stage {
+          grid-template-columns: 118px 1fr;
+        }
+
+        .judge-box .judge-image {
+          max-height: 138px;
+        }
+
+        .question-text {
+          font-size: 26px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <main class="screen">
+        <div class="sparkle-layer" id="sparkleLayer"></div>
+        <div class="ink-layer" id="inkLayer"></div>
+
+        <header class="header">
+          <div class="crest">MIYABI</div>
+          <div class="title-main">
+            <h1>雅ジャッジ</h1>
+            <p>平安貴族松村が万物を判定</p>
+          </div>
+          <div class="crest">3.8</div>
+        </header>
+
+        <div class="content">
+          <section id="titleScreen" class="panel title-card">
+            <p class="subtitle">現代のあれこれを、<br />雅か非雅かで見立てる二択遊戯。</p>
+            <div class="hero-wrap">
+              <div class="hero-halo"></div>
+              <img id="titleJudge" class="judge-image" alt="平安貴族松村" />
+            </div>
+            <p class="subtitle">
+              お題は全10問。<br />見立ての正しさに応じて、雅度が定まります。
+            </p>
+            <div class="cta">
+              <button id="startBtn" class="start-btn">判定を始める</button>
+              <button id="titleCreditBtn" class="sub-btn">お題一覧を見る</button>
+            </div>
+          </section>
+
+          <section id="gameScreen" class="hidden">
+            <div class="game-top">
+              <div class="counter" id="counter">一ノ問 / 十問</div>
+              <div class="score-mini" id="scoreMini">雅度 0</div>
+            </div>
+
+            <div class="panel card fade-up" id="questionCard">
+              <div class="question-label">御題</div>
+              <div class="question-text" id="questionText">サッカー</div>
+            </div>
+
+            <div class="judge-stage">
+              <div class="panel judge-box">
+                <img id="gameJudge" class="judge-image" alt="平安貴族松村" />
+              </div>
+              <div class="panel bubble-box">
+                <div class="judgement" id="judgementText">
+                  <strong>見立てよ</strong>
+                  雅か、非雅か。
+                </div>
+                <div class="feedback" id="feedbackText"></div>
+              </div>
+            </div>
+
+            <div class="choice-row">
+              <button class="choice-btn choice-miyabi" id="miyabiBtn">
+                <span>雅</span>
+                <small>みやび</small>
+              </button>
+              <button class="choice-btn choice-higa" id="higaBtn">
+                <span>非雅</span>
+                <small>ひが</small>
+              </button>
+            </div>
+
+            <div class="cta hidden" id="nextWrap">
+              <button id="nextBtn" class="next-btn">次の見立てへ</button>
+            </div>
+          </section>
+
+          <section id="resultScreen" class="panel hidden">
+            <div class="result-wrap">
+              <div class="hero-wrap" style="max-width: 220px; margin-top: 0;">
+                <div class="hero-halo"></div>
+                <img id="resultJudge" class="judge-image" alt="平安貴族松村" />
+              </div>
+
+              <div class="result-score">
+                <span>最終雅度</span>
+                <strong id="finalScore">85</strong>
+              </div>
+
+              <div class="result-rank" id="finalRank">雅人</div>
+              <div class="result-comment" id="finalComment">風流の心、見事なり。</div>
+
+              <div class="result-list">
+                <div class="item"><span>正解数</span><strong id="correctCount">0 / 10</strong></div>
+                <div class="item"><span>見立て違い</span><strong id="missCount">0</strong></div>
+              </div>
+
+              <div class="cta">
+                <button id="retryBtn" class="retry-btn">もう一度判定する</button>
+                <button id="shareBtn" class="sub-btn">結果文をコピー</button>
+              </div>
+            </div>
+          </section>
+
+          <section id="listScreen" class="panel hidden">
+            <h2 style="margin: 0 0 14px; font-size: 20px; letter-spacing: 0.06em; text-align: center;">御題一覧</h2>
+            <div id="questionList" class="result-list"></div>
+            <div class="cta">
+              <button id="closeListBtn" class="sub-btn">戻る</button>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script type="module">
+      const asset = (p) => new URL(p, import.meta.url).toString();
+
+      const ASSETS = {
+        normal: asset('./assets/matsumura-normal.png'),
+        ok: asset('./assets/matsumura-ok.png'),
+        ng: asset('./assets/matsumura-ng.png'),
+      };
+
+      const QUESTIONS = [
+        { text: 'サッカー', answer: 'miyabi', reason: '雅。蹴鞠の流れを汲むゆえ。' },
+        { text: '花見', answer: 'miyabi', reason: '雅。春を愛でる心、まことに見事。' },
+        { text: '鹿威し', answer: 'miyabi', reason: '雅。水音に風情あり。' },
+        { text: '満月', answer: 'miyabi', reason: '雅。月こそ風流の本懐。' },
+        { text: '短冊に和歌', answer: 'higa', reason: '非雅。令和でそれはちょっと…。' },
+        { text: '団子', answer: 'miyabi', reason: '雅。月と共にあれば、なおよし。' },
+        { text: '畳', answer: 'miyabi', reason: '雅。心静まるゆえ。' },
+        { text: '縁側で昼寝', answer: 'miyabi', reason: '雅。風の通り道に趣あり。' },
+        { text: '風鈴', answer: 'miyabi', reason: '雅。音の涼やかさ、見事なり。' },
+        { text: '雨の日の散歩', answer: 'higa', reason: '非雅。靴がビチャビチャになって不快。' },
+        { text: '温泉', answer: 'miyabi', reason: '雅。身も心もほどけて風流。' },
+        { text: '松村のサックス', answer: 'miyabi', reason: '雅。音に風流あり。' },
+        { text: 'ふすま', answer: 'miyabi', reason: '雅。静けさをたたえる道具なり。' },
+        { text: '始発電車', answer: 'miyabi', reason: '雅。夜明けの気配あり。' },
+        { text: '割れたスマホ', answer: 'miyabi', reason: '雅。もののあはれを感じるゆえ。' },
+        { text: 'ビニール傘', answer: 'higa', reason: '非雅。実用に寄りすぎておる。' },
+        { text: '深夜のカップ焼きそば', answer: 'higa', reason: '非雅。心の乱れが見える。' },
+        { text: '筋トレ', answer: 'higa', reason: '非雅。鍛錬ではあるが雅ではない。' },
+        { text: 'コンビニ前で食べるファミチキ', answer: 'higa', reason: '非雅。うまいが雅ではない。' },
+        { text: 'USBどこ問題', answer: 'higa', reason: '非雅。余裕がなさすぎる。' },
+        { text: '花粉症', answer: 'higa', reason: '非雅。つらさが勝ちすぎる。' },
+        { text: '既読スルー', answer: 'higa', reason: '非雅。心ばえよろしくなし。' },
+        { text: '電車で寝過ごす', answer: 'miyabi', reason: '雅。知らぬ駅に着いて、少し胸が高鳴るまでがセット。' },
+        { text: 'エレベーター閉ボタン連打', answer: 'higa', reason: '非雅。せわしなさが過ぎる。' },
+        { text: 'ポイントカード', answer: 'higa', reason: '非雅。計算高さが前に出る。' },
+        { text: '電池残量1%', answer: 'higa', reason: '非雅。心の平穏なし。' },
+        { text: '割れた保護フィルム', answer: 'higa', reason: '非雅。惜しさはあるが雅ではない。' },
+        { text: 'レジ前で小銭を探す', answer: 'higa', reason: '非雅。キャッシュレスにいたせ。' },
+        { text: '改札で引っかかる', answer: 'higa', reason: '非雅。流れを止めておる。' },
+        { text: '寝ぐせ', answer: 'higa', reason: '非雅。整える心が足りぬ。' },
+        { text: 'ゾンビが迫り来るスマホゲーのCM', answer: 'higa', reason: '非雅。もう少し真面目にプレーせよ。' },
+      ];
+
+      const RANKS = [
+        { min: 0, max: 29, title: '非雅の化身', comment: '風流、まだ遠く候。' },
+        { min: 30, max: 54, title: '町人', comment: '俗世の気配、まだ色濃し。' },
+        { min: 55, max: 74, title: '風流見習い', comment: '雅を解する芽は見ゆ。' },
+        { min: 75, max: 89, title: '雅人', comment: '風流の心、見事なり。' },
+        { min: 90, max: 100, title: '殿上人', comment: 'いと雅なる心に候。' },
+      ];
+
+      const titleScreen = document.getElementById('titleScreen');
+      const gameScreen = document.getElementById('gameScreen');
+      const resultScreen = document.getElementById('resultScreen');
+      const listScreen = document.getElementById('listScreen');
+
+      const titleJudge = document.getElementById('titleJudge');
+      const gameJudge = document.getElementById('gameJudge');
+      const resultJudge = document.getElementById('resultJudge');
+
+      const counter = document.getElementById('counter');
+      const scoreMini = document.getElementById('scoreMini');
+      const questionCard = document.getElementById('questionCard');
+      const questionText = document.getElementById('questionText');
+      const judgementText = document.getElementById('judgementText');
+      const feedbackText = document.getElementById('feedbackText');
+      const miyabiBtn = document.getElementById('miyabiBtn');
+      const higaBtn = document.getElementById('higaBtn');
+      const nextWrap = document.getElementById('nextWrap');
+      const sparkleLayer = document.getElementById('sparkleLayer');
+      const inkLayer = document.getElementById('inkLayer');
+
+      const finalScore = document.getElementById('finalScore');
+      const finalRank = document.getElementById('finalRank');
+      const finalComment = document.getElementById('finalComment');
+      const correctCount = document.getElementById('correctCount');
+      const missCount = document.getElementById('missCount');
+      const questionList = document.getElementById('questionList');
+
+      const startBtn = document.getElementById('startBtn');
+      const titleCreditBtn = document.getElementById('titleCreditBtn');
+      const closeListBtn = document.getElementById('closeListBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const retryBtn = document.getElementById('retryBtn');
+      const shareBtn = document.getElementById('shareBtn');
+
+      titleJudge.src = ASSETS.normal;
+      gameJudge.src = ASSETS.normal;
+      resultJudge.src = ASSETS.normal;
+
+      let deck = [];
+      let index = 0;
+      let correct = 0;
+      let currentAnswered = false;
+      let finalScoreValue = 0;
+
+      buildList();
+
+      startBtn.addEventListener('click', startGame);
+      retryBtn.addEventListener('click', startGame);
+      titleCreditBtn.addEventListener('click', () => showOnly(listScreen));
+      closeListBtn.addEventListener('click', () => showOnly(titleScreen));
+      miyabiBtn.addEventListener('click', () => answer('miyabi'));
+      higaBtn.addEventListener('click', () => answer('higa'));
+      nextBtn.addEventListener('click', nextQuestion);
+      shareBtn.addEventListener('click', copyResult);
+
+      function startGame() {
+        deck = shuffle([...QUESTIONS]).slice(0, 10);
+        index = 0;
+        correct = 0;
+        currentAnswered = false;
+        finalScoreValue = 0;
+        scoreMini.textContent = '雅度 0';
+        showOnly(gameScreen);
+        renderQuestion();
+      }
+
+      function renderQuestion() {
+        currentAnswered = false;
+        const q = deck[index];
+        counter.textContent = `${kanjiNumber(index + 1)}ノ問 / 十問`;
+        questionText.textContent = q.text;
+        judgementText.innerHTML = '<strong>見立てよ</strong>雅か、非雅か。';
+        feedbackText.textContent = '';
+        gameJudge.src = ASSETS.normal;
+        miyabiBtn.disabled = false;
+        higaBtn.disabled = false;
+        nextWrap.classList.add('hidden');
+        questionCard.classList.remove('fade-up');
+        void questionCard.offsetWidth;
+        questionCard.classList.add('fade-up');
+      }
+
+      function answer(choice) {
+        if (currentAnswered) return;
+        currentAnswered = true;
+
+        const q = deck[index];
+        const isCorrect = q.answer === choice;
+        if (isCorrect) correct += 1;
+
+        finalScoreValue = Math.round((correct / deck.length) * 100);
+        scoreMini.textContent = `雅度 ${finalScoreValue}`;
+
+        miyabiBtn.disabled = true;
+        higaBtn.disabled = true;
+        nextWrap.classList.remove('hidden');
+
+        gameJudge.src = q.answer === 'miyabi' ? ASSETS.ok : ASSETS.ng;
+        judgementText.innerHTML = `<strong>${q.answer === 'miyabi' ? '雅' : '非雅'}</strong>${q.reason}`;
+        feedbackText.textContent = isCorrect ? '見立て、悪くなし。' : '見立て違い。風流、まだ遠し。';
+
+        if (q.answer === 'miyabi') {
+          burstSparkles();
+        } else {
+          burstInk();
+        }
+      }
+
+      function nextQuestion() {
+        index += 1;
+        if (index >= deck.length) {
+          showResult();
+          return;
+        }
+        renderQuestion();
+      }
+
+      function showResult() {
+        finalScoreValue = Math.round((correct / deck.length) * 100);
+        const rank = RANKS.find((item) => finalScoreValue >= item.min && finalScoreValue <= item.max) ?? RANKS[0];
+
+        finalScore.textContent = String(finalScoreValue);
+        finalRank.textContent = rank.title;
+        finalComment.textContent = rank.comment;
+        correctCount.textContent = `${correct} / ${deck.length}`;
+        missCount.textContent = String(deck.length - correct);
+        resultJudge.src = finalScoreValue >= 70 ? ASSETS.ok : ASSETS.normal;
+
+        showOnly(resultScreen);
+      }
+
+      async function copyResult() {
+        const text = `雅ジャッジ\n最終雅度：${finalScoreValue}\n称号：${finalRank.textContent}\n${finalComment.textContent}`;
+        try {
+          await navigator.clipboard.writeText(text);
+          shareBtn.textContent = 'コピー済み';
+          setTimeout(() => {
+            shareBtn.textContent = '結果文をコピー';
+          }, 1200);
+        } catch {
+          shareBtn.textContent = 'コピー失敗';
+          setTimeout(() => {
+            shareBtn.textContent = '結果文をコピー';
+          }, 1200);
+        }
+      }
+
+      function showOnly(target) {
+        [titleScreen, gameScreen, resultScreen, listScreen].forEach((el) => {
+          el.classList.toggle('hidden', el !== target);
+        });
+      }
+
+      function buildList() {
+        questionList.innerHTML = QUESTIONS.map((q) => {
+          const label = q.answer === 'miyabi' ? '雅' : '非雅';
+          return `<div class="item"><span>${escapeHtml(q.text)}</span><strong>${label}</strong></div>`;
+        }).join('');
+      }
+
+      function burstSparkles() {
+        for (let i = 0; i < 12; i += 1) {
+          const el = document.createElement('span');
+          el.className = 'sparkle';
+          const size = random(16, 48);
+          el.style.width = `${size}px`;
+          el.style.height = `${size}px`;
+          el.style.left = `${random(8, 92)}%`;
+          el.style.top = `${random(28, 82)}%`;
+          el.style.animationDelay = `${Math.random() * 120}ms`;
+          sparkleLayer.appendChild(el);
+          setTimeout(() => el.remove(), 950);
+        }
+      }
+
+      function burstInk() {
+        for (let i = 0; i < 8; i += 1) {
+          const el = document.createElement('span');
+          el.className = 'ink';
+          const size = random(24, 66);
+          el.style.width = `${size}px`;
+          el.style.height = `${size}px`;
+          el.style.left = `${random(10, 88)}%`;
+          el.style.top = `${random(34, 84)}%`;
+          el.style.animationDelay = `${Math.random() * 80}ms`;
+          inkLayer.appendChild(el);
+          setTimeout(() => el.remove(), 960);
+        }
+      }
+
+      function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      }
+
+      function kanjiNumber(num) {
+        const map = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+        return map[num] ?? String(num);
+      }
+
+      function random(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function escapeHtml(str) {
+        return str
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+    </script>
+  </body>
+</html>
