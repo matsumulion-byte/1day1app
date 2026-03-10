@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <base href="/2026-03-10/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>松村お見合いシミュレーション</title>
+    <style>
+      :root {
+        --text: #3b2d23;
+        --sub: #6d5949;
+        --accent: #8b5a3c;
+        --accent-dark: #6e4329;
+        --line: rgba(107, 78, 56, 0.16);
+        --shadow: 0 12px 32px rgba(82, 52, 24, 0.16);
+        --panel: rgba(255, 250, 245, 0.72);
+      }
+
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        min-height: 100%;
+        font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+        background: #eadccf;
+        color: var(--text);
+      }
+
+      body {
+        overflow: hidden;
+      }
+
+      button {
+        border: 0;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .app {
+        position: relative;
+        width: 100%;
+        height: 100dvh;
+        overflow: hidden;
+        background: #d9c3ad;
+      }
+
+      .hero {
+        position: absolute;
+        inset: 0;
+      }
+
+      .hero img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, rgba(33, 21, 14, 0.06) 0%, rgba(33, 21, 14, 0.12) 46%, rgba(33, 21, 14, 0.2) 100%),
+          linear-gradient(180deg, rgba(255, 247, 239, 0) 45%, rgba(255, 247, 239, 0.14) 100%);
+        pointer-events: none;
+      }
+
+      .hero__title {
+        position: absolute;
+        left: 18px;
+        top: calc(18px + env(safe-area-inset-top));
+        z-index: 2;
+        color: #fff8f1;
+        text-shadow: 0 3px 18px rgba(0, 0, 0, 0.28);
+      }
+
+      .hero__kicker {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        margin-bottom: 6px;
+      }
+
+      .hero__heading {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.12;
+        font-weight: 800;
+      }
+
+      .chat-panel {
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        bottom: calc(10px + env(safe-area-inset-bottom));
+        z-index: 3;
+        height: min(40dvh, 340px);
+        border-radius: 24px;
+        background: var(--panel);
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow: 0 8px 22px rgba(82, 52, 24, 0.12);
+        overflow: hidden;
+      }
+
+      .chat-scroll {
+        height: 100%;
+        overflow-y: auto;
+        padding: 10px 10px 12px;
+      }
+
+      .status {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .status__step {
+        font-size: 10px;
+        font-weight: 800;
+        color: var(--sub);
+        white-space: nowrap;
+      }
+
+      .meter {
+        flex: 1;
+        height: 5px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(125, 91, 63, 0.12);
+      }
+
+      .meter__fill {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #c5906b 0%, #8b5a3c 100%);
+        transition: width 0.28s ease;
+      }
+
+      .nameplate {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 6px;
+        font-weight: 800;
+        font-size: 11px;
+        color: var(--accent-dark);
+      }
+
+      .nameplate::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+
+      .message {
+        font-size: 16px;
+        line-height: 1.4;
+        letter-spacing: 0.01em;
+        margin: 0;
+      }
+
+      .lead {
+        margin: 0;
+        color: var(--sub);
+        line-height: 1.6;
+        font-size: 11px;
+      }
+
+      .reaction {
+        margin-top: 6px;
+        min-height: 2.6em;
+        font-size: 12px;
+        line-height: 1.55;
+        color: var(--sub);
+        white-space: pre-line;
+      }
+
+      .intro,
+      .result,
+      .question {
+        display: grid;
+        gap: 8px;
+      }
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .tag {
+        padding: 5px 8px;
+        border-radius: 999px;
+        font-size: 10px;
+        background: rgba(139, 90, 60, 0.08);
+        color: var(--accent-dark);
+      }
+
+      .choices {
+        display: grid;
+        gap: 6px;
+      }
+
+      .choice {
+        width: 100%;
+        text-align: left;
+        padding: 10px 11px;
+        border-radius: 12px;
+        background: #fffaf5;
+        color: var(--text);
+        border: 1px solid var(--line);
+        box-shadow: 0 6px 16px rgba(71, 42, 15, 0.06);
+        transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+      }
+
+      .choice:active {
+        transform: scale(0.985);
+      }
+
+      .choice[disabled] {
+        cursor: default;
+        opacity: 0.86;
+      }
+
+      .choice.is-selected {
+        background: #f1dfcd;
+        border-color: rgba(139, 90, 60, 0.34);
+      }
+
+      .controls {
+        display: flex;
+        gap: 6px;
+      }
+
+      .btn {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 999px;
+        font-weight: 800;
+      }
+
+      .btn--primary {
+        background: linear-gradient(180deg, #9b6747 0%, #7d4d30 100%);
+        color: #fff7ef;
+        box-shadow: 0 10px 22px rgba(112, 66, 35, 0.22);
+      }
+
+      .result__badge {
+        display: inline-flex;
+        width: fit-content;
+        padding: 5px 8px;
+        border-radius: 999px;
+        background: #efe0cf;
+        font-weight: 800;
+        color: var(--accent-dark);
+      }
+
+      .result__title {
+        font-size: 21px;
+        line-height: 1.2;
+        margin: 0;
+      }
+
+      .result__text {
+        margin: 0;
+        font-size: 12px;
+        line-height: 1.6;
+        color: var(--sub);
+      }
+
+      .answers {
+        display: grid;
+        gap: 5px;
+      }
+
+      .answers__item {
+        padding: 8px 10px;
+        border-radius: 12px;
+        background: rgba(255, 250, 245, 0.72);
+        border: 1px solid var(--line);
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      .answers__item strong {
+        display: block;
+        margin-bottom: 2px;
+        color: var(--accent-dark);
+        font-size: 10px;
+      }
+
+      @media (min-width: 768px) {
+        body {
+          display: flex;
+          justify-content: center;
+          align-items: stretch;
+          min-height: 100dvh;
+        }
+
+        .app {
+          max-width: 480px;
+          margin: 0 auto;
+          box-shadow: 0 0 40px rgba(0, 0, 0, 0.16);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero">
+        <img id="heroImage" alt="和室で向かい合う松村とのお見合い" />
+        <div class="hero__title">
+          <div class="hero__kicker">3/10 お見合いの日</div>
+          <h1 class="hero__heading">松村と<br />お見合いシミュレーション</h1>
+        </div>
+      </section>
+
+      <section class="chat-panel">
+        <div class="chat-scroll" id="screen"></div>
+      </section>
+    </main>
+
+    <script type="module">
+      const asset = (p) => new URL(p, import.meta.url).toString();
+
+      document.getElementById("heroImage").src = asset("./assets/matsumura-omiai.png");
+
+      const QUESTIONS = [
+        {
+          id: "intro1",
+          speaker: "松村",
+          text: "はじめまして。松村です。今日はよろしくお願いします。",
+          choices: [
+            {
+              label: "こちらこそよろしくお願いします",
+              score: 2,
+              reaction: "礼儀がある方なんですね。安心しました。",
+            },
+            {
+              label: "思ったより松村ですね",
+              score: 1,
+              reaction: "それはそうかもしれません。かなり松村で来ています。",
+            },
+            {
+              label: "お見合いってちょっと緊張しますね",
+              score: 2,
+              reaction: "わかります。空気がちょっと特別ですよね。",
+            },
+          ],
+        },
+        {
+          id: "intro2",
+          speaker: "松村",
+          text: "こういう場って初めてですか？",
+          choices: [
+            {
+              label: "初めてです",
+              score: 2,
+              reaction: "そうなんですね。僕もちょっと緊張しています。",
+            },
+            {
+              label: "何回かあります",
+              score: 1,
+              reaction: "なるほど。少し慣れている感じですね。",
+            },
+            {
+              label: "256回目です",
+              score: 3,
+              reaction: "256回目です？\nそれはもう……かなりのベテランですね。",
+            },
+          ],
+        },
+        {
+          id: "finger",
+          speaker: "松村",
+          text: "もし人間の指が一本増えたら、新しい指って何指って呼ぶのがいいと思います？",
+          choices: [
+            {
+              label: "孫指ですかね…",
+              score: 2,
+              reaction: "孫指ですか。\n親指、子指、孫指……家系が続いていきますね。",
+            },
+            {
+              label: "え、なんの質問ですか？",
+              score: 1,
+              reaction: "質問を質問で返すなあーっ!!",
+            },
+            {
+              label: "（答えは沈黙…）",
+              score: 3,
+              reaction: "沈黙!!\nそれが正しい答えなんだ。",
+            },
+          ],
+        },
+        {
+          id: "holiday",
+          speaker: "松村",
+          text: "休みの日は何して過ごすことが多いですか？",
+          choices: [
+            {
+              label: "家でのんびりします",
+              score: 2,
+              reaction: "いいですね。落ち着いた休日、かなり好きです。",
+            },
+            {
+              label: "どこか出かけます",
+              score: 2,
+              reaction: "行動的ですね。ちょっと遠出とかもできそうです。",
+            },
+            {
+              label: "とりあえず寝ます",
+              score: 1,
+              reaction: "睡眠を優先する姿勢、嫌いじゃないです。",
+            },
+          ],
+        },
+      ];
+
+      const RESULTS = [
+        {
+          min: 9,
+          badge: "マッチング成立",
+          title: "いい感じでした",
+          text: "会話のテンポも感覚も、思ったより自然に噛み合っていました。松村はもう少し話してみたいと思っています。",
+        },
+        {
+          min: 6,
+          badge: "連絡先交換エンド",
+          title: "まずは様子見です",
+          text: "大きな事故はなく、ところどころ気になる部分もありました。いったん連絡先を交換して、次回に持ち越しです。",
+        },
+        {
+          min: 0,
+          badge: "ご縁なし",
+          title: "今日はここまで",
+          text: "お互いに悪くはなかったものの、なにかが決定的に噛み合いませんでした。松村は静かにお茶を飲んでいます。",
+        },
+      ];
+
+      const state = {
+        index: -1,
+        score: 0,
+        answers: [],
+      };
+
+      const screen = document.getElementById("screen");
+
+      const escapeHtml = (value) =>
+        String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+
+      const statusMarkup = () => {
+        const label =
+          state.index < 0
+            ? "開始前"
+            : state.index >= QUESTIONS.length
+              ? "結果発表"
+              : `会話 ${state.index + 1} / ${QUESTIONS.length}`;
+
+        const width =
+          state.index < 0 ? 0 : state.index >= QUESTIONS.length ? 100 : ((state.index + 1) / QUESTIONS.length) * 100;
+
+        return `
+          <div class="status">
+            <div class="status__step">${label}</div>
+            <div class="meter" aria-hidden="true">
+              <div class="meter__fill" style="width:${width}%"></div>
+            </div>
+          </div>
+        `;
+      };
+
+      const renderIntro = () => {
+        state.index = -1;
+        state.score = 0;
+        state.answers = [];
+
+        screen.innerHTML = `
+          ${statusMarkup()}
+          <div class="intro">
+            <div class="nameplate">本日の縁談相手</div>
+            <p class="message">松村と4ターン会話して、無事にマッチングするかを見届けてください。</p>
+            <p class="lead">3問目で急に変な質問が来ますが、仕様です。最後まで会話すると結果が出ます。</p>
+            <div class="tags">
+              <div class="tag">会話は全部で4問</div>
+              <div class="tag">選択肢をタップで進行</div>
+              <div class="tag">結果は3パターン</div>
+            </div>
+            <div class="controls">
+              <button class="btn btn--primary" id="startButton">お見合いをはじめる</button>
+            </div>
+          </div>
+        `;
+
+        document.getElementById("startButton").addEventListener("click", () => {
+          state.index = 0;
+          renderQuestion();
+        });
+      };
+
+      const renderQuestion = () => {
+        const q = QUESTIONS[state.index];
+
+        screen.innerHTML = `
+          ${statusMarkup()}
+          <div class="question">
+            <div>
+              <div class="nameplate">${escapeHtml(q.speaker)}</div>
+              <p class="message">${escapeHtml(q.text)}</p>
+              <div class="reaction" id="reactionArea"></div>
+            </div>
+            <div class="choices" id="choicesArea"></div>
+            <div class="controls" id="controlsArea"></div>
+          </div>
+        `;
+
+        const choicesArea = document.getElementById("choicesArea");
+        const controlsArea = document.getElementById("controlsArea");
+        const reactionArea = document.getElementById("reactionArea");
+
+        q.choices.forEach((choice, choiceIndex) => {
+          const button = document.createElement("button");
+          button.className = "choice";
+          button.textContent = choice.label;
+          button.addEventListener("click", () => {
+            state.score += choice.score;
+            state.answers.push({ question: q.text, answer: choice.label });
+
+            reactionArea.textContent = choice.reaction;
+            [...choicesArea.querySelectorAll("button")].forEach((el, idx) => {
+              el.disabled = true;
+              el.classList.toggle("is-selected", idx === choiceIndex);
+            });
+
+            controlsArea.innerHTML = `<button class="btn btn--primary" id="nextButton">${state.index === QUESTIONS.length - 1 ? "結果を見る" : "次へ"}</button>`;
+            document.getElementById("nextButton").addEventListener("click", () => {
+              state.index += 1;
+              if (state.index >= QUESTIONS.length) {
+                renderResult();
+              } else {
+                renderQuestion();
+              }
+            });
+          });
+          choicesArea.appendChild(button);
+        });
+      };
+
+      const renderResult = () => {
+        state.index = QUESTIONS.length;
+        const result = RESULTS.find((item) => state.score >= item.min) ?? RESULTS[RESULTS.length - 1];
+
+        screen.innerHTML = `
+          ${statusMarkup()}
+          <div class="result">
+            <div class="result__badge">${escapeHtml(result.badge)}</div>
+            <h2 class="result__title">${escapeHtml(result.title)}</h2>
+            <p class="result__text">${escapeHtml(result.text)}</p>
+            <div class="answers">
+              ${state.answers
+                .map(
+                  (item, index) => `
+                    <div class="answers__item">
+                      <strong>Q${index + 1}</strong>
+                      ${escapeHtml(item.answer)}
+                    </div>
+                  `,
+                )
+                .join("")}
+            </div>
+            <div class="controls">
+              <button class="btn btn--primary" id="retryButton">もう一度お見合いする</button>
+            </div>
+          </div>
+        `;
+
+        document.getElementById("retryButton").addEventListener("click", renderIntro);
+      };
+
+      renderIntro();
+    </script>
+  </body>
+</html>
