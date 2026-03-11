@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <base href="/2026-03-11/" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>風船松村救出大作戦</title>
+  <style>
+    :root {
+      --bg-top: #2f53a7;
+      --bg-bottom: #101b3a;
+      --panel: rgba(255,255,255,0.12);
+      --line: rgba(255,255,255,0.16);
+      --text: #f7f9ff;
+      --sub: rgba(247,249,255,0.72);
+      --shadow: 0 12px 28px rgba(0,0,0,0.24);
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      background: linear-gradient(180deg, #172855, #0d142a);
+      color: var(--text);
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+    }
+
+    .app {
+      width: min(100vw, calc(100vh * 9 / 16));
+      height: min(100vh, calc(100vw * 16 / 9));
+      aspect-ratio: 9 / 16;
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      background:
+        radial-gradient(circle at 20% 12%, rgba(255,255,255,0.11), transparent 24%),
+        radial-gradient(circle at 82% 14%, rgba(255,255,255,0.08), transparent 20%),
+        linear-gradient(180deg, var(--bg-top) 0%, #203b7c 38%, var(--bg-bottom) 100%);
+      border-left: 1px solid rgba(255,255,255,0.08);
+      border-right: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: max(10px, env(safe-area-inset-top)) 10px 8px;
+      z-index: 10;
+    }
+
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 8px 12px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      min-height: 58px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .label {
+      font-size: 10px;
+      color: var(--sub);
+      letter-spacing: 0.12em;
+      margin-bottom: 4px;
+    }
+
+    .value {
+      font-size: 26px;
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .stage-wrap {
+      min-height: 0;
+      padding: 0 10px;
+      position: relative;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      box-shadow: var(--shadow);
+    }
+
+    .status {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(106px + env(safe-area-inset-bottom));
+      max-width: calc(100% - 24px);
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.16);
+      border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-size: 12px;
+      color: rgba(255,255,255,0.8);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      z-index: 9;
+    }
+
+    .controls {
+      padding: 8px 10px calc(10px + env(safe-area-inset-bottom));
+      z-index: 10;
+    }
+
+    .power-wrap,
+    .bottom-row button {
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+    }
+
+    .power-wrap {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+
+    .power-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--sub);
+      margin-bottom: 8px;
+    }
+
+    .power-bar {
+      height: 18px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .power-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #53dcff, #ffe160 55%, #ff6f7e);
+      border-radius: 999px;
+    }
+
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr 1fr auto;
+      gap: 8px;
+    }
+
+    button {
+      appearance: none;
+      -webkit-appearance: none;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.12);
+      color: var(--text);
+      border-radius: 18px;
+      min-height: 60px;
+      font-size: 22px;
+      font-weight: 900;
+      touch-action: none;
+    }
+
+    button:active,
+    button.pressed {
+      transform: scale(0.985);
+      background: rgba(255,255,255,0.2);
+    }
+
+    #fireBtn {
+      font-size: 18px;
+      letter-spacing: 0.08em;
+      background: linear-gradient(180deg, rgba(255,217,94,0.36), rgba(255,108,126,0.24));
+    }
+
+    #audioBtn {
+      min-width: 82px;
+      padding: 0 10px;
+      font-size: 13px;
+      min-height: 60px;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(7,10,20,0.54);
+      z-index: 30;
+      transition: opacity 0.24s ease;
+    }
+
+    .overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .card {
+      width: 100%;
+      background: rgba(16,22,43,0.84);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 24px;
+      padding: 22px 18px 18px;
+      box-shadow: var(--shadow);
+      text-align: center;
+      max-width: 390px;
+    }
+
+    h1, h2 { margin: 0 0 10px; line-height: 1.2; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 28px; }
+    p {
+      margin: 0 0 10px;
+      color: var(--sub);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .rules {
+      text-align: left;
+      margin: 14px 0 16px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .primary, .secondary {
+      width: 100%;
+      min-height: 56px;
+      font-size: 18px;
+    }
+
+    .primary {
+      background: linear-gradient(180deg, rgba(91,229,158,0.44), rgba(91,229,158,0.24));
+    }
+
+    .secondary {
+      margin-top: 10px;
+      font-size: 16px;
+    }
+
+    .mini {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--sub);
+    }
+
+    @media (max-width: 420px) {
+      .bottom-row { grid-template-columns: 1fr 1.2fr 1fr auto; gap: 6px; }
+      .value { font-size: 22px; }
+      button { min-height: 56px; }
+      #audioBtn { min-width: 74px; font-size: 12px; }
+      .status { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="hud">
+      <div class="stat">
+        <span class="label">TIME</span>
+        <span class="value" id="timeValue">30</span>
+      </div>
+      <div class="stat">
+        <span class="label">AMMO</span>
+        <span class="value" id="ammoValue">10</span>
+      </div>
+    </div>
+
+    <div class="stage-wrap">
+      <canvas id="gameCanvas" width="720" height="1280"></canvas>
+    </div>
+
+    <div class="status" id="statusText">風船と本体の距離を広げています</div>
+
+    <div class="controls">
+      <div class="power-wrap">
+        <div class="power-head">
+          <span>POWER</span>
+          <span id="powerText">0%</span>
+        </div>
+        <div class="power-bar"><div class="power-fill" id="powerFill"></div></div>
+      </div>
+      <div class="bottom-row">
+        <button id="leftBtn" aria-label="左">←</button>
+        <button id="fireBtn" aria-label="発射">FIRE</button>
+        <button id="rightBtn" aria-label="右">→</button>
+        <button id="audioBtn" aria-label="BGM切替">BGM</button>
+      </div>
+    </div>
+
+    <div class="overlay" id="startOverlay">
+      <div class="card">
+        <h1>風船松村<br>救出大作戦</h1>
+        <p>6つの風船だけを割って、浮遊する松村を救出しよう。</p>
+        <div class="rules">
+          ・制限時間は30秒<br>
+          ・残弾は10発<br>
+          ・← → で照準を移動<br>
+          ・FIRE を長押しするとパワーが変化<br>
+          ・指を離すと発射<br>
+          ・松村本体に当てると即ゲームオーバー
+        </div>
+        <button class="primary" id="startBtn">スタート</button>
+        <div class="mini">BGMは初回操作後に再生</div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="resultOverlay">
+      <div class="card">
+        <h2 id="resultTitle">救出成功！</h2>
+        <p id="resultBody">松村は無事に地上へ戻りました。</p>
+        <button class="primary" id="retryBtn">もう一回</button>
+        <button class="secondary" id="closeBtn">タイトルへ</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    const asset = (p) => new URL(p, import.meta.url).toString();
+
+    const BALLOON_SRC = asset('./assets/balloons.png');
+    const MATSUMURA_SRC = asset('./assets/matsumura.png');
+    const BGM_SRC = asset('./assets/bgm.mp3');
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const timeValue = document.getElementById('timeValue');
+    const ammoValue = document.getElementById('ammoValue');
+    const powerFill = document.getElementById('powerFill');
+    const powerText = document.getElementById('powerText');
+    const statusText = document.getElementById('statusText');
+    const startOverlay = document.getElementById('startOverlay');
+    const resultOverlay = document.getElementById('resultOverlay');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultBody = document.getElementById('resultBody');
+    const startBtn = document.getElementById('startBtn');
+    const retryBtn = document.getElementById('retryBtn');
+    const closeBtn = document.getElementById('closeBtn');
+    const leftBtn = document.getElementById('leftBtn');
+    const rightBtn = document.getElementById('rightBtn');
+    const fireBtn = document.getElementById('fireBtn');
+    const audioBtn = document.getElementById('audioBtn');
+
+    const GAME_W = 720;
+    const GAME_H = 1280;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = GAME_W * dpr;
+    canvas.height = GAME_H * dpr;
+    ctx.scale(dpr, dpr);
+
+    const audio = new Audio(BGM_SRC);
+    audio.loop = true;
+    audio.volume = 0.55;
+    let audioEnabled = true;
+
+    const images = {
+      balloonSheet: new Image(),
+      matsumura: new Image(),
+    };
+    images.balloonSheet.src = BALLOON_SRC;
+    images.matsumura.src = MATSUMURA_SRC;
+
+    const state = {
+      running: false,
+      gameOver: false,
+      win: false,
+      timeLeft: 30,
+      ammo: 10,
+      moveLeft: false,
+      moveRight: false,
+      fireHolding: false,
+      power: 0,
+      powerDir: 1,
+      rescuePhase: false,
+      shots: [],
+      particles: [],
+      elapsed: 0,
+    };
+
+    const shooter = {
+      x: GAME_W / 2,
+      y: GAME_H - 188,
+      moveSpeed: 360,
+    };
+
+    const matsumura = {
+      baseX: GAME_W / 2,
+      baseY: 588,
+      x: GAME_W / 2,
+      y: 588,
+      width: 250,
+      height: 310,
+      bobSeed: Math.random() * 10,
+      rescueY: 0,
+    };
+
+    const COLORS = ['#ff4b63', '#2392ff', '#ffd51a', '#3cd43b', '#ff52a2', '#8a62ff'];
+    const balloonLayout = [
+      { offsetX: -148, offsetY: -420, rx: 36, ry: 50, seed: 0.4 },
+      { offsetX: -64,  offsetY: -456, rx: 36, ry: 50, seed: 1.3 },
+      { offsetX: 64,   offsetY: -448, rx: 36, ry: 50, seed: 2.2 },
+      { offsetX: 148,  offsetY: -412, rx: 36, ry: 50, seed: 3.1 },
+      { offsetX: -42,  offsetY: -356, rx: 36, ry: 50, seed: 4.2 },
+      { offsetX: 86,   offsetY: -332, rx: 36, ry: 50, seed: 5.2 },
+    ];
+
+    let balloons = [];
+    let balloonSpriteMode = 'draw';
+    let lastTs = 0;
+
+    function initBalloons() {
+      balloons = balloonLayout.map((b, i) => ({
+        ...b,
+        alive: true,
+        wobbleX: 0,
+        wobbleY: 0,
+        color: COLORS[i % COLORS.length],
+      }));
+    }
+
+    function detectBalloonSpriteMode() {
+      const img = images.balloonSheet;
+      if (!img.naturalWidth || !img.naturalHeight) {
+        balloonSpriteMode = 'draw';
+        return;
+      }
+      const ratio = img.naturalHeight / img.naturalWidth;
+      balloonSpriteMode = ratio > 1.45 ? 'sheet6' : 'single';
+    }
+
+    function syncHud() {
+      timeValue.textContent = Math.max(0, Math.ceil(state.timeLeft));
+      ammoValue.textContent = state.ammo;
+    }
+
+    function setPower(v) {
+      state.power = Math.max(0, Math.min(1, v));
+      powerFill.style.width = `${state.power * 100}%`;
+      powerText.textContent = `${Math.round(state.power * 100)}%`;
+    }
+
+    function syncAudioButton() {
+      audioBtn.textContent = audioEnabled ? 'BGM ON' : 'BGM OFF';
+    }
+
+    function tryPlayBgm() {
+      if (!audioEnabled) return;
+      audio.play().catch(() => {});
+    }
+
+    function resetGame() {
+      state.running = false;
+      state.gameOver = false;
+      state.win = false;
+      state.timeLeft = 30;
+      state.ammo = 10;
+      state.moveLeft = false;
+      state.moveRight = false;
+      state.fireHolding = false;
+      state.power = 0;
+      state.powerDir = 1;
+      state.rescuePhase = false;
+      state.shots = [];
+      state.particles = [];
+      state.elapsed = 0;
+      shooter.x = GAME_W / 2;
+      matsumura.x = matsumura.baseX;
+      matsumura.y = matsumura.baseY;
+      matsumura.rescueY = 0;
+      initBalloons();
+      syncHud();
+      setPower(0);
+      syncAudioButton();
+      statusText.textContent = '風船と本体の距離を広げています';
+    }
+
+    function startGame() {
+      resetGame();
+      state.running = true;
+      startOverlay.classList.add('hidden');
+      resultOverlay.classList.add('hidden');
+      tryPlayBgm();
+    }
+
+    function endGame(win, reason) {
+      if (state.gameOver) return;
+      state.running = false;
+      state.gameOver = true;
+      state.win = win;
+      resultTitle.textContent = win ? '救出成功！' : 'ゲームオーバー';
+      resultBody.innerHTML = win
+        ? `松村は無事に着地。<br>残り時間 ${Math.ceil(state.timeLeft)} 秒 / 残弾 ${state.ammo} 発`
+        : reason;
+      resultOverlay.classList.remove('hidden');
+    }
+
+    function pressMove(dir, isDown) {
+      if (!state.running) return;
+      if (dir === 'left') {
+        state.moveLeft = isDown;
+        leftBtn.classList.toggle('pressed', isDown);
+      } else {
+        state.moveRight = isDown;
+        rightBtn.classList.toggle('pressed', isDown);
+      }
+    }
+
+    function onFireDown(e) {
+      e.preventDefault();
+      if (!state.running || state.gameOver || state.rescuePhase || state.ammo <= 0) return;
+      state.fireHolding = true;
+      fireBtn.classList.add('pressed');
+      tryPlayBgm();
+    }
+
+    function onFireUp(e) {
+      e?.preventDefault?.();
+      if (!state.fireHolding) return;
+      fireBtn.classList.remove('pressed');
+      state.fireHolding = false;
+      if (!state.running || state.gameOver || state.rescuePhase || state.ammo <= 0) return;
+      fireShot();
+    }
+
+    function fireShot() {
+      state.ammo -= 1;
+      syncHud();
+      const power = 0.22 + state.power * 0.78;
+      const dx = shooter.x - GAME_W / 2;
+      const norm = dx / (GAME_W * 0.5);
+
+      state.shots.push({
+        x: shooter.x,
+        y: shooter.y - 40,
+        vx: norm * (340 + power * 280),
+        vy: -(1280 + power * 1060),
+        radius: 10,
+        alive: true,
+        trail: [],
+      });
+
+      setPower(0);
+      state.powerDir = 1;
+      statusText.textContent = state.ammo > 0 ? '風船だけを狙え！' : '残弾なし…';
+    }
+
+    function addPointerHold(btn, down, up) {
+      btn.addEventListener('pointerdown', down);
+      btn.addEventListener('pointerup', up);
+      btn.addEventListener('pointercancel', up);
+      btn.addEventListener('pointerleave', up);
+    }
+
+    addPointerHold(leftBtn, () => pressMove('left', true), () => pressMove('left', false));
+    addPointerHold(rightBtn, () => pressMove('right', true), () => pressMove('right', false));
+    fireBtn.addEventListener('pointerdown', onFireDown);
+    fireBtn.addEventListener('pointerup', onFireUp);
+    fireBtn.addEventListener('pointercancel', onFireUp);
+    fireBtn.addEventListener('pointerleave', onFireUp);
+    audioBtn.addEventListener('click', () => {
+      audioEnabled = !audioEnabled;
+      if (audioEnabled) tryPlayBgm();
+      else audio.pause();
+      syncAudioButton();
+    });
+
+    startBtn.addEventListener('click', startGame);
+    retryBtn.addEventListener('click', startGame);
+    closeBtn.addEventListener('click', () => {
+      resultOverlay.classList.add('hidden');
+      startOverlay.classList.remove('hidden');
+      resetGame();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') pressMove('left', true);
+      if (e.key === 'ArrowRight') pressMove('right', true);
+      if ((e.key === ' ' || e.key === 'Enter') && !state.fireHolding) onFireDown(e);
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowLeft') pressMove('left', false);
+      if (e.key === 'ArrowRight') pressMove('right', false);
+      if (e.key === ' ' || e.key === 'Enter') onFireUp(e);
+    });
+
+    function hitEllipse(px, py, cx, cy, rx, ry) {
+      const dx = px - cx;
+      const dy = py - cy;
+      return (dx * dx) / (rx * rx) + (dy * dy) / (ry * ry) <= 1;
+    }
+ 
+    function popBalloon(x, y, color) {
+      for (let i = 0; i < 18; i += 1) {
+        const ang = (Math.PI * 2 * i) / 18 + Math.random() * 0.2;
+        const speed = 70 + Math.random() * 200;
+        state.particles.push({ x, y, vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed, size: 5 + Math.random() * 5, life: 0.55 + Math.random() * 0.25, color });
+      }
+    }
+
+    function update(dt) {
+      if (!state.running) return;
+
+      state.elapsed += dt;
+      state.timeLeft -= dt;
+      if (state.timeLeft <= 0) {
+        state.timeLeft = 0;
+        syncHud();
+        endGame(false, '時間切れ。<br>松村の風船を割り切れませんでした。');
+        return;
+      }
+      syncHud();
+
+      if (state.moveLeft) shooter.x -= shooter.moveSpeed * dt;
+      if (state.moveRight) shooter.x += shooter.moveSpeed * dt;
+      shooter.x = Math.max(76, Math.min(GAME_W - 76, shooter.x));
+
+      if (state.fireHolding) {
+        const rate = dt / 0.9;
+        let p = state.power + rate * state.powerDir;
+        if (p >= 1) { p = 1; state.powerDir = -1; }
+        if (p <= 0) { p = 0; state.powerDir = 1; }
+        setPower(p);
+      }
+
+      const t = state.elapsed;
+      matsumura.x = matsumura.baseX + Math.sin(t * 0.8 + matsumura.bobSeed) * 18;
+      matsumura.y = matsumura.baseY + Math.sin(t * 1.25 + matsumura.bobSeed * 2) * 10 + matsumura.rescueY;
+
+      let aliveCount = 0;
+      for (const balloon of balloons) {
+        if (!balloon.alive) continue;
+        aliveCount += 1;
+        balloon.wobbleX = Math.sin(t * 1.35 + balloon.seed) * 14 + Math.sin(t * 2.05 + balloon.seed * 2) * 3;
+        balloon.wobbleY = Math.cos(t * 1.05 + balloon.seed) * 8;
+      }
+
+      if (aliveCount === 0 && !state.rescuePhase) {
+        state.rescuePhase = true;
+        statusText.textContent = '救出成功！松村降下中';
+      }
+
+      if (state.rescuePhase) {
+        matsumura.rescueY += 130 * dt;
+        if (matsumura.y > 960) {
+          endGame(true, '松村は無事に着地。');
+          return;
+        }
+      }
+
+      for (const shot of state.shots) {
+        if (!shot.alive) continue;
+        shot.vy += 920 * dt;
+        shot.x += shot.vx * dt;
+        shot.y += shot.vy * dt;
+        shot.trail.push({ x: shot.x, y: shot.y, life: 0.18 });
+        if (shot.trail.length > 8) shot.trail.shift();
+
+        for (const balloon of balloons) {
+          if (!balloon.alive) continue;
+          const cx = matsumura.x + balloon.offsetX + balloon.wobbleX;
+          const cy = matsumura.y + balloon.offsetY + balloon.wobbleY;
+          if (hitEllipse(shot.x, shot.y, cx, cy, balloon.rx + 8, balloon.ry + 10)) {
+            balloon.alive = false;
+            shot.alive = false;
+            popBalloon(cx, cy, balloon.color);
+            statusText.textContent = 'ナイスショット！';
+            break;
+          }
+        }
+        if (!shot.alive) continue;
+ 
+        if (shot.x < -80 || shot.x > GAME_W + 80 || shot.y < -160 || shot.y > GAME_H + 120) {
+          shot.alive = false;
+        }
+      }
+
+      state.shots = state.shots.filter((s) => s.alive);
+      if (state.ammo <= 0 && state.shots.length === 0 && balloons.some((b) => b.alive) && !state.rescuePhase) {
+        endGame(false, '弾切れで救出失敗。<br>松村はまだ空にいます。');
+        return;
+      }
+
+      for (const p of state.particles) {
+        p.life -= dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vx *= 0.985;
+        p.vy *= 0.985;
+      }
+      state.particles = state.particles.filter((p) => p.life > 0);
+
+      for (const shot of state.shots) {
+        shot.trail.forEach((tr) => tr.life -= dt);
+        shot.trail = shot.trail.filter((tr) => tr.life > 0);
+      }
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function drawFallbackBalloon(cx, cy, color) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(0, -48);
+      ctx.bezierCurveTo(32, -48, 40, -20, 40, 2);
+      ctx.bezierCurveTo(40, 28, 18, 44, 0, 52);
+      ctx.bezierCurveTo(-18, 44, -40, 28, -40, 2);
+      ctx.bezierCurveTo(-40, -20, -32, -48, 0, -48);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.beginPath();
+      ctx.ellipse(-14, -22, 10, 16, 0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(2, -10, 7, 11, 0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(-8, 48);
+      ctx.lineTo(8, 48);
+      ctx.lineTo(0, 62);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawBalloonSprite(cx, cy, color, index) {
+      const img = images.balloonSheet;
+      if (!img.complete || !img.naturalWidth) {
+        drawFallbackBalloon(cx, cy, color);
+        return;
+      }
+      if (balloonSpriteMode === 'sheet6') {
+        const cols = 3;
+        const rows = 2;
+        const sw = img.naturalWidth / cols;
+        const sh = img.naturalHeight / rows;
+        const sx = (index % cols) * sw;
+        const sy = Math.floor(index / cols) * sh;
+        ctx.drawImage(img, sx, sy, sw, sh, cx - 46, cy - 66, 92, 132);
+      } else {
+        ctx.drawImage(img, cx - 46, cy - 66, 92, 132);
+      }
+    }
+
+    function drawBackground() {
+      ctx.clearRect(0, 0, GAME_W, GAME_H);
+      const grad = ctx.createLinearGradient(0, 0, 0, GAME_H);
+      grad.addColorStop(0, '#365eb6');
+      grad.addColorStop(0.52, '#1b2f65');
+      grad.addColorStop(1, '#0e1730');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, GAME_W, GAME_H);
+
+      for (let i = 0; i < 18; i += 1) {
+        const x = (i * 157 + 40) % GAME_W;
+        const y = (i * 193 + 30) % 620;
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        ctx.beginPath();
+        ctx.arc(x, y, (i % 3) + 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+      ctx.fillRect(0, GAME_H - 250, GAME_W, 250);
+      ctx.fillStyle = 'rgba(255,255,255,0.07)';
+      ctx.fillRect(0, GAME_H - 212, GAME_W, 6);
+    }
+
+    function drawAimLine() {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 12]);
+      ctx.beginPath();
+      ctx.moveTo(shooter.x, shooter.y - 18);
+      ctx.lineTo(shooter.x, 100);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawMatsumuraAndBalloons() {
+      for (let i = 0; i < balloons.length; i += 1) {
+        const balloon = balloons[i];
+        if (!balloon.alive) continue;
+        const cx = matsumura.x + balloon.offsetX + balloon.wobbleX;
+        const cy = matsumura.y + balloon.offsetY + balloon.wobbleY;
+        ctx.strokeStyle = 'rgba(255,255,255,0.56)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(matsumura.x, matsumura.y - matsumura.height * 0.34);
+        ctx.quadraticCurveTo(cx - 6, (cy + matsumura.y) * 0.5, cx, cy + 54);
+        ctx.stroke();
+        drawBalloonSprite(cx, cy, balloon.color, i);
+      }
+
+      ctx.save();
+      ctx.translate(matsumura.x, matsumura.y);
+      const remaining = balloons.filter((b) => b.alive).length;
+      const tilt = remaining <= 2 ? 0.06 : remaining <= 4 ? 0.03 : 0;
+      ctx.rotate(Math.sin(state.elapsed * 2) * tilt);
+      if (images.matsumura.complete && images.matsumura.naturalWidth) {
+        ctx.drawImage(images.matsumura, -matsumura.width / 2, -matsumura.height / 2, matsumura.width, matsumura.height);
+      }
+      ctx.restore();
+    }
+
+    function drawShots() {
+      for (const shot of state.shots) {
+        for (const tr of shot.trail) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, tr.life / 0.18) * 0.4;
+          ctx.fillStyle = '#ffe6a0';
+          ctx.beginPath();
+          ctx.arc(tr.x, tr.y, 5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.save();
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = '#ffe160';
+        ctx.fillStyle = '#ffe160';
+        ctx.beginPath();
+        ctx.arc(shot.x, shot.y, shot.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function drawParticles() {
+      for (const p of state.particles) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life / 0.8);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function drawShooter() {
+      ctx.save();
+      ctx.translate(shooter.x, shooter.y);
+      ctx.fillStyle = 'rgba(255,255,255,0.16)';
+      roundRect(ctx, -50, 14, 100, 28, 12);
+      ctx.fill();
+      ctx.fillStyle = '#ffd95e';
+      ctx.beginPath();
+      ctx.moveTo(-13, 10);
+      ctx.lineTo(0, -40);
+      ctx.lineTo(13, 10);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(0, 8, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function draw() {
+      drawBackground();
+      drawAimLine();
+      drawMatsumuraAndBalloons();
+      drawShots();
+      drawParticles();
+      drawShooter();
+    }
+
+    function loop(ts) {
+      if (!lastTs) lastTs = ts;
+      const dt = Math.min(0.033, (ts - lastTs) / 1000);
+      lastTs = ts;
+      update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    Promise.allSettled([
+      images.balloonSheet.decode?.() ?? Promise.resolve(),
+      images.matsumura.decode?.() ?? Promise.resolve(),
+    ]).finally(() => {
+      detectBalloonSpriteMode();
+      resetGame();
+      requestAnimationFrame(loop);
+    });
+  </script>
+</body>
+</html>
