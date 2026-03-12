@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>嘘つき松村を探せ</title>
+    <style>
+      :root {
+        --bg: #f6f1e6;
+        --panel: #fff9ee;
+        --text: #2f261d;
+        --sub: #6f6252;
+        --line: #d8c6a9;
+        --accent: #d04c3f;
+        --accent-2: #efb24b;
+        --shadow: 0 10px 24px rgba(47, 38, 29, 0.12);
+        --radius: 18px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: linear-gradient(180deg, #f8f3e8 0%, #efe2c7 100%);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      body {
+        padding: 12px 12px 18px;
+      }
+
+      .app {
+        width: min(100%, 560px);
+        margin: 0 auto;
+      }
+
+      .hero {
+        background: var(--panel);
+        border: 2px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: 12px 14px 10px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::before,
+      .hero::after {
+        content: "";
+        position: absolute;
+        border-radius: 999px;
+        opacity: 0.12;
+      }
+
+      .hero::before {
+        width: 140px;
+        height: 140px;
+        background: var(--accent);
+        top: -48px;
+        right: -28px;
+      }
+
+      .hero::after {
+        width: 100px;
+        height: 100px;
+        background: var(--accent-2);
+        bottom: -36px;
+        left: -20px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--accent);
+        background: rgba(208, 76, 63, 0.08);
+        border: 1px solid rgba(208, 76, 63, 0.18);
+        border-radius: 999px;
+        padding: 6px 10px;
+        margin-bottom: 10px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(28px, 7vw, 36px);
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+      }
+
+      .lead {
+        margin: 8px 0 0;
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--sub);
+      }
+
+      .lead strong {
+        color: var(--text);
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 10px;
+        align-items: stretch;
+        grid-auto-rows: 1fr;
+      }
+
+      .card {
+        appearance: none;
+        border: 2px solid var(--line);
+        background: var(--panel);
+        border-radius: var(--radius);
+        padding: 8px;
+        text-align: left;
+        box-shadow: var(--shadow);
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+      }
+
+      .card:active {
+        transform: scale(0.985);
+      }
+
+      .card:hover {
+        border-color: #c9b08b;
+      }
+
+      .photo {
+        width: 100%;
+        aspect-ratio: 1 / 1.14;
+        object-fit: cover;
+        display: block;
+        flex: 0 0 auto;
+        border-radius: 14px;
+        border: 1px solid rgba(47, 38, 29, 0.08);
+        background: #eadfca;
+      }
+
+      .meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .badge {
+        display: inline-grid;
+        place-items: center;
+        width: 26px;
+        height: 26px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 800;
+        background: var(--text);
+        color: #fff;
+        flex: 0 0 auto;
+      }
+
+      .name {
+        font-size: 15px;
+        font-weight: 800;
+      }
+
+      .line {
+        margin-top: 6px;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--text);
+      }
+
+      .hint {
+        margin-top: 14px;
+        text-align: center;
+        font-size: 12px;
+        color: var(--sub);
+      }
+
+      .result {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(27, 21, 15, 0.64);
+        padding: 10px 12px;
+        z-index: 20;
+      }
+
+      .result.is-open {
+        display: flex;
+      }
+
+      .sheet {
+        width: min(100%, 560px);
+        max-height: 80vh;
+        overflow: auto;
+        background: #fffaf1;
+        border-radius: 24px 24px 18px 18px;
+        border: 2px solid #d9c8ab;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+        padding: 14px 14px 12px;
+      }
+
+      .result-label {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 800;
+        color: #fff;
+        background: var(--accent);
+        border-radius: 999px;
+        padding: 6px 10px;
+      }
+
+      .result-title {
+        margin: 8px 0 0;
+        font-size: 28px;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+      }
+
+      .result-copy {
+        margin: 10px 0 0;
+        font-size: 14px;
+        line-height: 1.75;
+        color: var(--sub);
+      }
+
+      .answer-box {
+        margin-top: 14px;
+        background: #fff;
+        border: 1px solid #e7d8bf;
+        border-radius: 16px;
+        padding: 14px;
+      }
+
+      .picked,
+      .answer {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.7;
+      }
+
+      .picked strong,
+      .answer strong {
+        font-size: 18px;
+        color: var(--text);
+      }
+
+      .explanations {
+        margin-top: 10px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .explanation {
+        background: #fff;
+        border: 1px solid #eadcc6;
+        border-radius: 14px;
+        padding: 10px 10px 9px;
+      }
+
+      .explanation h3 {
+        margin: 0 0 6px;
+        font-size: 14px;
+      }
+
+      .explanation p {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.7;
+        color: var(--sub);
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .btn {
+        appearance: none;
+        border: 0;
+        border-radius: 14px;
+        height: 40px;
+        font-size: 14px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        background: var(--text);
+        color: #fff;
+      }
+
+      .btn-secondary {
+        background: #efe3cc;
+        color: var(--text);
+      }
+
+      @media (max-width: 380px) {
+        .cards {
+          gap: 8px;
+        }
+
+        .card {
+          padding: 6px;
+        }
+
+        .line {
+          font-size: 11px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero">
+        <h1>嘘つき松村を探せ</h1>
+        <p class="lead">
+          4人の松村のうち、<strong>1人だけ嘘をついています。</strong><br />
+          写真をタップして、嘘つき松村を見つけてください。
+        </p>
+      </section>
+
+      <section class="cards" id="cards"></section>
+
+    </main>
+
+    <section class="result" id="result" aria-hidden="true">
+      <div class="sheet">
+        <span class="result-label">判定結果</span>
+        <h2 class="result-title" id="resultTitle">正解！</h2>
+
+        <div class="explanations">
+          <article class="explanation">
+            <h3>A</h3>
+            <p>彼は願望を言っているだけなので、嘘ではありません。</p>
+          </article>
+          <article class="explanation">
+            <h3>B</h3>
+            <p>悲しい嘘ですね。友達になってあげましょう。</p>
+          </article>
+          <article class="explanation">
+            <h3>C</h3>
+            <p>嘘をついているのはいとこのお兄ちゃんなので、彼は被害者です。</p>
+          </article>
+          <article class="explanation">
+            <h3>D</h3>
+            <p>5以上の数が数えられないだけで、嘘ではありません。</p>
+          </article>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-secondary" id="closeBtn" type="button">閉じる</button>
+          <button class="btn btn-primary" id="retryBtn" type="button">もう一度見る</button>
+        </div>
+      </div>
+    </section>
+
+    <script type="module">
+      const APP_BASE =
+        typeof location !== "undefined" && location.pathname
+          ? location.pathname.endsWith("/")
+            ? location.pathname
+            : location.pathname.endsWith(".html")
+              ? location.pathname.replace(/[^/]+$/, "")
+              : `${location.pathname.replace(/\/*$/, "")}/`
+          : "";
+      const asset = (p) =>
+        typeof location !== "undefined"
+          ? new URL(String(p).replace(/^\.?\//, ""), `${location.origin}${APP_BASE}`).toString()
+          : new URL(p, import.meta.url).toString();
+
+      const answer = "B";
+      const cardsData = [
+        {
+          id: "A",
+          name: "松村A",
+          image: asset("./assets/matsumura-a.png"),
+          line: "俺ね、大きくなったらプロ野球選手になるんだ！",
+        },
+        {
+          id: "B",
+          name: "松村B",
+          image: asset("./assets/matsumura-b.png"),
+          line: "俺ね、スイッチ3持ってるよ！",
+        },
+        {
+          id: "C",
+          name: "松村C",
+          image: asset("./assets/matsumura-c.png"),
+          line: "ワンピースは仲間のことなんだって！いとこのお兄ちゃんが作者に聞いたって言ってた！",
+        },
+        {
+          id: "D",
+          name: "松村D",
+          image: asset("./assets/matsumura-d.png"),
+          line: "俺ね、昨日ね、回転寿司で20皿食べたんだ！",
+        },
+      ];
+
+      const cardsEl = document.getElementById("cards");
+      const resultEl = document.getElementById("result");
+      const resultTitleEl = document.getElementById("resultTitle");
+      const closeBtn = document.getElementById("closeBtn");
+      const retryBtn = document.getElementById("retryBtn");
+      const explanationEls = document.querySelectorAll(".explanation");
+
+      function renderCards() {
+        cardsEl.innerHTML = cardsData
+          .map(
+            (item) => `
+              <button class="card" type="button" data-id="${item.id}" aria-label="${item.name}を選ぶ">
+                <img class="photo" src="${item.image}" alt="${item.name}" />
+                <div class="meta">
+                  <span class="badge">${item.id}</span>
+                  <span class="name">${item.name}</span>
+                </div>
+                <p class="line">「${item.line}」</p>
+              </button>
+            `
+          )
+          .join("");
+      }
+
+      function openResult(pickedId) {
+        const correct = pickedId === answer;
+        resultTitleEl.textContent = correct ? "正解！" : "不正解…";
+        explanationEls.forEach((el) => {
+          const label = el.querySelector("h3")?.textContent.trim();
+          el.style.display = label === pickedId ? "block" : "none";
+        });
+        resultEl.classList.add("is-open");
+        resultEl.setAttribute("aria-hidden", "false");
+      }
+
+      function closeResult() {
+        resultEl.classList.remove("is-open");
+        resultEl.setAttribute("aria-hidden", "true");
+      }
+
+      renderCards();
+
+      cardsEl.addEventListener("click", (event) => {
+        const button = event.target.closest(".card");
+        if (!button) return;
+        openResult(button.dataset.id);
+      });
+
+      closeBtn.addEventListener("click", closeResult);
+      retryBtn.addEventListener("click", closeResult);
+
+      resultEl.addEventListener("click", (event) => {
+        if (event.target === resultEl) closeResult();
+      });
+    </script>
+  </body>
+</html>
