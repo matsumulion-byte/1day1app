@@ -1,0 +1,960 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>青函トンネル開通ゲーム</title>
+  <style>
+    :root {
+      --bg1: #07152a;
+      --bg2: #12345d;
+      --sea: #1f5f9e;
+      --rock: #3a2b22;
+      --rock2: #5c4638;
+      --sand: #a47d55;
+      --line: rgba(255,255,255,0.14);
+      --ui: rgba(7, 18, 34, 0.78);
+      --ui-strong: rgba(10, 24, 46, 0.92);
+      --text: #f5f7fb;
+      --sub: rgba(245, 247, 251, 0.72);
+      --accent: #ffd86b;
+      --danger: #8fd3ff;
+      --ok: #93f1a8;
+      --shadow: 0 14px 40px rgba(0,0,0,0.32);
+      --radius: 18px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 50% -10%, rgba(120, 200, 255, 0.18), transparent 35%),
+        linear-gradient(180deg, #0b2344 0%, #0c2447 20%, #164a7b 38%, #18395f 39%, #0b1322 39%, #0b1322 100%);
+      overflow: hidden;
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    .app {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 10px;
+      padding: calc(14px + var(--safe-top)) 14px calc(14px + var(--safe-bottom));
+    }
+
+    .hud {
+      background: var(--ui);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px 14px;
+      backdrop-filter: blur(10px);
+    }
+
+    .hud__top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      margin: 2px 0 0;
+      font-size: 11px;
+      color: var(--sub);
+    }
+
+    .count {
+      min-width: 58px;
+      text-align: right;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .progress {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.1);
+      overflow: hidden;
+    }
+
+    .progress__bar {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #ffd86b, #ffb83d);
+      transition: width 280ms ease;
+    }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: var(--shadow);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0) 18%),
+        linear-gradient(180deg, rgba(18,74,123,0.3) 0 39%, rgba(4,9,19,0.1) 39% 100%);
+    }
+
+    .skyline {
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 39%;
+      pointer-events: none;
+    }
+
+    .label-land {
+      position: absolute;
+      top: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(7, 18, 34, 0.42);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(4px);
+    }
+
+    .label-land--left { left: 12px; }
+    .label-land--right { right: 12px; }
+
+    .sea-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 39%;
+      height: 3px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.45), rgba(255,255,255,0.15));
+      opacity: 0.7;
+    }
+
+    .sea-waves,
+    .seabed-grid,
+    .track,
+    .effects,
+    .overlay,
+    .intro,
+    .result {
+      position: absolute;
+      inset: 0;
+    }
+
+    .sea-waves {
+      top: 0;
+      height: 39%;
+      background:
+        radial-gradient(circle at 10% 45%, rgba(255,255,255,0.12) 0 1px, transparent 1px),
+        radial-gradient(circle at 35% 25%, rgba(255,255,255,0.12) 0 1.2px, transparent 1.2px),
+        radial-gradient(circle at 68% 60%, rgba(255,255,255,0.12) 0 1px, transparent 1px),
+        linear-gradient(180deg, rgba(20,105,169,0.08), rgba(20,105,169,0.18));
+      opacity: 0.85;
+      pointer-events: none;
+    }
+
+    .seabed-grid {
+      top: 39%;
+      background:
+        linear-gradient(90deg, transparent calc(100% - 1px), var(--line) 0),
+        linear-gradient(180deg, transparent calc(100% - 1px), rgba(255,255,255,0.06) 0);
+      background-size: 28px 28px;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    .track {
+      top: 39%;
+      overflow: hidden;
+    }
+
+    .layer {
+      position: absolute;
+      inset: 0;
+      background-repeat: repeat;
+      image-rendering: pixelated;
+    }
+
+    .layer--soil {
+      background-color: #3d2b22;
+      background-image:
+        radial-gradient(circle at 8px 8px, rgba(210,164,112,0.55) 0 1.4px, transparent 1.5px),
+        radial-gradient(circle at 18px 16px, rgba(255,255,255,0.12) 0 1.3px, transparent 1.4px),
+        radial-gradient(circle at 22px 6px, rgba(0,0,0,0.2) 0 1.4px, transparent 1.5px),
+        linear-gradient(180deg, #604937, #3a2b22);
+      background-size: 28px 28px;
+    }
+
+    .tunnel,
+    .branch,
+    .drill,
+    .goal,
+    .bubble,
+    .spray,
+    .debris,
+    .flash {
+      position: absolute;
+    }
+
+    .tunnel {
+      top: calc(39% + 50%);
+      height: 64px;
+      transform: translateY(-50%);
+      border-radius: 0 999px 999px 0;
+      background:
+        linear-gradient(180deg, #0f131d, #090c12 45%, #0b1017 100%);
+      box-shadow:
+        inset 0 3px 8px rgba(255,255,255,0.05),
+        inset 0 -8px 18px rgba(0,0,0,0.55),
+        0 0 0 2px rgba(0,0,0,0.12);
+      overflow: hidden;
+    }
+
+    .tunnel::before,
+    .branch::before {
+      content: "";
+      position: absolute;
+      inset: 7px 0 7px 0;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.12) 0 5px, transparent 5px 26px);
+      opacity: 0.22;
+      pointer-events: none;
+    }
+
+    .branch {
+      top: calc(39% + 50%);
+      width: 88px;
+      height: 58px;
+      transform: translateY(-50%);
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, #10141d, #090c12 45%, #0b1017 100%);
+      box-shadow:
+        inset 0 3px 8px rgba(255,255,255,0.05),
+        inset 0 -8px 18px rgba(0,0,0,0.55),
+        0 0 0 2px rgba(0,0,0,0.12);
+      transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+    }
+
+    .branch.is-selected {
+      transform: translateY(-50%) scale(1.04);
+      box-shadow:
+        inset 0 3px 8px rgba(255,255,255,0.05),
+        inset 0 -8px 18px rgba(0,0,0,0.55),
+        0 0 0 2px rgba(255,216,107,0.55),
+        0 0 18px rgba(255,216,107,0.18);
+    }
+
+    .branch.is-faded {
+      opacity: 0.45;
+    }
+
+    .branch__badge {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 900;
+      color: #07152a;
+      background: rgba(255,255,255,0.88);
+      box-shadow: 0 3px 12px rgba(0,0,0,0.24);
+    }
+
+    .drill {
+      top: calc(39% + 50%);
+      left: 24px;
+      width: 110px;
+      height: 110px;
+      transform: translateY(-50%);
+      transition: left 320ms ease;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .drill__photo {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: left bottom;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.35));
+      z-index: 2;
+    }
+
+    .drill.has-photo .drill__cab,
+    .drill.has-photo .drill__body,
+    .drill.has-photo .drill__wheel {
+      display: none;
+    }
+
+    .drill.has-photo .drill__bit {
+      display: none;
+    }
+
+    .drill__cab {
+      position: absolute;
+      left: 14px;
+      top: 2px;
+      width: 20px;
+      height: 16px;
+      border-radius: 6px 6px 4px 4px;
+      background: linear-gradient(180deg, #d7eeff, #8ab8df);
+      box-shadow: inset 0 -2px 6px rgba(0,0,0,0.15);
+    }
+
+    .drill__bit {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 16px;
+      clip-path: polygon(0 50%, 100% 0, 100% 100%);
+      background: linear-gradient(180deg, #d2d8dd, #7b8794);
+      animation: spin 0.2s linear infinite;
+      transform-origin: 6px 50%;
+    }
+
+    .drill__wheel {
+      position: absolute;
+      bottom: 0;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #101722;
+      border: 3px solid #324255;
+    }
+    .drill__wheel--1 { left: 10px; }
+    .drill__wheel--2 { left: 34px; }
+
+    .goal {
+      top: calc(39% + 50%);
+      right: 18px;
+      width: 44px;
+      height: 76px;
+      transform: translateY(-50%);
+      opacity: 0.72;
+    }
+
+    .goal__pole {
+      position: absolute;
+      left: 16px;
+      top: 6px;
+      width: 5px;
+      height: 62px;
+      border-radius: 4px;
+      background: linear-gradient(180deg, #c9d6e2, #6d7885);
+    }
+
+    .goal__flag {
+      position: absolute;
+      left: 21px;
+      top: 6px;
+      width: 20px;
+      height: 14px;
+      border-radius: 0 4px 4px 0;
+      background:
+        linear-gradient(90deg, #ff644f 0 50%, #ffffff 50% 100%);
+    }
+
+    .effects { pointer-events: none; }
+
+    .bubble {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.22);
+      animation: bubble 4.5s linear infinite;
+      top: 16%;
+    }
+
+    .spray {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.85);
+      box-shadow: 0 0 10px rgba(143,211,255,0.45);
+      opacity: 0;
+    }
+
+    .debris {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #a67d57;
+      opacity: 0;
+    }
+
+    .flash {
+      inset: 0;
+      background: rgba(255,255,255,0.1);
+      opacity: 0;
+    }
+
+    .overlay,
+    .intro,
+    .result {
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(5,10,18,0.52);
+      backdrop-filter: blur(8px);
+      z-index: 5;
+    }
+
+    .panel {
+      width: min(100%, 360px);
+      background: var(--ui-strong);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 18px 16px;
+      text-align: center;
+    }
+
+    .panel h2,
+    .panel h3,
+    .panel p {
+      margin: 0;
+    }
+
+    .panel h2,
+    .panel h3 {
+      font-size: 24px;
+      line-height: 1.25;
+      font-weight: 800;
+    }
+
+    .panel p {
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--sub);
+    }
+
+    .panel .mini {
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--sub);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn,
+    .btn-single {
+      appearance: none;
+      border: 0;
+      border-radius: 18px;
+      min-height: 68px;
+      padding: 12px;
+      font: inherit;
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: transform 120ms ease, opacity 120ms ease, background 120ms ease;
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn:active,
+    .btn-single:active {
+      transform: translateY(1px) scale(0.99);
+    }
+
+    .btn[disabled],
+    .btn-single[disabled] {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    .btn__main {
+      display: block;
+      font-size: 18px;
+      line-height: 1.2;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .btn__sub {
+      display: block;
+      font-size: 11px;
+      color: var(--sub);
+    }
+
+    .btn--left::before,
+    .btn--right::before {
+      content: "";
+      position: absolute;
+      inset: auto 12px 10px;
+      height: 3px;
+      border-radius: 999px;
+      background: rgba(255,216,107,0.4);
+    }
+
+    .message {
+      min-height: 50px;
+      padding: 8px 4px 0;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .message small {
+      display: block;
+      margin-top: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--sub);
+    }
+
+    .message.is-success { color: var(--ok); }
+    .message.is-fail { color: #8fd3ff; }
+    .message.is-idle { color: var(--sub); }
+
+    .hidden { display: none !important; }
+
+    @keyframes spin {
+      from { transform: translateY(-50%) rotate(0deg); }
+      to { transform: translateY(-50%) rotate(360deg); }
+    }
+
+    @keyframes bubble {
+      from { transform: translateY(0) scale(0.8); opacity: 0; }
+      12% { opacity: 0.55; }
+      100% { transform: translateY(-48px) scale(1.15); opacity: 0; }
+    }
+
+    @media (min-width: 768px) {
+      .app {
+        width: min(430px, 100%);
+        margin: 0 auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hud">
+      <div class="hud__top">
+        <div>
+          <h1 class="title">青函トンネル開通ゲーム</h1>
+          <p class="subtitle">左右どちらかの坑道を選んで、5区間つなげる</p>
+        </div>
+        <div class="count" id="countText">0 / 5</div>
+      </div>
+      <div class="progress" aria-label="進捗">
+        <div class="progress__bar" id="progressBar"></div>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="ゲーム画面">
+      <div class="skyline"></div>
+      <div class="label-land label-land--left">北海道</div>
+      <div class="label-land label-land--right">本州</div>
+      <div class="sea-waves"></div>
+      <div class="sea-line"></div>
+      <div class="seabed-grid"></div>
+
+      <div class="track" id="track">
+        <div class="layer layer--soil" id="soil"></div>
+        <div class="tunnel" id="mainTunnel"></div>
+        <div class="branch" id="leftBranch"><span class="branch__badge">L</span></div>
+        <div class="branch" id="rightBranch"><span class="branch__badge">R</span></div>
+
+        <div class="drill" id="drill">
+          <img class="drill__photo hidden" id="drillPhoto" alt="トンネル掘り松村" />
+          <div class="drill__cab"></div>
+          <div class="drill__body"></div>
+          <div class="drill__bit"></div>
+          <div class="drill__wheel drill__wheel--1"></div>
+          <div class="drill__wheel drill__wheel--2"></div>
+        </div>
+
+        <div class="goal" id="goal">
+          <div class="goal__pole"></div>
+          <div class="goal__flag"></div>
+        </div>
+      </div>
+
+      <div class="effects" id="effects"></div>
+
+      <div class="intro" id="intro">
+        <div class="panel">
+          <h2>海底をまっすぐ貫通</h2>
+          <p>前に現れる左右2つの坑道候補から、ひとつ選びます。<br>正解すると掘削前進。5回成功で青函トンネル開通です。</p>
+          <p class="mini">テキスト判断なし / 毎回ランダム / 失敗で海水流入</p>
+          <button class="btn-single" id="startBtn" type="button">スタート</button>
+        </div>
+      </div>
+
+      <div class="result hidden" id="result">
+        <div class="panel">
+          <h3 id="resultTitle">貫通成功</h3>
+          <p id="resultText">青函トンネルがつながりました。</p>
+          <button class="btn-single" id="retryBtn" type="button">もう一回</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="controls">
+        <button class="btn btn--left" id="leftBtn" type="button" disabled>
+          <span class="btn__main">左を掘る</span>
+          <span class="btn__sub">左の坑道へ進む</span>
+        </button>
+        <button class="btn btn--right" id="rightBtn" type="button" disabled>
+          <span class="btn__main">右を掘る</span>
+          <span class="btn__sub">右の坑道へ進む</span>
+        </button>
+      </div>
+      <div class="message is-idle" id="message">スタートで開始</div>
+    </section>
+  </main>
+
+  <script type="module">
+    const APP_BASE =
+      typeof location !== "undefined" && location.pathname
+        ? location.pathname.endsWith("/")
+          ? location.pathname
+          : location.pathname.endsWith(".html")
+            ? location.pathname.replace(/[^/]+$/, "")
+            : `${location.pathname.replace(/\/*$/, "")}/`
+        : "";
+    const asset = (p) =>
+      typeof location !== "undefined"
+        ? new URL(String(p).replace(/^\.?\//, ""), `${location.origin}${APP_BASE}`).toString()
+        : new URL(p, import.meta.url).toString();
+
+    const state = {
+      successCount: 0,
+      total: 5,
+      correct: Math.random() < 0.5 ? 'left' : 'right',
+      locked: true,
+      gameOver: false,
+      holeLeft: 0,
+      holeRight: 0,
+      holeWidth: 88,
+      trackWidth: 0,
+      useTileImage: false,
+    };
+
+    const els = {
+      progressBar: document.getElementById('progressBar'),
+      countText: document.getElementById('countText'),
+      mainTunnel: document.getElementById('mainTunnel'),
+      leftBranch: document.getElementById('leftBranch'),
+      rightBranch: document.getElementById('rightBranch'),
+      drill: document.getElementById('drill'),
+      drillPhoto: document.getElementById('drillPhoto'),
+      goal: document.getElementById('goal'),
+      message: document.getElementById('message'),
+      leftBtn: document.getElementById('leftBtn'),
+      rightBtn: document.getElementById('rightBtn'),
+      intro: document.getElementById('intro'),
+      startBtn: document.getElementById('startBtn'),
+      result: document.getElementById('result'),
+      resultTitle: document.getElementById('resultTitle'),
+      resultText: document.getElementById('resultText'),
+      retryBtn: document.getElementById('retryBtn'),
+      effects: document.getElementById('effects'),
+      track: document.getElementById('track'),
+      soil: document.getElementById('soil'),
+    };
+
+    // 土タイルを差し替える場合は、下のパスだけ入れ替えてください。
+    // 例: './assets/soil-tile.png'
+    const SOIL_TILE_PATH = './assets/soil-tile.png';
+    const MATSUMURA_MINER_PATH = './assets/Gemini_Generated_Image_7w8wsq7w8wsq7w8w.png';
+
+    function applySoilTexture() {
+      const testImage = new Image();
+      testImage.onload = () => {
+        state.useTileImage = true;
+        els.soil.style.backgroundImage = `url(${asset(SOIL_TILE_PATH)})`;
+        els.soil.style.backgroundSize = '28px 28px';
+        els.soil.style.backgroundRepeat = 'repeat';
+      };
+      testImage.onerror = () => {
+        state.useTileImage = false;
+      };
+      testImage.src = asset(SOIL_TILE_PATH);
+    }
+
+    function applyMatsumuraPhoto() {
+      const testImage = new Image();
+      testImage.onload = () => {
+        els.drillPhoto.src = asset(MATSUMURA_MINER_PATH);
+        els.drillPhoto.classList.remove('hidden');
+        els.drill.classList.add('has-photo');
+      };
+      testImage.onerror = () => {
+        els.drillPhoto.classList.add('hidden');
+        els.drill.classList.remove('has-photo');
+      };
+      testImage.src = asset(MATSUMURA_MINER_PATH);
+    }
+
+    function updateProgress() {
+      const rate = (state.successCount / state.total) * 100;
+      els.progressBar.style.width = `${rate}%`;
+      els.countText.textContent = `${state.successCount} / ${state.total}`;
+    }
+
+    function setMessage(text, type = 'idle') {
+      els.message.className = `message is-${type}`;
+      els.message.innerHTML = text;
+    }
+
+    function enableButtons(enabled) {
+      els.leftBtn.disabled = !enabled;
+      els.rightBtn.disabled = !enabled;
+    }
+
+    function spawnAmbientBubbles() {
+      for (let i = 0; i < 9; i += 1) {
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.style.left = `${6 + Math.random() * 88}%`;
+        bubble.style.animationDelay = `${Math.random() * 4}s`;
+        bubble.style.animationDuration = `${3.6 + Math.random() * 2.4}s`;
+        bubble.style.top = `${8 + Math.random() * 18}%`;
+        els.effects.appendChild(bubble);
+      }
+    }
+
+    function clearDynamicEffects() {
+      [...els.effects.querySelectorAll('.spray, .debris, .flash')].forEach((node) => node.remove());
+    }
+
+    function flashScreen() {
+      const flash = document.createElement('div');
+      flash.className = 'flash';
+      els.effects.appendChild(flash);
+      flash.animate(
+        [
+          { opacity: 0 },
+          { opacity: 1, offset: 0.2 },
+          { opacity: 0 }
+        ],
+        { duration: 240, easing: 'ease-out' }
+      );
+      setTimeout(() => flash.remove(), 260);
+    }
+
+    function spawnDebris(x, y) {
+      for (let i = 0; i < 12; i += 1) {
+        const p = document.createElement('div');
+        p.className = 'debris';
+        p.style.left = `${x}px`;
+        p.style.top = `${y}px`;
+        els.effects.appendChild(p);
+        const dx = 18 + Math.random() * 52;
+        const dy = -20 + Math.random() * 40;
+        const size = 5 + Math.random() * 7;
+        p.style.width = `${size}px`;
+        p.style.height = `${size}px`;
+        p.animate(
+          [
+            { transform: 'translate(0, 0) scale(0.8)', opacity: 1 },
+            { transform: `translate(${dx}px, ${dy}px) scale(1)`, opacity: 0 }
+          ],
+          { duration: 420 + Math.random() * 180, easing: 'ease-out' }
+        );
+        setTimeout(() => p.remove(), 640);
+      }
+    }
+
+    function spawnWaterSpray(x, y) {
+      for (let i = 0; i < 18; i += 1) {
+        const p = document.createElement('div');
+        p.className = 'spray';
+        p.style.left = `${x}px`;
+        p.style.top = `${y}px`;
+        els.effects.appendChild(p);
+        const dx = -18 + Math.random() * 88;
+        const dy = -42 + Math.random() * 84;
+        const size = 5 + Math.random() * 8;
+        p.style.width = `${size}px`;
+        p.style.height = `${size}px`;
+        p.animate(
+          [
+            { transform: 'translate(0, 0) scale(0.7)', opacity: 1 },
+            { transform: `translate(${dx}px, ${dy}px) scale(1.15)`, opacity: 0 }
+          ],
+          { duration: 460 + Math.random() * 180, easing: 'ease-out' }
+        );
+        setTimeout(() => p.remove(), 700);
+      }
+    }
+
+    function layoutTrack() {
+      const rect = els.track.getBoundingClientRect();
+      state.trackWidth = rect.width;
+
+      const mainWidth = 92 + state.successCount * ((rect.width - 180) / state.total);
+      els.mainTunnel.style.left = '0px';
+      els.mainTunnel.style.width = `${Math.max(92, Math.min(mainWidth, rect.width - 110))}px`;
+
+      const tunnelTop = rect.height * 0.5;
+      const branchGap = 18;
+      const startX = Math.min(mainWidth + 18, rect.width - 120);
+
+      state.holeLeft = startX;
+      state.holeRight = startX + state.holeWidth + branchGap;
+
+      els.leftBranch.style.left = `${state.holeLeft}px`;
+      els.rightBranch.style.left = `${state.holeRight}px`;
+
+      els.drill.style.left = `${Math.max(18, mainWidth - 30)}px`;
+      els.goal.style.opacity = state.successCount >= state.total ? '1' : '0.72';
+      els.goal.style.right = '18px';
+
+      const remain = state.total - state.successCount;
+      const couldFinish = remain <= 1;
+      if (couldFinish) {
+        els.leftBranch.style.opacity = '0.92';
+        els.rightBranch.style.opacity = '0.92';
+      }
+    }
+
+    function resetBranchClasses() {
+      els.leftBranch.classList.remove('is-selected', 'is-faded');
+      els.rightBranch.classList.remove('is-selected', 'is-faded');
+    }
+
+    function nextRound() {
+      if (state.gameOver) return;
+      state.correct = Math.random() < 0.5 ? 'left' : 'right';
+      state.locked = false;
+      resetBranchClasses();
+      enableButtons(true);
+      setMessage('左右どちらかの坑道を選ぶ', 'idle');
+      layoutTrack();
+    }
+
+    function finishGame(success) {
+      state.gameOver = true;
+      state.locked = true;
+      enableButtons(false);
+      els.result.classList.remove('hidden');
+      if (success) {
+        els.resultTitle.textContent = '貫通成功';
+        els.resultText.innerHTML = '青函トンネルがつながりました。<br>5区間突破です。';
+      } else {
+        els.resultTitle.textContent = '海水流入';
+        els.resultText.innerHTML = '坑道の選択に失敗しました。<br>最初から再挑戦。';
+      }
+    }
+
+    function animateDrill(targetX) {
+      els.drill.style.left = `${targetX}px`;
+    }
+
+    function choose(side) {
+      if (state.locked || state.gameOver) return;
+      state.locked = true;
+      enableButtons(false);
+      clearDynamicEffects();
+
+      const isCorrect = side === state.correct;
+      const chosenBranch = side === 'left' ? els.leftBranch : els.rightBranch;
+      const otherBranch = side === 'left' ? els.rightBranch : els.leftBranch;
+      chosenBranch.classList.add('is-selected');
+      otherBranch.classList.add('is-faded');
+
+      const rect = els.track.getBoundingClientRect();
+      const baseY = rect.height * 0.695;
+      const chosenX = side === 'left' ? state.holeLeft : state.holeRight;
+      const targetDrill = Math.min(chosenX - 40, rect.width - 110);
+      animateDrill(targetDrill);
+
+      setTimeout(() => {
+        if (isCorrect) {
+          spawnDebris(chosenX + 30, baseY);
+          flashScreen();
+          state.successCount += 1;
+          updateProgress();
+          setMessage('掘削成功<small>坑道がつながった</small>', 'success');
+
+          if (state.successCount >= state.total) {
+            els.mainTunnel.style.width = `${rect.width - 64}px`;
+            animateDrill(rect.width - 130);
+            setTimeout(() => finishGame(true), 700);
+          } else {
+            setTimeout(() => {
+              layoutTrack();
+              nextRound();
+            }, 620);
+          }
+        } else {
+          spawnWaterSpray(chosenX + 26, baseY - 4);
+          flashScreen();
+          setMessage('海水流入<small>坑道の選択に失敗</small>', 'fail');
+          setTimeout(() => finishGame(false), 720);
+        }
+      }, 280);
+    }
+
+    function resetGame() {
+      state.successCount = 0;
+      state.gameOver = false;
+      state.locked = true;
+      clearDynamicEffects();
+      updateProgress();
+      resetBranchClasses();
+      layoutTrack();
+      els.result.classList.add('hidden');
+      setMessage('左右どちらかの坑道を選ぶ', 'idle');
+      setTimeout(() => nextRound(), 80);
+    }
+
+    function startGame() {
+      els.intro.classList.add('hidden');
+      resetGame();
+    }
+
+    els.leftBtn.addEventListener('click', () => choose('left'));
+    els.rightBtn.addEventListener('click', () => choose('right'));
+    els.startBtn.addEventListener('click', startGame);
+    els.retryBtn.addEventListener('click', resetGame);
+    window.addEventListener('resize', layoutTrack);
+
+    applySoilTexture();
+    applyMatsumuraPhoto();
+    spawnAmbientBubbles();
+    updateProgress();
+    layoutTrack();
+  </script>
+</body>
+</html>
