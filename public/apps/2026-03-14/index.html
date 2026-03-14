@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>マル村性格診断</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hero">
+        <p class="hero__eyebrow">3/14 円周率の日</p>
+        <h1 class="hero__title">マル村性格診断</h1>
+        <p class="hero__lead">
+          あなたの描く「まる」には、性格が出ています。<br />
+          指でひと筆の円を描いて診断してください。
+        </p>
+      </header>
+
+      <section class="card draw-card">
+        <div class="canvas-wrap">
+          <canvas id="drawCanvas" aria-label="丸を描くエリア"></canvas>
+          <div class="canvas-guide">ここに丸を描いてください</div>
+        </div>
+
+        <div class="actions">
+          <button id="clearBtn" class="btn btn--sub" type="button">描き直す</button>
+          <button id="diagnoseBtn" class="btn btn--main" type="button">
+            診断する
+          </button>
+        </div>
+
+        <p id="miniStatus" class="mini-status">
+          できるだけ一筆で、最後は始点の近くまで戻ると診断しやすいです。
+        </p>
+      </section>
+
+      <section id="resultCard" class="card result-card is-hidden" aria-live="polite">
+        <p class="result-card__label">診断結果</p>
+        <h2 id="resultTitle" class="result-card__title">---</h2>
+
+        <div class="score-wrap">
+          <div class="score">
+            <span class="score__label">マル村度</span>
+            <span id="scoreValue" class="score__value">0</span>
+          </div>
+        </div>
+
+        <dl class="metrics">
+          <div class="metrics__row">
+            <dt>丸さ</dt>
+            <dd id="metricRoundness">--</dd>
+          </div>
+          <div class="metrics__row">
+            <dt>閉じ力</dt>
+            <dd id="metricClosure">--</dd>
+          </div>
+          <div class="metrics__row">
+            <dt>勢い</dt>
+            <dd id="metricSpeed">--</dd>
+          </div>
+          <div class="metrics__row">
+            <dt>安定感</dt>
+            <dd id="metricStability">--</dd>
+          </div>
+          <div class="metrics__row">
+            <dt>向き</dt>
+            <dd id="metricDirection">--</dd>
+          </div>
+        </dl>
+
+        <p id="resultBody" class="result-card__body"></p>
+        <p id="resultSub" class="result-card__sub"></p>
+
+        <div class="result-actions">
+          <button id="retryBtn" class="btn btn--main" type="button">もう一回やる</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
