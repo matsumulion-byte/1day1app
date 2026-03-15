@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>サイコマツ診断</title>
+    <meta
+      name="description"
+      content="よくあるサイコパス診断のようで、実は松村度を測る診断アプリ。あなたはサイコ寄りか、松村寄りか。"
+    />
+    <link rel="stylesheet" href="/apps/2026-03-15/style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <main class="app" id="app">
+        <section class="screen screen--active" id="start-screen">
+          <div class="hero-card">
+            <div class="hero-image-wrap">
+              <img id="hero-image" class="hero-image" alt="サイコマツ" />
+              <div class="hero-overlay"></div>
+              <div class="hero-copy">
+                <p class="eyebrow">PSYCHO / MATSU</p>
+                <h1>サイコマツ診断</h1>
+                <p class="lead">
+                  いかにもサイコパス診断っぽい質問に答えて、<br />
+                  あなたの中の<strong>松村度</strong>を測定します。
+                </p>
+              </div>
+            </div>
+
+            <div class="intro-panel">
+              <p class="intro-note">これは性格診断ではありません。</p>
+              <ul class="intro-points">
+                <li>全5問</li>
+                <li>質問は1問ずつ表示</li>
+                <li>結果は「サイコ寄り」「松村寄り」で判定</li>
+              </ul>
+              <button id="start-button" class="primary-button" type="button">診断をはじめる</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" id="quiz-screen" aria-live="polite">
+          <header class="quiz-header">
+            <p class="quiz-progress" id="quiz-progress">Q1 / 5</p>
+            <div class="progress-bar" aria-hidden="true">
+              <div class="progress-bar__fill" id="progress-fill"></div>
+            </div>
+          </header>
+
+          <article class="question-card">
+            <h2 class="question-title" id="question-title"></h2>
+            <p class="question-body" id="question-body"></p>
+            <div class="choices" id="choices"></div>
+          </article>
+
+          <section class="answer-feedback" id="answer-feedback" hidden>
+            <p class="answer-feedback__label" id="feedback-label"></p>
+            <p class="answer-feedback__text" id="feedback-text"></p>
+            <button id="next-button" class="primary-button" type="button">次へ</button>
+          </section>
+        </section>
+
+        <section class="screen" id="result-screen" aria-live="polite">
+          <div class="result-card">
+            <div class="result-visual">
+              <img id="result-image" class="result-image" alt="サイコマツ" />
+              <div class="result-badge" id="result-badge">診断結果</div>
+            </div>
+
+            <div class="result-body">
+              <p class="result-kicker">RESULT</p>
+              <h2 class="result-title" id="result-title"></h2>
+              <p class="result-description" id="result-description"></p>
+
+              <dl class="score-board">
+                <div>
+                  <dt>サイコpt</dt>
+                  <dd id="psycho-score">0</dd>
+                </div>
+                <div>
+                  <dt>松村pt</dt>
+                  <dd id="matsu-score">0</dd>
+                </div>
+              </dl>
+
+              <p class="result-subtext" id="result-subtext"></p>
+
+              <div class="result-actions">
+                <button id="restart-button" class="primary-button" type="button">もう一度診断する</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="/apps/2026-03-15/script.js"></script>
+  </body>
+</html>
