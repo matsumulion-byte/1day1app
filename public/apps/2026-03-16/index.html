@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>レシート金運みくじ</title>
+    <link rel="stylesheet" href="/apps/2026-03-16/style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hero">
+        <p class="eyebrow">3/16 財務の日</p>
+        <h1>レシート金運みくじ</h1>
+        <p class="lead">レシートを読み込んで、金運をざっくり占います。</p>
+      </header>
+
+      <section class="card uploader">
+        <label class="dropzone" for="fileInput" id="dropzone">
+          <input id="fileInput" type="file" accept="image/*" />
+          <div class="dropzone__inner">
+            <p class="dropzone__title">レシート画像を選ぶ</p>
+            <p class="dropzone__sub">タップして選択 / ドラッグ&ドロップ</p>
+          </div>
+        </label>
+
+        <div class="preview-wrap" id="previewWrap" hidden>
+          <img id="previewImage" alt="レシートプレビュー" />
+        </div>
+
+        <div class="actions">
+          <button id="analyzeBtn" class="button button--primary" disabled>占う</button>
+          <button id="resetBtn" class="button button--ghost" disabled>リセット</button>
+        </div>
+
+        <p class="status" id="statusText">画像を入れてください。</p>
+        <div class="progress" id="progressWrap" hidden>
+          <div class="progress__bar" id="progressBar"></div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <section class="card info-card">
+          <h2>読み取り結果</h2>
+          <dl class="kv">
+            <div>
+              <dt>店名っぽいもの</dt>
+              <dd id="shopName">-</dd>
+            </div>
+            <div>
+              <dt>合計っぽい金額</dt>
+              <dd id="totalAmount">-</dd>
+            </div>
+            <div>
+              <dt>日付っぽいもの</dt>
+              <dd id="dateText">-</dd>
+            </div>
+            <div>
+              <dt>時刻っぽいもの</dt>
+              <dd id="timeText">-</dd>
+            </div>
+            <div>
+              <dt>割引ワード</dt>
+              <dd id="discountText">-</dd>
+            </div>
+            <div>
+              <dt>支払いワード</dt>
+              <dd id="paymentText">-</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="card fortune-card" id="fortuneCard">
+          <h2>おみくじ結果</h2>
+          <div class="fortune" id="fortuneResult">
+            <p class="fortune__rank">-</p>
+            <p class="fortune__title">まだ占っていません</p>
+            <p class="fortune__message">レシートを読み込むと結果が出ます。</p>
+            <div class="fortune__meta">
+              <div>
+                <span>ラッキー金額</span>
+                <strong id="luckyAmount">-</strong>
+              </div>
+              <div>
+                <span>無駄遣い注意度</span>
+                <strong id="wasteLevel">-</strong>
+              </div>
+              <div>
+                <span>ラッキー勘定科目</span>
+                <strong id="luckyCategory">-</strong>
+              </div>
+            </div>
+            <p class="fortune__oracle" id="oracleText">-</p>
+          </div>
+        </section>
+      </section>
+
+      <section class="card raw-card">
+        <div class="raw-card__head">
+          <h2>OCRテキスト</h2>
+          <button id="toggleRawBtn" class="button button--tiny">表示</button>
+        </div>
+        <pre id="rawText" hidden></pre>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script type="module" src="/apps/2026-03-16/main.js"></script>
+  </body>
+</html>
