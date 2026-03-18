@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>精霊松村を探せ</title>
+    <link rel="stylesheet" href="/apps/2026-03-18/style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <div class="frame">
+        <div class="hud">
+          <div class="hud__item">
+            <span class="hud__label">残り</span>
+            <span class="hud__value" id="timeText">30.0</span>
+          </div>
+          <div class="hud__item">
+            <span class="hud__label">発見</span>
+            <span class="hud__value" id="scoreText">0</span>
+          </div>
+        </div>
+
+        <main
+          id="game"
+          class="game"
+          aria-label="ゲーム画面"
+        >
+          <div class="vignette"></div>
+          <div class="grain"></div>
+          <div class="mist mist--a"></div>
+          <div class="mist mist--b"></div>
+
+          <img
+            id="ghost"
+            class="ghost"
+            alt="精霊松村"
+          />
+
+          <div id="tapFlash" class="tap-flash" aria-hidden="true"></div>
+
+          <div id="message" class="message" aria-live="polite"></div>
+
+          <section id="startOverlay" class="overlay overlay--show">
+            <div class="panel">
+              <p class="eyebrow">精霊の日</p>
+              <h1 class="title">精霊松村を探せ</h1>
+              <p class="lead">
+                旅館のどこかに、うっすら現れる精霊松村を見つけてタップ。<br />
+                制限時間は30秒。
+              </p>
+              <button id="startButton" class="button" type="button">
+                はじめる
+              </button>
+            </div>
+          </section>
+
+          <section id="resultOverlay" class="overlay">
+            <div class="panel">
+              <p class="eyebrow">終了</p>
+              <h2 class="title title--result">結果</h2>
+              <p class="result-score">
+                <span id="finalScore">0</span> 体発見
+              </p>
+              <p id="finalComment" class="lead"></p>
+              <button id="retryButton" class="button" type="button">
+                もう一度
+              </button>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script type="module" src="/apps/2026-03-18/main.js"></script>
+  </body>
+</html>
