@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>DJ松村 / スクラッチ村</title>
+    <link rel="stylesheet" href="/apps/2026-03-21/style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hud">
+        <p class="eyebrow">LPレコードの日おくれアプリ</p>
+        <h1>DJ松村</h1>
+        <p class="sub">盤をこすってスクラッチ。離すと勝手に回ります。</p>
+      </header>
+
+      <section class="player-wrap">
+        <div class="deck">
+          <div class="deck-top"></div>
+
+          <button id="startButton" class="start-button">TAP TO START</button>
+
+          <div class="turntable-area">
+            <div class="platter-shadow"></div>
+
+            <div id="record" class="record" aria-label="record player">
+              <div class="record-ring ring1"></div>
+              <div class="record-ring ring2"></div>
+              <div class="record-ring ring3"></div>
+              <div class="record-label">
+                <div class="record-label-inner">
+                  <span class="label-top">MATSUMURA SOUND</span>
+                  <span class="label-main">SCRATCH</span>
+                  <span class="label-bottom">45 RPM-ish</span>
+                </div>
+              </div>
+              <div class="spindle"></div>
+              <div class="shine"></div>
+            </div>
+
+            <div class="tonearm-base"></div>
+            <div class="tonearm">
+              <div class="tonearm-head"></div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button id="playToggle" class="control-button">AUTO SPIN ON</button>
+            <button id="modeToggle" class="control-button alt">NORMAL MODE</button>
+          </div>
+
+          <div class="status">
+            <div class="status-item">
+              <span class="status-label">speed</span>
+              <span id="speedText" class="status-value">0.00</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">direction</span>
+              <span id="directionText" class="status-value">STOP</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">scratch</span>
+              <span id="scratchText" class="status-value">0</span>
+            </div>
+          </div>
+
+          <p class="note">
+            ※ `assets/loop.mp3` を置いてください。<br />
+            前後にこすると音も前後します。
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/apps/2026-03-21/main.js"></script>
+  </body>
+</html>
