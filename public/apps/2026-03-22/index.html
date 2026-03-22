@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <base href="/2026-03-22/" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+    />
+    <title>ぷかぷか松村BOX</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hud">
+        <div class="hud__titleWrap">
+          <p class="hud__eyebrow">WORLD WATER DAY?</p>
+          <h1 class="hud__title">ぷかぷか松村BOX</h1>
+        </div>
+
+        <div class="hud__stats">
+          <div class="stat">
+            <span class="stat__label">CAPTURED</span>
+            <span class="stat__value"><span id="score">0</span> / <span id="goal">5</span></span>
+          </div>
+          <div class="stat">
+            <span class="stat__label">TIME</span>
+            <span class="stat__value"><span id="time">30</span></span>
+          </div>
+        </div>
+      </header>
+
+      <section class="tankSection">
+        <canvas id="gameCanvas" aria-label="ぷかぷか松村BOX"></canvas>
+
+        <div class="message" id="message">
+          <div class="message__card">
+            <p class="message__lead">長押しで噴射</p>
+            <h2 class="message__title">ミニ松村を箱に入れろ</h2>
+            <p class="message__text">
+              下のPUSHを長押しすると水流が出ます。<br />
+              30秒で5人入れたらクリアです。
+            </p>
+            <button id="startButton" class="message__button">START</button>
+          </div>
+        </div>
+      </section>
+
+      <footer class="controls">
+        <button id="leftButton" class="pushButton pushButton--left" type="button">
+          <span class="pushButton__main">LEFT</span>
+          <span class="pushButton__sub">左から噴射</span>
+        </button>
+      
+        <button id="rightButton" class="pushButton pushButton--right" type="button">
+          <span class="pushButton__main">RIGHT</span>
+          <span class="pushButton__sub">右から噴射</span>
+        </button>
+      </footer>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
