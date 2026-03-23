@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <title>クマor松村</title>
+  <link rel="stylesheet" href="/apps/2026-03-23/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="screen screen--start active" id="startScreen">
+      <div class="panel start-panel">
+        <p class="eyebrow">3/23</p>
+        <h1 class="title">クマor松村</h1>
+        <p class="lead">
+          次々に出てくる画像を見て、<br />
+          <strong>クマ</strong>か<strong>松村</strong>かを30秒で判定。
+        </p>
+
+        <div class="rule-box">
+          <p>出てくる画像は4種類</p>
+          <ul>
+            <li>クマ</li>
+            <li>松村</li>
+            <li>松村風クマ</li>
+            <li>クマ風松村</li>
+          </ul>
+          <p class="rule-note">
+            でも答えるのは <strong>クマ / 松村</strong> の2択だけ。
+          </p>
+        </div>
+
+        <button class="primary-btn" id="startBtn">START</button>
+      </div>
+    </section>
+
+    <section class="screen screen--game" id="gameScreen" aria-hidden="true">
+      <header class="hud">
+        <div class="hud-item">
+          <span class="hud-label">TIME</span>
+          <span class="hud-value" id="timeText">30.0</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">SCORE</span>
+          <span class="hud-value" id="scoreText">0</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Q</span>
+          <span class="hud-value" id="countText">0</span>
+        </div>
+      </header>
+
+      <div class="stage">
+        <div class="image-card" id="imageCard">
+          <img id="questionImage" alt="問題画像" />
+          <div class="flash-label" id="flashLabel"></div>
+        </div>
+      </div>
+
+      <div class="answer-row">
+        <button class="answer-btn answer-btn--left" id="kumaBtn">クマ</button>
+        <button class="answer-btn answer-btn--right" id="matsumuraBtn">松村</button>
+      </div>
+    </section>
+
+    <section class="screen screen--result" id="resultScreen" aria-hidden="true">
+      <div class="panel result-panel">
+        <p class="eyebrow">RESULT</p>
+        <h2 class="result-title">あなたは…</h2>
+        <div class="result-main" id="resultType">クマ</div>
+        <p class="result-sub" id="resultSub">野生の勘で判定しています。</p>
+
+        <dl class="result-stats">
+          <div>
+            <dt>スコア</dt>
+            <dd id="finalScore">0</dd>
+          </div>
+          <div>
+            <dt>正解数</dt>
+            <dd id="finalCorrect">0</dd>
+          </div>
+          <div>
+            <dt>回答数</dt>
+            <dd id="finalAnswered">0</dd>
+          </div>
+        </dl>
+
+        <button class="primary-btn" id="retryBtn">もう一回</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-03-23/main.js"></script>
+</body>
+</html>
