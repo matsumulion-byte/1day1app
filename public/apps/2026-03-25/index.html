@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>光った順に押せ松村</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: #111;
+      color: #fff;
+      text-align: center;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+    }
+
+    h1 {
+      font-size: 18px;
+      margin: 12px 0 8px;
+    }
+
+    #info {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: clamp(24px, 5vw, 44px);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+      text-shadow: 0 6px 24px rgba(0, 0, 0, 0.75);
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding: 16px;
+      width: min(420px, 92vw);
+      margin: 0 auto;
+    }
+
+    .cell {
+      width: 100%;
+      aspect-ratio: 1/1;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      transition: transform 0.1s, filter 0.1s;
+    }
+
+    .on {
+      filter: brightness(1.8);
+      transform: scale(1.05);
+    }
+
+    #startBtn {
+      margin: 16px;
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      background: #fff;
+      color: #000;
+      border-radius: 8px;
+    }
+
+    .app {
+      width: min(520px, 100%);
+      padding: 16px 12px 24px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>光った順に押せ松村</h1>
+    <div id="info">STARTを押して開始</div>
+    <button id="startBtn">START</button>
+    <div id="grid"></div>
+  </div>
+
+  <script type="module" src="/apps/2026-03-25/main.js"></script>
+</body>
+</html>
