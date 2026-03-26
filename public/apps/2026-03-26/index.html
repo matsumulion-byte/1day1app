@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>線を引いて松村を守れ！</title>
+    <link rel="stylesheet" href="/apps/2026-03-26/style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hud">
+        <p class="mini">ROUND <span id="round">1</span> / 3</p>
+        <h1>線を引いて松村を守れ！</h1>
+        <p id="message">線を1本描いて松村を守れ！</p>
+      </header>
+
+      <section class="game-wrap">
+        <canvas id="gameCanvas" width="390" height="640"></canvas>
+
+        <div class="overlay" id="overlay">
+          <p id="overlayMessage" class="overlay-message"></p>
+          <button id="startBtn" class="main-btn">スタート</button>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <button id="restartBtn" class="sub-btn">最初から</button>
+      </footer>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+    <script type="module" src="/apps/2026-03-26/main.js"></script>
+  </body>
+</html>

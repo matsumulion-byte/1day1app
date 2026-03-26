@@ -1,0 +1,134 @@
+* {
+    box-sizing: border-box;
+  }
+  
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: #f5f1e8;
+    color: #222;
+    font-family:
+      "Hiragino Sans",
+      "Yu Gothic",
+      "Noto Sans JP",
+      sans-serif;
+    touch-action: none;
+  }
+  
+  body {
+    min-height: 100svh;
+  }
+  
+  .app {
+    width: 100%;
+    max-width: 430px;
+    margin: 0 auto;
+    padding: 12px 12px 20px;
+  }
+  
+  .hud {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  
+  .hud .mini {
+    margin: 0 0 6px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+  
+  .hud h1 {
+    margin: 0;
+    font-size: 24px;
+    line-height: 1.2;
+  }
+  
+  .hud p {
+    margin: 8px 0 0;
+    font-size: 14px;
+    min-height: 1.5em;
+  }
+  
+  .game-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 390 / 640;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #d7ecff;
+    border: 3px solid #222;
+    box-shadow: 0 8px 0 #222;
+  }
+  
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  
+  .overlay {
+    position: absolute;
+    inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+    background: rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(2px);
+  }
+  
+  .overlay.hidden {
+    display: none;
+  }
+
+.overlay-message {
+  margin: 0;
+  font-size: clamp(30px, 9vw, 52px);
+  font-weight: 900;
+  line-height: 1.1;
+  text-align: center;
+  color: #111;
+  text-shadow:
+    0 3px 0 #fff,
+    0 8px 20px rgba(0, 0, 0, 0.2);
+}
+  
+  .main-btn,
+  .sub-btn {
+    appearance: none;
+    border: 3px solid #222;
+    border-radius: 999px;
+    background: #fff36d;
+    color: #222;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  
+  .main-btn {
+    min-width: 160px;
+    min-height: 56px;
+    padding: 12px 20px;
+    font-size: 18px;
+    box-shadow: 0 6px 0 #222;
+  }
+  
+  .sub-btn {
+    padding: 12px 18px;
+    font-size: 15px;
+    background: #fff;
+    box-shadow: 0 4px 0 #222;
+  }
+  
+  .main-btn:active,
+  .sub-btn:active {
+    transform: translateY(2px);
+  }
+  
+  .footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 14px;
+  }
