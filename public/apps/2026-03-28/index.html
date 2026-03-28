@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <title>四つ葉じゃない松村を探せ</title>
+    <link rel="stylesheet" href="/apps/2026-03-28/style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="hud top">
+        <h1 class="title">四つ葉じゃない松村を探せ</h1>
+        <p class="subtitle">四つ葉じゃなくて、三つ葉の松村を探せ</p>
+      </header>
+
+      <main class="game-shell">
+        <section class="status">
+          <div class="panel">
+            <span class="label">TIME</span>
+            <span id="timeValue" class="value">30</span>
+          </div>
+          <div class="panel">
+            <span class="label">SCORE</span>
+            <span id="scoreValue" class="value">0</span>
+          </div>
+        </section>
+
+        <section id="field" class="field" aria-label="ゲームエリア">
+          <div id="startOverlay" class="overlay show">
+            <div class="overlay-card">
+              <p class="overlay-lead">30秒で</p>
+              <h2>三つ葉の松村だけをタップ</h2>
+              <p class="overlay-text">四つ葉の松村はハズレです</p>
+              <button id="startButton" class="primary-button">スタート</button>
+            </div>
+          </div>
+
+          <div id="finishOverlay" class="overlay">
+            <div class="overlay-card">
+              <p class="overlay-lead">結果</p>
+              <h2 id="finalScore">0点</h2>
+              <p id="finalMessage" class="overlay-text"></p>
+              <button id="retryButton" class="primary-button">もう一回</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="/apps/2026-03-28/main.js"></script>
+  </body>
+</html>
