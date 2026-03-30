@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>松村武将診断 〜天下布松〜</title>
+    <meta
+      name="description"
+      content="信長の野望の日に贈る、戦国風・松村武将診断。"
+    />
+    <link rel="stylesheet" href="/apps/2026-03-30/style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="crest">⚔︎</div>
+        <div class="topbar-text">
+          <p class="topbar-sub">3/30 信長の野望の日</p>
+          <h1>松村武将診断 〜天下布松〜</h1>
+        </div>
+      </header>
+
+      <main class="screen-wrap">
+        <section id="title-screen" class="screen screen-active">
+          <div class="card hero-card">
+            <p class="hero-kicker">あなたを戦国でたとえると</p>
+            <h2 class="hero-title">どの松村武将か、見極める。</h2>
+            <p class="hero-desc">
+              7つの問いに答えるだけ。<br />
+              あなたの采配、義、覇道、そして面倒くささを診断します。
+            </p>
+
+            <div class="hero-points">
+              <div class="point">全7問</div>
+              <div class="point">所要30秒</div>
+              <div class="point">結果10種類</div>
+            </div>
+
+            <button id="start-btn" class="btn btn-primary">診断を始める</button>
+          </div>
+        </section>
+
+        <section id="quiz-screen" class="screen">
+          <div class="card quiz-card">
+            <div class="progress-row">
+              <div class="progress-meta">
+                <span id="question-counter">第1問</span>
+                <span id="question-total">/ 全7問</span>
+              </div>
+              <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+              </div>
+            </div>
+
+            <p id="question-theme" class="question-theme">戦国の問い</p>
+            <h2 id="question-text" class="question-text"></h2>
+
+            <div id="choices" class="choices"></div>
+          </div>
+        </section>
+
+        <section id="result-screen" class="screen">
+          <div class="card result-card">
+            <p class="result-kicker">診断結果</p>
+            <h2 id="result-name" class="result-name"></h2>
+            <p id="result-catch" class="result-catch"></p>
+
+            <div class="result-image-wrap">
+              <img id="result-image" class="result-image" src="" alt="" />
+            </div>
+
+            <p id="result-desc" class="result-desc"></p>
+
+            <div class="result-block">
+              <h3>あるある</h3>
+              <ul id="result-traits" class="result-traits"></ul>
+            </div>
+
+            <div class="result-block">
+              <h3>あなたの一手</h3>
+              <p id="result-advice" class="result-advice"></p>
+            </div>
+
+            <div class="result-actions">
+              <button id="retry-btn" class="btn btn-secondary">もう一度診断</button>
+              <button id="share-btn" class="btn btn-primary">結果をコピー</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="/apps/2026-03-30/main.js"></script>
+  </body>
+</html>
