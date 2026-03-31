@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>A=440Hz 当てゲーム</title>
+    <link rel="stylesheet" href="/apps/2026-03-31/style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="card" id="start-screen">
+        <p class="eyebrow">3/31 オーケストラの日</p>
+        <h1>A=440Hz 当てゲーム</h1>
+        <p class="lead">
+          3つの音を聴いて、どれが <strong>440Hz</strong> か当ててください。
+        </p>
+        <p class="note">※ スマホは消音解除推奨。できればイヤホン推奨。</p>
+        <button class="primary-btn" id="start-btn">はじめる</button>
+      </section>
+
+      <section class="card hidden" id="game-screen">
+        <div class="topbar">
+          <p id="progress">Q1 / 5</p>
+          <p id="score">Score: 0</p>
+        </div>
+
+        <h2>どれが 440Hz？</h2>
+        <p class="subtext">まず聴いて、あとで選んでください。</p>
+
+        <div class="listen-grid" id="listen-grid">
+          <!-- JS -->
+        </div>
+
+        <div class="answer-grid" id="answer-grid">
+          <!-- JS -->
+        </div>
+
+        <p class="feedback" id="feedback"></p>
+
+        <button class="primary-btn hidden" id="next-btn">次へ</button>
+      </section>
+
+      <section class="card hidden" id="result-screen">
+        <p class="eyebrow">結果</p>
+        <h2 id="result-title">おつかれさまでした</h2>
+        <p class="result-score" id="result-score">5問中 0問正解</p>
+        <p class="result-comment" id="result-comment"></p>
+        <div class="result-actions">
+          <button class="primary-btn" id="retry-btn">もう一度</button>
+          <button class="ghost-btn" id="share-btn">結果をコピー</button>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/apps/2026-03-31/main.js"></script>
+  </body>
+</html>
