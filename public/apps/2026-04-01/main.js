@@ -8,8 +8,6 @@ const limitFill = document.getElementById("limitFill");
 const gameoverEl = document.getElementById("gameover");
 const retryBtn = document.getElementById("retryBtn");
 
-charmEl.src = "./assets/matsumura.png";
-
 const BASE_STRAP = 170;
 const CHARM_SIZE = 150;
 const CHARM_TOP_OFFSET = Math.round(CHARM_SIZE * (2 / 150));
