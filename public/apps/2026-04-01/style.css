@@ -1,0 +1,228 @@
+:root {
+    --bg1: #fff7f8;
+    --bg2: #eef7ff;
+    --text: #222;
+    --muted: #666;
+    --danger: #ff5a5f;
+  }
+  
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    touch-action: none;
+    overscroll-behavior: none;
+    user-select: none;
+    -webkit-user-select: none;
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(circle at top, rgba(255,255,255,0.95), transparent 35%),
+      linear-gradient(180deg, var(--bg1), var(--bg2));
+  }
+  
+  .app {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+  
+  .title {
+    margin: 0;
+    padding-top: max(18px, env(safe-area-inset-top));
+    text-align: center;
+    font-size: 24px;
+    line-height: 1.2;
+  }
+  
+  .subtitle {
+    margin: 6px 0 0;
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  
+  .stage {
+    position: relative;
+    width: 100%;
+    height: calc(100% - 60px);
+    overflow: hidden;
+  }
+  
+  .anchor {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    width: 36px;
+    height: 18px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: linear-gradient(180deg, #9aa3b2, #636c7a);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  }
+  
+  .strap-root {
+    position: absolute;
+    top: 38px;
+    left: 50%;
+    width: 0;
+    height: 0;
+    transform: translateX(-50%);
+    transform-origin: top center;
+  }
+  
+  .strap {
+    position: absolute;
+    top: 0;
+    left: 50%;
+  width: 6px;
+    height: 170px;
+    transform: translateX(-50%);
+    transform-origin: top center;
+    border-radius: 999px;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.2), transparent 24%, transparent 76%, rgba(0,0,0,0.12)),
+      linear-gradient(180deg, #9098a8, #626978);
+    box-shadow:
+      inset 1px 0 0 rgba(255,255,255,0.25),
+      inset -1px 0 0 rgba(0,0,0,0.12);
+  }
+  
+  .strap.danger {
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.2), transparent 24%, transparent 76%, rgba(0,0,0,0.08)),
+      linear-gradient(180deg, #ff9ea0, var(--danger));
+  }
+  
+  .charm-wrap {
+    position: absolute;
+    top: 172px;
+    left: 50%;
+    width: 150px;
+    height: 150px;
+    transform: translateX(-50%);
+    transform-origin: center top;
+  }
+
+  .ring {
+    position: absolute;
+    left: 50%;
+    top: 154px;
+    width: 16px;
+    height: 16px;
+    border: 3px solid #8f96a3;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.35);
+  }
+  
+  .charm {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    pointer-events: auto;
+    touch-action: none;
+    filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.18));
+  }
+  
+  .limit {
+    position: absolute;
+    right: 14px;
+    top: 24px;
+    bottom: 110px;
+    width: 14px;
+  }
+  
+  .limit-bar {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.6);
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+  }
+  
+  .limit-fill {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 0%;
+    background: linear-gradient(180deg, #ffd166, #ff6b6b);
+    border-radius: 999px;
+  }
+  
+  .hint {
+    position: absolute;
+    left: 50%;
+    bottom: max(24px, calc(env(safe-area-inset-bottom) + 12px));
+    transform: translateX(-50%);
+    margin: 0;
+    white-space: nowrap;
+    font-size: 14px;
+    color: #444;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+  }
+  
+  .gameover {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(0,0,0,0.28);
+    backdrop-filter: blur(4px);
+  }
+  
+  .hidden {
+    display: none;
+  }
+  
+  .gameover-card {
+    width: min(88vw, 300px);
+    padding: 24px 20px;
+    border-radius: 22px;
+    background: rgba(255,255,255,0.95);
+    text-align: center;
+    box-shadow: 0 14px 32px rgba(0,0,0,0.18);
+  }
+  
+  .gameover-title {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 800;
+  }
+  
+  .gameover-text {
+    margin: 10px 0 18px;
+    font-size: 15px;
+    color: #444;
+  }
+  
+  .retry-btn {
+    appearance: none;
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 20px;
+    min-width: 140px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    background: #111;
+  }
+  
+  .retry-btn:active {
+    transform: scale(0.98);
+  }

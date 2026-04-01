@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <title>松村ストラップ</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <h1 class="title">松村ストラップ</h1>
+      <p class="subtitle">下に引っ張る。引っ張りすぎると終わる。</p>
+
+      <section class="stage" id="stage">
+        <div class="anchor"></div>
+
+        <div class="strap-root" id="strapRoot">
+          <div class="strap" id="strap"></div>
+          <div class="ring" id="ring"></div>
+          <div class="charm-wrap" id="charmWrap">
+            <img
+              id="charm"
+              class="charm"
+              src=""
+              alt="松村ストラップ"
+              draggable="false"
+            />
+          </div>
+        </div>
+
+        <div class="limit">
+          <div class="limit-bar">
+            <div class="limit-fill" id="limitFill"></div>
+          </div>
+        </div>
+
+        <p class="hint" id="hint">松村を下に引っ張る</p>
+
+        <div class="gameover hidden" id="gameover">
+          <div class="gameover-card">
+            <p class="gameover-title">GAME OVER</p>
+            <p class="gameover-text">引っ張りすぎました</p>
+            <button id="retryBtn" class="retry-btn">もう一度</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
