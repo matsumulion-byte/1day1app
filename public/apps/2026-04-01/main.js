@@ -1,5 +1,5 @@
-const APP_BASE = "/apps/2026-04-01";
-const asset = (p) => `${APP_BASE}/${p.replace(/^\.\//, "")}`;
+const ASSET_BASE = "/apps/2026-04-01";
+const asset = (p) => `${ASSET_BASE}/${p.replace(/^\.\//, "")}`;
 
 const stage = document.getElementById("stage");
 const strapRoot = document.getElementById("strapRoot");
