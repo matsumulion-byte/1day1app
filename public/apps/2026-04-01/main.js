@@ -1,4 +1,5 @@
-const asset = (p) => new URL(p, import.meta.url).toString();
+const APP_BASE = "/apps/2026-04-01";
+const asset = (p) => `${APP_BASE}${p}`;
 
 const stage = document.getElementById("stage");
 const strapRoot = document.getElementById("strapRoot");
