@@ -1,6 +1,3 @@
-const ASSET_BASE = "/apps/2026-04-01";
-const asset = (p) => `${ASSET_BASE}/${p.replace(/^\.\//, "")}`;
-
 const stage = document.getElementById("stage");
 const strapRoot = document.getElementById("strapRoot");
 const strapEl = document.getElementById("strap");
@@ -11,7 +8,7 @@ const limitFill = document.getElementById("limitFill");
 const gameoverEl = document.getElementById("gameover");
 const retryBtn = document.getElementById("retryBtn");
 
-charmEl.src = asset("./assets/matsumura.png");
+charmEl.src = "/apps/2026-04-01/assets/matsumura.png";
 
 const BASE_STRAP = 170;
 const CHARM_SIZE = 150;
