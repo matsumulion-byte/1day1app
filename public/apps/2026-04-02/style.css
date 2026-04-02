@@ -1,0 +1,115 @@
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #111;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    touch-action: manipulation;
+  }
+  
+  body {
+    overscroll-behavior: none;
+  }
+  
+  .app {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #000;
+  }
+  
+  #video,
+  #overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  
+  #video {
+    object-fit: cover;
+    transform: scaleX(-1);
+  }
+  
+  #overlay {
+    pointer-events: none;
+  }
+  
+  .hud {
+    position: absolute;
+    top: max(16px, env(safe-area-inset-top));
+    left: 16px;
+    right: 16px;
+    z-index: 10;
+    color: #fff;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+  }
+  
+  .title {
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+  }
+  
+  .sub {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    opacity: 0.9;
+  }
+  
+  .bottom-ui {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+  }
+  
+  .btn {
+    flex: 1;
+    height: 52px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #111;
+    font-size: 15px;
+    font-weight: 800;
+  }
+  
+  .btn:active {
+    transform: scale(0.98);
+  }
+  
+  .btn.ghost {
+    background: rgba(17, 17, 17, 0.45);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(10px);
+  }
+  
+  .status {
+    position: absolute;
+    left: 50%;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 10;
+    min-width: 180px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(17, 17, 17, 0.55);
+    color: #fff;
+    font-size: 12px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+  }

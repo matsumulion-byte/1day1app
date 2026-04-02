@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <title>シャンプー泡フィルター</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <video id="video" playsinline muted autoplay></video>
+      <canvas id="overlay"></canvas>
+
+      <div class="hud">
+        <div class="title">SHAMPOO FOAM FILTER</div>
+        <div class="sub">顔に合わせて泡がのります。タップで盛れます。</div>
+      </div>
+
+      <div class="bottom-ui">
+        <button id="addBtn" class="btn">泡を盛る</button>
+        <button id="switchBtn" class="btn ghost">カメラ切替</button>
+      </div>
+
+      <div id="status" class="status">カメラを起動中…</div>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
