@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>目指せ調律マスター</title>
+    <link rel="stylesheet" href="/apps/2026-04-04/style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hero">
+        <p class="date">4/4 ピアノ調律の日</p>
+        <h1>目指せ調律マスター</h1>
+        <p class="lead">
+          音を440.0Hzに合わせよう。<br />
+          ±0.3Hzで成功、ぴったりで大成功。
+        </p>
+      </header>
+
+      <section class="panel status-panel gameplay">
+        <div class="badge-row">
+          <div class="badge">ROUND <span id="round">1</span> / 1</div>
+          <div class="badge">SCORE <span id="score">0</span></div>
+        </div>
+      </section>
+
+      <section class="panel gameplay">
+        <div class="audio-buttons">
+          <button id="playCurrentBtn" class="primary">今の音を鳴らす</button>
+          <button id="playReferenceBtn" class="secondary">440.0Hzを確認</button>
+          <button id="stopBtn" class="ghost">音を止める</button>
+        </div>
+      </section>
+
+      <section class="panel gameplay">
+        <p class="section-title">調整する</p>
+        <div class="control-grid">
+          <button class="adjust-btn" data-step="-1.0">-1.0</button>
+          <button class="adjust-btn" data-step="-0.1">-0.1</button>
+          <button class="adjust-btn" data-step="0.1">+0.1</button>
+          <button class="adjust-btn" data-step="1.0">+1.0</button>
+        </div>
+      </section>
+
+      <section class="panel gameplay">
+        <button id="judgeBtn" class="judge-btn">この音で決定</button>
+        <p id="message" class="message">まずは今の音と440.0Hzを聴き比べよう。</p>
+      </section>
+
+      <section id="resultPanel" class="panel result-panel hidden">
+        <h2 class="result-heading">結果</h2>
+        <p id="finalDetail" class="final-detail"></p>
+        <p id="finalFreq" class="final-freq"></p>
+        <p id="finalTitle" class="final-title"></p>
+        <p id="finalScore" class="final-score"></p>
+        <p id="finalText" class="final-text"></p>
+        <button id="restartBtn" class="primary full">もう一度挑戦</button>
+      </section>
+    </main>
+
+    <script type="module" src="/apps/2026-04-04/main.js"></script>
+  </body>
+</html>
