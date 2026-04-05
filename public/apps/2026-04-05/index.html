@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>アイドルデビュー告知メーカー</title>
+    <link rel="stylesheet" href="/apps/2026-04-05/style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="panel panel-input">
+        <div class="heading">
+          <p class="eyebrow">2026.04.05</p>
+          <h1>アイドルデビュー告知メーカー</h1>
+          <p class="lead">
+            写真と名前を入れると、アイドルデビュー告知画像を生成します。
+          </p>
+        </div>
+
+        <div class="form">
+          <label class="field">
+            <span class="label">名前</span>
+            <input
+              id="nameInput"
+              class="text-input"
+              type="text"
+              maxlength="16"
+              placeholder="例：松村 ひろのり"
+            />
+          </label>
+
+          <label class="field">
+            <span class="label">写真</span>
+            <input id="photoInput" class="file-input" type="file" accept="image/*" />
+          </label>
+
+          <div class="field">
+            <span class="label">写真の位置調整</span>
+            <div class="preview-wrap">
+              <div id="photoPreview" class="photo-preview is-empty">
+                <canvas id="photoPreviewCanvas" width="600" height="600"></canvas>
+                <span id="photoPreviewEmptyText" class="photo-preview-empty-text">
+                  ここに写真プレビュー
+                </span>
+              </div>
+            </div>
+            <p class="help-text">プレビューをドラッグして位置を調整</p>
+          </div>
+
+          <label class="field">
+            <span class="label">写真の拡大率</span>
+            <input
+              id="zoomRange"
+              class="range-input"
+              type="range"
+              min="1"
+              max="3"
+              step="0.01"
+              value="1"
+            />
+          </label>
+
+          <div class="actions">
+            <button id="generateBtn" class="btn btn-primary" type="button">
+              告知を生成
+            </button>
+            <button id="shuffleBtn" class="btn" type="button">
+              文言だけ再抽選
+            </button>
+            <button id="saveBtn" class="btn" type="button" disabled>
+              画像を保存
+            </button>
+          </div>
+
+          <div id="textResult" class="text-result" aria-live="polite">
+            <p>生成後、ここにキャッチコピーや担当が表示されます。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel-output">
+        <div class="canvas-wrap">
+          <canvas id="posterCanvas" width="1080" height="1350"></canvas>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/apps/2026-04-05/main.js"></script>
+  </body>
+</html>
