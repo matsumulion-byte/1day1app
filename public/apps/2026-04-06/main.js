@@ -510,14 +510,28 @@ resultDialog.addEventListener("click", (e) => {
   if (!inside) resultDialog.close();
 });
 
+function isActiveTouchInteraction() {
+  if (state.phase === "align") {
+    return state.pointerId !== null;
+  }
+
+  if (state.phase === "dust") {
+    return state.dusts.some((dust) => dust.dragging);
+  }
+
+  if (state.phase === "bubble") {
+    return state.bubbles.some((bubble) => bubble.dragging);
+  }
+
+  return false;
+}
+
 document.addEventListener(
   "touchmove",
   (e) => {
-    if (!["dust", "align", "bubble"].includes(state.phase)) return;
-    if (!(e.target instanceof Element)) return;
-
-    // Prevent page scroll only while touching inside the game screen.
-    if (e.target.closest("#phone")) {
+    // Keep normal page scrolling available.
+    // Only block it while a game drag gesture is actively running.
+    if (isActiveTouchInteraction()) {
       e.preventDefault();
     }
   },
