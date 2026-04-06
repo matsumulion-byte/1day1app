@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <title>シール貼り職人</title>
+    <link rel="stylesheet" href="/apps/2026-04-06/style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">4/6 シールの日</p>
+          <h1>シール貼り職人</h1>
+        </div>
+        <button id="helpBtn" class="ghost-btn" type="button">遊び方</button>
+      </header>
+
+      <main class="layout">
+        <section class="play-panel">
+          <div id="phone" class="phone">
+            <div class="phone__screen">
+              <div class="screen-ui">
+                <div class="screen-ui__top"></div>
+                <div class="screen-ui__cards">
+                  <div class="screen-ui__card"></div>
+                  <div class="screen-ui__card"></div>
+                  <div class="screen-ui__card"></div>
+                </div>
+              </div>
+
+              <div id="dustLayer" class="dust-layer"></div>
+
+              <div
+                id="film"
+                class="film film--hidden"
+                style="--offset-x: 0px; --progress: 0; --tilt: 12px;"
+              >
+                <div class="film__surface">
+                  <div class="film__gloss"></div>
+                  <div id="filmEdge" class="film__edge"></div>
+                </div>
+                <div id="tab" class="film__tab">
+                  <span>ここを動かす</span>
+                </div>
+              </div>
+
+              <div id="bubbleLayer" class="bubble-layer"></div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="ui-panel">
+          <section class="hud">
+            <div class="hud__card">
+              <span class="hud__label">STAGE</span>
+              <span id="stageText" class="hud__value">1 / 3</span>
+            </div>
+            <div class="hud__card">
+              <span class="hud__label">評価</span>
+              <span id="scoreText" class="hud__value">-</span>
+            </div>
+          </section>
+
+          <section class="bottom-panel">
+            <p id="message" class="message">
+              まずはホコリを画面外へ払ってください。
+            </p>
+
+            <div class="meter-wrap">
+              <span class="meter-wrap__label">仕上がり</span>
+              <div class="meter">
+                <div id="qualityBar" class="meter__fill"></div>
+              </div>
+            </div>
+
+            <button id="actionBtn" class="primary-btn" type="button" disabled>
+              次へ
+            </button>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <dialog id="helpDialog" class="dialog">
+      <div class="dialog__content">
+        <h2>遊び方</h2>
+        <ul>
+          <li>最初に、ホコリを指で払って画面の外に出します。</li>
+          <li>次に、下のタブを左右に動かしてフィルムの位置を合わせます。</li>
+          <li>指を離すと、上から自動で貼り付いていきます。</li>
+          <li>貼ったあとに気泡が残ったら、端まで押し出して消します。</li>
+        </ul>
+        <button id="closeHelpBtn" class="primary-btn" type="button">閉じる</button>
+      </div>
+    </dialog>
+
+    <dialog id="resultDialog" class="dialog">
+      <div class="dialog__content dialog__content--center">
+        <p id="resultEmoji" class="result-emoji">✨</p>
+        <h2 id="resultTitle">GOOD</h2>
+        <p id="resultBody" class="result-body">まずまずの仕上がりです。</p>
+        <button id="closeResultBtn" class="primary-btn" type="button">閉じる</button>
+      </div>
+    </dialog>
+
+    <script type="module" src="/apps/2026-04-06/main.js"></script>
+  </body>
+</html>
