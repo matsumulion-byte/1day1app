@@ -2,9 +2,7 @@ const asset = (p) => new URL(p, import.meta.url).toString();
 void asset;
 
 const STAGES = [
-  { dust: 2, applySpeed: 0.02 },
   { dust: 3, applySpeed: 0.024 },
-  { dust: 4, applySpeed: 0.03 },
 ];
 
 const state = {
