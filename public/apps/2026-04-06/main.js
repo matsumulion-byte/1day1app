@@ -513,7 +513,11 @@ resultDialog.addEventListener("click", (e) => {
 document.addEventListener(
   "touchmove",
   (e) => {
-    if (["dust", "align", "bubble"].includes(state.phase)) {
+    if (!["dust", "align", "bubble"].includes(state.phase)) return;
+    if (!(e.target instanceof Element)) return;
+
+    // Prevent page scroll only while touching inside the game screen.
+    if (e.target.closest("#phone")) {
       e.preventDefault();
     }
   },
