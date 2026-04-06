@@ -477,6 +477,23 @@
   .phone.is-bad {
     animation: shake 0.35s ease;
   }
+
+  @media (max-width: 899px) {
+    .app {
+      padding-bottom: calc(96px + var(--safe-bottom));
+    }
+
+    #actionBtn {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: calc(12px + var(--safe-bottom));
+      z-index: 40;
+      width: auto;
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+  }
   
   @keyframes pop {
     0% { transform: scale(0.985); }
