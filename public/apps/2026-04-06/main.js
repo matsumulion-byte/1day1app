@@ -510,32 +510,4 @@ resultDialog.addEventListener("click", (e) => {
   if (!inside) resultDialog.close();
 });
 
-function isActiveTouchInteraction() {
-  if (state.phase === "align") {
-    return state.pointerId !== null;
-  }
-
-  if (state.phase === "dust") {
-    return state.dusts.some((dust) => dust.dragging);
-  }
-
-  if (state.phase === "bubble") {
-    return state.bubbles.some((bubble) => bubble.dragging);
-  }
-
-  return false;
-}
-
-document.addEventListener(
-  "touchmove",
-  (e) => {
-    // Keep normal page scrolling available.
-    // Only block it while a game drag gesture is actively running.
-    if (isActiveTouchInteraction()) {
-      e.preventDefault();
-    }
-  },
-  { passive: false }
-);
-
 resetStage();

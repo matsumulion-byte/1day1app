@@ -26,11 +26,11 @@
     color: var(--text);
     font-family:
       "Hiragino Sans", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
-    overscroll-behavior: none;
+    overscroll-behavior-y: auto;
   }
   
   body {
-    touch-action: pan-y;
+    touch-action: auto;
   }
   
   button {
