@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>タイヤ空気圧チキンレース</title>
+    <link rel="stylesheet" href="/apps/2026-04-07/style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hud">
+        <p class="day-label">4/7 タイヤゲージの日</p>
+        <h1>タイヤ空気圧チキンレース</h1>
+        <p class="lead">
+          空気を入れて、バースト寸前で止めろ。
+        </p>
+      </header>
+
+      <section class="status-panel">
+        <div class="score-box">
+          <span class="label">スコア</span>
+          <strong id="scoreValue">0</strong>
+        </div>
+        <div class="score-box">
+          <span class="label">ベスト</span>
+          <strong id="bestValue">0</strong>
+        </div>
+      </section>
+
+      <section class="play-area">
+        <div id="stage" class="stage">
+          <div id="burstFlash" class="burst-flash"></div>
+
+          <div class="wheel-wrap">
+            <div id="wheel" class="wheel">
+              <div class="wheel-inner"></div>
+              <div class="wheel-center"></div>
+            </div>
+
+            <div id="airLines" class="air-lines" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+        <p id="commentText" class="comment">押してる間だけ空気が入る。いつ止める？</p>
+      </section>
+
+      <section class="controls">
+        <button id="pumpButton" class="pump-button">空気を入れる</button>
+        <button id="stopButton" class="stop-button">ここで止める</button>
+        <button id="retryButton" class="retry-button" hidden>もう一回</button>
+      </section>
+
+      <section class="rules">
+        <p>・空気を入れるほどスコアアップ</p>
+        <p>・危険域に入るとバースト確率が上昇</p>
+        <p>・バーストしたら即終了</p>
+      </section>
+    </main>
+
+    <script type="module" src="/apps/2026-04-07/main.js"></script>
+  </body>
+</html>
