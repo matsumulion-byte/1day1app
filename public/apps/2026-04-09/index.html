@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>名画フィルター美術館</title>
+    <link rel="stylesheet" href="/apps/2026-04-09/style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="header">
+        <p class="eyebrow">4/9 美術館の日</p>
+        <h1>名画フィルター美術館</h1>
+        <p class="lead">あなたの顔を、今日だけ展示作品にします。</p>
+      </header>
+
+      <section class="viewer-wrap">
+        <div class="viewer-card">
+          <div class="viewer-head">
+            <div class="mode-chips">
+              <button class="chip is-active" data-mode="dali" type="button">ダリ風</button>
+              <button class="chip" data-mode="gogh" type="button">ゴッホ風</button>
+            </div>
+            <p class="hint" id="hint">顔を中央に置くと、下側からゆがみます。</p>
+          </div>
+
+          <div class="viewer">
+            <video id="video" playsinline muted autoplay></video>
+            <canvas id="canvas"></canvas>
+            <img id="snapshot" alt="撮影結果" />
+            <div class="overlay-frame">
+              <div class="guide-face"></div>
+            </div>
+            <div class="status" id="status">カメラを起動してください</div>
+          </div>
+
+          <div class="controls">
+            <button id="startBtn" class="btn btn-sub" type="button">カメラ起動</button>
+            <button id="shotBtn" class="btn btn-main" type="button" disabled>撮影</button>
+            <button id="retryBtn" class="btn btn-sub" type="button" disabled>撮り直し</button>
+            <button id="saveBtn" class="btn btn-sub" type="button" disabled>保存</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="info">
+        <div class="info-card">
+          <h2>展示作品について</h2>
+          <ul>
+            <li><strong>ダリ風</strong>：下に向かってとろける、ゆがみの作品</li>
+            <li><strong>ゴッホ風</strong>：色を荒くし、筆致のようなうねりを重ねた作品</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/apps/2026-04-09/main.js"></script>
+  </body>
+</html>
