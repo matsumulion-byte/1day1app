@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+  />
+  <title>フォント当てクイズ</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=M+PLUS+Rounded+1c:wght@400;700&family=Sawarabi+Mincho&family=Shippori+Mincho:wght@400;700&family=Yusei+Magic&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      --bg: #f6f2ea;
+      --panel: rgba(255, 255, 255, 0.78);
+      --text: #1c1c1c;
+      --sub: #6b665f;
+      --line: rgba(0, 0, 0, 0.08);
+      --accent: #111111;
+      --accent-2: #d9c6a3;
+      --correct: #dff3d8;
+      --wrong: #f9d9d9;
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top, #fffdf8 0%, #f4efe6 45%, #efe8dc 100%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+        "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      overscroll-behavior: none;
+    }
+
+    body {
+      padding:
+        calc(16px + var(--safe-top))
+        calc(16px + var(--safe-right))
+        calc(16px + var(--safe-bottom))
+        calc(16px + var(--safe-left));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .card {
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.7);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .screen {
+      display: none;
+      padding: 20px 18px 18px;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid var(--line);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .title {
+      margin: 8px 0 8px;
+      font-size: 28px;
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--sub);
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .progress {
+      margin: 14px 0 12px;
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #1d1d1d 0%, #74674f 100%);
+      transform-origin: left center;
+      transform: scaleX(1);
+      transition: transform 0.12s linear;
+    }
+
+    .question-wrap {
+      margin-top: 8px;
+      padding: 18px 14px 16px;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.75);
+      border: 1px solid var(--line);
+      min-height: 286px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .question-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--sub);
+      font-weight: 700;
+    }
+
+    .sample {
+      width: 100%;
+      min-height: 156px;
+      padding: 16px 12px;
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(249,245,237,0.85) 100%);
+      border: 1px solid rgba(0,0,0,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      line-height: 1.4;
+      letter-spacing: 0.02em;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+      transition: transform 0.18s ease;
+    }
+
+    .sample.pop {
+      animation: pop 0.22s ease;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.98); }
+      60% { transform: scale(1.025); }
+      100% { transform: scale(1); }
+    }
+
+    .sample-text {
+      font-size: clamp(28px, 8vw, 44px);
+      font-weight: 700;
+    }
+
+    .choices {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .choice-btn,
+    .main-btn,
+    .secondary-btn {
+      appearance: none;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      border-radius: 18px;
+      transition: transform 0.12s ease, opacity 0.12s ease, background 0.12s ease;
+    }
+
+    .choice-btn:active,
+    .main-btn:active,
+    .secondary-btn:active {
+      transform: scale(0.98);
+    }
+
+    .choice-btn {
+      min-height: 62px;
+      padding: 12px 10px;
+      background: #fff;
+      border: 1px solid var(--line);
+      font-size: 14px;
+      line-height: 1.35;
+      font-weight: 800;
+      color: var(--text);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.04);
+    }
+
+    .choice-btn.correct {
+      background: var(--correct);
+    }
+
+    .choice-btn.wrong {
+      background: var(--wrong);
+    }
+
+    .choice-btn:disabled {
+      cursor: default;
+      opacity: 1;
+    }
+
+    .feedback {
+      min-height: 24px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .feedback.correct {
+      color: #2c6c2c;
+    }
+
+    .feedback.wrong {
+      color: #9a2f2f;
+    }
+
+    .main-btn {
+      width: 100%;
+      min-height: 58px;
+      margin-top: 22px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .secondary-btn {
+      width: 100%;
+      min-height: 54px;
+      margin-top: 10px;
+      background: #fff;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 800;
+      border: 1px solid var(--line);
+    }
+
+    .result-score {
+      margin: 18px 0 6px;
+      text-align: center;
+      font-size: 58px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    .result-total {
+      font-size: 20px;
+      color: var(--sub);
+      font-weight: 700;
+    }
+
+    .result-rank {
+      margin: 16px 0 10px;
+      text-align: center;
+      font-size: 24px;
+      line-height: 1.4;
+      font-weight: 900;
+    }
+
+    .result-comment {
+      margin: 0;
+      text-align: center;
+      color: var(--sub);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .result-list {
+      margin: 18px 0 0;
+      padding: 14px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid var(--line);
+    }
+
+    .result-list-title {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--sub);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .result-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 0;
+      border-top: 1px solid rgba(0,0,0,0.06);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .result-item:first-of-type {
+      border-top: none;
+      padding-top: 0;
+    }
+
+    .result-item:last-of-type {
+      padding-bottom: 0;
+    }
+
+    .status-ok {
+      font-weight: 900;
+      color: #2c6c2c;
+      flex-shrink: 0;
+    }
+
+    .status-ng {
+      font-weight: 900;
+      color: #9a2f2f;
+      flex-shrink: 0;
+    }
+
+    .font-biz {
+      font-family: "BIZ UDPGothic", sans-serif;
+    }
+
+    .font-sawarabi {
+      font-family: "Sawarabi Mincho", serif;
+    }
+
+    .font-mplus {
+      font-family: "M PLUS Rounded 1c", sans-serif;
+    }
+
+    .font-shippori {
+      font-family: "Shippori Mincho", serif;
+    }
+
+    .font-yusei {
+      font-family: "Yusei Magic", cursive;
+    }
+
+    @media (min-width: 768px) {
+      body {
+        padding-top: 24px;
+        padding-bottom: 24px;
+      }
+
+      .screen {
+        padding: 24px 22px 22px;
+      }
+
+      .question-wrap {
+        min-height: 320px;
+        padding: 20px 18px 18px;
+      }
+
+      .sample {
+        min-height: 180px;
+      }
+
+      .choice-btn {
+        min-height: 68px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card">
+      <!-- Start -->
+      <section class="screen active" id="startScreen">
+        <div class="header">
+          <div class="badge">4/10 フォントの日</div>
+          <div class="badge">全5問</div>
+        </div>
+        <h1 class="title">フォント当てクイズ</h1>
+        <p class="lead">
+          表示される文字を見て、どのフォントかを4択で当てるクイズです。
+          
+        </p>
+        <button class="main-btn" id="startBtn">スタート</button>
+      </section>
+
+      <!-- Game -->
+      <section class="screen" id="gameScreen">
+        <div class="header">
+          <div class="badge" id="questionCount">1 / 5</div>
+          <div class="badge" id="scoreBadge">0問正解</div>
+        </div>
+
+        <div class="progress">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="question-wrap">
+          <div class="question-label">
+            <span>この文字はどのフォント？</span>
+            <span id="timerLabel">5.0</span>
+          </div>
+
+          <div class="sample" id="sampleBox">
+            <div class="sample-text" id="sampleText">松村です</div>
+          </div>
+
+          <div class="feedback" id="feedback"></div>
+
+          <div class="choices" id="choices"></div>
+        </div>
+      </section>
+
+      <!-- Result -->
+      <section class="screen" id="resultScreen">
+        <div class="header">
+          <div class="badge">RESULT</div>
+          <div class="badge" id="resultMini">0 / 5</div>
+        </div>
+
+        <h2 class="title">診断結果</h2>
+
+        <div class="result-score">
+          <span id="finalScore">0</span><span class="result-total"> / 5</span>
+        </div>
+
+        <div class="result-rank" id="resultRank">文字に興味なし</div>
+        <p class="result-comment" id="resultComment"></p>
+
+        <div class="result-list" id="resultList">
+          <p class="result-list-title">YOUR ANSWERS</p>
+        </div>
+
+        <button class="main-btn" id="retryBtn">もう一回</button>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const QUESTIONS = [
+      {
+        fontKey: "biz",
+        fontName: "BIZ UDPGothic",
+        text: "松村です",
+        choices: ["BIZ UDPGothic", "M PLUS Rounded 1c", "Sawarabi Mincho", "Yusei Magic"]
+      },
+      {
+        fontKey: "sawarabi",
+        fontName: "Sawarabi Mincho",
+        text: "松村です",
+        choices: ["Sawarabi Mincho", "Shippori Mincho", "BIZ UDPGothic", "M PLUS Rounded 1c"]
+      },
+      {
+        fontKey: "mplus",
+        fontName: "M PLUS Rounded 1c",
+        text: "松村です",
+        choices: ["M PLUS Rounded 1c", "BIZ UDPGothic", "Sawarabi Mincho", "Yusei Magic"]
+      },
+      {
+        fontKey: "shippori",
+        fontName: "Shippori Mincho",
+        text: "松村です",
+        choices: ["Shippori Mincho", "Sawarabi Mincho", "BIZ UDPGothic", "Yusei Magic"]
+      },
+      {
+        fontKey: "yusei",
+        fontName: "Yusei Magic",
+        text: "松村です",
+        choices: ["Yusei Magic", "M PLUS Rounded 1c", "Shippori Mincho", "BIZ UDPGothic"]
+      }
+    ];
+
+    const TIME_LIMIT = 5.0;
+    const FEEDBACK_DELAY = 700;
+
+    const startScreen = document.getElementById("startScreen");
+    const gameScreen = document.getElementById("gameScreen");
+    const resultScreen = document.getElementById("resultScreen");
+
+    const startBtn = document.getElementById("startBtn");
+    const retryBtn = document.getElementById("retryBtn");
+
+    const questionCount = document.getElementById("questionCount");
+    const scoreBadge = document.getElementById("scoreBadge");
+    const progressBar = document.getElementById("progressBar");
+    const timerLabel = document.getElementById("timerLabel");
+    const sampleBox = document.getElementById("sampleBox");
+    const sampleText = document.getElementById("sampleText");
+    const feedback = document.getElementById("feedback");
+    const choices = document.getElementById("choices");
+
+    const resultMini = document.getElementById("resultMini");
+    const finalScore = document.getElementById("finalScore");
+    const resultRank = document.getElementById("resultRank");
+    const resultComment = document.getElementById("resultComment");
+    const resultList = document.getElementById("resultList");
+
+    let currentIndex = 0;
+    let score = 0;
+    let answers = [];
+    let locked = false;
+    let timeLeft = TIME_LIMIT;
+    let timerId = null;
+    let rafId = null;
+    let startTimestamp = 0;
+
+    const fontClassMap = {
+      biz: "font-biz",
+      sawarabi: "font-sawarabi",
+      mplus: "font-mplus",
+      shippori: "font-shippori",
+      yusei: "font-yusei"
+    };
+
+    function showScreen(target) {
+      [startScreen, gameScreen, resultScreen].forEach((screen) => {
+        screen.classList.remove("active");
+      });
+      target.classList.add("active");
+    }
+
+    function resetGame() {
+      currentIndex = 0;
+      score = 0;
+      answers = [];
+      locked = false;
+      stopTimer();
+      progressBar.style.transform = "scaleX(1)";
+      timerLabel.textContent = TIME_LIMIT.toFixed(1);
+      feedback.textContent = "";
+      feedback.className = "feedback";
+      scoreBadge.textContent = "0問正解";
+      questionCount.textContent = `1 / ${QUESTIONS.length}`;
+    }
+
+    function startGame() {
+      resetGame();
+      showScreen(gameScreen);
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const q = QUESTIONS[currentIndex];
+      locked = false;
+      timeLeft = TIME_LIMIT;
+      feedback.textContent = "";
+      feedback.className = "feedback";
+      questionCount.textContent = `${currentIndex + 1} / ${QUESTIONS.length}`;
+      scoreBadge.textContent = `${score}問正解`;
+
+      sampleText.textContent = q.text;
+      sampleText.className = `sample-text ${fontClassMap[q.fontKey] || ""}`;
+      sampleBox.classList.remove("pop");
+      void sampleBox.offsetWidth;
+      sampleBox.classList.add("pop");
+
+      choices.innerHTML = "";
+      q.choices.forEach((choice) => {
+        const btn = document.createElement("button");
+        btn.className = "choice-btn";
+        btn.type = "button";
+        btn.textContent = choice;
+        btn.addEventListener("click", () => handleAnswer(choice, btn));
+        choices.appendChild(btn);
+      });
+
+      startTimer();
+    }
+
+    function startTimer() {
+      stopTimer();
+      startTimestamp = performance.now();
+
+      const tick = (now) => {
+        const elapsed = (now - startTimestamp) / 1000;
+        timeLeft = Math.max(0, TIME_LIMIT - elapsed);
+        updateTimerUI(timeLeft);
+
+        if (timeLeft <= 0) {
+          stopTimer();
+          handleTimeout();
+          return;
+        }
+
+        rafId = requestAnimationFrame(tick);
+      };
+
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function stopTimer() {
+      if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    }
+
+    function updateTimerUI(sec) {
+      timerLabel.textContent = sec.toFixed(1);
+      const ratio = Math.max(0, sec / TIME_LIMIT);
+      progressBar.style.transform = `scaleX(${ratio})`;
+    }
+
+    function disableChoices() {
+      [...choices.querySelectorAll(".choice-btn")].forEach((btn) => {
+        btn.disabled = true;
+      });
+    }
+
+    function handleAnswer(choice, clickedBtn) {
+      if (locked) return;
+      locked = true;
+      stopTimer();
+      disableChoices();
+
+      const q = QUESTIONS[currentIndex];
+      const isCorrect = choice === q.fontName;
+
+      if (isCorrect) {
+        score += 1;
+        clickedBtn.classList.add("correct");
+        feedback.textContent = "正解";
+        feedback.className = "feedback correct";
+      } else {
+        clickedBtn.classList.add("wrong");
+        [...choices.querySelectorAll(".choice-btn")].forEach((btn) => {
+          if (btn.textContent === q.fontName) btn.classList.add("correct");
+        });
+        feedback.textContent = `不正解 正解は ${q.fontName}`;
+        feedback.className = "feedback wrong";
+      }
+
+      answers.push({
+        question: currentIndex + 1,
+        correctFont: q.fontName,
+        selected: choice,
+        isCorrect
+      });
+
+      scoreBadge.textContent = `${score}問正解`;
+      window.setTimeout(nextStep, FEEDBACK_DELAY);
+    }
+
+    function handleTimeout() {
+      if (locked) return;
+      locked = true;
+      disableChoices();
+
+      const q = QUESTIONS[currentIndex];
+      [...choices.querySelectorAll(".choice-btn")].forEach((btn) => {
+        if (btn.textContent === q.fontName) btn.classList.add("correct");
+      });
+
+      feedback.textContent = `時間切れ 正解は ${q.fontName}`;
+      feedback.className = "feedback wrong";
+
+      answers.push({
+        question: currentIndex + 1,
+        correctFont: q.fontName,
+        selected: "時間切れ",
+        isCorrect: false
+      });
+
+      window.setTimeout(nextStep, FEEDBACK_DELAY);
+    }
+
+    function nextStep() {
+      currentIndex += 1;
+      if (currentIndex >= QUESTIONS.length) {
+        finishGame();
+      } else {
+        renderQuestion();
+      }
+    }
+
+    function getResultData(point) {
+      if (point === 5) {
+        return {
+          rank: "フォントオタク",
+          comment: "かなり見分けられています。たぶん日常でも文字をちゃんと見ています。"
+        };
+      }
+      if (point === 4) {
+        return {
+          rank: "デザイナー気質",
+          comment: "かなり鋭いです。丸みやウロコの差をちゃんと拾えています。"
+        };
+      }
+      if (point === 3) {
+        return {
+          rank: "文字わかる人",
+          comment: "なんとなくではなく、ちゃんと雰囲気で見抜けています。"
+        };
+      }
+      if (point === 2) {
+        return {
+          rank: "なんとなく読める人",
+          comment: "違いは少し掴めています。明朝とゴシックの境目は見えてきています。"
+        };
+      }
+      return {
+        rank: "文字に興味なし",
+        comment: "でも大丈夫です。読めればだいたい勝ちです。"
+      };
+    }
+
+    function finishGame() {
+      showScreen(resultScreen);
+      finalScore.textContent = score;
+      resultMini.textContent = `${score} / ${QUESTIONS.length}`;
+
+      const result = getResultData(score);
+      resultRank.textContent = result.rank;
+      resultComment.textContent = result.comment;
+
+      resultList.innerHTML = '<p class="result-list-title">YOUR ANSWERS</p>';
+
+      answers.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "result-item";
+        row.innerHTML = `
+          <div>
+            <div>Q${item.question} 正解：${escapeHtml(item.correctFont)}</div>
+            <div style="color: var(--sub); font-size: 13px;">あなたの回答：${escapeHtml(item.selected)}</div>
+          </div>
+          <div class="${item.isCorrect ? "status-ok" : "status-ng"}">
+            ${item.isCorrect ? "OK" : "NG"}
+          </div>
+        `;
+        resultList.appendChild(row);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    startBtn.addEventListener("click", startGame);
+    retryBtn.addEventListener("click", startGame);
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) stopTimer();
+      else if (gameScreen.classList.contains("active") && !locked) {
+        startTimer();
+      }
+    });
+  </script>
+</body>
+</html>
