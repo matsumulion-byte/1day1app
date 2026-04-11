@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>ガッツポーズ判定</title>
+<title>ガッツポーズ判定マシーン</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet" />
@@ -168,6 +168,48 @@ video {
 video.active {
   display: block;
 }
+.judge-dock-wrap {
+  position: relative;
+}
+.judge-dock {
+  display: flex;
+  justify-content: stretch;
+}
+body.camera-live {
+  scroll-padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+}
+body.camera-live .judge-dock-wrap {
+  min-height: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+body.camera-live .judge-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(
+    180deg,
+    rgba(7, 10, 18, 0) 0%,
+    rgba(7, 10, 18, 0.88) 28%,
+    rgba(7, 10, 18, 0.96) 100%
+  );
+  box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.35);
+}
+body.camera-live .container {
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+}
+@media (max-width: 520px) {
+  video.active {
+    max-height: min(36vh, 300px);
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    object-position: center 20%;
+  }
+}
 button {
   width: 100%;
   padding: 14px 16px;
@@ -210,9 +252,14 @@ button:disabled {
   box-shadow: 0 4px 0 #8a5a00, 0 12px 28px rgba(255, 201, 74, 0.35);
   font-size: 1.05rem;
   letter-spacing: 0.06em;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .btn-judge:hover {
   filter: brightness(1.05);
+}
+body.camera-live .btn-judge {
+  padding-block: 16px;
 }
 .bar-wrap {
   margin-top: 2px;
@@ -330,7 +377,7 @@ button:disabled {
   <div class="card">
     <header class="hero">
       <p class="eyebrow">LIVE STADIUM</p>
-      <h1>ガッツポーズ判定</h1>
+      <h1>ガッツポーズ判定マシーン</h1>
       <p class="tagline">写真でもカメラでも、その一瞬を熱量スコア化。</p>
     </header>
 
@@ -347,7 +394,11 @@ button:disabled {
       </div>
     </div>
 
-    <button type="button" class="btn-judge" onclick="analyze()">判定する</button>
+    <div class="judge-dock-wrap">
+      <div class="judge-dock">
+        <button type="button" class="btn-judge" onclick="analyze()">判定する</button>
+      </div>
+    </div>
 
     <div class="bar-wrap">
       <div class="bar-label"><span>HYPE</span><span>METER</span></div>
@@ -385,6 +436,10 @@ img.onload = () => {
   ctx.drawImage(img, 0, 0);
 };
 
+function setCameraLive(on) {
+  document.body.classList.toggle('camera-live', !!on);
+}
+
 function stopCamera() {
   if (stream) {
     stream.getTracks().forEach((t) => t.stop());
@@ -394,6 +449,7 @@ function stopCamera() {
   video.classList.remove('active');
   btnCamera.disabled = false;
   btnStopCam.disabled = true;
+  setCameraLive(false);
 }
 
 const resultEl = document.getElementById('result');
@@ -419,6 +475,7 @@ btnCamera.onclick = async () => {
     btnCamera.disabled = true;
     btnStopCam.disabled = false;
     await video.play();
+    setCameraLive(true);
   } catch (e) {
     setResultMessage(
       'カメラを起動できませんでした。権限の許可やHTTPS接続を確認してください。',
