@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ガッツポーズ判定</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+:root {
+  --bg-deep: #070a12;
+  --gold: #ffc94a;
+  --gold-hot: #fff1a6;
+  --cyan: #2ee8ff;
+  --magenta: #ff3cac;
+  --card: rgba(18, 22, 38, 0.82);
+  --stroke: rgba(255, 201, 74, 0.45);
+}
+body {
+  font-family: "Zen Kaku Gothic New", sans-serif;
+  text-align: center;
+  background: var(--bg-deep);
+  color: #f2f5ff;
+  margin: 0;
+  min-height: 100dvh;
+  position: relative;
+  overflow-x: hidden;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(255, 60, 172, 0.22), transparent 55%),
+    radial-gradient(ellipse 90% 60% at 100% 50%, rgba(46, 232, 255, 0.12), transparent 50%),
+    radial-gradient(ellipse 80% 50% at 0% 80%, rgba(255, 201, 74, 0.1), transparent 45%),
+    linear-gradient(180deg, #0a1020 0%, #05060c 100%);
+  pointer-events: none;
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 75%);
+  opacity: 0.6;
+  animation: grid-drift 28s linear infinite;
+  pointer-events: none;
+}
+@keyframes grid-drift {
+  from { transform: translate(0, 0); }
+  to { transform: translate(48px, 48px); }
+}
+.container {
+  max-width: 420px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  position: relative;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: 20px;
+  padding: 20px 16px 22px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.06) inset,
+    0 20px 50px rgba(0, 0, 0, 0.45),
+    0 0 40px rgba(255, 201, 74, 0.08);
+  backdrop-filter: blur(10px);
+}
+.hero {
+  margin-bottom: 4px;
+}
+.eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.35em;
+  color: var(--cyan);
+  text-shadow: 0 0 12px rgba(46, 232, 255, 0.5);
+}
+h1 {
+  margin: 0;
+  font-family: "Dela Gothic One", "Zen Kaku Gothic New", sans-serif;
+  font-size: 1.5rem;
+  line-height: 1.25;
+  font-weight: 400;
+  background: linear-gradient(180deg, var(--gold-hot) 0%, var(--gold) 45%, #c97800 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,0.5));
+}
+.tagline {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(242, 245, 255, 0.65);
+}
+#fileInput {
+  width: 100%;
+  font-size: 13px;
+  color: rgba(242, 245, 255, 0.85);
+}
+#fileInput::file-selector-button {
+  margin-right: 10px;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #1a1204;
+  background: linear-gradient(180deg, var(--gold-hot), var(--gold));
+  box-shadow: 0 2px 0 #8a5a00, 0 6px 16px rgba(255, 201, 74, 0.25);
+}
+#fileInput::file-selector-button:hover {
+  filter: brightness(1.08);
+}
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.screen-frame {
+  position: relative;
+  padding: 3px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--gold), var(--cyan), var(--magenta), var(--gold));
+  background-size: 200% 200%;
+  animation: frame-glow 6s ease infinite;
+  box-shadow: 0 0 24px rgba(46, 232, 255, 0.15);
+}
+@keyframes frame-glow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.screen-frame-inner {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #020308;
+}
+canvas, video {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0;
+  vertical-align: top;
+}
+video {
+  display: none;
+  transform: scaleX(-1);
+}
+video.active {
+  display: block;
+}
+button {
+  width: 100%;
+  padding: 14px 16px;
+  margin: 0;
+  font-size: 16px;
+  font-family: inherit;
+  font-weight: 800;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn-camera {
+  color: #031014;
+  background: linear-gradient(180deg, #8ff8ff, var(--cyan));
+  box-shadow: 0 3px 0 #0a6f7c, 0 8px 20px rgba(46, 232, 255, 0.25);
+}
+.btn-camera:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+.btn-stop {
+  color: rgba(242, 245, 255, 0.9);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.2) inset;
+}
+.btn-stop:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+.btn-judge {
+  color: #1a0f00;
+  background: linear-gradient(180deg, #fff2b0, var(--gold) 55%, #e09a00);
+  box-shadow: 0 4px 0 #8a5a00, 0 12px 28px rgba(255, 201, 74, 0.35);
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+}
+.btn-judge:hover {
+  filter: brightness(1.05);
+}
+.bar-wrap {
+  margin-top: 2px;
+}
+.bar-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: rgba(242, 245, 255, 0.55);
+  margin-bottom: 6px;
+}
+.bar {
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #1a1f2e, #0e111c);
+  box-shadow: 0 2px 0 rgba(255,255,255,0.06) inset, 0 6px 16px rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.bar-inner {
+  position: relative;
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #00ffa6, var(--gold), #ff4b8b);
+  background-size: 200% 100%;
+  transition: width 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 0 16px rgba(255, 236, 120, 0.45);
+  animation: bar-hue 4s linear infinite;
+}
+.bar-inner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255,255,255,0.55) 45%,
+    transparent 55%
+  );
+  background-size: 200% 100%;
+  animation: bar-shine 2.2s ease-in-out infinite;
+  opacity: 0.7;
+}
+@keyframes bar-hue {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+@keyframes bar-shine {
+  0% { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
+}
+.result {
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0;
+  white-space: pre-line;
+  line-height: 1.55;
+  min-height: 3.2em;
+  padding: 12px 10px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.result.pop {
+  animation: result-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes result-pop {
+  from { transform: scale(0.92); opacity: 0.5; }
+  to { transform: scale(1); opacity: 1; }
+}
+.result.tier-0 { color: rgba(242, 245, 255, 0.55); }
+.result.tier-1 { color: #b8e8ff; }
+.result.tier-2 { color: var(--cyan); text-shadow: 0 0 20px rgba(46, 232, 255, 0.35); }
+.result.tier-3 {
+  color: var(--gold);
+  text-shadow: 0 0 18px rgba(255, 201, 74, 0.4);
+  border-color: rgba(255, 201, 74, 0.25);
+}
+.result.tier-4 {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(255, 60, 172, 0.2), rgba(255, 201, 74, 0.15));
+  border-color: rgba(255, 201, 74, 0.45);
+  box-shadow: 0 0 28px rgba(255, 60, 172, 0.25), 0 0 40px rgba(255, 201, 74, 0.12);
+  animation: tier4-pulse 1.6s ease-in-out infinite;
+}
+.result.tier-4.pop {
+  animation: result-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
+    tier4-pulse 1.6s ease-in-out infinite;
+}
+@keyframes tier4-pulse {
+  0%, 100% { box-shadow: 0 0 24px rgba(255, 60, 172, 0.2), 0 0 36px rgba(255, 201, 74, 0.1); }
+  50% { box-shadow: 0 0 36px rgba(255, 60, 172, 0.35), 0 0 48px rgba(255, 201, 74, 0.2); }
+}
+@media (prefers-reduced-motion: reduce) {
+  body::after,
+  .screen-frame,
+  .bar-inner,
+  .bar-inner::after,
+  .result.tier-4 {
+    animation: none;
+  }
+  .result.pop { animation: none; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <header class="hero">
+      <p class="eyebrow">LIVE STADIUM</p>
+      <h1>ガッツポーズ判定</h1>
+      <p class="tagline">写真でもカメラでも、その一瞬を熱量スコア化。</p>
+    </header>
+
+    <input type="file" accept="image/*" id="fileInput">
+    <div class="btn-group">
+      <button type="button" class="btn-camera" id="btnCamera">カメラを起動</button>
+      <button type="button" class="btn-stop" id="btnStopCam" disabled>カメラを停止</button>
+    </div>
+
+    <div class="screen-frame">
+      <div class="screen-frame-inner">
+        <video id="video" playsinline muted></video>
+        <canvas id="canvas"></canvas>
+      </div>
+    </div>
+
+    <button type="button" class="btn-judge" onclick="analyze()">判定する</button>
+
+    <div class="bar-wrap">
+      <div class="bar-label"><span>HYPE</span><span>METER</span></div>
+      <div class="bar"><div class="bar-inner" id="bar"></div></div>
+    </div>
+    <div class="result" id="result"></div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const fileInput = document.getElementById('fileInput');
+const video = document.getElementById('video');
+const btnCamera = document.getElementById('btnCamera');
+const btnStopCam = document.getElementById('btnStopCam');
+
+let img = new Image();
+let stream = null;
+
+fileInput.onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  stopCamera();
+  const reader = new FileReader();
+  reader.onload = ev => {
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+img.onload = () => {
+  canvas.width = img.width;
+  canvas.height = img.height;
+  ctx.drawImage(img, 0, 0);
+};
+
+function stopCamera() {
+  if (stream) {
+    stream.getTracks().forEach((t) => t.stop());
+    stream = null;
+  }
+  video.srcObject = null;
+  video.classList.remove('active');
+  btnCamera.disabled = false;
+  btnStopCam.disabled = true;
+}
+
+const resultEl = document.getElementById('result');
+
+function setResultMessage(text, tier) {
+  resultEl.className = 'result' + (tier ? ' ' + tier : '');
+  resultEl.innerText = text;
+}
+
+btnCamera.onclick = async () => {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    setResultMessage('このブラウザではカメラを利用できません。', 'tier-0');
+    return;
+  }
+  try {
+    stopCamera();
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false,
+    });
+    video.srcObject = stream;
+    video.classList.add('active');
+    btnCamera.disabled = true;
+    btnStopCam.disabled = false;
+    await video.play();
+  } catch (e) {
+    setResultMessage(
+      'カメラを起動できませんでした。権限の許可やHTTPS接続を確認してください。',
+      'tier-0'
+    );
+  }
+};
+
+btnStopCam.onclick = () => stopCamera();
+
+function analyze() {
+  if (stream && video.videoWidth > 0) {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.save();
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0);
+    ctx.restore();
+  }
+
+  const w = canvas.width;
+  const h = canvas.height;
+  if (!w || !h) {
+    setResultMessage('画像を選ぶか、カメラを起動してください。', 'tier-0');
+    return;
+  }
+
+  const imageData = ctx.getImageData(0, 0, w, h).data;
+
+  let score = 0;
+  let count = 0;
+
+  // 上半分の左右を見る
+  for (let y = 0; y < h / 2; y++) {
+    for (let x = 0; x < w; x++) {
+      // 左右の端を優先
+      if (x < w * 0.3 || x > w * 0.7) {
+        const i = (y * w + x) * 4;
+        const r = imageData[i];
+        const g = imageData[i + 1];
+        const b = imageData[i + 2];
+
+        const brightness = (r + g + b) / 3;
+
+        // 明るさの変化っぽいものを雑に拾う
+        if (brightness > 120) {
+          score++;
+        }
+        count++;
+      }
+    }
+  }
+
+  let finalScore = Math.min(100, Math.floor((score / count) * 200));
+
+  const resultText = getResult(finalScore);
+
+  document.getElementById('bar').style.width = finalScore + '%';
+
+  resultEl.innerText = `スコア: ${finalScore} / 100\n${resultText}`;
+  resultEl.className = 'result ' + tierClass(finalScore);
+  void resultEl.offsetWidth;
+  resultEl.classList.add('pop');
+}
+
+function tierClass(score) {
+  if (score < 20) return 'tier-0';
+  if (score < 40) return 'tier-1';
+  if (score < 60) return 'tier-2';
+  if (score < 80) return 'tier-3';
+  return 'tier-4';
+}
+
+function getResult(score) {
+  if (score < 20) return "無";
+  if (score < 40) return "小成功";
+  if (score < 60) return "いい感じ";
+  if (score < 80) return "ガッツポーズ";
+  return "優勝インタビュー";
+}
+</script>
+</body>
+</html>
