@@ -168,47 +168,13 @@ video {
 video.active {
   display: block;
 }
-.judge-dock-wrap {
-  position: relative;
-}
-.judge-dock {
+.preview-judge {
   display: flex;
-  justify-content: stretch;
+  flex-direction: column;
+  gap: 14px;
 }
-body.camera-live {
-  scroll-padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
-}
-body.camera-live .judge-dock-wrap {
-  min-height: calc(64px + env(safe-area-inset-bottom, 0px));
-}
-body.camera-live .judge-dock {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 50;
-  max-width: 420px;
-  margin: 0 auto;
-  padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(
-    180deg,
-    rgba(7, 10, 18, 0) 0%,
-    rgba(7, 10, 18, 0.88) 28%,
-    rgba(7, 10, 18, 0.96) 100%
-  );
-  box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.35);
-}
-body.camera-live .container {
-  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-}
-@media (max-width: 520px) {
-  video.active {
-    max-height: min(36vh, 300px);
-    width: 100%;
-    height: auto;
-    object-fit: cover;
-    object-position: center 20%;
-  }
+body.camera-live .preview-judge {
+  flex-direction: column-reverse;
 }
 button {
   width: 100%;
@@ -257,9 +223,6 @@ button:disabled {
 }
 .btn-judge:hover {
   filter: brightness(1.05);
-}
-body.camera-live .btn-judge {
-  padding-block: 16px;
 }
 .bar-wrap {
   margin-top: 2px;
@@ -387,17 +350,14 @@ body.camera-live .btn-judge {
       <button type="button" class="btn-stop" id="btnStopCam" disabled>カメラを停止</button>
     </div>
 
-    <div class="screen-frame">
-      <div class="screen-frame-inner">
-        <video id="video" playsinline muted></video>
-        <canvas id="canvas"></canvas>
+    <div class="preview-judge">
+      <div class="screen-frame">
+        <div class="screen-frame-inner">
+          <video id="video" playsinline muted></video>
+          <canvas id="canvas"></canvas>
+        </div>
       </div>
-    </div>
-
-    <div class="judge-dock-wrap">
-      <div class="judge-dock">
-        <button type="button" class="btn-judge" onclick="analyze()">判定する</button>
-      </div>
+      <button type="button" class="btn-judge" onclick="analyze()">判定する</button>
     </div>
 
     <div class="bar-wrap">
