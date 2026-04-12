@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+    />
+    <title>ROCKET LAUNCH 4/12</title>
+    <link rel="stylesheet" href="/apps/2026-04-12/style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="hud">
+        <div class="hud__left">
+          <p class="eyebrow">4/12 世界宇宙飛行の日</p>
+          <h1>ロケット打ち上げ</h1>
+        </div>
+        <button id="soundToggle" class="soundBtn" type="button" aria-label="sound toggle">
+          SOUND OFF
+        </button>
+      </header>
+
+      <main class="main">
+        <section class="scene">
+          <div class="canvasWrap">
+            <canvas id="launchCanvas" width="720" height="1280" aria-label="launch scene"></canvas>
+
+            <div class="overlay">
+              <div class="phaseCard">
+                <p id="phaseLabel" class="phaseLabel">PHASE 1</p>
+                <h2 id="phaseTitle" class="phaseTitle">角度をあわせろ</h2>
+                <p id="phaseDesc" class="phaseDesc">
+                  ゲージが中央に来たら画面をタップ
+                </p>
+
+                <div class="meter">
+                  <div class="meter__track">
+                    <div class="meter__target"></div>
+                    <div id="meterNeedle" class="meter__needle"></div>
+                  </div>
+                  <div class="meter__labels">
+                    <span id="meterMin">-18°</span>
+                    <span id="meterMid">90°</span>
+                    <span id="meterMax">+18°</span>
+                  </div>
+                </div>
+
+                <div class="resultRow">
+                  <div class="miniScore">
+                    <span class="miniScore__label">ANGLE</span>
+                    <strong id="angleScore">--</strong>
+                  </div>
+                  <div class="miniScore">
+                    <span class="miniScore__label">POWER</span>
+                    <strong id="powerScore">--</strong>
+                  </div>
+                  <div class="miniScore">
+                    <span class="miniScore__label">TIMING</span>
+                    <strong id="timingScore">--</strong>
+                  </div>
+                </div>
+
+                <button id="actionBtn" class="actionBtn" type="button">
+                  TAP TO START
+                </button>
+              </div>
+
+              <div id="countdown" class="countdown" aria-hidden="true"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="/apps/2026-04-12/main.js"></script>
+  </body>
+</html>
