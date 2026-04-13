@@ -3,8 +3,8 @@ const asset = (p) => new URL(p, import.meta.url).toString();
 const MAX_FILL = 100;
 const OVERFLOW_POINT = 100;
 const SAFE_START = 78;
-const PERFECT_START = 92.5;
-const PERFECT_END = 94.5;
+const PERFECT_START = 97;
+const PERFECT_END = 100;
 const TOTAL_TIME = 15;
 
 const coffeeEl = document.getElementById('coffee');
