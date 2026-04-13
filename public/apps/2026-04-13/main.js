@@ -65,10 +65,9 @@ function getRank(fill, overflow = false, timeout = false) {
   }
 
   if (fill >= PERFECT_START && fill <= PERFECT_END) {
-    const score = 100 - Math.round((PERFECT_END - fill) * 2);
     return {
       label: '神の一杯',
-      score: clamp(score, 95, 100),
+      score: 100,
       text: '表面張力ギリギリ。喫茶店の主も黙る精度。',
     };
   }
