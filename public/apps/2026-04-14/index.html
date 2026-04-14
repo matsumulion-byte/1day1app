@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+  />
+  <title>4/14 パートナー占い</title>
+  <link rel="stylesheet" href="/apps/2026-04-14/style.css" />
+</head>
+<body>
+  <div id="app" class="app">
+    <header class="hero">
+      <p class="day">4/14 PARTNER DAY</p>
+      <h1>あなたにぴったりの<br />相棒診断</h1>
+      <p class="lead">
+        5つの質問に答えるだけ。<br />
+        あなたと相性のいい“パートナータイプ”を占います。
+      </p>
+    </header>
+
+    <main class="card" id="card">
+      <section id="startScreen" class="screen active">
+        <div class="badge">診断時間 約30秒</div>
+        <p class="intro-text">
+          恋愛、友達、仕事相手。<br />
+          あなたに合うのは、どんなタイプ？
+        </p>
+        <button id="startButton" class="primary-button">診断スタート</button>
+      </section>
+
+      <section id="questionScreen" class="screen">
+        <div class="progress-wrap">
+          <div class="progress-text">
+            <span id="currentNumber">1</span> / <span id="totalNumber">5</span>
+          </div>
+          <div class="progress-bar">
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+        </div>
+
+        <p id="questionText" class="question-text"></p>
+
+        <div id="answers" class="answers"></div>
+      </section>
+
+      <section id="resultScreen" class="screen">
+        <div class="result-mark">診断結果</div>
+        <p id="resultType" class="result-type"></p>
+
+        <div class="result-image-wrap">
+          <img id="resultImage" class="result-image" src="" alt="" />
+        </div>
+
+        <h2 id="resultTitle" class="result-title"></h2>
+        <p id="resultDescription" class="result-description"></p>
+
+        <div class="result-subbox">
+          <h3>こんな相手が合います</h3>
+          <p id="resultMatch" class="result-match"></p>
+        </div>
+
+        <div class="result-subbox">
+          <h3>関係がうまくいくコツ</h3>
+          <p id="resultTip" class="result-tip"></p>
+        </div>
+
+        <div class="result-actions">
+          <button id="retryButton" class="secondary-button">もう一度診断する</button>
+          <button id="shareButton" class="primary-button">結果をコピー</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Partner Day mini app</p>
+    </footer>
+  </div>
+
+  <script type="module" src="/apps/2026-04-14/main.js"></script>
+</body>
+</html>
