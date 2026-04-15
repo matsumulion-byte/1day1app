@@ -1,0 +1,214 @@
+:root {
+    --bg1: #09111f;
+    --bg2: #13233d;
+    --panel: rgba(8, 13, 24, 0.72);
+    --line: rgba(255, 255, 255, 0.14);
+    --text: #f4f7fb;
+    --sub: rgba(244, 247, 251, 0.72);
+    --accent: #78e08f;
+    --danger: #ff6b6b;
+    --warn: #ffd166;
+  }
+  
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background:
+      radial-gradient(circle at top, #24426f 0%, rgba(36, 66, 111, 0) 36%),
+      linear-gradient(180deg, var(--bg2) 0%, var(--bg1) 100%);
+    color: var(--text);
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    touch-action: manipulation;
+    overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  }
+  
+  body {
+    min-height: 100vh;
+  }
+  
+  .app {
+    width: min(100vw, 480px);
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 12px 16px;
+    gap: 12px;
+  }
+  
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 12px 14px;
+    backdrop-filter: blur(8px);
+  }
+  
+  .hud__label {
+    margin: 0 0 4px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--sub);
+  }
+  
+  .hud__title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+  }
+  
+  .hud__right {
+    min-width: 120px;
+  }
+  
+  .meter__label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--sub);
+    text-align: right;
+  }
+  
+  .meter__bar {
+    width: 120px;
+    height: 10px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .meter__fill {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #7ef29a 0%, #d9ff76 100%);
+    transform-origin: left center;
+  }
+  
+  .game-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    overflow: hidden;
+  }
+  
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 390 / 740;
+    background:
+      linear-gradient(180deg, rgba(141, 201, 255, 0.2) 0%, rgba(21, 28, 40, 0) 42%),
+      linear-gradient(180deg, #18365f 0%, #101b2b 65%, #0a1119 100%);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  }
+  
+  .center-guide {
+    position: absolute;
+    left: 50%;
+    top: 22px;
+    transform: translateX(-50%);
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(6, 10, 20, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    font-size: 13px;
+    color: var(--sub);
+    pointer-events: none;
+  }
+  
+  .controls {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 12px;
+    text-align: center;
+  }
+  
+  .start-button,
+  .overlay__button {
+    width: 100%;
+    border: 0;
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #09111f;
+    background: linear-gradient(180deg, #f7ff8d 0%, #8dffbd 100%);
+  }
+  
+  .controls__note {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: var(--sub);
+    line-height: 1.5;
+  }
+  
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(3, 6, 13, 0.64);
+    backdrop-filter: blur(6px);
+  }
+  
+  .overlay.is-hidden {
+    display: none;
+  }
+  
+  .overlay__card {
+    width: 100%;
+    padding: 20px;
+    border-radius: 20px;
+    background: rgba(9, 16, 29, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    text-align: center;
+  }
+  
+  .overlay__badge {
+    margin: 0 0 8px;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    color: var(--warn);
+  }
+  
+  .overlay__title {
+    margin: 0 0 10px;
+    font-size: 28px;
+    line-height: 1.2;
+  }
+  
+  .overlay__text {
+    margin: 0 0 18px;
+    font-size: 14px;
+    color: var(--sub);
+    line-height: 1.7;
+  }
+  
+  @media (min-width: 768px) {
+    .app {
+      padding-top: 20px;
+      padding-bottom: 24px;
+    }
+  }
