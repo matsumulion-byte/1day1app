@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>大志メーカー</title>
+    <link rel="stylesheet" href="/apps/2026-04-16/style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero">
+        <img id="statueImage" class="statue" alt="クラーク博士風の銅像" />
+        <p class="eyebrow">Boys, be ambitious.</p>
+        <h1>大志メーカー</h1>
+        <p class="lead">小さな願いを、必要以上に壮大化します。</p>
+      </section>
+
+      <section class="panel input-panel">
+        <label class="label" for="wishInput">あなたの願い</label>
+        <textarea
+          id="wishInput"
+          class="wish-input"
+          rows="3"
+          maxlength="60"
+          placeholder="例：朝ちゃんと起きたい"
+        ></textarea>
+
+        <div class="actions">
+          <button id="generateBtn" class="btn primary">大志にする</button>
+          <button id="sampleBtn" class="btn secondary" type="button">おまかせ</button>
+        </div>
+
+        <p class="hint">例：痩せたい / 貯金したい / 部屋を片付けたい / モテたい</p>
+      </section>
+
+      <section id="resultSection" class="panel result-panel is-hidden" aria-live="polite">
+        <p class="result-head">本日の大志</p>
+
+        <div class="result-card">
+          <div class="result-row">
+            <p class="result-label">大志名</p>
+            <p id="planName" class="result-value large"></p>
+          </div>
+
+          <div class="result-row">
+            <p class="result-label">標語</p>
+            <p id="slogan" class="result-value"></p>
+          </div>
+
+          <div class="result-row two-col">
+            <div>
+              <p class="result-label">二つ名</p>
+              <p id="titleName" class="result-value"></p>
+            </div>
+            <div>
+              <p class="result-label">スケール</p>
+              <p id="scale" class="result-value"></p>
+            </div>
+          </div>
+
+          <div class="result-row">
+            <p class="result-label">ありがたい一言</p>
+            <p id="comment" class="result-value comment"></p>
+          </div>
+        </div>
+
+        <div class="actions result-actions">
+          <button id="regenBtn" class="btn primary">もう一度大志にする</button>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/apps/2026-04-16/main.js"></script>
+  </body>
+</html>
