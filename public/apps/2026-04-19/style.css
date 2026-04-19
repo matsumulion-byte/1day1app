@@ -1,0 +1,236 @@
+:root {
+    --bg: #f5f1e8;
+    --card: #fffdf8;
+    --text: #1f1b16;
+    --sub: #6f665b;
+    --line: #d9cfbf;
+    --accent: #1f1b16;
+    --accent-2: #8d1f1f;
+    --ok: #0b7a43;
+    --ng: #b02a2a;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    --radius: 24px;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(circle at top, #fff8eb 0%, #f5f1e8 45%, #ece5d6 100%);
+  }
+  
+  body {
+    min-height: 100dvh;
+  }
+  
+  button {
+    font: inherit;
+  }
+  
+  .app {
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: 20px 16px 28px;
+  }
+  
+  .screen {
+    display: none;
+    width: 100%;
+    max-width: 560px;
+  }
+  
+  .screen.active {
+    display: block;
+  }
+  
+  .card {
+    background: var(--card);
+    border: 2px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  
+  .intro-card,
+  .result-card {
+    padding: 32px 24px;
+    text-align: center;
+  }
+  
+  .quiz-card {
+    padding: 20px 16px 18px;
+  }
+  
+  .eyebrow {
+    margin: 0 0 10px;
+    color: var(--sub);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+  }
+  
+  h1,
+  h2 {
+    margin: 0;
+    line-height: 1.2;
+  }
+  
+  h1 {
+    font-size: clamp(30px, 7vw, 42px);
+  }
+  
+  h2 {
+    font-size: clamp(34px, 9vw, 48px);
+  }
+  
+  .intro-text,
+  .result-text {
+    margin: 16px 0 0;
+    line-height: 1.7;
+    color: var(--sub);
+    font-size: 15px;
+  }
+  
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-weight: 700;
+  }
+  
+  .progress,
+  .score {
+    background: rgba(255, 255, 255, 0.72);
+    border: 2px solid var(--line);
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  .question-label {
+    margin: 0 0 14px;
+    text-align: center;
+    color: var(--sub);
+    font-size: 14px;
+    font-weight: 700;
+  }
+  
+  .image-wrap {
+    width: min(72vw, 320px);
+    height: min(72vw, 320px);
+    margin: 0 auto 18px;
+    border-radius: 22px;
+    border: 2px dashed var(--line);
+    background:
+      linear-gradient(180deg, #f8f4ea 0%, #f3ecdd 100%);
+    display: grid;
+    place-items: center;
+    padding: 14px;
+  }
+  
+  #country-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: auto;
+    filter: brightness(0);
+  }
+  
+  .choices {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .choice-btn,
+  .primary-btn,
+  .secondary-btn {
+    appearance: none;
+    border: none;
+    border-radius: 16px;
+    padding: 14px 16px;
+    min-height: 52px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.08s ease, opacity 0.2s ease, background-color 0.2s ease;
+  }
+  
+  .choice-btn:active,
+  .primary-btn:active,
+  .secondary-btn:active {
+    transform: scale(0.98);
+  }
+  
+  .choice-btn {
+    background: #ffffff;
+    color: var(--text);
+    border: 2px solid var(--line);
+  }
+  
+  .choice-btn.correct {
+    background: rgba(11, 122, 67, 0.08);
+    border-color: var(--ok);
+    color: var(--ok);
+  }
+  
+  .choice-btn.wrong {
+    background: rgba(176, 42, 42, 0.08);
+    border-color: var(--ng);
+    color: var(--ng);
+  }
+  
+  .choice-btn:disabled {
+    cursor: default;
+    opacity: 1;
+  }
+  
+  .primary-btn {
+    width: 100%;
+    margin-top: 22px;
+    background: var(--accent);
+    color: #fff;
+  }
+  
+  .secondary-btn {
+    width: 100%;
+    margin-top: 8px;
+    background: #efe7d8;
+    color: var(--text);
+    border: 2px solid var(--line);
+  }
+  
+  .feedback {
+    min-height: 28px;
+    margin: 14px 0 0;
+    text-align: center;
+    font-weight: 700;
+  }
+  
+  .feedback.ok {
+    color: var(--ok);
+  }
+  
+  .feedback.ng {
+    color: var(--ng);
+  }
+  
+  .hidden {
+    display: none;
+  }
+  
+  @media (min-width: 640px) {
+    .quiz-card {
+      padding: 24px 22px 20px;
+    }
+  
+    .choices {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
