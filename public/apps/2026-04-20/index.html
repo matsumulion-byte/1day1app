@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+    />
+    <title>ジャムぬり職人</title>
+    <link rel="stylesheet" href="/apps/2026-04-20/style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hud">
+        <div class="hud__top">
+          <p class="title">ジャムぬり職人</p>
+          <p class="subtitle">パン全体をきれいにぬれ</p>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <span class="stat__label">TIME</span>
+            <span class="stat__value" id="timeText">15.0</span>
+          </div>
+          <div class="stat">
+            <span class="stat__label">カバー率</span>
+            <span class="stat__value" id="coverText">0%</span>
+          </div>
+          <div class="stat">
+            <span class="stat__label">はみ出し</span>
+            <span class="stat__value" id="missText">0%</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="stageWrap">
+        <div class="stageFrame" id="stageFrame">
+          <canvas id="gameCanvas" aria-label="ジャムぬりゲーム"></canvas>
+
+          <div class="overlay overlay--start" id="startOverlay">
+            <div class="panel">
+              <h1>ジャムぬり職人</h1>
+              <p>
+                指でなぞってパンにジャムをぬろう。<br />
+                白い部分を広くぬるほど高得点。<br />
+                外にはみ出すと減点。
+              </p>
+              <button id="startButton" class="btn">スタート</button>
+            </div>
+          </div>
+
+          <div class="overlay overlay--result" id="resultOverlay" hidden>
+            <div class="panel">
+              <p class="resultRank" id="resultRank">朝の匠</p>
+              <p class="resultScore" id="resultScore">88点</p>
+              <div class="resultBreakdown">
+                <p>カバー率：<span id="resultCover">0%</span></p>
+                <p>均一さ：<span id="resultBalance">0%</span></p>
+                <p>はみ出し：<span id="resultMiss">0%</span></p>
+              </div>
+              <button id="retryButton" class="btn">もう一回</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="guide">
+        <p>パン全体をムラなくぬるのがコツ</p>
+      </footer>
+    </main>
+
+    <script type="module" src="/apps/2026-04-20/main.js"></script>
+  </body>
+</html>
