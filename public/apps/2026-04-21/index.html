@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>発明研究所</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    h1 {
+      margin-bottom: 16px;
+      font-size: 22px;
+    }
+    .card {
+      width: 90%;
+      max-width: 360px;
+      background: #222;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 0 0 rgba(255,255,255,0);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card.active {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(255,255,255,0.2);
+    }
+    .title {
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+    .desc {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 16px;
+    }
+    .stats {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #fff;
+      color: #000;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>発明研究所</h1>
+
+<div class="card" id="card">
+  <div class="title" id="title">ボタンを押して発明</div>
+  <div class="desc" id="desc"></div>
+  <div class="stats" id="stats"></div>
+</div>
+
+<div class="buttons">
+  <button id="generate">発明する</button>
+  <button id="share">シェア</button>
+</div>
+
+<script type="module" src="/apps/2026-04-21/main.js"></script>
+</body>
+</html>
