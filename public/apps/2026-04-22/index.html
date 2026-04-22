@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+    />
+    <title>ハミングをドレミ化するやつ</title>
+    <link rel="stylesheet" href="/apps/2026-04-22/style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="card">
+        <p class="eyebrow">4/22</p>
+        <h1 class="title">ハミングをドレミ化するやつ</h1>
+        <p class="lead">鼻歌を音の名前にします</p>
+
+        <div class="orb-wrap" aria-hidden="true">
+          <div class="orb" id="orb"></div>
+          <div class="ring ring-a"></div>
+          <div class="ring ring-b"></div>
+        </div>
+
+        <div class="status" id="status">STARTを押して6秒間ハミングしてください</div>
+        <div class="timer" id="timer">00.0</div>
+
+        <div class="meter">
+          <div class="meter-bar" id="meterBar"></div>
+        </div>
+
+        <div class="controls">
+          <button class="btn primary" id="startBtn">START</button>
+          <button class="btn" id="retryBtn" disabled>もう一回</button>
+        </div>
+
+        <section class="result" id="result">
+          <h2 class="result-title">あなたのメロディ</h2>
+          <p class="notes-ja" id="notesJa">---</p>
+          <p class="notes-en" id="notesEn">---</p>
+          <p class="sub" id="subText">録音するとここに結果が出ます</p>
+        </section>
+
+        <p class="footnote">
+          ※ マイク許可が必要です。iPhoneではSafari、AndroidではChrome推奨。<br />
+          ※ https環境かlocalhostで動かしてください。
+        </p>
+      </section>
+    </main>
+
+    <script type="module" src="/apps/2026-04-22/main.js"></script>
+  </body>
+</html>
