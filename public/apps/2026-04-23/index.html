@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>松村新書 帯メーカー</title>
+  <link rel="stylesheet" href="/apps/2026-04-23/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <p class="hero__publisher">松村新書</p>
+      <h1 class="hero__title">帯メーカー</h1>
+      <p class="hero__lead">タイトルと著者名を入れるだけで、松村推薦帯つきの本を作れます。</p>
+    </header>
+
+    <main class="main">
+      <section class="panel panel--form">
+        <div class="form-row">
+          <label class="label" for="titleInput">タイトル</label>
+          <input id="titleInput" class="text-input" type="text" maxlength="40" placeholder="例：松村のすべて" />
+        </div>
+
+        <div class="form-row">
+          <label class="label" for="authorInput">著者名</label>
+          <input id="authorInput" class="text-input" type="text" maxlength="24" placeholder="例：松村 広則" />
+        </div>
+
+        <div class="form-row">
+          <span class="label">表紙タイプ</span>
+          <div class="toggle-group" role="radiogroup" aria-label="表紙タイプ">
+            <label class="toggle">
+              <input type="radio" name="coverMode" value="photo" checked />
+              <span>写真あり</span>
+            </label>
+            <label class="toggle">
+              <input type="radio" name="coverMode" value="plain" />
+              <span>写真なし</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-row" id="imageRow">
+          <label class="label" for="imageInput">写真</label>
+          <input id="imageInput" class="file-input" type="file" accept="image/*" />
+          <p class="note">写真ありの場合のみ使用します。未選択でも仮の表紙で生成できます。</p>
+        </div>
+
+        <div class="actions">
+          <button id="generateBtn" class="btn btn--primary" type="button">表紙をつくる</button>
+          <button id="rerollBtn" class="btn" type="button">帯だけ変える</button>
+        </div>
+      </section>
+
+      <section class="panel panel--preview">
+        <div class="preview-wrap">
+          <div id="bookCard" class="book book--photo" aria-live="polite">
+            <div class="book__publisher">松村新書</div>
+
+            <div class="book__photo-area" id="photoArea">
+              <img id="photoPreview" class="book__photo" alt="表紙写真" />
+              <div id="photoPlaceholder" class="book__photo-placeholder">
+                <div class="book__photo-placeholder-inner">
+                  <p>PHOTO</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="book__plain-area" id="plainArea">
+              <div class="book__plain-topline"></div>
+              <div class="book__plain-bottomline"></div>
+            </div>
+
+            <div class="book__meta">
+              <h2 id="bookTitle" class="book__title">ここにタイトルが入ります</h2>
+              <p id="bookAuthor" class="book__author">著者名</p>
+            </div>
+
+            <div class="obi">
+              <p id="obiText" class="obi__text">大丈夫。松村の攻略本だよ。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions actions--preview">
+          <button id="saveBtn" class="btn btn--primary" type="button">画像を保存</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/apps/2026-04-23/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,381 @@
+:root {
+    --bg: #f3efe6;
+    --panel: rgba(255, 255, 255, 0.78);
+    --text: #1f1f1f;
+    --sub: #67625a;
+    --line: rgba(0, 0, 0, 0.08);
+    --accent: #d9b64f;
+    --accent-strong: #caa334;
+    --shinsho-red: #9f2f2f;
+    --shinsho-navy: #213b67;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    --radius: 20px;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(180deg, #eee7da 0%, #f7f2e9 100%);
+    color: var(--text);
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic",
+      "Noto Sans JP", sans-serif;
+  }
+  
+  body {
+    min-height: 100vh;
+  }
+  
+  button,
+  input {
+    font: inherit;
+  }
+  
+  .app {
+    width: min(100%, 980px);
+    margin: 0 auto;
+    padding: 20px 16px 32px;
+  }
+  
+  .hero {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .hero__publisher {
+    margin: 0 0 6px;
+    color: var(--sub);
+    font-size: 13px;
+    letter-spacing: 0.14em;
+  }
+  
+  .hero__title {
+    margin: 0;
+    font-size: clamp(28px, 6vw, 40px);
+    line-height: 1.1;
+  }
+  
+  .hero__lead {
+    margin: 10px auto 0;
+    max-width: 38em;
+    color: var(--sub);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  
+  .main {
+    display: grid;
+    gap: 16px;
+  }
+  
+  .panel {
+    background: var(--panel);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+  }
+  
+  .form-row + .form-row {
+    margin-top: 14px;
+  }
+  
+  .label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  
+  .text-input,
+  .file-input {
+    width: 100%;
+  }
+  
+  .text-input {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 14px;
+    padding: 14px 14px;
+    background: #fff;
+    font-size: 16px;
+  }
+  
+  .file-input {
+    font-size: 14px;
+  }
+  
+  .note {
+    margin: 8px 0 0;
+    color: var(--sub);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  
+  .toggle-group {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .toggle {
+    flex: 1;
+    cursor: pointer;
+  }
+  
+  .toggle input {
+    display: none;
+  }
+  
+  .toggle span {
+    display: block;
+    text-align: center;
+    padding: 12px 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: #fff;
+    font-weight: 700;
+  }
+  
+  .toggle input:checked + span {
+    background: #1f1f1f;
+    color: #fff;
+    border-color: #1f1f1f;
+  }
+  
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  
+  .actions--preview {
+    margin-top: 14px;
+  }
+  
+  .btn {
+    appearance: none;
+    border: none;
+    border-radius: 999px;
+    padding: 14px 18px;
+    background: #e5ddd0;
+    color: #1f1f1f;
+    font-weight: 800;
+    cursor: pointer;
+    flex: 1;
+  }
+  
+  .btn--primary {
+    background: #1f1f1f;
+    color: #fff;
+  }
+  
+  .preview-wrap {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .book {
+    position: relative;
+    width: min(100%, 360px);
+    aspect-ratio: 2 / 3;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #faf7f0;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+  }
+  
+  .book__publisher {
+    position: absolute;
+    top: 14px;
+    left: 16px;
+    z-index: 5;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: rgba(0, 0, 0, 0.72);
+  }
+  
+  .book__photo-area,
+  .book__plain-area {
+    position: absolute;
+    inset: 0;
+  }
+  
+  .book__photo-area {
+    background:
+      linear-gradient(180deg, rgba(25, 25, 25, 0.12) 0%, rgba(25, 25, 25, 0.35) 100%),
+      linear-gradient(135deg, #c0bbb0 0%, #7d776d 100%);
+  }
+  
+  .book__photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+  
+  .book__photo.is-visible {
+    display: block;
+  }
+  
+  .book__photo-placeholder {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+  }
+  
+  .book__photo-placeholder.is-hidden {
+    display: none;
+  }
+  
+  .book__photo-placeholder-inner {
+    width: 100%;
+    height: 100%;
+    border: 1.5px solid rgba(255, 255, 255, 0.5);
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  }
+  
+  .book__photo-placeholder p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 28px;
+    letter-spacing: 0.22em;
+    font-weight: 800;
+  }
+  
+  .book__plain-area {
+    display: none;
+    background: #f6f0e4;
+  }
+  
+  .book__plain-topline,
+  .book__plain-bottomline {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    background: var(--shinsho-red);
+  }
+  
+  .book__plain-topline {
+    top: 46px;
+    height: 12px;
+  }
+  
+  .book__plain-bottomline {
+    bottom: 34px;
+    height: 8px;
+  }
+  
+  .book__meta {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 48px;
+    z-index: 4;
+  }
+  
+  .book__title {
+    margin: 0;
+    font-size: clamp(24px, 5vw, 32px);
+    line-height: 1.28;
+    font-weight: 800;
+    word-break: break-word;
+    letter-spacing: 0.02em;
+  }
+  
+  .book__author {
+    margin: 12px 0 0;
+    font-size: 16px;
+    font-weight: 700;
+    opacity: 0.92;
+  }
+  
+  .obi {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 53%;
+    transform: translateY(-50%);
+    z-index: 6;
+    background: linear-gradient(180deg, #f2ce63 0%, #dfb843 100%);
+    color: #111;
+    padding: 16px 18px;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  }
+  
+  .obi__text {
+    margin: 0;
+    text-align: center;
+    font-size: clamp(19px, 4.8vw, 28px);
+    line-height: 1.3;
+    font-weight: 900;
+    letter-spacing: 0.01em;
+  }
+  
+  .book--photo .book__title,
+  .book--photo .book__author {
+    color: #fff;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
+  }
+  
+  .book--plain .book__photo-area {
+    display: none;
+  }
+  
+  .book--plain .book__plain-area {
+    display: block;
+  }
+  
+  .book--plain .book__publisher {
+    color: var(--shinsho-navy);
+  }
+  
+  .book--plain .book__meta {
+    top: 92px;
+    bottom: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .book--plain .book__title {
+    color: #252525;
+    text-shadow: none;
+    font-size: clamp(26px, 5.4vw, 34px);
+    line-height: 1.45;
+  }
+  
+  .book--plain .book__author {
+    color: #353535;
+    margin-top: 18px;
+    text-shadow: none;
+  }
+  
+  @media (min-width: 860px) {
+    .app {
+      padding-top: 28px;
+    }
+  
+    .main {
+      grid-template-columns: 1fr 1fr;
+      align-items: start;
+    }
+  
+    .panel {
+      padding: 20px;
+    }
+  }
