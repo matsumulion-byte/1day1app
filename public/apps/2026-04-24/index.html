@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>松村ダービー</title>
+  <link rel="stylesheet" href="/apps/2026-04-24/style.css" />
+</head>
+<body>
+  <main id="app">
+    <section id="game">
+      <div id="sky"></div>
+      <div id="track">
+        <div class="rail rail-back"></div>
+        <div class="grass grass-a"></div>
+        <div class="grass grass-b"></div>
+        <div class="rail rail-front"></div>
+        <div id="goalLine"></div>
+      </div>
+
+      <img id="horse" alt="松村ダービー出走馬" />
+
+      <div id="hud">
+        <div class="title">松村ダービー</div>
+        <div class="status">
+          <span>距離 <b id="distanceText">0</b>m</span>
+          <span>タイム <b id="timeText">0.00</b></span>
+        </div>
+        <div class="meter">
+          <div id="staminaBar"></div>
+        </div>
+      </div>
+
+      <div id="startPanel">
+        <h1>松村ダービー</h1>
+        <p>連打で加速。押しすぎるとスタミナ切れ。</p>
+        <button id="startBtn">出走</button>
+      </div>
+
+      <div id="resultPanel" class="hidden">
+        <h2 id="resultTitle">GOAL!</h2>
+        <p id="resultText"></p>
+        <button id="retryBtn">もう一回</button>
+      </div>
+    </section>
+
+    <section id="controls">
+      <button id="runBtn">追う！</button>
+    </section>
+
+    <audio id="bgm" src="/apps/2026-04-24/assets/bgm.mp3" loop preload="auto"></audio>
+  </main>
+
+  <script type="module" src="/apps/2026-04-24/main.js"></script>
+</body>
+</html>
