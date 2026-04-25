@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>初任給の使い道ルーレット</title>
+  <link rel="stylesheet" href="/apps/2026-04-25/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <p class="date">4/25 初任給の日</p>
+      <h1>初任給の<br>使い道ルーレット</h1>
+      <p class="lead">誰に、何を、どうする？<br>社会人最初の大決断を運に任せよう。</p>
+    </section>
+
+    <section class="roulette" aria-label="初任給ルーレット">
+      <div class="slot">
+        <span class="label">誰に</span>
+        <div id="who" class="value"></div>
+      </div>
+
+      <div class="slot">
+        <span class="label">何を</span>
+        <div id="what" class="value"></div>
+      </div>
+
+      <div class="slot">
+        <span class="label">どうする</span>
+        <div id="how" class="value"></div>
+      </div>
+    </section>
+
+    <button id="startBtn" class="start-btn">初任給を使う</button>
+
+    <div id="resultModal" class="modal hidden">
+      <div class="modal-card">
+        <p class="result-label">あなたの初任給の使い道</p>
+        <p id="resultText" class="result-text"></p>
+        <p id="comment" class="comment"></p>
+        <button id="closeBtn" class="close-btn">閉じる</button>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="/apps/2026-04-25/main.js"></script>
+</body>
+</html>
