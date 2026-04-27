@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>松村ソクラテス問答</title>
+  <link rel="stylesheet" href="/apps/2026-04-27/style.css" />
+</head>
+<body>
+  <div id="app">
+    <main class="screen">
+      <section class="hero">
+        <img id="socratesImg" class="socrates" alt="ソクラテス松村" />
+        <div class="titleBlock">
+          <p class="date">4.27 哲学の日</p>
+          <h1>松村ソクラテス問答</h1>
+          <p class="lead">それは本当にそうですか？</p>
+        </div>
+      </section>
+
+      <section id="startPanel" class="panel">
+        <label class="label" for="worryInput">相談したいこと</label>
+        <textarea id="worryInput" placeholder="例：友達ができない / お金がない / 将来が不安"></textarea>
+        <button id="startBtn" class="mainBtn">問答をはじめる</button>
+      </section>
+
+      <section id="questionPanel" class="panel hidden">
+        <div class="progress">
+          <span id="stepText">問 1 / 5</span>
+          <div class="bar">
+            <div id="barFill"></div>
+          </div>
+        </div>
+
+        <div class="speech">
+          <p id="questionText"></p>
+        </div>
+
+        <div id="answerButtons" class="answers"></div>
+      </section>
+    </main>
+
+    <div id="resultModal" class="modal hidden">
+      <div class="modalCard">
+        <p class="modalLabel">あなたは</p>
+        <h2 id="resultText"></h2>
+        <button id="retryBtn" class="mainBtn">もう一度問われる</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/apps/2026-04-27/main.js"></script>
+</body>
+</html>
