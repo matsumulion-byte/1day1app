@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>缶ジュース・シャッフル</title>
+  <link rel="stylesheet" href="/apps/2026-04-28/style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="header">
+      <div class="date">4/28 缶ジュース発売記念日</div>
+      <h1>缶ジュース・シャッフル</h1>
+      <p>当たりの缶を見失うな。</p>
+    </header>
+  
+    <main class="game">
+      <div class="status">
+        <div>ROUND <span id="round">1</span> / 3</div>
+        <div>SCORE <span id="score">0</span></div>
+      </div>
+  
+      <div id="message" class="message">当たり缶を覚えてください</div>
+  
+      <div class="stage" id="stage">
+        <button class="can" data-index="0">
+          <span class="tab"></span>
+          <span class="photo-label"></span>
+        </button>
+        <button class="can" data-index="1">
+          <span class="tab"></span>
+          <span class="photo-label"></span>
+        </button>
+        <button class="can" data-index="2">
+          <span class="tab"></span>
+          <span class="photo-label"></span>
+        </button>
+      </div>
+  
+      <button id="startBtn" class="main-btn">START</button>
+    </main>
+  
+    <div id="resultModal" class="modal hidden">
+      <div class="modal-inner">
+        <div class="modal-title" id="resultTitle"></div>
+        <p id="resultText"></p>
+        <button id="retryBtn" class="main-btn">もう一回</button>
+      </div>
+    </div>
+  </div>
+  
+  <script type="module" src="/apps/2026-04-28/main.js"></script>
+</body>
+</html>

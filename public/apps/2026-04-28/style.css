@@ -1,0 +1,225 @@
+* {
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    background: #f5efe4;
+    color: #222;
+  }
+  
+  #app {
+    min-height: 100vh;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .date {
+    display: inline-block;
+    padding: 6px 12px;
+    border: 2px solid #222;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    background: #fff;
+  }
+  
+  h1 {
+    margin: 14px 0 6px;
+    font-size: clamp(30px, 9vw, 48px);
+    line-height: 1.05;
+  }
+  
+  p {
+    margin: 0;
+  }
+  
+  .game {
+    width: 100%;
+    max-width: 420px;
+    background: #fff8ed;
+    border: 3px solid #222;
+    border-radius: 24px;
+    padding: 18px;
+    box-shadow: 8px 8px 0 #222;
+  }
+  
+  .status {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 900;
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
+  
+  .message {
+    height: 44px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    font-weight: 800;
+    border: 2px solid #222;
+    border-radius: 14px;
+    background: #fff;
+    margin-bottom: 18px;
+  }
+  
+  .stage {
+    position: relative;
+    height: 250px;
+    border: 3px solid #222;
+    border-radius: 20px;
+    background:
+      linear-gradient(#fff 0 0) center / 100% 2px no-repeat,
+      repeating-linear-gradient(
+        90deg,
+        #ffe4a3 0,
+        #ffe4a3 16px,
+        #ffd470 16px,
+        #ffd470 32px
+      );
+    overflow: hidden;
+    margin-bottom: 18px;
+  }
+  
+  .can {
+    position: absolute;
+    top: 68px;
+    width: 78px;
+    height: 128px;
+    border: 3px solid #222;
+    border-radius: 18px 18px 12px 12px;
+    background: linear-gradient(90deg, #ddd, #fff 35%, #cfcfcf 72%, #aaa);
+    transform: translateX(-50%);
+    transition:
+      left 0.35s cubic-bezier(.2,.9,.2,1),
+      top 0.35s cubic-bezier(.2,.9,.2,1),
+      transform 0.2s,
+      filter 0.2s;
+    cursor: pointer;
+    padding: 0;
+  }
+  
+  .can::before {
+    content: "";
+    position: absolute;
+    inset: 24px 8px 18px;
+    border: 3px solid #222;
+    border-radius: 12px;
+    background: #e53935;
+  }
+  
+  .tab {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 30px;
+    height: 12px;
+    border: 3px solid #222;
+    border-radius: 999px;
+    transform: translateX(-50%);
+    background: #eee;
+    z-index: 2;
+  }
+  
+  .photo-label {
+    position: absolute;
+    left: 50%;
+    top: 34px;
+    width: 52px;
+    height: 66px;
+    transform: translateX(-50%) rotate(-5deg);
+    z-index: 3;
+    border: 3px solid #222;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+  }
+  
+  .photo-label::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/apps/2026-04-28/assets/matsumura.png");
+    background-size: cover;
+    background-position: center;
+  }
+  
+  .can.target {
+    filter: drop-shadow(0 0 16px #ffea00);
+    transform: translateX(-50%) scale(1.1);
+  }
+  
+  .can.correct {
+    filter: drop-shadow(0 0 18px #00d26a);
+  }
+  
+  .can.wrong {
+    filter: grayscale(1) brightness(.8);
+  }
+  
+  .can.disabled {
+    pointer-events: none;
+  }
+  
+  .main-btn {
+    width: 100%;
+    height: 52px;
+    border: 3px solid #222;
+    border-radius: 16px;
+    background: #222;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+  
+  .main-btn:disabled {
+    opacity: .45;
+    cursor: default;
+  }
+  
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    z-index: 20;
+  }
+  
+  .modal.hidden {
+    display: none;
+  }
+  
+  .modal-inner {
+    width: 100%;
+    max-width: 360px;
+    background: #fff8ed;
+    border: 3px solid #222;
+    border-radius: 24px;
+    box-shadow: 8px 8px 0 #222;
+    padding: 22px;
+    text-align: center;
+  }
+  
+  .modal-title {
+    font-size: 26px;
+    font-weight: 900;
+    margin-bottom: 10px;
+  }
+  
+  .modal-inner p {
+    margin-bottom: 18px;
+    font-weight: 700;
+    line-height: 1.6;
+  }
