@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>昭和レトロ広告メーカー</title>
+  <link rel="stylesheet" href="/apps/2026-04-29/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="panel">
+      <h1>昭和レトロ<br>広告メーカー</h1>
+      <p class="lead">写真と名前で、ブリキ看板っぽい広告を作ろう。</p>
+
+      <label class="upload">
+        <input id="photoInput" type="file" accept="image/*" />
+        <span>写真を選ぶ</span>
+      </label>
+
+      <input id="nameInput" type="text" placeholder="例：松村" maxlength="12" />
+
+      <select id="copySelect">
+        <option value="一家に一枚！">一家に一枚！</option>
+        <option value="ナウなヤングに大評判！">ナウなヤングに大評判！</option>
+        <option value="信頼の品質！">信頼の品質！</option>
+        <option value="町内会も認めた逸品！">町内会も認めた逸品！</option>
+        <option value="暮らしに昭和の味わい！">暮らしに昭和の味わい！</option>
+      </select>
+
+      <button id="randomBtn" type="button">コピーをランダム</button>
+      <button id="makeBtn" type="button">看板をつくる</button>
+      <button id="saveBtn" type="button">画像を保存</button>
+    </section>
+
+    <section class="previewWrap">
+      <canvas id="poster" width="900" height="1200"></canvas>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-04-29/main.js"></script>
+</body>
+</html>
