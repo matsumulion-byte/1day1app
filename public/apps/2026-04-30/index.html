@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ゴールデンウィークなにすルーレット</title>
+  <link rel="stylesheet" href="/apps/2026-04-30/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <p class="label">4/30</p>
+      <h1>ゴールデンウィーク<br>なにすルーレット</h1>
+      <p class="lead">予定がないなら、予定っぽいものを作ろう。</p>
+    </section>
+
+    <section class="machine" aria-label="ルーレット">
+      <div class="slot" data-slot="0">
+        <div class="slot-title">誰と</div>
+        <div class="slot-window">
+          <div class="slot-item" id="slotWho">？？？</div>
+        </div>
+      </div>
+
+      <div class="slot" data-slot="1">
+        <div class="slot-title">どこで</div>
+        <div class="slot-window">
+          <div class="slot-item" id="slotWhere">？？？</div>
+        </div>
+      </div>
+
+      <div class="slot" data-slot="2">
+        <div class="slot-title">何をする</div>
+        <div class="slot-window">
+          <div class="slot-item" id="slotWhat">？？？</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="controls">
+      <button id="mainButton" class="main-button">スタート</button>
+      <button id="resetButton" class="sub-button" hidden>もう一回</button>
+    </section>
+
+    <p class="note" id="note">ボタンを押すとルーレットが回ります。</p>
+  </main>
+
+  <div class="modal" id="resultModal" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+      <p class="modal-label">今年のGWは</p>
+      <h2 id="resultTitle">予定が決まりました</h2>
+      <p class="result-text" id="resultText"></p>
+      <button id="modalCloseButton" class="main-button">もう一回</button>
+    </div>
+  </div>
+
+  <script type="module" src="/apps/2026-04-30/main.js"></script>
+</body>
+</html>
