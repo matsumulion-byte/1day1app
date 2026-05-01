@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>八十八夜の茶摘み職人</title>
+  <link rel="stylesheet" href="/apps/2026-05-01/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="hero" id="startScreen">
+      <div class="badge">5/1 新茶チャレンジ</div>
+      <h1>八十八夜の<br>茶摘み職人</h1>
+      <p class="lead">
+        やわらかい新芽だけを摘め。<br>
+        古い葉っぱと虫は触るな。
+      </p>
+
+      <div class="rule-card">
+        <div class="rule-item good">
+          <span class="leaf-icon">🌱</span>
+          <div>
+            <strong>新芽</strong>
+            <small>+10点 / コンボ継続</small>
+          </div>
+        </div>
+        <div class="rule-item gold">
+          <span class="leaf-icon">🍃</span>
+          <div>
+            <strong>金の茶葉</strong>
+            <small>+30点 / レア</small>
+          </div>
+        </div>
+        <div class="rule-item bad">
+          <span class="leaf-icon">🍂</span>
+          <div>
+            <strong>古い葉</strong>
+            <small>-10点 / コンボ切れ</small>
+          </div>
+        </div>
+        <div class="rule-item bug">
+          <span class="leaf-icon">🐛</span>
+          <div>
+            <strong>虫</strong>
+            <small>-20点 / 触るな</small>
+          </div>
+        </div>
+      </div>
+
+      <button class="primary-btn" id="startBtn">茶摘み開始</button>
+    </section>
+
+    <section class="game hidden" id="gameScreen">
+      <header class="hud">
+        <div class="hud-box">
+          <span>得点</span>
+          <strong id="scoreText">0</strong>
+        </div>
+        <div class="hud-box center">
+          <span>コンボ</span>
+          <strong id="comboText">0</strong>
+        </div>
+        <div class="hud-box">
+          <span>残り</span>
+          <strong><span id="timeText">30</span>s</strong>
+        </div>
+      </header>
+
+      <div class="combo-label" id="comboLabel">新芽を摘め</div>
+
+      <div class="field-wrap">
+        <div class="field" id="field">
+          <div class="row row1"></div>
+          <div class="row row2"></div>
+          <div class="row row3"></div>
+          <div class="row row4"></div>
+          <div class="row row5"></div>
+        </div>
+      </div>
+
+      <button class="sound-btn" id="soundBtn" type="button">♪</button>
+    </section>
+
+    <section class="result-modal hidden" id="resultModal">
+      <div class="result-card">
+        <div class="result-kicker">結果発表</div>
+        <h2 id="rankTitle">茶畑観光客</h2>
+        <p class="result-score"><span id="finalScore">0</span>点</p>
+        <p class="result-text" id="resultText">
+          茶葉を見る目はあるが、手が追いついていない。
+        </p>
+
+        <div class="result-stats">
+          <div>
+            <span>最大コンボ</span>
+            <strong id="maxComboText">0</strong>
+          </div>
+          <div>
+            <span>摘んだ新芽</span>
+            <strong id="goodCountText">0</strong>
+          </div>
+          <div>
+            <span>誤摘み</span>
+            <strong id="missCountText">0</strong>
+          </div>
+        </div>
+
+        <button class="primary-btn" id="retryBtn">もう一度摘む</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-05-01/main.js"></script>
+</body>
+</html>
