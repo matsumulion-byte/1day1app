@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>GW渋滞サバイバー</title>
+  <link rel="stylesheet" href="/apps/2026-05-02/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section id="startScreen" class="screen start-screen">
+      <div class="title-block">
+        <p class="date">5/2</p>
+        <h1>GW渋滞<br>サバイバー</h1>
+        <p class="lead">どこまで進めるか。<br>帰るなら今。</p>
+      </div>
+
+      <div class="howto">
+        <p>左右に移動して、車を避けろ。</p>
+        <p>時間が経つほど渋滞は狂っていく。</p>
+      </div>
+
+      <button id="startButton" class="primary-button">出発する</button>
+    </section>
+
+    <section id="gameScreen" class="screen game-screen hidden">
+      <div class="hud">
+        <div>
+          <span class="label">距離</span>
+          <strong id="distanceText">0m</strong>
+        </div>
+        <div>
+          <span class="label">速度</span>
+          <strong id="speedText">低速</strong>
+        </div>
+      </div>
+
+      <div id="road" class="road">
+        <div class="road-line line-left"></div>
+        <div class="road-line line-right"></div>
+        <div id="player" class="player-car">
+          <div class="car-window"></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="leftButton" class="control-button">←</button>
+        <button id="rightButton" class="control-button">→</button>
+      </div>
+    </section>
+
+    <section id="resultModal" class="modal hidden">
+      <div class="modal-card">
+        <p class="result-label">RESULT</p>
+        <h2 id="resultTitle">まだ家の前</h2>
+        <p id="resultDistance" class="result-distance">0m</p>
+        <p id="resultComment" class="result-comment"></p>
+        <button id="retryButton" class="primary-button">もう一回出発する</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-05-02/main.js"></script>
+</body>
+</html>
