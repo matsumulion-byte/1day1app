@@ -228,42 +228,42 @@ function isHit(a, b, margin = 0) {
 }
 
 function getResult(m) {
-  if (m < 180) {
+  if (m < 500) {
     return {
       title: "まだ家の前",
       comment: "出発したという事実だけが残った。",
     };
   }
 
-  if (m < 700) {
+  if (m < 1000) {
     return {
       title: "近所のコンビニで終了",
       comment: "ここでアイスを買って帰る判断もある。",
     };
   }
 
-  if (m < 1200) {
+  if (m < 3000) {
     return {
       title: "サービスエリアに吸い込まれた人",
       comment: "目的地よりSAの記憶の方が濃い。",
     };
   }
 
-  if (m <2000) {
+  if (m <5000) {
     return {
       title: "渋滞の概念を理解した人",
       comment: "車は進んでいない。でも心は少し進んだ。",
     };
   }
 
-  if (m < 3000) {
+  if (m < 10000) {
     return {
       title: "海老名を越えし者",
       comment: "ここから先は選ばれた者だけの領域。",
     };
   }
 
-  if (m < 4000) {
+  if (m < 15000) {
     return {
       title: "GWに車で出る判断をした人",
       comment: "勇気と無謀は、だいたい同じ顔をしている。",
