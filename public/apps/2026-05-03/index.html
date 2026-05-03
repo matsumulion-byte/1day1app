@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>東京ごみ分別パニック</title>
+  <link rel="stylesheet" href="/apps/2026-05-03/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section id="startScreen" class="screen active">
+      <div class="badge">5/3 ごみの日</div>
+      <h1>東京ごみ分別<br>パニック</h1>
+      <p class="lead">
+        東京23区の一般的な分別を参考に、<br>
+        流れてくるごみをテンポよく仕分けよう。
+      </p>
+
+      <div class="notice">
+        ※実際の分別ルールは自治体によって異なります。
+      </div>
+
+      <button id="startBtn" class="primary-btn">分別スタート</button>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <header class="game-header">
+        <div class="status-card">
+          <span>残り</span>
+          <strong id="timeText">30</strong>
+        </div>
+        <div class="status-card">
+          <span>スコア</span>
+          <strong id="scoreText">0</strong>
+        </div>
+        <div class="status-card">
+          <span>コンボ</span>
+          <strong id="comboText">0</strong>
+        </div>
+      </header>
+
+      <div class="combo-banner" id="comboBanner">清掃局モード</div>
+
+      <div class="trash-stage">
+        <div class="trash-card" id="trashCard">
+          <div class="trash-icon" id="trashIcon">🗑️</div>
+          <div class="trash-name" id="trashName">生ごみ</div>
+        </div>
+      </div>
+
+      <div class="answer-grid">
+        <button class="answer-btn burn" data-category="burn">燃やすごみ</button>
+        <button class="answer-btn nonburn" data-category="nonburn">燃やさないごみ</button>
+        <button class="answer-btn resource" data-category="resource">資源</button>
+        <button class="answer-btn oversized" data-category="oversized">粗大ごみ</button>
+      </div>
+
+      <div id="judgeText" class="judge-text"></div>
+    </section>
+
+    <section id="resultScreen" class="screen">
+      <div class="badge">結果発表</div>
+      <h2 id="resultTitle">清掃局の申し子</h2>
+
+      <div class="result-score">
+        <span>スコア</span>
+        <strong id="finalScore">0</strong>
+      </div>
+
+      <p id="resultComment" class="result-comment"></p>
+
+      <button id="retryBtn" class="primary-btn">もう一回分別する</button>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-05-03/main.js"></script>
+</body>
+</html>

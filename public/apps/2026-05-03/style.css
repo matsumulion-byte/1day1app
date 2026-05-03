@@ -1,0 +1,342 @@
+* {
+    box-sizing: border-box;
+  }
+  
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+      "Yu Gothic", sans-serif;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(255, 255, 255, 0.7), transparent 28%),
+      linear-gradient(135deg, #e8f6ee 0%, #d8ecf5 48%, #f4efd9 100%);
+    color: #173329;
+  }
+  
+  button {
+    font: inherit;
+  }
+  
+  .app {
+    width: min(100%, 520px);
+    min-height: 100svh;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .screen {
+    display: none;
+    width: 100%;
+    min-height: calc(100svh - 40px);
+    padding: 24px 18px;
+    border: 3px solid #173329;
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.78);
+    box-shadow: 8px 8px 0 #173329;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .screen.active {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .badge {
+    width: fit-content;
+    margin: 0 auto 18px;
+    padding: 8px 14px;
+    border: 2px solid #173329;
+    border-radius: 999px;
+    background: #ffef77;
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+  }
+  
+  h1 {
+    margin: 0;
+    text-align: center;
+    font-size: clamp(42px, 12vw, 62px);
+    line-height: 0.95;
+    letter-spacing: -0.06em;
+  }
+  
+  h2 {
+    margin: 10px 0 22px;
+    text-align: center;
+    font-size: clamp(32px, 9vw, 48px);
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+  }
+  
+  .lead {
+    margin: 22px 0 18px;
+    text-align: center;
+    font-weight: 700;
+    line-height: 1.8;
+  }
+  
+  .notice {
+    margin: 0 auto 26px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: #edf3f0;
+    color: #40534c;
+    font-size: 13px;
+    line-height: 1.6;
+    text-align: center;
+  }
+  
+  .primary-btn {
+    width: 100%;
+    border: 3px solid #173329;
+    border-radius: 18px;
+    background: #25c06d;
+    color: #fff;
+    padding: 18px 16px;
+    font-size: 20px;
+    font-weight: 900;
+    box-shadow: 0 6px 0 #173329;
+    cursor: pointer;
+  }
+  
+  .primary-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #173329;
+  }
+  
+  .game-header {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  
+  .status-card {
+    border: 2px solid #173329;
+    border-radius: 16px;
+    background: #fff;
+    padding: 10px 8px;
+    text-align: center;
+    box-shadow: 3px 3px 0 #173329;
+  }
+  
+  .status-card span {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 12px;
+    font-weight: 800;
+    color: #52675f;
+  }
+  
+  .status-card strong {
+    display: block;
+    font-size: 28px;
+    line-height: 1;
+  }
+  
+  .combo-banner {
+    opacity: 0;
+    transform: scale(0.94);
+    margin: 0 auto;
+    width: fit-content;
+    padding: 8px 16px;
+    border: 2px solid #173329;
+    border-radius: 999px;
+    background: #ff6b6b;
+    color: #fff;
+    font-weight: 900;
+    transition: 0.18s ease;
+  }
+  
+  .combo-banner.show {
+    opacity: 1;
+    transform: scale(1);
+  }
+  
+  .trash-stage {
+    flex: 1;
+    min-height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .trash-card {
+    width: min(88%, 340px);
+    min-height: 230px;
+    border: 4px solid #173329;
+    border-radius: 30px;
+    background: #fffdf4;
+    box-shadow: 8px 8px 0 #173329;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.14s ease, background 0.14s ease;
+  }
+  
+  .trash-card.pop {
+    animation: pop 0.18s ease;
+  }
+  
+  .trash-card.correct {
+    background: #dffbe8;
+  }
+  
+  .trash-card.wrong {
+    background: #ffe0de;
+  }
+  
+  .trash-icon {
+    font-size: 72px;
+    line-height: 1;
+    margin-bottom: 18px;
+  }
+  
+  .trash-name {
+    padding: 0 16px;
+    text-align: center;
+    font-size: 30px;
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+  }
+  
+  .answer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .answer-btn {
+    min-height: 76px;
+    border: 3px solid #173329;
+    border-radius: 18px;
+    color: #173329;
+    font-size: 18px;
+    font-weight: 900;
+    box-shadow: 0 5px 0 #173329;
+    cursor: pointer;
+  }
+  
+  .answer-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 #173329;
+  }
+  
+  .answer-btn.burn {
+    background: #ffb86b;
+  }
+  
+  .answer-btn.nonburn {
+    background: #b8c7ff;
+  }
+  
+  .answer-btn.resource {
+    background: #82dd9f;
+  }
+  
+  .answer-btn.oversized {
+    background: #ffd76f;
+  }
+  
+  .judge-text {
+    height: 32px;
+    margin-top: 14px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 900;
+  }
+  
+  .judge-text.correct {
+    color: #158447;
+  }
+  
+  .judge-text.wrong {
+    color: #c83b32;
+  }
+  
+  .result-score {
+    width: min(100%, 280px);
+    margin: 0 auto 20px;
+    padding: 18px;
+    border: 3px solid #173329;
+    border-radius: 22px;
+    background: #fff;
+    text-align: center;
+    box-shadow: 5px 5px 0 #173329;
+  }
+  
+  .result-score span {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+    font-weight: 800;
+    color: #52675f;
+  }
+  
+  .result-score strong {
+    display: block;
+    font-size: 64px;
+    line-height: 1;
+  }
+  
+  .result-comment {
+    margin: 0 0 28px;
+    text-align: center;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.8;
+  }
+  
+  @keyframes pop {
+    0% {
+      transform: scale(0.92) rotate(-2deg);
+    }
+    70% {
+      transform: scale(1.04) rotate(1deg);
+    }
+    100% {
+      transform: scale(1) rotate(0deg);
+    }
+  }
+  
+  @media (max-height: 700px) {
+    .app {
+      padding: 12px;
+    }
+  
+    .screen {
+      min-height: calc(100svh - 24px);
+      padding: 16px 14px;
+    }
+  
+    .trash-stage {
+      min-height: 210px;
+    }
+  
+    .trash-card {
+      min-height: 190px;
+    }
+  
+    .trash-icon {
+      font-size: 58px;
+      margin-bottom: 12px;
+    }
+  
+    .trash-name {
+      font-size: 26px;
+    }
+  
+    .answer-btn {
+      min-height: 64px;
+      font-size: 16px;
+    }
+  }
