@@ -1,0 +1,207 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  background: #020304;
+  color: #e9fff2;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+}
+
+.app {
+  position: relative;
+  width: 100vw;
+  height: 100svh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(0, 255, 120, 0.08), transparent 36%),
+    linear-gradient(180deg, #020304, #050707);
+}
+
+#gameCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  padding: max(10px, env(safe-area-inset-top)) 10px 10px;
+  text-shadow: 0 0 8px rgba(80, 255, 150, 0.8);
+}
+
+.hud__top {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.hud__top > div {
+  border: 1px solid rgba(120, 255, 170, 0.6);
+  background: rgba(0, 20, 10, 0.45);
+  padding: 6px 7px;
+  box-shadow: 0 0 12px rgba(0, 255, 110, 0.12) inset;
+}
+
+.label {
+  display: block;
+  font-size: 9px;
+  color: rgba(200, 255, 220, 0.72);
+  letter-spacing: 0.08em;
+}
+
+.hud strong {
+  display: block;
+  margin-top: 2px;
+  font-size: clamp(15px, 4.6vw, 23px);
+  line-height: 1;
+}
+
+.message {
+  position: absolute;
+  left: 50%;
+  top: 15%;
+  transform: translateX(-50%);
+  min-width: 190px;
+  padding: 7px 10px;
+  border: 1px solid rgba(120, 255, 170, 0.65);
+  background: rgba(0, 10, 6, 0.5);
+  color: #baffcf;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.message.is-show {
+  opacity: 1;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.68);
+  backdrop-filter: blur(2px);
+}
+
+.screen--hidden {
+  display: none;
+}
+
+.panel {
+  width: min(92vw, 390px);
+  border: 1px solid rgba(120, 255, 170, 0.78);
+  background: rgba(0, 14, 8, 0.82);
+  box-shadow:
+    0 0 24px rgba(0, 255, 120, 0.16),
+    0 0 32px rgba(0, 255, 120, 0.08) inset;
+  padding: 22px 18px;
+  text-align: center;
+}
+
+.kicker {
+  margin: 0 0 10px;
+  color: #9affb9;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+}
+
+h1,
+h2 {
+  margin: 0;
+  color: #f1fff5;
+  line-height: 0.9;
+  text-shadow:
+    0 0 10px rgba(80, 255, 150, 0.8),
+    0 0 22px rgba(80, 255, 150, 0.42);
+}
+
+h1 {
+  font-size: clamp(42px, 14vw, 70px);
+  letter-spacing: -0.08em;
+}
+
+h2 {
+  font-size: clamp(27px, 8vw, 40px);
+  line-height: 1.12;
+}
+
+.lead {
+  margin: 16px 0 0;
+  color: rgba(232, 255, 240, 0.9);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.button {
+  width: min(270px, 100%);
+  margin-top: 20px;
+  border: 1px solid rgba(160, 255, 190, 0.9);
+  background: rgba(0, 255, 115, 0.12);
+  color: #eaffef;
+  padding: 12px 16px;
+  font-size: 17px;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  box-shadow:
+    0 0 16px rgba(0, 255, 120, 0.18),
+    0 0 16px rgba(0, 255, 120, 0.12) inset;
+}
+
+.button:active {
+  transform: translateY(1px);
+  background: rgba(0, 255, 115, 0.22);
+}
+
+.note {
+  margin: 12px 0 0;
+  color: rgba(220, 255, 230, 0.62);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+@media (min-width: 768px) {
+  .hud {
+    padding-top: 22px;
+  }
+
+  .hud__top > div {
+    padding: 8px 10px;
+  }
+
+  .message {
+    top: 14%;
+  }
+
+  .panel {
+    padding: 26px 20px;
+  }
+}
+
+html,
+body,
+.app,
+#gameCanvas {
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}

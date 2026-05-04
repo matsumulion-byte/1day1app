@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>MATSUMURA WARS</title>
+  <link rel="stylesheet" href="/apps/2026-05-04/style.css" />
+</head>
+<body>
+  <main class="app">
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="hud">
+      <div class="hud__top">
+        <div>
+          <span class="label">SCORE</span>
+          <strong id="score">000000</strong>
+        </div>
+        <div>
+          <span class="label">TIME</span>
+          <strong id="time">30.0</strong>
+        </div>
+        <div>
+          <span class="label">SHIELD</span>
+          <strong id="shield">100</strong>
+        </div>
+      </div>
+
+      <div id="message" class="message">MATSUMURA WARS</div>
+    </div>
+
+    <div id="startScreen" class="screen">
+      <div class="panel">
+        <p class="kicker">5.4 STAR WARS DAY</p>
+        <h1>MATSUMURA<br>WARS</h1>
+        <p class="lead">
+          ワイヤーフレームの宇宙空間で、<br>
+          奥から迫る敵機を撃ち落とせ。
+        </p>
+        <button id="startButton" class="button">START</button>
+        <p class="note">操作：敵をクリック（PC）／タップ（SP）でショット。照準は最後に撃った位置。</p>
+      </div>
+    </div>
+
+    <div id="resultScreen" class="screen screen--hidden">
+      <div class="panel">
+        <p class="kicker">MISSION COMPLETE</p>
+        <h2 id="rankTitle">銀河の松村</h2>
+        <p id="resultText" class="lead"></p>
+        <button id="retryButton" class="button">もう一回</button>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="/apps/2026-05-04/main.js"></script>
+</body>
+</html>
