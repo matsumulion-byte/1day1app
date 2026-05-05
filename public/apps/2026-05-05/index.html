@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>登れ！鯉のぼりくん</title>
+  <link rel="stylesheet" href="/apps/2026-05-05/style.css" />
+</head>
+<body>
+  <main class="app">
+    <canvas id="game"></canvas>
+
+    <section id="startPanel" class="panel start-panel">
+      <p class="date">5月5日 こどもの日</p>
+      <h1>登れ！<br>鯉のぼりくん</h1>
+      <p class="copy">五月の空を、のぼりきれ。</p>
+      <button id="startBtn" class="primary-btn">スタート</button>
+      <p class="howto">タップで跳ねる<br>風のリングをくぐって空高く登ろう</p>
+    </section>
+
+    <section id="resultPanel" class="panel result-panel hidden">
+      <p id="resultLabel" class="result-label">結果</p>
+      <h2 id="resultTitle">まだ庭先の鯉</h2>
+      <p id="resultText">もう少し風をつかみたい。</p>
+      <div class="score-box">
+        <span>到達高度</span>
+        <strong id="heightResult">0m</strong>
+      </div>
+      <button id="retryBtn" class="primary-btn">もう一回</button>
+    </section>
+
+    <div class="hud">
+      <div>
+        <span>高度</span>
+        <strong id="heightText">0m</strong>
+      </div>
+      <div>
+        <span>SCORE</span>
+        <strong id="windText">0</strong>
+      </div>
+    </div>
+
+    <div id="touchArea" class="touch-area">
+      <span id="holdText">長押しでのぼる</span>
+    </div>
+  </main>
+
+  <script type="module" src="/apps/2026-05-05/main.js"></script>
+</body>
+</html>
