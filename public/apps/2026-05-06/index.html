@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>迷宮の日 - Wizardry風3D迷路</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="app">
+    <section id="titleScreen" class="screen title-screen">
+      <div class="title-frame">
+        <p class="kicker">5月6日 迷路の日</p>
+        <h1>迷宮の日</h1>
+        <p class="subtitle">出口を探せ。振り向くな。</p>
+        <button id="startBtn" class="primary-btn">迷宮に入る</button>
+        <p class="note">左・前進・右だけで進む擬似3D迷路</p>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen game-screen hidden">
+      <header class="hud">
+        <div>
+          <span class="label">TIME</span>
+          <strong id="timeText">60</strong>
+        </div>
+        <div>
+          <span class="label">STEP</span>
+          <strong id="stepText">0</strong>
+        </div>
+        <div>
+          <span class="label">DEPTH</span>
+          <strong id="depthText">B1F</strong>
+        </div>
+      </header>
+
+      <div class="view-wrap">
+        <canvas id="viewCanvas" width="720" height="720"></canvas>
+        <div id="message" class="message">石の匂いがする……</div>
+      </div>
+
+      <div class="sub-panel">
+        <canvas id="mapCanvas" width="180" height="180"></canvas>
+        <div class="status">
+          <p id="facingText">NORTH</p>
+          <p id="hintText">出口の気配を探せ</p>
+        </div>
+      </div>
+
+      <nav class="controls">
+        <button id="leftBtn" class="ctrl-btn">←</button>
+        <button id="forwardBtn" class="ctrl-btn forward">前進</button>
+        <button id="rightBtn" class="ctrl-btn">→</button>
+      </nav>
+    </section>
+
+    <section id="resultScreen" class="screen result-screen hidden">
+      <div class="result-frame">
+        <p class="kicker">RESULT</p>
+        <h2 id="resultTitle">脱出成功</h2>
+        <p id="resultRank" class="rank">迷宮に勝った人</p>
+        <p id="resultDetail" class="detail"></p>
+        <button id="retryBtn" class="primary-btn">もう一度入る</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
