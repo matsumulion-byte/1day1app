@@ -40,7 +40,7 @@ const DIRS = [
 
 let maze = [];
 let player = { x: 1, y: 1, dir: 1 };
-let exit = { x: MAZE_SIZE - 2, y: MAZE_SIZE - 2 };
+let exit = { x: MAZE_SIZE - 1, y: MAZE_SIZE - 2 };
 
 let timeLeft = TIME_LIMIT;
 let steps = 0;
@@ -104,7 +104,7 @@ function resetGame() {
   timeText.textContent = timeLeft;
   stepText.textContent = steps;
   depthText.textContent = "B1F";
-  message.textContent = "石の匂いがする……";
+  message.textContent = "石造りの迷宮に入った。";
 
   clearInterval(gameTimer);
   gameTimer = setInterval(() => {
@@ -138,48 +138,42 @@ function startAmbient() {
     masterGain.gain.value = 0.035;
     masterGain.connect(audioCtx.destination);
 
-    const osc1 = audioCtx.createOscillator();
-    const osc2 = audioCtx.createOscillator();
+    const osc = audioCtx.createOscillator();
     const filter = audioCtx.createBiquadFilter();
 
-    osc1.type = "sawtooth";
-    osc2.type = "sine";
-    osc1.frequency.value = 58;
-    osc2.frequency.value = 92;
+    osc.type = "sine";
+    osc.frequency.value = 62;
 
     filter.type = "lowpass";
     filter.frequency.value = 360;
 
-    osc1.connect(filter);
-    osc2.connect(filter);
+    osc.connect(filter);
     filter.connect(masterGain);
-
-    osc1.start();
-    osc2.start();
+    osc.start();
   } catch (e) {
     audioCtx = null;
   }
 }
 
 function playStepSound(ok = true) {
-  if (!audioCtx || !masterGain) return;
+  if (!audioCtx) return;
 
   const now = audioCtx.currentTime;
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
 
-  osc.type = ok ? "square" : "sawtooth";
+  osc.type = ok ? "triangle" : "sawtooth";
   osc.frequency.setValueAtTime(ok ? 130 : 70, now);
-  osc.frequency.exponentialRampToValueAtTime(ok ? 65 : 38, now + 0.08);
+  osc.frequency.exponentialRampToValueAtTime(ok ? 72 : 42, now + 0.08);
 
-  gain.gain.setValueAtTime(0.09, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+  gain.gain.setValueAtTime(ok ? 0.07 : 0.11, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
 
   osc.connect(gain);
   gain.connect(audioCtx.destination);
 
   osc.start(now);
-  osc.stop(now + 0.11);
+  osc.stop(now + 0.12);
 }
 
 function isWall(x, y) {
@@ -194,7 +188,7 @@ function isExit(x, y) {
 function turnLeft() {
   if (gameOver) return;
   player.dir = (player.dir + 3) % 4;
-  message.textContent = "向きを変えた。";
+  message.textContent = "左を向いた。";
   playStepSound(true);
   render();
 }
@@ -202,7 +196,7 @@ function turnLeft() {
 function turnRight() {
   if (gameOver) return;
   player.dir = (player.dir + 1) % 4;
-  message.textContent = "向きを変えた。";
+  message.textContent = "右を向いた。";
   playStepSound(true);
   render();
 }
@@ -215,7 +209,7 @@ function moveForward() {
   const ny = player.y + d.dy;
 
   if (isWall(nx, ny)) {
-    message.textContent = "壁だ。冷たい石が行く手を塞ぐ。";
+    message.textContent = "壁だ。これ以上は進めない。";
     playStepSound(false);
     renderShake();
     return;
@@ -238,10 +232,10 @@ function moveForward() {
     message.textContent = "出口の光が近い。";
   } else if (Math.random() < 0.25) {
     const lines = [
+      "湿った空気が流れている。",
       "遠くで水滴の音がした。",
-      "壁に古い傷跡がある。",
-      "背後から風が吹いた気がする。",
-      "どこかで扉が閉まる音がした。",
+      "壁に古い傷がある。",
+      "通路の奥がかすかに光った。",
     ];
     message.textContent = lines[Math.floor(Math.random() * lines.length)];
   } else {
@@ -278,9 +272,9 @@ function finish(success) {
 
 function renderShake() {
   const original = viewCanvas.style.transform;
-  viewCanvas.style.transform = "translateX(-4px)";
+  viewCanvas.style.transform = "translateX(-5px)";
   setTimeout(() => {
-    viewCanvas.style.transform = "translateX(4px)";
+    viewCanvas.style.transform = "translateX(5px)";
   }, 40);
   setTimeout(() => {
     viewCanvas.style.transform = original;
@@ -317,9 +311,9 @@ function updateHudText() {
   if (dist <= 2) {
     hintText.textContent = "出口の光がすぐ近くにある";
   } else if (dist <= 5) {
-    hintText.textContent = "空気が少し軽い";
+    hintText.textContent = "少し空気が軽い";
   } else {
-    hintText.textContent = "まだ深い迷宮の中";
+    hintText.textContent = "まだ迷宮の奥にいる";
   }
 }
 
@@ -332,170 +326,144 @@ function renderView() {
   drawBackground(w, h);
 
   const layers = [
-    { z: 5, rect: [276, 266, 444, 454], alpha: 0.34 },
-    { z: 4, rect: [232, 226, 488, 500], alpha: 0.46 },
-    { z: 3, rect: [180, 176, 540, 560], alpha: 0.58 },
-    { z: 2, rect: [116, 112, 604, 632], alpha: 0.74 },
-    { z: 1, rect: [40, 44, 680, 704], alpha: 0.95 },
+    { depth: 5, rect: [292, 282, 428, 438], alpha: 0.38 },
+    { depth: 4, rect: [252, 238, 468, 490], alpha: 0.48 },
+    { depth: 3, rect: [198, 184, 522, 554], alpha: 0.62 },
+    { depth: 2, rect: [126, 112, 594, 638], alpha: 0.78 },
+    { depth: 1, rect: [34, 36, 686, 706], alpha: 1.0 },
   ];
 
+  /*
+    奥から手前へ描画。
+    ただし「空間の四角枠」は描かず、壁がある場所だけ描く。
+  */
   for (const layer of layers) {
-    drawLayer(layer);
+    drawDepthLayer(layer);
   }
 
   drawVignette(w, h);
 }
 
 function drawBackground(w, h) {
-  const g = viewCtx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, "#070706");
-  g.addColorStop(0.5, "#11100e");
-  g.addColorStop(1, "#050403");
-  viewCtx.fillStyle = g;
-  viewCtx.fillRect(0, 0, w, h);
+  // 天井
+  const ceiling = viewCtx.createLinearGradient(0, 0, 0, h * 0.5);
+  ceiling.addColorStop(0, "#17120d");
+  ceiling.addColorStop(1, "#2a2117");
+  viewCtx.fillStyle = ceiling;
+  viewCtx.fillRect(0, 0, w, h * 0.5);
 
-  viewCtx.fillStyle = "#18130d";
-  viewCtx.fillRect(0, h * 0.51, w, h * 0.49);
+  // 床
+  const floor = viewCtx.createLinearGradient(0, h * 0.5, 0, h);
+  floor.addColorStop(0, "#302619");
+  floor.addColorStop(1, "#100c08");
+  viewCtx.fillStyle = floor;
+  viewCtx.fillRect(0, h * 0.5, w, h * 0.5);
 
-  for (let i = 0; i < 40; i++) {
-    const x = Math.random() * w;
-    const y = Math.random() * h;
-    viewCtx.fillStyle = `rgba(188, 158, 92, ${Math.random() * 0.035})`;
-    viewCtx.fillRect(x, y, Math.random() * 3 + 1, Math.random() * 3 + 1);
-  }
+  // 奥行き線はかなり薄くする
+  viewCtx.strokeStyle = "rgba(230, 190, 105, 0.08)";
+  viewCtx.lineWidth = 1;
+
+  viewCtx.beginPath();
+  viewCtx.moveTo(0, h);
+  viewCtx.lineTo(w / 2, h / 2);
+  viewCtx.lineTo(w, h);
+  viewCtx.stroke();
+
+  viewCtx.beginPath();
+  viewCtx.moveTo(0, 0);
+  viewCtx.lineTo(w / 2, h / 2);
+  viewCtx.lineTo(w, 0);
+  viewCtx.stroke();
 }
 
-function drawLayer(layer) {
-  const [l, t, r, b] = layer.rect;
-  const depth = layer.z;
+function drawDepthLayer(layer) {
+  const { depth, rect, alpha } = layer;
+  const [l, t, r, b] = rect;
 
   const front = cellAt(depth, 0);
   const left = cellAt(depth - 1, -1);
   const right = cellAt(depth - 1, 1);
 
   const prevRect = getLayerRect(depth - 1);
-  const nextRect = getLayerRect(depth);
+  const currentRect = getLayerRect(depth);
 
+  // 左右の壁だけを面で描く
   if (left === 1) {
-    drawSideWall(prevRect, nextRect, "left", layer.alpha);
+    drawSideWall(prevRect, currentRect, "left", alpha);
   }
 
   if (right === 1) {
-    drawSideWall(prevRect, nextRect, "right", layer.alpha);
+    drawSideWall(prevRect, currentRect, "right", alpha);
   }
 
+  // 正面に壁がある場合は、そこで視界を止める
   if (front === 1) {
-    drawFrontWall(l, t, r, b, layer.alpha, false);
+    drawFrontWall(l, t, r, b, alpha);
+    return;
   }
 
   if (front === 2) {
-    drawExit(l, t, r, b, layer.alpha);
+    drawExit(l, t, r, b, alpha);
+    return;
   }
 
-  if (front === 0) {
-    drawCorridorFrame(l, t, r, b, layer.alpha);
-  }
+  // 前が開いている場合だけ、かなり薄い奥行きガイドを出す
+  drawSubtleDepthGuide(l, t, r, b, alpha);
 }
 
 function getLayerRect(depth) {
   const rects = {
-    0: [0, 0, 720, 720],
-    1: [40, 44, 680, 704],
-    2: [116, 112, 604, 632],
-    3: [180, 176, 540, 560],
-    4: [232, 226, 488, 500],
-    5: [276, 266, 444, 454],
+    0: [-40, -20, 760, 760],
+    1: [34, 36, 686, 706],
+    2: [126, 112, 594, 638],
+    3: [198, 184, 522, 554],
+    4: [252, 238, 468, 490],
+    5: [292, 282, 428, 438],
   };
 
   return rects[Math.max(0, Math.min(5, depth))];
 }
 
-function drawCorridorFrame(l, t, r, b, alpha) {
-  viewCtx.strokeStyle = `rgba(178, 145, 78, ${alpha * 0.35})`;
-  viewCtx.lineWidth = 2;
+function drawOpenFrame(l, t, r, b, alpha) {
+  viewCtx.strokeStyle = `rgba(236, 196, 112, ${alpha * 0.48})`;
+  viewCtx.lineWidth = Math.max(2, 6 * alpha);
   viewCtx.strokeRect(l, t, r - l, b - t);
-}
-
-function drawFrontWall(l, t, r, b, alpha, isNear) {
-  const g = viewCtx.createLinearGradient(l, t, r, b);
-  g.addColorStop(0, `rgba(34, 29, 23, ${alpha})`);
-  g.addColorStop(0.5, `rgba(65, 57, 45, ${alpha})`);
-  g.addColorStop(1, `rgba(20, 17, 13, ${alpha})`);
-
-  viewCtx.fillStyle = g;
+  // 通路の奥を少し明るくする
+  viewCtx.fillStyle = `rgba(222, 177, 94, ${alpha * 0.035})`;
   viewCtx.fillRect(l, t, r - l, b - t);
-
-  drawStonePattern(l, t, r, b, alpha);
-
-  viewCtx.strokeStyle = `rgba(214, 181, 107, ${alpha * 0.45})`;
-  viewCtx.lineWidth = isNear ? 5 : 3;
-  viewCtx.strokeRect(l, t, r - l, b - t);
 }
 
-function drawExit(l, t, r, b, alpha) {
-  const cx = (l + r) / 2;
-  const cy = (t + b) / 2;
-  const width = (r - l) * 0.48;
-  const height = (b - t) * 0.7;
+function drawSubtleDepthGuide(l, t, r, b, alpha) {
+  // 空間の枠線ではなく、通路の奥行きを薄く示すだけ
+  viewCtx.strokeStyle = `rgba(236, 196, 112, ${alpha * 0.16})`;
+  viewCtx.lineWidth = 1.5;
 
-  drawFrontWall(l, t, r, b, alpha * 0.75, false);
-
-  const glow = viewCtx.createRadialGradient(cx, cy, 5, cx, cy, width);
-  glow.addColorStop(0, `rgba(255, 225, 137, ${0.9 * alpha})`);
-  glow.addColorStop(0.35, `rgba(230, 158, 60, ${0.4 * alpha})`);
-  glow.addColorStop(1, "rgba(230, 158, 60, 0)");
-
-  viewCtx.fillStyle = glow;
-  viewCtx.fillRect(l, t, r - l, b - t);
-
-  viewCtx.fillStyle = `rgba(245, 214, 140, ${0.95 * alpha})`;
-  viewCtx.fillRect(cx - width / 2, cy - height / 2, width, height);
-
-  viewCtx.fillStyle = `rgba(255, 246, 198, ${0.9 * alpha})`;
-  viewCtx.fillRect(cx - width / 4, cy - height / 2, width / 2, height);
-}
-
-function drawSideWall(prevRect, nextRect, side, alpha) {
-  const [pl, pt, pr, pb] = prevRect;
-  const [nl, nt, nr, nb] = nextRect;
-
+  // 上辺・下辺だけ薄く出す。四角で囲まない。
   viewCtx.beginPath();
-
-  if (side === "left") {
-    viewCtx.moveTo(pl, pt);
-    viewCtx.lineTo(nl, nt);
-    viewCtx.lineTo(nl, nb);
-    viewCtx.lineTo(pl, pb);
-  } else {
-    viewCtx.moveTo(pr, pt);
-    viewCtx.lineTo(nr, nt);
-    viewCtx.lineTo(nr, nb);
-    viewCtx.lineTo(pr, pb);
-  }
-
-  viewCtx.closePath();
-
-  const g = viewCtx.createLinearGradient(side === "left" ? pl : pr, pt, side === "left" ? nl : nr, pb);
-  g.addColorStop(0, `rgba(21, 18, 14, ${alpha})`);
-  g.addColorStop(0.55, `rgba(52, 45, 35, ${alpha})`);
-  g.addColorStop(1, `rgba(12, 10, 8, ${alpha})`);
-
-  viewCtx.fillStyle = g;
-  viewCtx.fill();
-
-  viewCtx.strokeStyle = `rgba(188, 153, 82, ${alpha * 0.28})`;
-  viewCtx.lineWidth = 2;
+  viewCtx.moveTo(l, t);
+  viewCtx.lineTo(r, t);
+  viewCtx.moveTo(l, b);
+  viewCtx.lineTo(r, b);
   viewCtx.stroke();
 }
 
-function drawStonePattern(l, t, r, b, alpha) {
+function drawFrontWall(l, t, r, b, alpha) {
+  const g = viewCtx.createLinearGradient(l, t, r, b);
+  g.addColorStop(0, `rgba(64, 54, 40, ${alpha})`);
+  g.addColorStop(0.5, `rgba(104, 88, 63, ${alpha})`);
+  g.addColorStop(1, `rgba(39, 32, 24, ${alpha})`);
+
+  viewCtx.fillStyle = g;
+  viewCtx.fillRect(l, t, r - l, b - t);
+
+  // 石の模様は控えめにする
+  viewCtx.strokeStyle = `rgba(19, 15, 11, ${alpha * 0.42})`;
+  viewCtx.lineWidth = 2;
+
+  const rows = 4;
+  const cols = 4;
   const width = r - l;
   const height = b - t;
-  const rows = Math.max(3, Math.floor(height / 42));
-  const cols = Math.max(3, Math.floor(width / 68));
-
-  viewCtx.strokeStyle = `rgba(9, 8, 7, ${0.65 * alpha})`;
-  viewCtx.lineWidth = 2;
 
   for (let y = 1; y < rows; y++) {
     const yy = t + (height / rows) * y;
@@ -506,29 +474,110 @@ function drawStonePattern(l, t, r, b, alpha) {
   }
 
   for (let y = 0; y < rows; y++) {
-    const offset = y % 2 === 0 ? 0 : width / cols / 2;
     for (let x = 1; x < cols; x++) {
-      const xx = l + (width / cols) * x + offset;
+      const xx = l + (width / cols) * x + (y % 2 ? width / cols / 2 : 0);
       const y1 = t + (height / rows) * y;
       const y2 = t + (height / rows) * (y + 1);
+
       viewCtx.beginPath();
       viewCtx.moveTo(xx, y1);
       viewCtx.lineTo(xx, y2);
       viewCtx.stroke();
     }
   }
+
+  viewCtx.strokeStyle = `rgba(250, 212, 129, ${alpha * 0.65})`;
+  viewCtx.lineWidth = 4;
+  viewCtx.strokeRect(l, t, r - l, b - t);
+}
+
+function drawSideWall(prevRect, currentRect, side, alpha) {
+  const [pl, pt, pr, pb] = prevRect;
+  const [cl, ct, cr, cb] = currentRect;
+
+  viewCtx.beginPath();
+
+  if (side === "left") {
+    viewCtx.moveTo(pl, pt);
+    viewCtx.lineTo(cl, ct);
+    viewCtx.lineTo(cl, cb);
+    viewCtx.lineTo(pl, pb);
+  } else {
+    viewCtx.moveTo(pr, pt);
+    viewCtx.lineTo(cr, ct);
+    viewCtx.lineTo(cr, cb);
+    viewCtx.lineTo(pr, pb);
+  }
+
+  viewCtx.closePath();
+
+  const g = viewCtx.createLinearGradient(
+    side === "left" ? pl : pr,
+    pt,
+    side === "left" ? cl : cr,
+    cb
+  );
+
+  g.addColorStop(0, `rgba(40, 32, 23, ${alpha})`);
+  g.addColorStop(0.55, `rgba(82, 68, 47, ${alpha})`);
+  g.addColorStop(1, `rgba(25, 20, 15, ${alpha})`);
+
+  viewCtx.fillStyle = g;
+  viewCtx.fill();
+
+  viewCtx.strokeStyle = `rgba(236, 196, 112, ${alpha * 0.38})`;
+  viewCtx.lineWidth = 3;
+  viewCtx.stroke();
+}
+
+function drawExit(l, t, r, b, alpha) {
+  drawFrontWall(l, t, r, b, alpha * 0.75);
+
+  const cx = (l + r) / 2;
+  const cy = (t + b) / 2;
+  const width = (r - l) * 0.5;
+  const height = (b - t) * 0.72;
+
+  const glow = viewCtx.createRadialGradient(cx, cy, 4, cx, cy, Math.max(width, height));
+  glow.addColorStop(0, `rgba(255, 240, 170, ${alpha})`);
+  glow.addColorStop(0.35, `rgba(255, 191, 80, ${alpha * 0.62})`);
+  glow.addColorStop(1, "rgba(255, 191, 80, 0)");
+
+  viewCtx.fillStyle = glow;
+  viewCtx.fillRect(l, t, r - l, b - t);
+
+  viewCtx.fillStyle = `rgba(255, 229, 140, ${alpha})`;
+  viewCtx.fillRect(cx - width / 2, cy - height / 2, width, height);
+
+  viewCtx.fillStyle = `rgba(255, 251, 214, ${alpha})`;
+  viewCtx.fillRect(cx - width / 5, cy - height / 2, width / 2.5, height);
+}
+
+function drawDirectionGuide() {
+  // 進行方向をわかりやすくする床の矢印
+  viewCtx.fillStyle = "rgba(245, 207, 125, 0.22)";
+  viewCtx.beginPath();
+  viewCtx.moveTo(360, 455);
+  viewCtx.lineTo(328, 525);
+  viewCtx.lineTo(350, 518);
+  viewCtx.lineTo(350, 612);
+  viewCtx.lineTo(370, 612);
+  viewCtx.lineTo(370, 518);
+  viewCtx.lineTo(392, 525);
+  viewCtx.closePath();
+  viewCtx.fill();
 }
 
 function drawVignette(w, h) {
   const g = viewCtx.createRadialGradient(w / 2, h / 2, 120, w / 2, h / 2, 520);
   g.addColorStop(0, "rgba(0,0,0,0)");
-  g.addColorStop(0.62, "rgba(0,0,0,0.12)");
-  g.addColorStop(1, "rgba(0,0,0,0.76)");
+  g.addColorStop(0.72, "rgba(0,0,0,0.16)");
+  g.addColorStop(1, "rgba(0,0,0,0.56)");
 
   viewCtx.fillStyle = g;
   viewCtx.fillRect(0, 0, w, h);
 
-  viewCtx.strokeStyle = "rgba(234, 194, 101, 0.35)";
+  viewCtx.strokeStyle = "rgba(244, 207, 121, 0.5)";
   viewCtx.lineWidth = 8;
   viewCtx.strokeRect(8, 8, w - 16, h - 16);
 }
@@ -539,10 +588,10 @@ function renderMap() {
   const cell = w / MAZE_SIZE;
 
   mapCtx.clearRect(0, 0, w, h);
-  mapCtx.fillStyle = "#060504";
+  mapCtx.fillStyle = "#050403";
   mapCtx.fillRect(0, 0, w, h);
 
-  const radius = 4;
+  const radius = 5;
 
   for (let y = 0; y < MAZE_SIZE; y++) {
     for (let x = 0; x < MAZE_SIZE; x++) {
@@ -550,31 +599,31 @@ function renderMap() {
       if (!visible) continue;
 
       if (maze[y][x] === 1) {
-        mapCtx.fillStyle = "rgba(113, 91, 50, 0.72)";
+        mapCtx.fillStyle = "rgba(150, 120, 66, 0.9)";
       } else {
-        mapCtx.fillStyle = "rgba(34, 28, 19, 0.9)";
+        mapCtx.fillStyle = "rgba(44, 36, 24, 1)";
       }
 
       mapCtx.fillRect(x * cell, y * cell, cell - 1, cell - 1);
     }
   }
 
-  mapCtx.fillStyle = "rgba(255, 218, 125, 0.95)";
+  mapCtx.fillStyle = "rgba(255, 230, 120, 1)";
   mapCtx.fillRect(exit.x * cell, exit.y * cell, cell - 1, cell - 1);
 
-  mapCtx.fillStyle = "#f1dfb4";
+  mapCtx.fillStyle = "#ffffff";
   mapCtx.beginPath();
-  mapCtx.arc(player.x * cell + cell / 2, player.y * cell + cell / 2, cell * 0.38, 0, Math.PI * 2);
+  mapCtx.arc(player.x * cell + cell / 2, player.y * cell + cell / 2, cell * 0.4, 0, Math.PI * 2);
   mapCtx.fill();
 
   const d = DIRS[player.dir];
-  mapCtx.strokeStyle = "#f1dfb4";
-  mapCtx.lineWidth = 2;
+  mapCtx.strokeStyle = "#ffffff";
+  mapCtx.lineWidth = 3;
   mapCtx.beginPath();
   mapCtx.moveTo(player.x * cell + cell / 2, player.y * cell + cell / 2);
   mapCtx.lineTo(
-    player.x * cell + cell / 2 + d.dx * cell * 0.55,
-    player.y * cell + cell / 2 + d.dy * cell * 0.55
+    player.x * cell + cell / 2 + d.dx * cell * 0.65,
+    player.y * cell + cell / 2 + d.dy * cell * 0.65
   );
   mapCtx.stroke();
 }
