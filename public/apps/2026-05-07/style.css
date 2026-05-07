@@ -1,0 +1,588 @@
+* {
+    box-sizing: border-box;
+  }
+  
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    min-height: 100%;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    font-family:
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Helvetica Neue",
+      sans-serif;
+    background: #22120a;
+    color: #fff7e8;
+  }
+  
+  button {
+    font: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .game {
+    position: relative;
+    width: 100%;
+    max-width: 430px;
+    min-height: 100svh;
+    margin: 0 auto;
+    padding: 20px;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255, 204, 115, 0.24), transparent 34%),
+      linear-gradient(180deg, #5b2b12 0%, #261108 58%, #130905 100%);
+  }
+  
+  .hidden {
+    display: none !important;
+  }
+  
+  .start-screen,
+  .result-screen,
+  .play-screen {
+    min-height: calc(100svh - 40px);
+  }
+  
+  .start-screen,
+  .result-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 20px;
+  }
+  
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+  }
+  
+  h1 {
+    margin: 0;
+    font-size: 54px;
+    line-height: 0.96;
+    letter-spacing: -0.05em;
+    text-shadow: 0 6px 0 rgba(0, 0, 0, 0.3);
+  }
+  
+  h2 {
+    margin: 0;
+    font-size: 34px;
+    line-height: 1.16;
+    letter-spacing: -0.04em;
+  }
+  
+  .lead,
+  .result-text {
+    width: 100%;
+    margin: 0;
+    color: #f8d7a5;
+    font-size: 15px;
+    line-height: 1.8;
+  }
+  
+  .primary-btn {
+    width: min(100%, 280px);
+    border: 0;
+    border-radius: 999px;
+    padding: 16px 24px;
+    background: linear-gradient(180deg, #ffdf72, #f49b25);
+    color: #3a1807;
+    font-size: 18px;
+    font-weight: 900;
+    box-shadow:
+      0 8px 0 #9a4b14,
+      0 18px 28px rgba(0, 0, 0, 0.35);
+  }
+  
+  .primary-btn:active {
+    transform: translateY(5px);
+    box-shadow:
+      0 3px 0 #9a4b14,
+      0 10px 18px rgba(0, 0, 0, 0.35);
+  }
+  
+  .hud {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  
+  .hud > div {
+    padding: 10px 8px;
+    border-radius: 18px;
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+  }
+  
+  .label {
+    display: block;
+    margin-bottom: 2px;
+    color: #dbad72;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+  }
+  
+  .hud strong {
+    font-size: 24px;
+    line-height: 1;
+  }
+  
+  .message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    margin-bottom: 14px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff0ce;
+    font-size: 14px;
+    font-weight: 800;
+    text-align: center;
+  }
+  
+  .pan {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    margin: 0 auto 18px;
+    padding: 22px;
+    border-radius: 42px;
+    background:
+      radial-gradient(circle at 25% 20%, rgba(255, 255, 255, 0.12), transparent 18%),
+      linear-gradient(145deg, #1b1b1b, #050505);
+    box-shadow:
+      inset 0 0 0 8px #2e2e2e,
+      inset 0 0 36px rgba(255, 255, 255, 0.06),
+      0 18px 40px rgba(0, 0, 0, 0.5);
+  }
+  
+  .pan::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -36px;
+    width: 84px;
+    height: 74px;
+    transform: translateX(-50%);
+    border-radius: 0 0 42px 42px;
+    background: linear-gradient(180deg, #2c2c2c, #0b0b0b);
+    z-index: -1;
+  }
+  
+  .holes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .takoyaki {
+    position: relative;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    overflow: visible;
+    background: none;
+  }
+
+  /* たこ焼き器の穴 */
+  .takoyaki::before {
+    content: "";
+    position: absolute;
+    inset: 4%;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 42%, #1f1f1f 0 42%, #090909 68%, #000 100%);
+    box-shadow:
+      inset 0 8px 10px rgba(255,255,255,.05),
+      inset 0 -12px 18px rgba(0,0,0,.95);
+    z-index: 0;
+  }
+
+  .takoyaki::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 10%;
+    width: 64%;
+    height: 18%;
+    border-radius: 50%;
+    background: rgba(0,0,0,.55);
+    filter: blur(6px);
+    transform: translateX(-50%);
+    z-index: 1;
+  }
+  
+  .takoyaki-body {
+    --base: #c9782b;
+  
+    position: relative;
+    z-index: 2;
+    display: block;
+    width: 82%;
+    height: 82%;
+    border-radius: 50%;
+    overflow: hidden;
+    transform: translateY(-14%);
+    background:
+      radial-gradient(circle at 34% 26%, rgba(255,255,245,.95) 0 6%, rgba(255,240,190,.55) 7% 14%, transparent 22%),
+      radial-gradient(circle at 42% 34%, #efb15f 0 20%, #d68734 38%, #a9521b 62%, #5a2509 100%),
+      radial-gradient(circle at 62% 78%, rgba(45,16,4,.72) 0 16%, transparent 34%),
+      radial-gradient(circle at 70% 40%, rgba(120,60,20,.18) 0 10%, transparent 18%),
+      radial-gradient(circle at 38% 70%, rgba(90,35,8,.22) 0 9%, transparent 16%);
+    box-shadow:
+      inset 10px 10px 16px rgba(255,232,180,.22),
+      inset -12px -18px 22px rgba(46,15,3,.62),
+      inset 0 -12px 18px rgba(0,0,0,.24),
+      0 10px 12px rgba(0,0,0,.45);
+    transition:
+      transform 0.16s ease,
+      background 0.12s linear;
+  }
+
+  /* 上面のツヤ */
+  .takoyaki-body::before {
+    content: "";
+    position: absolute;
+    top: 10%;
+    left: 18%;
+    width: 34%;
+    height: 18%;
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(255,255,255,.42) 0%,
+      rgba(255,255,255,.12) 45%,
+      transparent 75%
+    );
+    transform: rotate(-18deg);
+  }
+
+  /* 下側の締まり */
+  .takoyaki-body::after {
+    content: "";
+    position: absolute;
+    left: 16%;
+    right: 10%;
+    bottom: 4%;
+    height: 24%;
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(25,8,2,.34) 0%,
+      transparent 72%
+    );
+  }
+  
+  .takoyaki.active .takoyaki-body {
+    animation: pulseBall 0.75s infinite;
+  }
+  
+  .takoyaki.active::after {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 3px solid #ffdf72;
+    animation: ring 0.8s infinite;
+  }
+  
+  .takoyaki.done .takoyaki-body {
+    transform: translateY(-14%);
+  }
+  
+  .takoyaki.success .takoyaki-body {
+    --bake: #cf7c27;
+    background:
+      radial-gradient(circle at 32% 24%, rgba(255, 238, 188, 0.72) 0 8%, transparent 20%),
+      radial-gradient(circle at 66% 70%, rgba(58, 20, 4, 0.45) 0 12%, transparent 32%),
+      radial-gradient(circle at 48% 40%, #eda955 0 18%, #cf7c27 48%, #79340f 100%);
+  }
+
+  .sauce,
+  .aonori {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 3;
+  }
+
+  .takoyaki.success .sauce {
+    opacity: 1;
+    inset: 30% 12% auto 12%;
+    height: 16%;
+    border-radius: 999px;
+    background: rgba(70, 28, 10, 0.72);
+    transform: rotate(-12deg);
+    box-shadow:
+      10px 12px 0 rgba(70, 28, 10, 0.65),
+      -6px 20px 0 rgba(70, 28, 10, 0.55);
+  }
+
+  .takoyaki.success .aonori {
+    opacity: 1;
+    inset: 18% 14% 12% 14%;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 20% 30%, #2f7b2f 0 2px, transparent 3px),
+      radial-gradient(circle at 55% 24%, #2f7b2f 0 2px, transparent 3px),
+      radial-gradient(circle at 70% 58%, #2f7b2f 0 2px, transparent 3px),
+      radial-gradient(circle at 35% 68%, #e7d8a6 0 2px, transparent 3px);
+  }
+  
+  .takoyaki.ok .takoyaki-body {
+    --bake: #d9963d;
+    background:
+      radial-gradient(circle at 32% 24%, rgba(255, 245, 205, 0.72) 0 8%, transparent 20%),
+      radial-gradient(circle at 70% 76%, rgba(91, 38, 8, 0.42) 0 10%, transparent 30%),
+      radial-gradient(circle at 48% 40%, #f4bf73 0 18%, #d9963d 48%, #8d4316 100%);
+  }
+  
+  .takoyaki.raw .takoyaki-body {
+    --bake: #eecf92;
+    background:
+      radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.8) 0 8%, transparent 22%),
+      radial-gradient(circle at 68% 74%, rgba(156, 95, 30, 0.24) 0 10%, transparent 30%),
+      radial-gradient(circle at 48% 40%, #fff0bc 0 18%, #eecf92 48%, #bd7d35 100%);
+  }
+  
+  .takoyaki.burnt .takoyaki-body {
+    --bake: #3a1d10;
+    background:
+      radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.14) 0 7%, transparent 20%),
+      radial-gradient(circle at 66% 72%, rgba(0, 0, 0, 0.48) 0 12%, transparent 32%),
+      radial-gradient(circle at 48% 40%, #6b3418 0 16%, #3a1d10 50%, #120805 100%);
+  }
+  
+  .shine {
+    position: absolute;
+    top: 24%;
+    left: 30%;
+    width: 15%;
+    height: 10%;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.28);
+    transform: rotate(-24deg);
+    pointer-events: none;
+  }
+  
+  .steam {
+    position: absolute;
+    top: 4%;
+    left: 50%;
+    width: 8px;
+    height: 18px;
+    border-radius: 999px;
+    border-left: 2px solid rgba(255, 255, 255, 0.3);
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  .takoyaki.active .steam {
+    opacity: 1;
+    animation: steam 0.9s infinite ease-out;
+  }
+  
+  .gauge-wrap {
+    margin-bottom: 16px;
+    padding: 14px;
+    border-radius: 22px;
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .gauge-label {
+    margin-bottom: 8px;
+    color: #f6c98b;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-align: center;
+  }
+  
+  .gauge {
+    position: relative;
+    display: flex;
+    height: 22px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #111;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.55);
+  }
+  
+  .zone {
+    height: 100%;
+  }
+  
+  .raw-zone {
+    width: 43%;
+    background: #f2d79b;
+  }
+  
+  .good-zone {
+    width: 22%;
+    background: #ffb33a;
+  }
+  
+  .burnt-zone {
+    flex: 1;
+    background: #3a1e13;
+  }
+  
+  .marker {
+    position: absolute;
+    top: -7px;
+    left: 0%;
+    width: 8px;
+    height: 36px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow:
+      0 0 0 2px rgba(0, 0, 0, 0.45),
+      0 0 14px rgba(255, 255, 255, 0.85);
+    transform: translateX(-50%);
+  }
+  
+  .gauge-text {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 7px;
+    color: #e9c49a;
+    font-size: 11px;
+    font-weight: 800;
+  }
+  
+  .tap-btn {
+    width: 100%;
+    height: 76px;
+    border: 0;
+    border-radius: 26px;
+    background: linear-gradient(180deg, #ffdf72, #ef851b);
+    color: #3a1807;
+    font-size: 28px;
+    font-weight: 1000;
+    letter-spacing: 0.02em;
+    box-shadow:
+      0 9px 0 #8d3d0e,
+      0 18px 28px rgba(0, 0, 0, 0.35);
+  }
+  
+  .tap-btn:active {
+    transform: translateY(6px);
+    box-shadow:
+      0 3px 0 #8d3d0e,
+      0 8px 18px rgba(0, 0, 0, 0.35);
+  }
+  
+  .result-score {
+    margin: 0;
+    color: #f4c27b;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+  }
+  
+  .result-score strong {
+    display: block;
+    margin-top: 8px;
+    color: #fff;
+    font-size: 58px;
+    line-height: 1;
+  }
+  
+  @keyframes pulse {
+    0%,
+    100% {
+      transform: scale(1.06);
+    }
+    50% {
+      transform: scale(1.16);
+    }
+  }
+
+  @keyframes pulseBall {
+    0%, 100% {
+      transform: translateY(-14%) scale(1.03);
+    }
+    50% {
+      transform: translateY(-17%) scale(1.10);
+    }
+  }
+  
+  @keyframes ring {
+    0% {
+      opacity: 1;
+      transform: scale(0.94);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.2);
+    }
+  }
+  
+  @keyframes steam {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, 8px) scale(0.8);
+    }
+    30% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, -20px) scale(1.3);
+    }
+  }
+  
+  @media (max-height: 720px) {
+    .game {
+      padding: 14px;
+    }
+  
+    .start-screen,
+    .result-screen,
+    .play-screen {
+      min-height: calc(100svh - 28px);
+    }
+  
+    .pan {
+      margin-bottom: 12px;
+    }
+  
+    .tap-btn {
+      height: 66px;
+      font-size: 24px;
+    }
+  
+    .message {
+      height: 38px;
+      margin-bottom: 10px;
+    }
+  
+    .gauge-wrap {
+      margin-bottom: 12px;
+      padding: 12px;
+    }
+  }
