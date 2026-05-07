@@ -348,6 +348,19 @@ startBtn.addEventListener("click", startGame);
 retryBtn.addEventListener("click", startGame);
 tapBtn.addEventListener("click", flipTakoyaki);
 
+let lastTouchEnd = 0;
+window.addEventListener(
+  "touchend",
+  (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 350) {
+      e.preventDefault();
+    }
+    lastTouchEnd = now;
+  },
+  { passive: false }
+);
+
 window.addEventListener(
   "touchmove",
   (e) => {
