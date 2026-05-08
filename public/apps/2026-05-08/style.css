@@ -1,0 +1,342 @@
+:root {
+    --bg: #ddd0b8;
+    --paper: #f3ead6;
+    --paper-deep: #e8dbc0;
+    --ink: #2a2a22;
+    --muted: #6e6657;
+    --green: #224a2b;
+    --green-light: #3f7144;
+    --brown: #5b3628;
+    --brown-dark: #41251c;
+    --pot: #5f524d;
+    --pot-dark: #473c38;
+    --line: rgba(70, 58, 39, 0.08);
+    --white: rgba(255, 255, 255, 0.72);
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family:
+      "Hiragino Mincho ProN",
+      "Yu Mincho",
+      "YuMincho",
+      serif;
+    touch-action: manipulation;
+  }
+  
+  button {
+    font: inherit;
+  }
+  
+  .app {
+    min-height: 100dvh;
+    background: linear-gradient(180deg, #ded2bd 0%, #d7c7af 100%);
+  }
+  
+  .start-screen,
+  .game-screen {
+    min-height: 100dvh;
+  }
+  
+  .start-screen {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  
+  .start-screen.active {
+    display: flex;
+  }
+  
+  .start-card {
+    width: min(92vw, 420px);
+    padding: 34px 24px 28px;
+    border-radius: 24px;
+    background: rgba(255, 249, 237, 0.92);
+    box-shadow: 0 16px 40px rgba(72, 57, 41, 0.14);
+    text-align: center;
+  }
+  
+  .eyebrow {
+    margin: 0 0 12px;
+    color: #76624f;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+  }
+  
+  h1 {
+    margin: 0 0 16px;
+    font-size: clamp(34px, 8vw, 48px);
+    line-height: 1.15;
+  }
+  
+  .lead {
+    margin: 0 0 22px;
+    color: #544a3f;
+    line-height: 1.9;
+    font-size: 15px;
+  }
+  
+  .primary-btn,
+  .secondary-btn {
+    appearance: none;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  
+  .primary-btn {
+    width: 100%;
+    padding: 15px 18px;
+    background: #2c2b22;
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+  
+  .game-screen {
+    display: none;
+    flex-direction: column;
+    padding:
+      max(12px, env(safe-area-inset-top))
+      14px
+      max(14px, env(safe-area-inset-bottom));
+  }
+  
+  .game-screen.active {
+    display: flex;
+  }
+  
+  .hud {
+    width: 100%;
+    max-width: 460px;
+    margin: 0 auto 12px;
+    display: grid;
+    grid-template-columns: 116px 1fr;
+    gap: 8px;
+  }
+  
+  .hud-box {
+    padding: 12px 12px 10px;
+    border-radius: 18px;
+    background: rgba(255, 249, 237, 0.72);
+    border: 1px solid rgba(63, 50, 36, 0.08);
+  }
+  
+  .hud-box-wide {
+    min-width: 0;
+  }
+  
+  .hud-label {
+    display: block;
+    margin-bottom: 4px;
+    color: #76624f;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+  }
+  
+  .hud-value {
+    display: block;
+    font-size: 22px;
+    line-height: 1.1;
+  }
+  
+  .hud-sub {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  
+  .stage-wrap {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+  }
+  
+  .stage {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    flex: 1;
+    min-height: 0;
+    margin: 0 auto;
+    border-radius: 28px;
+    overflow: hidden;
+    border: 1px solid rgba(63, 50, 36, 0.08);
+    background:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px),
+      radial-gradient(circle at 50% 20%, rgba(255,255,255,0.6), transparent 28%),
+      linear-gradient(180deg, var(--paper) 0%, var(--paper-deep) 100%);
+    background-size: 24px 24px, 24px 24px, auto, auto;
+    box-shadow: inset 0 0 50px rgba(81, 61, 37, 0.05);
+  }
+  
+  .moon {
+    position: absolute;
+    right: 36px;
+    top: 30px;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--white);
+  }
+  
+  .guide-text {
+    position: absolute;
+    left: 50%;
+    top: 14px;
+    transform: translateX(-50%);
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(255, 250, 242, 0.78);
+    color: #6f6555;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    z-index: 2;
+  }
+  
+  .bonsai-svg {
+    position: absolute;
+    left: 50%;
+    bottom: 54px;
+    width: min(96vw, 430px);
+    height: min(72dvh, 560px);
+    transform: translateX(-50%);
+    overflow: visible;
+  }
+  
+  .trunk {
+    fill: none;
+    stroke: var(--brown);
+    stroke-width: 18;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  
+  .trunk-sub {
+    stroke-width: 11;
+  }
+  
+  .branch-line {
+    fill: none;
+    stroke: var(--brown-dark);
+    stroke-width: 6.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+  
+.grow-branch {
+  fill: none;
+  stroke: var(--brown);
+  stroke-width: 11;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.55s ease-out;
+}
+
+  .needle {
+    stroke: var(--green);
+    stroke-width: 4.2;
+    stroke-linecap: round;
+    opacity: 0.96;
+    pointer-events: none;
+  }
+  
+  .needle.light {
+    stroke: var(--green-light);
+    stroke-width: 3.4;
+  }
+  
+  .leaf-core {
+    fill: var(--green);
+    opacity: 0.94;
+    pointer-events: none;
+  }
+  
+  .leaf-hit {
+    fill: rgba(0, 0, 0, 0.001);
+    pointer-events: all;
+    cursor: pointer;
+  }
+  
+  .cut-ring {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.42);
+    stroke-width: 3;
+    pointer-events: none;
+  }
+  
+  .branch-pop {
+    transform-origin: center;
+  }
+  
+  .pot {
+    position: absolute;
+    left: 50%;
+    bottom: 16px;
+    width: 162px;
+    height: 92px;
+    transform: translateX(-50%);
+  }
+  
+  .pot-rim {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 162px;
+    height: 24px;
+    border-radius: 999px;
+    background: #796b65;
+  }
+  
+  .pot-body {
+    position: absolute;
+    left: 16px;
+    top: 12px;
+    width: 130px;
+    height: 74px;
+    border-radius: 0 0 22px 22px;
+    background: linear-gradient(180deg, var(--pot), var(--pot-dark));
+  }
+  
+  .controls {
+    width: 100%;
+    max-width: 460px;
+    margin: 12px auto 0;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  
+  .secondary-btn {
+    padding: 12px 18px;
+    background: rgba(255, 249, 237, 0.72);
+    color: var(--ink);
+    border: 1px solid rgba(63, 50, 36, 0.08);
+  }
+  
+  @media (min-width: 700px) {
+    body {
+      display: flex;
+      justify-content: center;
+    }
+  
+    .app {
+      width: 100%;
+      max-width: 520px;
+    }
+  }

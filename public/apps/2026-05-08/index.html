@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, user-scalable=no"
+  />
+  <title>松をととのえる</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="start-screen active" id="startScreen">
+      <div class="start-card">
+        <p class="eyebrow">5/8 松の日</p>
+        <h1>松をととのえる</h1>
+        <p class="lead">
+          少しずつ伸びる松を、気になるところだけ剪定。<br />
+          好きな形に育ててください。
+        </p>
+        <button class="primary-btn" id="startBtn">はじめる</button>
+      </div>
+    </section>
+
+    <section class="game-screen" id="gameScreen">
+      <header class="hud">
+        <div class="hud-box">
+          <span class="hud-label">日めくり</span>
+          <strong class="hud-value" id="dayText">1日目</strong>
+        </div>
+        <div class="hud-box hud-box-wide">
+          <span class="hud-label">いまの姿</span>
+          <strong class="hud-value" id="shapeName">ひらき松</strong>
+          <p class="hud-sub" id="shapeNote">枝先をタップで剪定</p>
+        </div>
+      </header>
+
+      <div class="stage-wrap">
+        <div class="stage" id="stage">
+          <div class="moon"></div>
+          <div class="guide-text">枝先をタップで剪定</div>
+
+          <svg
+            id="bonsaiSvg"
+            class="bonsai-svg"
+            viewBox="0 0 360 520"
+            preserveAspectRatio="xMidYMid meet"
+            aria-label="盆栽"
+          >
+            <path
+              class="trunk"
+              d="M174 438
+                 C172 406 180 382 178 350
+                 C176 318 162 292 166 260
+                 C171 224 192 194 218 166"
+            />
+            <g id="branchBaseLayer">
+              <path class="grow-branch" data-branch-id="b1" d="M175 388 C142 382 102 364 58 336" />
+              <path class="grow-branch" data-branch-id="b2" d="M177 352 C222 346 270 324 316 286" />
+              <path class="grow-branch" data-branch-id="b3" d="M170 308 C138 294 96 270 56 238" />
+              <path class="grow-branch" data-branch-id="b4" d="M188 266 C226 250 258 226 286 192" />
+              <path class="grow-branch" data-branch-id="b5" d="M181 226 C164 208 146 188 126 160" />
+              <path class="grow-branch" data-branch-id="b6" d="M216 176 C232 156 246 136 258 108" />
+            </g>
+
+            <g id="branchLayer"></g>
+          </svg>
+
+          <div class="pot">
+            <div class="pot-rim"></div>
+            <div class="pot-body"></div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="controls">
+        <button class="secondary-btn" id="pauseBtn">止める</button>
+        <button class="secondary-btn" id="resetBtn">最初から</button>
+      </footer>
+    </section>
+  </main>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
