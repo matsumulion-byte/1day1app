@@ -1,14 +1,4 @@
-const APP_BASE = typeof location !== "undefined" && location.pathname
-  ? location.pathname.endsWith("/")
-    ? location.pathname
-    : location.pathname.endsWith(".html")
-      ? location.pathname.replace(/[^/]+$/, "")
-      : `${location.pathname.replace(/\/*$/, "")}/`
-  : "";
-const asset = (p) =>
-  typeof location !== "undefined"
-    ? new URL(String(p).replace(/^\.?\//, ""), `${location.origin}${APP_BASE}`).toString()
-    : new URL(p, import.meta.url).toString();
+const asset = (p) => new URL(p, import.meta.url).toString();
 
 const startScreen = document.getElementById("startScreen");
 const gameScreen = document.getElementById("gameScreen");
