@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>アイス積み職人</title>
+  <link rel="stylesheet" href="/apps/2026-05-09/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="game-header">
+      <p class="date">5/9 アイスクリームの日</p>
+      <h1>アイス積み職人</h1>
+      <p class="lead">落ちてくるアイスをコーンで受け止めろ。落としたら即終了。</p>
+    </section>
+
+    <section class="game-area" id="gameArea">
+      <div class="sky">
+        <div class="score-board">
+          <span>積んだ数</span>
+          <strong id="score">0</strong>
+        </div>
+
+        <div class="falling-ice" id="fallingIce"></div>
+
+        <button class="sound-button" id="soundButton" type="button">♪</button>
+
+        <div class="tower" id="tower">
+          <div class="cone" id="cone">
+            <div class="cone-top"></div>
+            <div class="cone-body"></div>
+          </div>
+        </div>
+
+        <div class="start-panel" id="startPanel">
+          <h2>アイスを積め</h2>
+          <p>左右にドラッグしてコーンを動かします。</p>
+          <button id="startButton">スタート</button>
+        </div>
+
+        <div class="result-panel hidden" id="resultPanel">
+          <p class="result-label">記録</p>
+          <h2><span id="finalScore">0</span> 個</h2>
+          <p id="resultText">コーンだけで帰宅</p>
+          <button id="restartButton">もう一回</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-05-09/main.js"></script>
+</body>
+</html>
