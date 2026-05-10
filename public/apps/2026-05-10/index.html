@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>お母さんありがとう</title>
+  <link rel="stylesheet" href="/apps/2026-05-10/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section id="startScreen" class="screen start-screen">
+      <div class="start-card">
+        <p class="date-label">5/10 母の日</p>
+        <h1>お母さんありがとう</h1>
+        <p class="lead">
+          今日は母の日。<br>
+          お母さんに感謝を伝えましょう。
+        </p>
+        <p class="goal">
+          お母さんに感謝が伝わったらクリアです。
+        </p>
+        <button id="startBtn" class="primary-btn">はじめる</button>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen game-screen hidden">
+      <header class="chat-header">
+        <div class="back-mark">‹</div>
+        <div class="mom-icon">母</div>
+        <div class="header-text">
+          <div class="chat-name">お母さん</div>
+          <div class="chat-status">母の日の会話中</div>
+        </div>
+      </header>
+
+      <div id="chatLog" class="chat-log"></div>
+
+      <div id="choices" class="choices"></div>
+    </section>
+
+    <section id="resultScreen" class="screen result-screen hidden">
+      <div class="result-card">
+        <p id="resultLabel" class="result-label"></p>
+        <h2 id="resultTitle"></h2>
+        <p id="resultText"></p>
+        <button id="retryBtn" class="primary-btn">もう一度</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-05-10/main.js"></script>
+</body>
+</html>
