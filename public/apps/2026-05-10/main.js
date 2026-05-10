@@ -379,11 +379,13 @@ function showResult(isClear) {
   if (isClear) {
     resultLabel.textContent = "CLEAR";
     resultTitle.textContent = "感謝が伝わりました";
-    resultText.innerHTML = "お母さんに、ちゃんとありがとうが伝わりました。<br>言葉遣いより、覚えていることが大事な日もあります。";
+    resultText.innerHTML =
+      "お母さんに、ちゃんとありがとうが伝わりました。<br>言葉遣いより、覚えていることが大事な日もあります。<br><br>こんなゲームなんてやってないで、ちゃんとお母さんに連絡しなさい。";
   } else {
     resultLabel.textContent = "END";
     resultTitle.textContent = "会話が終了しました";
-    resultText.innerHTML = "今日は、少しだけ言葉が足りなかったようです。<br>来年の母の日に期待しましょう。";
+    resultText.innerHTML =
+      "今日は、少しだけ言葉が足りなかったようです。<br>来年の母の日に期待しましょう。<br><br>こんなゲームなんてやってないで、ちゃんとお母さんに連絡しなさい。";
   }
 }
 
