@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>爆誕！ご当地キャラ会議</title>
+  <link rel="stylesheet" href="/apps/2026-05-11/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <p class="date">5月11日｜ご当地キャラの日</p>
+      <h1>爆誕！<br>ご当地キャラ会議</h1>
+      <p class="lead">
+        地域名と名物を入れると、自治体に出していいのか微妙なご当地キャラが爆誕します。
+      </p>
+    </section>
+
+    <section class="panel input-panel" id="inputPanel">
+      <label>
+        <span>地域名</span>
+        <input id="areaInput" type="text" placeholder="例：蒲田" autocomplete="off" />
+      </label>
+
+      <label>
+        <span>名産・名物</span>
+        <input id="specialtyInput" type="text" placeholder="例：羽根つき餃子" autocomplete="off" />
+      </label>
+
+      <button id="generateBtn" class="primary-btn">キャラ案を提出する</button>
+    </section>
+
+    <section class="panel result-panel hidden" id="resultPanel">
+      <div class="stamp" id="stamp">審査中</div>
+
+      <div class="character-card">
+        <div class="character-visual">
+          <div class="sunburst"></div>
+          <div class="character-emoji" id="characterEmoji">🐶</div>
+        </div>
+
+        <div class="character-info">
+          <p class="label">爆誕キャラ</p>
+          <h2 id="characterName">カマタギョーザ丸</h2>
+          <p class="copy" id="characterCopy">地元の味を背負いすぎた、蒲田の公式志望キャラ。</p>
+        </div>
+      </div>
+
+      <div class="profile-grid">
+        <div class="profile-item">
+          <span>モチーフ</span>
+          <strong id="motifText">犬</strong>
+        </div>
+        <div class="profile-item">
+          <span>性格</span>
+          <strong id="personalityText">地元愛が強すぎて話が長い</strong>
+        </div>
+        <div class="profile-item">
+          <span>口癖</span>
+          <strong id="catchphraseText">んだんだ</strong>
+        </div>
+        <div class="profile-item">
+          <span>得意技</span>
+          <strong id="skillText">羽根バリア</strong>
+        </div>
+        <div class="profile-item">
+          <span>弱点</span>
+          <strong id="weaknessText">横から見ると何かわからない</strong>
+        </div>
+      </div>
+
+      <div class="meeting-box">
+        <h3>会議コメント</h3>
+        <ul id="commentsList"></ul>
+      </div>
+
+      <div class="score-box">
+        <div class="score-row">
+          <span>地元感</span>
+          <div class="meter"><i id="localMeter"></i></div>
+        </div>
+        <div class="score-row">
+          <span>ゆるさ</span>
+          <div class="meter"><i id="looseMeter"></i></div>
+        </div>
+        <div class="score-row">
+          <span>物販適性</span>
+          <div class="meter"><i id="goodsMeter"></i></div>
+        </div>
+        <div class="score-row">
+          <span>炎上リスク</span>
+          <div class="meter danger"><i id="riskMeter"></i></div>
+        </div>
+      </div>
+
+      <button id="retryBtn" class="secondary-btn">もう一度、会議にかける</button>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-05-11/main.js"></script>
+</body>
+</html>
