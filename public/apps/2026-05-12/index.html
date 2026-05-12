@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>つかめ！ザリガニくん</title>
+  <link rel="stylesheet" href="/apps/2026-05-12/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="title-screen" id="titleScreen">
+      <div class="title-card">
+        <p class="date">5/12 ザリガニの日</p>
+        <h1>つかめ！<br>ザリガニくん</h1>
+        <p class="lead">
+          エサをたらして、食いついた瞬間に引き上げろ。<br>
+          焦ると逃げる。待ちすぎるとチョキン。
+        </p>
+        <button class="primary-button" id="startButton">池に向かう</button>
+      </div>
+    </section>
+
+    <section class="game-screen" id="gameScreen" aria-hidden="true">
+      <header class="hud">
+        <div>
+          <span class="label">釣果</span>
+          <strong><span id="catchCount">0</span>/3</strong>
+        </div>
+        <div>
+          <span class="label">糸</span>
+          <strong><span id="lineCount">5</span>本</strong>
+        </div>
+        <button class="sound-button" id="soundButton" type="button">♪</button>
+      </header>
+
+      <div class="pond" id="pond">
+        <div class="water-line"></div>
+        <div class="sky-reflection reflection-a"></div>
+        <div class="sky-reflection reflection-b"></div>
+
+        <div class="message" id="message">ザリガニを狙え</div>
+
+        <div class="rod">
+          <div class="rod-stick"></div>
+          <div class="line" id="line"></div>
+          <div class="bait" id="bait"></div>
+        </div>
+
+        <div class="target-zone" id="targetZone"></div>
+
+        <div class="crayfish" id="crayfish">
+          <div class="claw left"></div>
+          <div class="claw right"></div>
+          <div class="body"></div>
+          <div class="tail"></div>
+          <div class="eye eye-left"></div>
+          <div class="eye eye-right"></div>
+        </div>
+
+        <div class="splash splash-a"></div>
+        <div class="splash splash-b"></div>
+        <div class="splash splash-c"></div>
+      </div>
+
+      <div class="controls">
+        <button id="dropButton" class="control-button">エサをたらす</button>
+        <button id="pullButton" class="control-button pull" disabled>引き上げる</button>
+      </div>
+
+      <p class="tip">
+        「！」が出たら食いつき中。早すぎず、遅すぎず。
+      </p>
+    </section>
+
+    <section class="result-screen" id="resultScreen" aria-hidden="true">
+      <div class="result-card">
+        <p class="result-label">RESULT</p>
+        <h2 id="resultTitle">ザリガニ名人</h2>
+        <p id="resultText"></p>
+        <button class="primary-button" id="retryButton">もう一回釣る</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-05-12/main.js"></script>
+</body>
+</html>
