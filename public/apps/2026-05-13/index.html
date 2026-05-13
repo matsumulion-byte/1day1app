@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>松村を傷つけないようにしてフれ！</title>
+  <link rel="stylesheet" href="/apps/2026-05-13/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section id="startScreen" class="screen active">
+      <div class="storm-bg"></div>
+
+      <div class="title-card">
+        <p class="date-label">5/13 メイストームデー</p>
+        <h1>松村を<br />傷つけないようにしてフれ！</h1>
+        <p class="lead">
+          優しすぎるとルートが増える。<br />
+          冷たすぎるとHPが削れる。<br />
+          ちょうどよく、ちゃんとフれ（※説明書は付きません）。
+        </p>
+      </div>
+
+      <div class="select-card">
+        <p class="select-title">今日フる松村を選んでください</p>
+        <div class="gender-buttons">
+          <button class="gender-btn" data-gender="boy">
+            <span>彼氏 松村</span>
+            <small>「俺、なんかした？　※審判待ち」</small>
+          </button>
+          <button class="gender-btn" data-gender="girl">
+            <span>彼女 松村</span>
+            <small>「私、なんかしたかな？　※審判待ち」</small>
+          </button>
+        </div>
+      </div>
+
+      <button id="soundToggle" class="sound-btn" type="button">♪ BGM OFF</button>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <div class="storm-bg"></div>
+
+      <header class="game-header">
+        <div>
+          <p class="mini-label">別れ話進行度</p>
+          <div class="progress">
+            <div id="progressBar" class="progress-bar"></div>
+          </div>
+        </div>
+        <button id="soundToggleGame" class="sound-btn small" type="button">♪ OFF</button>
+      </header>
+
+      <section class="status-panel">
+        <div class="meter">
+          <div class="meter-label">
+            <span>傷つき度</span>
+            <strong id="hurtValue">0</strong>
+          </div>
+          <div class="meter-track"><div id="hurtBar" class="meter-fill hurt"></div></div>
+        </div>
+
+        <div class="meter">
+          <div class="meter-label">
+            <span>未練</span>
+            <strong id="attachmentValue">0</strong>
+          </div>
+          <div class="meter-track"><div id="attachmentBar" class="meter-fill attachment"></div></div>
+        </div>
+
+        <div class="meter">
+          <div class="meter-label">
+            <span>気まずさ</span>
+            <strong id="awkwardValue">0</strong>
+          </div>
+          <div class="meter-track"><div id="awkwardBar" class="meter-fill awkward"></div></div>
+        </div>
+      </section>
+
+      <section class="scene">
+        <div id="weatherLayer" class="weather-layer calm"></div>
+
+        <div class="matsumura-wrap">
+          <img id="matsumuraImage" class="matsumura-img" src="" alt="松村" />
+          <div id="emotionBadge" class="emotion-badge">平静（仮）</div>
+        </div>
+
+        <div class="dialogue-card">
+          <p id="speakerName" class="speaker">松村</p>
+          <p id="dialogueText" class="dialogue-text"></p>
+        </div>
+      </section>
+
+      <section id="choices" class="choices"></section>
+
+      <div id="toast" class="toast"></div>
+    </section>
+
+    <section id="resultScreen" class="screen">
+      <div class="storm-bg"></div>
+
+      <div class="result-card">
+        <p id="resultLabel" class="result-label"></p>
+        <h2 id="resultTitle"></h2>
+        <p id="resultText" class="result-text"></p>
+
+        <div class="final-meters">
+          <div><span>傷つき度</span><strong id="finalHurt">0</strong></div>
+          <div><span>未練</span><strong id="finalAttachment">0</strong></div>
+          <div><span>気まずさ</span><strong id="finalAwkward">0</strong></div>
+        </div>
+
+        <button id="restartBtn" class="primary-btn" type="button">もう一度フる</button>
+      </div>
+    </section>
+  </main>
+
+  <audio id="bgm" loop preload="auto"></audio>
+  <script type="module" src="/apps/2026-05-13/main.js"></script>
+</body>
+</html>
