@@ -1,10 +1,5 @@
-// Vercel用：/YYYY-MM-DD/ でアクセスしたときにアセットを正しく解決（別日アプリと同パターン）
-const DATE_SEGMENT = (location.pathname.match(/\d{4}-\d{2}-\d{2}/) || [""])[0];
-const DATE_BASE = DATE_SEGMENT ? `/${DATE_SEGMENT}/` : "/";
-const asset = (p) => {
-  const clean = String(p || "").replace(/^\.?\//, "");
-  return `${DATE_BASE}${clean}`;
-};
+// アセットは常にこのモジュールと同じディレクトリ基準で解決（/YYYY-MM-DD/ や末尾スラ無しでも壊れない）
+const asset = (p) => new URL(p, import.meta.url).toString();
 
 const ASSETS = {
   boy: asset("./assets/matsumura_boy.png"),
@@ -20,45 +15,45 @@ const profiles = {
     name: "彼氏 松村",
     image: ASSETS.boy,
     firstPerson: "俺",
-    opening: "今日のテーマ、恋愛？それとも解散？",
-    clearLine: "なるほどね。公式発表、ありがとう。拍手は控えめにする。",
+    opening: "今日、大事な話ある？",
+    clearLine: "うん、わかった。ちゃんと言ってくれて、ありがとう。",
   },
   girl: {
     label: "彼女 松村",
     name: "彼女 松村",
     image: ASSETS.girl,
     firstPerson: "私",
-    opening: "今日のテーマ、恋愛？それとも解散？",
-    clearLine: "なるほどね。公式発表、ありがとう。拍手は控えめにする。",
+    opening: "今日、大事な話ある？",
+    clearLine: "うん、わかった。ちゃんと言ってくれて、ありがとう。",
   },
 };
 
 const questions = [
   {
     text: {
-      boy: "今日、なんか“重大発表”っぽい空気してない？",
-      girl: "今日、なんか“重大発表”っぽい空気してない？",
+      boy: "今日、なんか大事な話しようって感じ？",
+      girl: "今日、なんか大事な話しようって感じ？",
     },
     choices: [
       {
         text: "うん。ちゃんと話したいことがある",
         delta: { hurt: 8, attachment: -4, awkward: 6 },
-        reaction: "松村、背筋がゲーム開始時みたいに伸びた。",
+        reaction: "松村が、すこし背筋を正した。",
       },
       {
         text: "いや、別に。なんとなく呼んだ",
         delta: { hurt: 4, attachment: 10, awkward: 24 },
-        reaction: "松村、ドリンクバーに魂を移し住ませはじめた。",
+        reaction: "松村の視線が、ふっとドリンクバーに逃げた。",
       },
       {
         text: "もう好きじゃない。以上です",
         delta: { hurt: 34, attachment: -10, awkward: 16 },
-        reaction: "言葉が直角に曲がって松村に直撃した。",
+        reaction: "言葉が、まっすぐ松村の胸に入った。",
       },
       {
         text: "松村ってさ、いい人だよね",
         delta: { hurt: 2, attachment: 24, awkward: 12 },
-        reaction: "松村の脳内に“続きありそう”の字幕が出た。",
+        reaction: "松村が、なんとなく空気を読みはじめた。",
       },
     ],
   },
@@ -71,22 +66,22 @@ const questions = [
       {
         text: "悪いとかじゃなくて、自分の気持ちが変わった",
         delta: { hurt: 10, attachment: -8, awkward: 5 },
-        reaction: "辛口アップデートログ。でも進行はした。",
+        reaction: "正直で辛いけれど、一歩だけ前に進んだ。",
       },
       {
         text: "強いて言えば、そういうところかな",
         delta: { hurt: 36, attachment: -6, awkward: 20 },
-        reaction: "松村の瞳が省エネモードに切り替わった。",
+        reaction: "松村の表情が、すこし曇った。",
       },
       {
         text: "何も悪くないよ。だから迷ってる",
         delta: { hurt: -2, attachment: 30, awkward: 12 },
-        reaction: "松村の心に「続編あり」の予告編が流れた。",
+        reaction: "松村の胸に、もう一度寄りかかれる余地が生まれた。",
       },
       {
         text: "それを今から一緒に考えよう",
         delta: { hurt: 4, attachment: 16, awkward: 26 },
-        reaction: "別れ話がホワイトボードと付箋を要求しはじめた。",
+        reaction: "別れ話が、急に打ち合わせみたいになった。",
       },
     ],
   },
@@ -99,22 +94,22 @@ const questions = [
       {
         text: "ごめん。戻るつもりはない",
         delta: { hurt: 14, attachment: -14, awkward: 6 },
-        reaction: "松村、傷ついたけど規約は読んだ顔をした。",
+        reaction: "松村は傷ついた。けれど、うなずいてくれた。",
       },
       {
         text: "タイミング次第ではある",
         delta: { hurt: 3, attachment: 34, awkward: 10 },
-        reaction: "松村、来週のカレンダーに謎の丸印を量産した。",
+        reaction: "松村が、来週からの予定を黙って数えはじめた。",
       },
       {
         text: "戻れると思う？",
         delta: { hurt: 20, attachment: 12, awkward: 24 },
-        reaction: "会話がエラー画面みたいに点滅しはじめた。",
+        reaction: "質問が質問を呼び、空気がぎこちなくなった。",
       },
       {
         text: "まずは友達からやり直そ",
         delta: { hurt: 2, attachment: 28, awkward: 16 },
-        reaction: "松村の中で「まだいける」が野生復帰した。",
+        reaction: "松村の中に、「まだチャンスかも」が芽吹いた。",
       },
     ],
   },
@@ -127,22 +122,22 @@ const questions = [
       {
         text: "嫌いになったわけじゃない。でも恋人ではいられない",
         delta: { hurt: 12, attachment: -12, awkward: 8 },
-        reaction: "正解ではない。でも正解の隣の席。",
+        reaction: "うまい答えではない。でも、誠実だった。",
       },
       {
         text: "正直ちょっと",
         delta: { hurt: 42, attachment: -10, awkward: 18 },
-        reaction: "言わなくても成立した世界線があった。",
+        reaction: "松村が、そっと目を伏せた。",
       },
       {
         text: "そういう質問するところかな",
         delta: { hurt: 45, attachment: -6, awkward: 26 },
-        reaction: "松村の心に雷が直撃し、Wi‑Fiが不安定になった。",
+        reaction: "松村が、言葉に詰まった。",
       },
       {
         text: "好きだよ",
         delta: { hurt: -6, attachment: 48, awkward: 12 },
-        reaction: "一言で物語がシーズン2に突入しかけた。",
+        reaction: "その一言で、ことがややこしくなった。",
       },
     ],
   },
@@ -155,22 +150,22 @@ const questions = [
       {
         text: "楽しかった。だからこそ、ちゃんと終わらせたい",
         delta: { hurt: 8, attachment: -8, awkward: 4 },
-        reaction: "松村、小さくうなずいてエンドロール感を出した。",
+        reaction: "松村が小さくうなずいた。",
       },
       {
         text: "まあ、悪くはなかった",
         delta: { hurt: 30, attachment: -8, awkward: 16 },
-        reaction: "思い出の査定が中古スマホ並みに安かった。",
+        reaction: "思い出の価値が、ずいぶん安く見積もられた。",
       },
       {
         text: "その話、今必要？",
         delta: { hurt: 35, attachment: -4, awkward: 26 },
-        reaction: "終盤で急に雑談モードに切り替わった。",
+        reaction: "急にテンポが途切れた。",
       },
       {
-        text: "楽しかったから、別れるのやめる？（※ロジックが逆走）",
+        text: "楽しかったから、別れるのやめる？",
         delta: { hurt: -8, attachment: 55, awkward: 14 },
-        reaction: "松村の目に希望のスポットライトが戻ってしまった。",
+        reaction: "松村の目に、光が戻った。",
       },
     ],
   },
@@ -295,15 +290,15 @@ function updateMeters() {
   }
 
   if (state.hurt >= 70) {
-    els.emotionBadge.textContent = "HP赤ゲージ";
+    els.emotionBadge.textContent = "傷つき";
   } else if (state.attachment >= 70) {
-    els.emotionBadge.textContent = "続編フラグ";
+    els.emotionBadge.textContent = "未練";
   } else if (state.awkward >= 70) {
-    els.emotionBadge.textContent = "沈黙MAX";
+    els.emotionBadge.textContent = "ぎこちなさ";
   } else if (highest >= 42) {
-    els.emotionBadge.textContent = "内心バグ";
+    els.emotionBadge.textContent = "動揺";
   } else {
-    els.emotionBadge.textContent = "平静（仮）";
+    els.emotionBadge.textContent = "平静";
   }
 }
 
@@ -394,23 +389,23 @@ function getResult(type, reason) {
     if (reason === "hurt") {
       return {
         label: "GAME OVER",
-        title: "松村、静かに泣く（※BGMは明るい）",
-        text: "「優しく」するはずが、言葉がナイフみたいに振る舞った。<br />別れ話というより、口頭のボス戦だった。",
+        title: "松村、静かに泣く",
+        text: "優しさで包もうとしたはずが、言葉がきつく刺さってしまった。<br />別れ話のはずが、すれ違いの嵐になった。",
       };
     }
 
     if (reason === "attachment") {
       return {
         label: "GAME OVER",
-        title: "なんかまだ付き合ってる（※シーズン延長）",
-        text: "優しさのバフが強すぎて、松村の中で復活イベントが発火した。<br />来週、また同じ席で「前回の続き」が始まる。",
+        title: "なんか、まだ続きそう",
+        text: "優しさが強すぎて、松村の胸に希望が残ってしまった。<br />来週、もう一度ちゃんと話すことになりそう。",
       };
     }
 
     return {
       label: "GAME OVER",
-      title: "沈黙のファミレス（※ドリンクバーが主人公）",
-      text: "気まずさが物理法則を疑わせた。<br />店内、たぶん空調よりドリンクバーの存在感が強かった。",
+      title: "沈黙のファミレス",
+      text: "気まずさが頂点に達した。<br />ドリンクバーだけが、妙に目についた。",
     };
   }
 
@@ -419,23 +414,23 @@ function getResult(type, reason) {
   if (score <= 45) {
     return {
       label: "CLEAR",
-      title: "ほぼ円満にフれた（※ノーダメージは都市伝説）",
-      text: "完全無傷ではない。でも「攻略動画」レベルには近かった。<br />これ以上キレイにするには編集が必要。",
+      title: "ほぼ円満にフれた",
+      text: "ピタリとはいかなかった。でも、深く傷つけない終わり方にかなり近かった。<br />これ以上きれいにするのは、もうちょっと無理そう。",
     };
   }
 
   if (score <= 68) {
     return {
       label: "CLEAR",
-      title: "円満ではないが成立（※実用ビルド）",
-      text: "多少の擦り傷はある。でも現実の別れ話としては十分リリース可能。<br />パッチは後日でもいい。",
+      title: "円満ではないが、成立",
+      text: "えぐった部分もある。それでも、現実として成立した別れ話だった。<br />あとから言い足すより、今日の線引きでよかったのかもしれない。",
     };
   }
 
   return {
     label: "CLEAR",
-    title: "嵐の中で成立（※ギリギリの奇跡）",
-    text: "あと一歩で松村か店内BGMのどちらかがクラッシュするところだった。<br />でも、なんとかエンドロールは流れた。",
+    title: "ギリギリで、成立",
+    text: "あと一歩で空気が壊れそうだった。<br />それでも、なんとか区切りをつけられた。",
   };
 }
 
@@ -444,6 +439,7 @@ async function toggleSound() {
 
   try {
     if (state.sound) {
+      els.bgm.load();
       await els.bgm.play();
     } else {
       els.bgm.pause();
