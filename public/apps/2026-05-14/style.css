@@ -1,0 +1,471 @@
+* {
+    box-sizing: border-box;
+  }
+  
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    min-height: 100%;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    background:
+      radial-gradient(circle at top, #fff7d6 0%, #f4d26a 26%, #d99838 62%, #8d4b24 100%);
+    color: #2d190f;
+    touch-action: manipulation;
+  }
+  
+  button {
+    font: inherit;
+  }
+  
+  .app {
+    width: 100%;
+    max-width: 480px;
+    min-height: 100svh;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .hidden {
+    display: none !important;
+  }
+  
+  /* start */
+  .start-screen,
+  .game-screen,
+  .result-screen {
+    width: 100%;
+  }
+  
+  .start-screen {
+    text-align: center;
+    padding: 28px 18px;
+    border: 3px solid #2d190f;
+    border-radius: 28px;
+    background: rgba(255, 248, 220, 0.9);
+    box-shadow: 0 12px 0 #2d190f;
+  }
+  
+  .badge {
+    display: inline-block;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: #2d190f;
+    color: #fff7d6;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+  
+  h1 {
+    margin: 18px 0 12px;
+    font-size: clamp(42px, 12vw, 58px);
+    line-height: 0.95;
+    letter-spacing: -0.06em;
+  }
+  
+  .lead {
+    margin: 0 auto 20px;
+    font-size: 15px;
+    line-height: 1.7;
+    font-weight: 700;
+  }
+  
+  .rule-box {
+    margin: 20px 0;
+    padding: 14px;
+    border: 2px solid #2d190f;
+    border-radius: 18px;
+    background: #fffef5;
+    text-align: left;
+  }
+  
+  .rule-box p {
+    margin: 8px 0;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  
+  .rule-box span {
+    display: inline-block;
+    width: 58px;
+    margin-right: 8px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #e8563f;
+    color: #fff;
+    font-size: 12px;
+    text-align: center;
+  }
+  
+  .primary-btn,
+  .rub-btn,
+  .finish-btn {
+    width: 100%;
+    border: 3px solid #2d190f;
+    border-radius: 18px;
+    cursor: pointer;
+    font-weight: 900;
+    color: #2d190f;
+    box-shadow: 0 7px 0 #2d190f;
+    transform: translateY(0);
+  }
+  
+  .primary-btn:active,
+  .rub-btn:active,
+  .finish-btn:active {
+    transform: translateY(5px);
+    box-shadow: 0 2px 0 #2d190f;
+  }
+  
+  .primary-btn {
+    padding: 16px;
+    background: #e8563f;
+    color: #fffef5;
+    font-size: 18px;
+  }
+  
+  /* game */
+  .game-screen {
+    min-height: calc(100svh - 40px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  
+  .game-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .game-header > div {
+    padding: 14px 12px;
+    border: 3px solid #2d190f;
+    border-radius: 20px;
+    background: rgba(255, 254, 245, 0.92);
+    box-shadow: 0 6px 0 #2d190f;
+  }
+  
+  .label {
+    margin: 0 0 4px;
+    font-size: 12px;
+    font-weight: 900;
+    opacity: 0.72;
+  }
+  
+  .time,
+  .temp {
+    margin: 0;
+    font-size: 28px;
+    line-height: 1;
+    font-weight: 950;
+    letter-spacing: -0.04em;
+  }
+  
+  .status {
+    min-height: 48px;
+    margin: 0;
+    padding: 12px 14px;
+    border: 3px solid #2d190f;
+    border-radius: 18px;
+    background: #fffef5;
+    font-size: 15px;
+    line-height: 1.45;
+    font-weight: 900;
+    text-align: center;
+  }
+  
+  .thermometer-area {
+    position: relative;
+    flex: 1;
+    min-height: 330px;
+    border: 3px solid #2d190f;
+    border-radius: 28px;
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.5), transparent 38%),
+      #ffe9a8;
+    box-shadow: inset 0 -10px 0 rgba(45, 25, 15, 0.08), 0 8px 0 #2d190f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  
+  .thermometer-area::before,
+  .thermometer-area::after {
+    content: "";
+    position: absolute;
+    border-radius: 999px;
+    background: rgba(232, 86, 63, 0.16);
+  }
+  
+  .thermometer-area::before {
+    width: 140px;
+    height: 140px;
+    top: -38px;
+    left: -40px;
+  }
+  
+  .thermometer-area::after {
+    width: 110px;
+    height: 110px;
+    right: -28px;
+    bottom: 26px;
+  }
+  
+  .thermometer {
+    position: relative;
+    width: 114px;
+    height: 285px;
+    transform: rotate(-14deg);
+  }
+  
+  .glass {
+    position: absolute;
+    left: 42px;
+    top: 12px;
+    width: 30px;
+    height: 220px;
+    border: 4px solid #2d190f;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.86);
+    overflow: hidden;
+    z-index: 2;
+  }
+  
+  .mercury {
+    position: absolute;
+    left: 4px;
+    bottom: 0;
+    width: 14px;
+    height: 18%;
+    border-radius: 999px 999px 0 0;
+    background: linear-gradient(#ff826d, #e62121);
+    transition: height 0.12s linear;
+  }
+  
+  .shine {
+    position: absolute;
+    left: 7px;
+    top: 18px;
+    width: 5px;
+    height: 142px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.8);
+  }
+  
+  .bulb {
+    position: absolute;
+    left: 26px;
+    bottom: 14px;
+    width: 62px;
+    height: 62px;
+    border: 4px solid #2d190f;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 30%, #ffb3a6 0 10%, transparent 11%),
+      #e62121;
+    z-index: 3;
+  }
+  
+  .scale {
+    position: absolute;
+    left: 80px;
+    top: 18px;
+    height: 205px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-weight: 950;
+    font-size: 14px;
+  }
+  
+  .scale span {
+    position: relative;
+  }
+  
+  .scale span::before {
+    content: "";
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    width: 22px;
+    height: 3px;
+    background: #2d190f;
+    border-radius: 999px;
+  }
+  
+  .rub-effect {
+    position: absolute;
+    left: 50%;
+    top: 52%;
+    padding: 8px 14px;
+    border: 3px solid #2d190f;
+    border-radius: 999px;
+    background: #fffef5;
+    font-size: 22px;
+    font-weight: 950;
+    transform: translate(-50%, -50%) scale(0.8) rotate(-8deg);
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  .rub-effect.show {
+    animation: pop 0.28s ease-out;
+  }
+  
+  @keyframes pop {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.55) rotate(-12deg);
+    }
+    40% {
+      opacity: 1;
+      transform: translate(-50%, -56%) scale(1.08) rotate(6deg);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, -68%) scale(0.92) rotate(-8deg);
+    }
+  }
+  
+  .target-zone {
+    padding: 12px;
+    border: 3px solid #2d190f;
+    border-radius: 18px;
+    background: rgba(255, 254, 245, 0.94);
+  }
+  
+  .zone-label {
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 950;
+    text-align: center;
+  }
+  
+  .zone-bar {
+    position: relative;
+    height: 18px;
+    border: 3px solid #2d190f;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #8ac6ff, #fff3a0, #ff7b61);
+    overflow: hidden;
+  }
+  
+  .zone-good {
+    position: absolute;
+    left: 40%;
+    width: 16%;
+    height: 100%;
+    background: rgba(74, 190, 92, 0.8);
+    border-left: 3px solid #2d190f;
+    border-right: 3px solid #2d190f;
+  }
+  
+  .zone-marker {
+    position: absolute;
+    top: -7px;
+    left: 22%;
+    width: 6px;
+    height: 32px;
+    border-radius: 999px;
+    background: #2d190f;
+    transition: left 0.1s linear;
+  }
+  
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .rub-btn,
+  .finish-btn {
+    padding: 15px 10px;
+    font-size: 16px;
+  }
+  
+  .rub-btn {
+    background: #fffef5;
+  }
+  
+  .finish-btn {
+    background: #e8563f;
+    color: #fffef5;
+  }
+  
+  .hint {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+    opacity: 0.75;
+  }
+  
+  /* result */
+  .result-screen {
+    text-align: center;
+  }
+  
+  .result-card {
+    padding: 28px 18px;
+    border: 3px solid #2d190f;
+    border-radius: 28px;
+    background: rgba(255, 254, 245, 0.94);
+    box-shadow: 0 12px 0 #2d190f;
+  }
+  
+  .result-label {
+    display: inline-block;
+    margin: 0 0 10px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: #2d190f;
+    color: #fffef5;
+    font-weight: 950;
+    font-size: 13px;
+  }
+  
+  .result-card h2 {
+    margin: 4px 0 0;
+    font-size: 64px;
+    line-height: 1;
+    letter-spacing: -0.06em;
+  }
+  
+  .result-card h3 {
+    margin: 12px 0 10px;
+    font-size: 30px;
+    line-height: 1.1;
+  }
+  
+  .result-card p {
+    font-weight: 800;
+    line-height: 1.65;
+  }
+  
+  #resultMessage {
+    min-height: 76px;
+    margin-bottom: 22px;
+  }
+  
+  @media (max-height: 700px) {
+    .thermometer-area {
+      min-height: 260px;
+    }
+  
+    .thermometer {
+      transform: rotate(-14deg) scale(0.86);
+    }
+  
+    h1 {
+      font-size: 42px;
+    }
+  }

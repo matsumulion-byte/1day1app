@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>サボれ！微熱チャレンジ</title>
+  <link rel="stylesheet" href="/apps/2026-05-14/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="start-screen" id="startScreen">
+      <div class="badge">5/14 温度計の日</div>
+      <h1>サボれ！<br>微熱チャレンジ</h1>
+      <p class="lead">
+        学校をサボるために、体温計をゴシゴシこすって<br>
+        ちょうどいい微熱を作ろう。
+      </p>
+
+      <div class="rule-box">
+        <p><span>成功</span> 37.0℃〜37.4℃</p>
+        <p><span>失敗</span> 元気すぎる or 熱すぎる</p>
+        <p><span>危険</span> 38.5℃以上で病院送り</p>
+      </div>
+
+      <button class="primary-btn" id="startBtn">仮病を開始する</button>
+    </section>
+
+    <section class="game-screen hidden" id="gameScreen">
+      <header class="game-header">
+        <div>
+          <p class="label">残り時間</p>
+          <p class="time"><span id="timeText">10.0</span>秒</p>
+        </div>
+        <div>
+          <p class="label">現在の体温</p>
+          <p class="temp"><span id="tempText">36.4</span>℃</p>
+        </div>
+      </header>
+
+      <p class="status" id="statusText">まだ健康。これでは登校です。</p>
+
+      <div class="thermometer-area" id="rubArea" aria-label="体温計をこするエリア">
+        <div class="thermometer">
+          <div class="glass">
+            <div class="mercury" id="mercury"></div>
+            <div class="shine"></div>
+          </div>
+          <div class="bulb"></div>
+          <div class="scale">
+            <span>40</span>
+            <span>39</span>
+            <span>38</span>
+            <span>37</span>
+            <span>36</span>
+          </div>
+        </div>
+
+        <div class="rub-effect" id="rubEffect">ゴシゴシ！</div>
+      </div>
+
+      <div class="target-zone">
+        <div class="zone-label">狙い目：37.0℃〜37.4℃</div>
+        <div class="zone-bar">
+          <div class="zone-good"></div>
+          <div class="zone-marker" id="zoneMarker"></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="rub-btn" id="rubBtn">ゴシゴシする</button>
+        <button class="finish-btn" id="finishBtn">測定終了</button>
+      </div>
+
+      <p class="hint">体温計を左右にこすっても温度が上がります。</p>
+    </section>
+
+    <section class="result-screen hidden" id="resultScreen">
+      <div class="result-card">
+        <p class="result-label">測定結果</p>
+        <h2 id="resultTemp">37.2℃</h2>
+        <h3 id="resultTitle">微熱成功</h3>
+        <p id="resultMessage">
+          完璧な微熱です。今日は休めそうです。
+        </p>
+        <button class="primary-btn" id="retryBtn">もう一度サボる</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-05-14/main.js"></script>
+</body>
+</html>
