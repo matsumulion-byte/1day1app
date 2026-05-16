@@ -198,9 +198,9 @@
   .torso {
     position: absolute;
     left: 50%;
-    bottom: 36px;
+    bottom: 20px;
     width: 116px;
-    height: 134px;
+    height: 118px;
     transform: translateX(-50%);
     border-radius: 48px 48px 36px 36px;
     background:
@@ -227,16 +227,16 @@
   
   .arm {
     position: absolute;
-    top: 140px;
+    top: 155px;
     width: 34px;
-    height: 108px;
+    height: 104px;
     border-radius: 999px;
     background:
       linear-gradient(to bottom, #78b36f, #285b3d);
     border: 4px solid #1c422f;
-    transform-origin: 50% 10%;
+    transform-origin: 50% 12%;
     transition: transform 90ms linear;
-    z-index: 3;
+    z-index: 1;
     pointer-events: none;
   }
 
@@ -244,9 +244,9 @@
     content: "";
     position: absolute;
     left: 50%;
-    bottom: -18px;
-    width: 36px;
-    height: 30px;
+    bottom: -15px;
+    width: 34px;
+    height: 28px;
     transform: translateX(-50%);
     border-radius: 50%;
     background: #e9b783;
@@ -254,19 +254,19 @@
   }
 
   .arm-left {
-    left: 34px;
+    left: 22px;
     transform: rotate(var(--armL));
   }
 
   .arm-right {
-    right: 34px;
+    right: 22px;
     transform: rotate(var(--armR));
   }
   
   .head {
     position: absolute;
     left: 50%;
-    top: 28px;
+    top: 12px;
     width: 142px;
     height: 132px;
     transform: translateX(-50%) rotate(var(--headRot));
@@ -280,6 +280,7 @@
       inset -10px -15px 0 rgba(117, 59, 36, 0.22),
       0 8px 0 rgba(0, 0, 0, 0.1);
     transition: transform 80ms linear;
+    z-index: 3;
   }
   
   .ear {
@@ -408,17 +409,7 @@
   }
   
   .operator-hand {
-    position: absolute;
-    left: 50%;
-    bottom: -24px;
-    width: 94px;
-    height: 74px;
-    transform: translateX(-50%);
-    border-radius: 48px 48px 20px 20px;
-    background:
-      linear-gradient(145deg, #d99163, #8d5035);
-    border: 4px solid rgba(54, 25, 16, 0.8);
-    opacity: 0.42;
+    display: none;
   }
   
   .controls {
