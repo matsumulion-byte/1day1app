@@ -3,7 +3,7 @@ const asset = (p) => new URL(p, import.meta.url).toString();
 const stage = document.getElementById("stage");
 const puppet = document.getElementById("puppet");
 
-const poseWave = document.getElementById("poseWave");
+const poseTalk = document.getElementById("poseTalk");
 const poseNod = document.getElementById("poseNod");
 const poseReset = document.getElementById("poseReset");
 
@@ -24,15 +24,7 @@ let currentLift = 0;
 let targetMouth = 0;
 let currentMouth = 0;
 
-let targetArmL = -16;
-let targetArmR = 16;
-let currentArmL = -16;
-let currentArmR = 16;
-
 let idle = 0;
-
-let waveTimer = null;
-let waving = false;
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -58,12 +50,10 @@ function preventGestureZoom() {
 preventGestureZoom();
 
 function setVars() {
-  puppet.style.setProperty("--x", `${currentLean * 0.45}px`);
+  puppet.style.setProperty("--x", `${currentLean * 0.35}px`);
   puppet.style.setProperty("--y", `${currentLift}px`);
-  puppet.style.setProperty("--rot", `${currentLean * 0.09}deg`);
-  puppet.style.setProperty("--headRot", `${currentLean * 0.22}deg`);
-  puppet.style.setProperty("--armL", `${currentArmL}deg`);
-  puppet.style.setProperty("--armR", `${currentArmR}deg`);
+  puppet.style.setProperty("--rot", `${currentLean * 0.06}deg`);
+  puppet.style.setProperty("--headRot", `${currentLean * 0.18}deg`);
   puppet.style.setProperty("--eyeX", `${clamp(currentLean * 0.035, -5, 5)}px`);
   puppet.style.setProperty("--eyeY", `${clamp(currentLift * -0.035, -4, 4)}px`);
   puppet.style.setProperty("--mouth", currentMouth.toFixed(2));
@@ -81,39 +71,7 @@ function openMouth(power = 1) {
   }, 220);
 }
 
-function wave() {
-  puppet.classList.remove("nodding");
-  puppet.classList.remove("waving");
-
-  waving = true;
-  openMouth(0.35);
-
-  window.clearTimeout(waveTimer);
-
-  let count = 0;
-
-  waveTimer = window.setInterval(() => {
-    const flip = count % 2 === 0;
-
-    targetArmL = flip ? -92 : -52;
-    targetArmR = flip ? 92 : 52;
-
-    targetLean = flip ? -18 : 18;
-
-    count += 1;
-
-    if (count >= 8) {
-      window.clearInterval(waveTimer);
-      waving = false;
-      targetArmL = -16;
-      targetArmR = 16;
-      targetLean = 0;
-    }
-  }, 140);
-}
-
 function nod() {
-  puppet.classList.remove("waving");
   puppet.classList.add("nodding");
   openMouth(0.45);
 
@@ -125,16 +83,11 @@ function nod() {
 function resetPuppet() {
   dragging = false;
 
-  window.clearInterval(waveTimer);
-  waving = false;
-
   targetLean = 0;
   targetLift = 0;
   targetMouth = 0;
-  targetArmL = -16;
-  targetArmR = 16;
 
-  puppet.classList.remove("talking", "waving", "nodding");
+  puppet.classList.remove("talking", "nodding");
 }
 
 stage.addEventListener("pointerdown", (event) => {
@@ -164,19 +117,6 @@ stage.addEventListener("pointermove", (event) => {
   targetLean = clamp(dragX, -95, 95);
   targetLift = clamp(dragY * 0.25, -22, 20);
 
-  const armSwing = clamp(Math.abs(dragX) * 0.5 + Math.abs(dragY) * 0.35, 0, 74);
-
-  if (dragX < -8) {
-    targetArmL = clamp(-20 - armSwing, -96, 28);
-    targetArmR = clamp(18 - armSwing * 0.25, -30, 74);
-  } else if (dragX > 8) {
-    targetArmL = clamp(-18 + armSwing * 0.25, -74, 30);
-    targetArmR = clamp(20 + armSwing, -28, 96);
-  } else {
-    targetArmL = clamp(-16 - Math.abs(dragY) * 0.25, -72, 28);
-    targetArmR = clamp(16 + Math.abs(dragY) * 0.25, -28, 72);
-  }
-
   if (Math.abs(dragX) + Math.abs(dragY) > 44) {
     openMouth(0.45);
   }
@@ -192,8 +132,6 @@ stage.addEventListener("pointerup", (event) => {
 
   targetLean *= 0.35;
   targetLift *= 0.2;
-  targetArmL = -16;
-  targetArmR = 16;
 });
 
 stage.addEventListener("pointercancel", () => {
@@ -202,8 +140,6 @@ stage.addEventListener("pointercancel", () => {
 
   targetLean = 0;
   targetLift = 0;
-  targetArmL = -16;
-  targetArmR = 16;
 });
 
 stage.addEventListener("click", (event) => {
@@ -211,9 +147,9 @@ stage.addEventListener("click", (event) => {
   openMouth(1);
 });
 
-poseWave.addEventListener("click", (event) => {
+poseTalk.addEventListener("click", (event) => {
   event.preventDefault();
-  wave();
+  openMouth(1);
 });
 
 poseNod.addEventListener("click", (event) => {
@@ -236,11 +172,6 @@ function animate() {
     targetLift += Math.sin(idle * 0.042) * 0.04;
     targetLift *= 0.96;
 
-    if (!waving) {
-      targetArmL += (-16 - targetArmL) * 0.08;
-      targetArmR += (16 - targetArmR) * 0.08;
-    }
-
     if (Math.random() < 0.004) {
       openMouth(Math.random() * 0.35 + 0.15);
     }
@@ -249,8 +180,6 @@ function animate() {
   currentLean += (targetLean - currentLean) * 0.18;
   currentLift += (targetLift - currentLift) * 0.18;
   currentMouth += (targetMouth - currentMouth) * 0.32;
-  currentArmL += (targetArmL - currentArmL) * 0.2;
-  currentArmR += (targetArmR - currentArmR) * 0.2;
 
   setVars();
   requestAnimationFrame(animate);
