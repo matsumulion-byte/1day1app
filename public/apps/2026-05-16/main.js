@@ -31,6 +31,9 @@ let currentArmR = 16;
 
 let idle = 0;
 
+let waveTimer = null;
+let waving = false;
+
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 function preventGestureZoom() {
@@ -80,12 +83,33 @@ function openMouth(power = 1) {
 
 function wave() {
   puppet.classList.remove("nodding");
-  puppet.classList.add("waving");
+  puppet.classList.remove("waving");
+
+  waving = true;
   openMouth(0.35);
 
-  window.setTimeout(() => {
-    puppet.classList.remove("waving");
-  }, 1100);
+  window.clearTimeout(waveTimer);
+
+  let count = 0;
+
+  waveTimer = window.setInterval(() => {
+    const flip = count % 2 === 0;
+
+    targetArmL = flip ? -92 : -52;
+    targetArmR = flip ? 92 : 52;
+
+    targetLean = flip ? -18 : 18;
+
+    count += 1;
+
+    if (count >= 8) {
+      window.clearInterval(waveTimer);
+      waving = false;
+      targetArmL = -16;
+      targetArmR = 16;
+      targetLean = 0;
+    }
+  }, 140);
 }
 
 function nod() {
@@ -100,6 +124,9 @@ function nod() {
 
 function resetPuppet() {
   dragging = false;
+
+  window.clearInterval(waveTimer);
+  waving = false;
 
   targetLean = 0;
   targetLift = 0;
@@ -209,8 +236,10 @@ function animate() {
     targetLift += Math.sin(idle * 0.042) * 0.04;
     targetLift *= 0.96;
 
-    targetArmL += (-16 - targetArmL) * 0.08;
-    targetArmR += (16 - targetArmR) * 0.08;
+    if (!waving) {
+      targetArmL += (-16 - targetArmL) * 0.08;
+      targetArmR += (16 - targetArmR) * 0.08;
+    }
 
     if (Math.random() < 0.004) {
       openMouth(Math.random() * 0.35 + 0.15);
