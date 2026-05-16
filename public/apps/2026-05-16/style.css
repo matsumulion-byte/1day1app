@@ -8,6 +8,10 @@
     min-height: 100%;
     overflow: hidden;
     touch-action: none;
+    overscroll-behavior: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
     background:
       radial-gradient(circle at 50% 10%, #38314d 0%, #17131f 42%, #09070d 100%);
     color: #fff;
@@ -62,6 +66,9 @@
   }
   
   .stage {
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
     position: relative;
     min-height: 0;
     overflow: hidden;
@@ -147,7 +154,7 @@
     --headRot: 0deg;
     --eyeX: 0px;
     --eyeY: 0px;
-  
+
     position: absolute;
     left: 50%;
     bottom: 8%;
@@ -160,9 +167,10 @@
       rotate(var(--rot))
       scaleY(var(--squash));
     transform-origin: 50% 85%;
-    transition: transform 80ms linear;
     cursor: grab;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
   
   .puppet-wrap:active {
