@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>スーパー戦隊アーキネーター</title>
+  <link rel="stylesheet" href="/apps/2026-05-17/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="hero" id="hero">
+      <p class="eyebrow">5/17 今日の1日1アプリ</p>
+      <h1>スーパー戦隊<br>アーキネーター</h1>
+      <p class="lead">
+        思い浮かべたスーパー戦隊を、質問だけでだいたい当てます。
+      </p>
+      <button class="primary-btn" id="startBtn">戦隊を思い浮かべた</button>
+    </section>
+
+    <section class="card hidden" id="questionScreen">
+      <div class="progress">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p class="step" id="stepText"></p>
+      <h2 id="questionTitle"></h2>
+      <p class="question-note" id="questionNote"></p>
+      <div class="choices" id="choices"></div>
+    </section>
+
+    <section class="card hidden" id="confirmScreen">
+      <p class="step">最後の確認</p>
+      <h2 id="confirmTitle"></h2>
+      <p class="question-note" id="confirmNote"></p>
+      <div class="choices">
+        <button class="choice" data-confirm="yes">はい</button>
+        <button class="choice" data-confirm="no">違う</button>
+        <button class="choice" data-confirm="unknown">覚えてない</button>
+      </div>
+    </section>
+
+    <section class="result hidden" id="resultScreen">
+      <p class="eyebrow">判定結果</p>
+      <h2>あなたが思い浮かべた戦隊は……</h2>
+      <div class="answer-name" id="answerName"></div>
+      <p class="result-comment" id="resultComment"></p>
+
+      <div class="candidate-box">
+        <p class="candidate-title">ほかの候補</p>
+        <ul id="candidateList"></ul>
+      </div>
+
+      <button class="secondary-btn" id="retryBtn">もう一回やる</button>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-05-17/main.js"></script>
+</body>
+</html>
