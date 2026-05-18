@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>たほいや風クイズ</title>
+  <link rel="stylesheet" href="/apps/2026-05-19/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="screen start-screen" id="startScreen">
+      <div class="label">5/18 ことばの日</div>
+      <h1>たほいや風<br />クイズ</h1>
+      <p class="lead">
+        実在することばの意味を、<br />
+        もっともらしい嘘の中から見抜け。
+      </p>
+
+      <div class="rule-box">
+        <p>全10問からランダムで5問出題</p>
+        <p>正解は毎回シャッフル</p>
+        <p>それっぽい嘘に気をつけろ</p>
+      </div>
+
+      <button class="primary-btn" id="startBtn">はじめる</button>
+    </section>
+
+    <section class="screen quiz-screen hidden" id="quizScreen">
+      <header class="quiz-header">
+        <div class="progress" id="progressText"></div>
+        <div class="score" id="scoreText"></div>
+      </header>
+
+      <div class="question-card">
+        <p class="question-label">このことばの意味は？</p>
+        <div class="word" id="wordText"></div>
+      </div>
+
+      <div class="choices" id="choices"></div>
+
+      <div class="feedback hidden" id="feedback">
+        <div class="feedback-title" id="feedbackTitle"></div>
+        <div class="feedback-answer" id="feedbackAnswer"></div>
+        <button class="primary-btn next-btn" id="nextBtn">次へ</button>
+      </div>
+    </section>
+
+    <section class="screen result-screen hidden" id="resultScreen">
+      <div class="label">結果</div>
+      <h2 id="resultTitle"></h2>
+      <p class="result-score" id="resultScore"></p>
+      <p class="result-comment" id="resultComment"></p>
+      <button class="primary-btn" id="retryBtn">もう一回</button>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-05-19/main.js"></script>
+</body>
+</html>
