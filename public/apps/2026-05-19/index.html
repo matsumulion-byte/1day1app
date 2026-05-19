@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>固まる前にやれ</title>
+  <link rel="stylesheet" href="/apps/2026-05-19/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <p class="date">5/19 セメントの日</p>
+      <h1>固まる前にやれ</h1>
+      <p class="lead">流し込まれたセメントを、制限時間内にならそう。</p>
+    </section>
+
+    <section class="status">
+      <div class="statusItem">
+        <span>残り</span>
+        <strong id="timeText">30.0</strong>
+      </div>
+      <div class="statusItem">
+        <span>固まり具合</span>
+        <strong id="hardText">0%</strong>
+      </div>
+      <div class="statusItem">
+        <span>平坦度</span>
+        <strong id="flatText">0%</strong>
+      </div>
+    </section>
+
+    <section class="gameWrap">
+      <canvas id="gameCanvas" width="720" height="720"></canvas>
+      <div id="trowel" class="trowel" aria-hidden="true"></div>
+
+      <div id="startPanel" class="panel">
+        <h2>セメントをならせ</h2>
+        <p>ローラーでなぞると、その周辺が平らになります。時間が経つほど固まって、直しにくくなります。</p>
+        <button id="startBtn" type="button">開始</button>
+      </div>
+
+      <div id="resultPanel" class="panel hidden">
+        <p class="resultLabel">仕上がり</p>
+        <h2 id="resultTitle">現場で褒められる人</h2>
+        <p id="resultText">まあまあ平らです。</p>
+        <button id="retryBtn" type="button">もう一回</button>
+      </div>
+    </section>
+
+    <p class="hint">ドラッグでローラーを動かす</p>
+  </main>
+
+  <script type="module" src="/apps/2026-05-19/main.js"></script>
+</body>
+</html>
