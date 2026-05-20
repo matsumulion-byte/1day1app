@@ -1,0 +1,78 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>はかれ！目分量職人</title>
+  <link rel="stylesheet" href="/apps/2026-05-20/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="game-card">
+      <header class="header">
+        <p class="date">5/20 世界計量記念日</p>
+        <h1>はかれ！目分量職人</h1>
+        <p class="lead">長押しで粉を入れて、目標グラムに近づけろ。</p>
+      </header>
+
+      <button class="sound-button" id="soundButton" type="button">
+        BGM OFF
+      </button>
+
+      <audio id="bgm" loop preload="auto"></audio>
+
+      <section class="status">
+        <div class="status-box">
+          <span>ROUND</span>
+          <strong id="roundText">1 / 3</strong>
+        </div>
+        <div class="status-box target">
+          <span>目標</span>
+          <strong><b id="targetText">100</b>g</strong>
+        </div>
+      </section>
+
+      <section class="scale-area">
+        <div class="bowl-wrap">
+          <div class="powder-stream" id="powderStream"></div>
+          <div class="bowl">
+            <div class="powder" id="powder"></div>
+            <div class="bowl-rim"></div>
+          </div>
+        </div>
+
+        <div class="scale">
+          <div class="scale-display" id="scaleDisplay">--- g</div>
+        </div>
+      </section>
+
+      <section class="message-area">
+        <p id="message">目標を見て、感覚だけで止めてください。</p>
+        <p id="subMessage">計量結果は離すまで表示されません。</p>
+      </section>
+
+      <button class="pour-button" id="pourButton">
+        長押しで粉を入れる
+      </button>
+
+      <button class="next-button hidden" id="nextButton">
+        次の計量へ
+      </button>
+
+      <section class="history" id="history"></section>
+    </section>
+
+    <div class="result-modal hidden" id="resultModal">
+      <div class="result-card">
+        <p class="result-label">総合結果</p>
+        <h2 id="finalTitle">計量神</h2>
+        <p id="finalText"></p>
+        <button id="restartButton">もう一回はかる</button>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="/apps/2026-05-20/main.js"></script>
+</body>
+</html>
