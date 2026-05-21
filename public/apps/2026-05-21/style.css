@@ -22,15 +22,28 @@ body {
   position: relative;
   width: min(100vw, 430px);
   height: 100dvh;
+  height: 100svh;
   overflow: hidden;
   color: #f6e7b1;
   background: #07090f;
+  --hud-top: max(10px, env(safe-area-inset-top));
+  --btn-bottom: max(16px, env(safe-area-inset-bottom));
+  --btn-height: clamp(58px, 10vh, 74px);
+  --stage-pad-x: 16px;
 }
 
 #world {
   position: absolute;
   inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   overflow: hidden;
+  padding:
+    calc(92px + var(--hud-top))
+    var(--stage-pad-x)
+    calc(var(--btn-height) + var(--btn-bottom) + 20px);
   background:
     radial-gradient(circle at 50% 10%, rgba(255, 214, 94, .22), transparent 28%),
     linear-gradient(#111827 0%, #07090f 55%, #020305 100%);
@@ -85,10 +98,10 @@ body {
 #hud {
   position: absolute;
   z-index: 30;
-  top: 14px;
-  left: 14px;
-  right: 14px;
-  padding: 12px 14px;
+  top: var(--hud-top);
+  left: var(--stage-pad-x);
+  right: var(--stage-pad-x);
+  padding: 10px 12px;
   background: rgba(2, 3, 5, .78);
   border: 1px solid rgba(246, 231, 177, .22);
   border-radius: 14px;
@@ -117,13 +130,12 @@ body {
 }
 
 #target {
-  position: absolute;
-  z-index: 8;
-  top: 118px;
-  left: 50%;
-  width: 58px;
-  height: 104px;
-  transform: translateX(-50%);
+  position: relative;
+  z-index: 18;
+  flex-shrink: 0;
+  width: clamp(50px, 14vw, 58px);
+  height: auto;
+  margin-top: clamp(8px, 2vh, 20px);
 }
 
 .suspect-head {
@@ -145,18 +157,21 @@ body {
 
 #bubble {
   position: absolute;
-  top: -48px;
+  top: calc(100% + 10px);
   left: 50%;
+  z-index: 25;
   transform: translateX(-50%) scale(.95);
-  padding: 7px 12px;
+  padding: 8px 14px;
   border-radius: 999px;
   background: #fff4c4;
   color: #121212;
-  font-size: 18px;
+  font-size: clamp(16px, 4.5vw, 18px);
   font-weight: 900;
   opacity: 0;
   transition: opacity .12s ease, transform .12s ease;
   white-space: nowrap;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .45);
+  pointer-events: none;
 }
 
 #bubble.show {
@@ -170,19 +185,18 @@ body {
 }
 
 #player {
-  position: absolute;
+  position: relative;
   z-index: 12;
-  left: 50%;
-  bottom: 122px;
-  width: 82px;
-  height: 132px;
-  transform: translateX(-50%);
+  flex-shrink: 0;
+  width: clamp(68px, 20vw, 82px);
+  height: clamp(108px, 28vw, 132px);
+  margin-bottom: clamp(4px, 1vh, 12px);
   transition: opacity .16s ease, transform .16s ease;
 }
 
 #player.hidden {
   opacity: 0;
-  transform: translateX(-50%) translateY(22px) scale(.58);
+  transform: translateY(22px) scale(.58);
 }
 
 .hat {
@@ -229,15 +243,15 @@ body {
 #hideBtn {
   position: absolute;
   z-index: 40;
-  left: 24px;
-  right: 24px;
-  bottom: 24px;
-  height: 74px;
+  left: var(--stage-pad-x);
+  right: var(--stage-pad-x);
+  bottom: var(--btn-bottom);
+  height: var(--btn-height);
   border: 0;
   border-radius: 999px;
   background: #ffd65a;
   color: #111;
-  font-size: 24px;
+  font-size: clamp(20px, 5.5vw, 24px);
   font-weight: 1000;
   letter-spacing: .08em;
   box-shadow: 0 8px 0 #80610f, 0 18px 36px rgba(0,0,0,.45);
@@ -310,4 +324,90 @@ body {
   color: #111;
   font-size: 18px;
   font-weight: 1000;
+}
+
+@media (max-height: 700px) {
+  #game {
+    --btn-height: 56px;
+  }
+
+  #hud {
+    padding: 8px 10px;
+  }
+
+  .label {
+    font-size: 12px;
+  }
+
+  .count {
+    font-size: 18px;
+  }
+
+  #status {
+    font-size: 12px;
+  }
+
+  #world {
+    padding-top: calc(78px + var(--hud-top));
+    padding-bottom: calc(var(--btn-height) + var(--btn-bottom) + 14px);
+  }
+
+  #target {
+    margin-top: 0;
+  }
+
+  .suspect-head {
+    width: 28px;
+    height: 28px;
+  }
+
+  .suspect-body {
+    width: 40px;
+    height: 62px;
+  }
+
+  #player {
+    width: 62px;
+    height: 98px;
+    margin-bottom: 0;
+  }
+
+  .hat {
+    width: 48px;
+    left: 7px;
+  }
+
+  .face {
+    top: 12px;
+    left: 18px;
+    width: 28px;
+    height: 32px;
+  }
+
+  .coat {
+    top: 38px;
+    left: 10px;
+    width: 42px;
+    height: 58px;
+  }
+
+  .coat::before {
+    left: 18px;
+    height: 56px;
+  }
+
+  .panel h1 {
+    font-size: 28px;
+  }
+}
+
+@media (max-height: 580px) {
+  #world {
+    padding-top: calc(72px + var(--hud-top));
+  }
+
+  #bubble {
+    top: calc(100% + 6px);
+    padding: 6px 12px;
+  }
 }
