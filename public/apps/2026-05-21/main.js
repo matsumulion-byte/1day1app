@@ -1,5 +1,8 @@
 const asset = (p) => new URL(p, import.meta.url).toString();
 
+const bgm = document.getElementById("bgm");
+if (bgm) bgm.src = asset("./assets/bgm.mp3");
+
 const game = document.getElementById("game");
 const progressEl = document.getElementById("progress");
 const statusEl = document.getElementById("status");
@@ -27,6 +30,10 @@ function start() {
   hideCount = 0;
   nextEventAt = performance.now() + random(1500, 2800);
   lastTime = performance.now();
+
+  bgm.volume = 0.45;
+  bgm.currentTime = 0;
+  bgm.play().catch(() => {});
 
   overlay.classList.add("hide");
   hideBtn.disabled = true;
@@ -110,6 +117,9 @@ function finish(title, text) {
   canHide = false;
   paused = true;
   clearTimeout(failTimer);
+
+  bgm.pause();
+  bgm.currentTime = 0;
 
   game.classList.add("paused");
   hideBtn.disabled = true;
