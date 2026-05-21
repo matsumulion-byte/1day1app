@@ -9,56 +9,90 @@ body {
   height: 100%;
   overflow: hidden;
   background: #050608;
-  font-family: system-ui, sans-serif;
-  touch-action: none;
+  font-family: system-ui, -apple-system, sans-serif;
+  touch-action: manipulation;
 }
 
 body {
-  display: grid;
-  place-items: center;
+  display: flex;
+  justify-content: center;
 }
 
 #game {
   position: relative;
-  width: min(100vw, 430px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: 100%;
+  max-width: 430px;
   height: 100dvh;
   height: 100svh;
   overflow: hidden;
   color: #f6e7b1;
   background: #07090f;
-  --hud-top: max(10px, env(safe-area-inset-top));
-  --btn-bottom: max(16px, env(safe-area-inset-bottom));
-  --btn-height: clamp(58px, 10vh, 74px);
-  --stage-pad-x: 16px;
+  padding:
+    max(8px, env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left));
+}
+
+#hud {
+  z-index: 30;
+  padding: 10px 12px;
+  background: rgba(2, 3, 5, .78);
+  border: 1px solid rgba(246, 231, 177, .22);
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .35);
+  backdrop-filter: blur(6px);
+}
+
+.label {
+  font-size: 12px;
+  letter-spacing: .08em;
+  font-weight: 900;
+}
+
+.count {
+  margin-top: 2px;
+  font-size: 20px;
+  font-weight: 900;
+  color: #ffd65a;
+}
+
+#status {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff0bd;
 }
 
 #world {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  margin: 10px 0;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% 8%, rgba(255, 214, 94, .22), transparent 32%),
+    linear-gradient(#111827 0%, #07090f 55%, #020305 100%);
+}
+
+.bg-effects {
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  overflow: hidden;
-  padding:
-    calc(92px + var(--hud-top))
-    var(--stage-pad-x)
-    calc(var(--btn-height) + var(--btn-bottom) + 20px);
-  background:
-    radial-gradient(circle at 50% 10%, rgba(255, 214, 94, .22), transparent 28%),
-    linear-gradient(#111827 0%, #07090f 55%, #020305 100%);
+  pointer-events: none;
 }
 
 .alley {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(75deg, transparent 0 31%, rgba(0,0,0,.42) 32% 38%, transparent 39%),
-    linear-gradient(-75deg, transparent 0 31%, rgba(0,0,0,.42) 32% 38%, transparent 39%),
+    linear-gradient(75deg, transparent 0 31%, rgba(0, 0, 0, .42) 32% 38%, transparent 39%),
+    linear-gradient(-75deg, transparent 0 31%, rgba(0, 0, 0, .42) 32% 38%, transparent 39%),
     repeating-linear-gradient(
       to bottom,
       transparent 0 76px,
-      rgba(255,255,255,.08) 78px,
+      rgba(255, 255, 255, .08) 78px,
       transparent 82px 150px
     );
   opacity: .8;
@@ -79,7 +113,7 @@ body {
   position: absolute;
   inset: -80px 0 0;
   background-image:
-    linear-gradient(115deg, transparent 0 70%, rgba(255,255,255,.18) 71%, transparent 74%);
+    linear-gradient(115deg, transparent 0 70%, rgba(255, 255, 255, .18) 71%, transparent 74%);
   background-size: 18px 42px;
   opacity: .28;
   animation: rainMove .45s linear infinite;
@@ -95,47 +129,20 @@ body {
   }
 }
 
-#hud {
-  position: absolute;
-  z-index: 30;
-  top: var(--hud-top);
-  left: var(--stage-pad-x);
-  right: var(--stage-pad-x);
-  padding: 10px 12px;
-  background: rgba(2, 3, 5, .78);
-  border: 1px solid rgba(246, 231, 177, .22);
-  border-radius: 14px;
-  box-shadow: 0 12px 30px rgba(0,0,0,.35);
-  backdrop-filter: blur(6px);
-}
-
-.label {
-  font-size: 13px;
-  letter-spacing: .08em;
-  font-weight: 900;
-}
-
-.count {
-  margin-top: 2px;
-  font-size: 22px;
-  font-weight: 900;
-  color: #ffd65a;
-}
-
-#status {
-  margin-top: 2px;
-  font-size: 13px;
-  font-weight: 800;
-  color: #fff0bd;
+.stage {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  height: 100%;
+  padding: 16px 12px 12px;
 }
 
 #target {
-  position: relative;
-  z-index: 18;
   flex-shrink: 0;
-  width: clamp(50px, 14vw, 58px);
-  height: auto;
-  margin-top: clamp(8px, 2vh, 20px);
+  width: 58px;
 }
 
 .suspect-head {
@@ -144,7 +151,7 @@ body {
   margin: 0 auto;
   border-radius: 50%;
   background: #050505;
-  box-shadow: 0 0 0 3px rgba(255,255,255,.08);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .08);
 }
 
 .suspect-body {
@@ -156,18 +163,19 @@ body {
 }
 
 #bubble {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 50%;
-  z-index: 25;
-  transform: translateX(-50%) scale(.95);
-  padding: 8px 14px;
+  flex-shrink: 0;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
   border-radius: 999px;
   background: #fff4c4;
   color: #121212;
-  font-size: clamp(16px, 4.5vw, 18px);
+  font-size: 18px;
   font-weight: 900;
   opacity: 0;
+  transform: scale(.92);
   transition: opacity .12s ease, transform .12s ease;
   white-space: nowrap;
   box-shadow: 0 8px 20px rgba(0, 0, 0, .45);
@@ -176,7 +184,7 @@ body {
 
 #bubble.show {
   opacity: 1;
-  transform: translateX(-50%) scale(1);
+  transform: scale(1);
 }
 
 #bubble.danger {
@@ -186,11 +194,9 @@ body {
 
 #player {
   position: relative;
-  z-index: 12;
   flex-shrink: 0;
-  width: clamp(68px, 20vw, 82px);
-  height: clamp(108px, 28vw, 132px);
-  margin-bottom: clamp(4px, 1vh, 12px);
+  width: 82px;
+  height: 132px;
   transition: opacity .16s ease, transform .16s ease;
 }
 
@@ -237,29 +243,26 @@ body {
   left: 23px;
   width: 8px;
   height: 76px;
-  background: rgba(0,0,0,.35);
+  background: rgba(0, 0, 0, .35);
 }
 
 #hideBtn {
-  position: absolute;
   z-index: 40;
-  left: var(--stage-pad-x);
-  right: var(--stage-pad-x);
-  bottom: var(--btn-bottom);
-  height: var(--btn-height);
+  width: 100%;
+  height: 64px;
   border: 0;
   border-radius: 999px;
   background: #ffd65a;
   color: #111;
-  font-size: clamp(20px, 5.5vw, 24px);
+  font-size: 22px;
   font-weight: 1000;
   letter-spacing: .08em;
-  box-shadow: 0 8px 0 #80610f, 0 18px 36px rgba(0,0,0,.45);
+  box-shadow: 0 8px 0 #80610f, 0 18px 36px rgba(0, 0, 0, .45);
 }
 
 #hideBtn:active {
   transform: translateY(5px);
-  box-shadow: 0 3px 0 #80610f, 0 12px 28px rgba(0,0,0,.45);
+  box-shadow: 0 3px 0 #80610f, 0 12px 28px rgba(0, 0, 0, .45);
 }
 
 #hideBtn:disabled {
@@ -273,10 +276,10 @@ body {
   inset: 0;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: 20px;
   background:
-    radial-gradient(circle at 50% 28%, rgba(255,214,90,.18), transparent 36%),
-    rgba(0,0,0,.82);
+    radial-gradient(circle at 50% 28%, rgba(255, 214, 90, .18), transparent 36%),
+    rgba(0, 0, 0, .82);
 }
 
 #overlay.hide {
@@ -285,12 +288,12 @@ body {
 
 .panel {
   width: 100%;
-  padding: 28px 22px;
+  padding: 24px 20px;
   text-align: center;
   border-radius: 22px;
   background: rgba(5, 6, 8, .94);
   border: 1px solid rgba(255, 214, 90, .28);
-  box-shadow: 0 24px 60px rgba(0,0,0,.55);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
 }
 
 .eyebrow {
@@ -302,8 +305,8 @@ body {
 }
 
 .panel h1 {
-  margin: 0 0 18px;
-  font-size: 34px;
+  margin: 0 0 16px;
+  font-size: 30px;
   line-height: 1.18;
   letter-spacing: .04em;
 }
@@ -312,48 +315,41 @@ body {
   margin: 8px 0;
   color: #f8eecb;
   line-height: 1.65;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .panel button {
-  margin-top: 20px;
-  padding: 15px 28px;
+  margin-top: 16px;
+  padding: 14px 28px;
   border: 0;
   border-radius: 999px;
   background: #ffd65a;
   color: #111;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 1000;
 }
 
-@media (max-height: 700px) {
+@media (max-height: 680px) {
   #game {
-    --btn-height: 56px;
+    padding-top: max(4px, env(safe-area-inset-top));
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
   }
 
   #hud {
     padding: 8px 10px;
   }
 
-  .label {
-    font-size: 12px;
-  }
-
   .count {
     font-size: 18px;
   }
 
-  #status {
-    font-size: 12px;
-  }
-
   #world {
-    padding-top: calc(78px + var(--hud-top));
-    padding-bottom: calc(var(--btn-height) + var(--btn-bottom) + 14px);
+    margin: 6px 0;
   }
 
-  #target {
-    margin-top: 0;
+  .stage {
+    padding: 10px 8px 8px;
   }
 
   .suspect-head {
@@ -363,51 +359,50 @@ body {
 
   .suspect-body {
     width: 40px;
-    height: 62px;
+    height: 60px;
+  }
+
+  #bubble {
+    min-height: 36px;
+    font-size: 16px;
+    padding: 6px 14px;
   }
 
   #player {
-    width: 62px;
-    height: 98px;
-    margin-bottom: 0;
+    width: 68px;
+    height: 108px;
   }
 
   .hat {
-    width: 48px;
-    left: 7px;
+    width: 50px;
+    left: 9px;
   }
 
   .face {
     top: 12px;
-    left: 18px;
+    left: 20px;
     width: 28px;
     height: 32px;
   }
 
   .coat {
-    top: 38px;
-    left: 10px;
-    width: 42px;
-    height: 58px;
+    top: 40px;
+    left: 11px;
+    width: 46px;
+    height: 64px;
   }
 
   .coat::before {
-    left: 18px;
+    left: 19px;
+    height: 62px;
+  }
+
+  #hideBtn {
     height: 56px;
+    font-size: 20px;
   }
 
   .panel h1 {
-    font-size: 28px;
-  }
-}
-
-@media (max-height: 580px) {
-  #world {
-    padding-top: calc(72px + var(--hud-top));
-  }
-
-  #bubble {
-    top: calc(100% + 6px);
-    padding: 6px 12px;
+    font-size: 26px;
   }
 }

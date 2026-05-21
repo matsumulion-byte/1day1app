@@ -1,42 +1,62 @@
-<link rel="stylesheet" href="/apps/2026-05-21/style.css" />
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>名探偵松村 尾行中</title>
+  <link rel="stylesheet" href="/apps/2026-05-21/style.css" />
+</head>
+<body>
+  <div id="game">
+    <header id="hud">
+      <div class="label">名探偵松村 尾行中</div>
+      <div class="count">HIDE <span id="progress">0/5</span></div>
+      <div id="status">容疑者を尾行しろ</div>
+    </header>
 
-<div id="game">
-  <div id="hud">
-    <div class="label">名探偵松村 尾行中</div>
-    <div class="count">HIDE <span id="progress">0/5</span></div>
-    <div id="status">容疑者を尾行しろ</div>
+    <main id="world">
+      <div class="bg-effects" aria-hidden="true">
+        <div class="rain"></div>
+        <div class="alley"></div>
+      </div>
+
+      <div class="stage">
+        <div id="target">
+          <div class="suspect-head"></div>
+          <div class="suspect-body"></div>
+        </div>
+
+        <div id="bubble">……？</div>
+
+        <div id="player">
+          <div class="hat"></div>
+          <div class="face"></div>
+          <div class="coat"></div>
+        </div>
+      </div>
+    </main>
+
+    <button id="hideBtn" type="button" disabled>隠れる</button>
+
+    <audio
+      id="bgm"
+      src="/apps/2026-05-21/assets/bgm.mp3"
+      loop
+      preload="auto"
+      playsinline
+    ></audio>
+
+    <div id="overlay">
+      <div class="panel">
+        <p class="eyebrow">NOIR TAILING GAME</p>
+        <h1>名探偵松村<br>尾行中</h1>
+        <p>「……？」が出たら、すぐに隠れろ。</p>
+        <p>5回しのげば証拠をつかめる。</p>
+        <button id="start" type="button">尾行開始</button>
+      </div>
+    </div>
   </div>
 
-  <div id="world">
-    <div class="rain"></div>
-    <div class="alley"></div>
-
-    <div id="target">
-      <div id="bubble">……？</div>
-      <div class="suspect-head"></div>
-      <div class="suspect-body"></div>
-    </div>
-
-    <div id="player">
-      <div class="hat"></div>
-      <div class="face"></div>
-      <div class="coat"></div>
-    </div>
-  </div>
-
-  <audio id="bgm" loop preload="auto"></audio>
-
-  <button id="hideBtn">隠れる</button>
-
-  <div id="overlay">
-    <div class="panel">
-      <p class="eyebrow">NOIR TAILING GAME</p>
-      <h1>名探偵松村<br>尾行中</h1>
-      <p>「……？」が出たら、すぐに隠れろ。</p>
-      <p>5回しのげば証拠をつかめる。</p>
-      <button id="start">尾行開始</button>
-    </div>
-  </div>
-</div>
-
-<script type="module" src="/apps/2026-05-21/main.js"></script>
+  <script type="module" src="/apps/2026-05-21/main.js"></script>
+</body>
+</html>

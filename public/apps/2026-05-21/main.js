@@ -1,7 +1,4 @@
-const asset = (p) => new URL(p, import.meta.url).toString();
-
-const bgm = document.getElementById("bgm");
-if (bgm) bgm.src = asset("./assets/bgm.mp3");
+const ASSET_BASE = "/apps/2026-05-21";
 
 const game = document.getElementById("game");
 const progressEl = document.getElementById("progress");
@@ -10,35 +7,76 @@ const overlay = document.getElementById("overlay");
 const bubble = document.getElementById("bubble");
 const hideBtn = document.getElementById("hideBtn");
 const player = document.getElementById("player");
+const bgm = document.getElementById("bgm");
+
+if (bgm && !bgm.currentSrc) {
+  bgm.src = `${ASSET_BASE}/assets/bgm.mp3`;
+}
 
 let playing = false;
 let paused = false;
 let canHide = false;
 let hideCount = 0;
 let nextEventAt = 0;
-let lastTime = 0;
 let failTimer = null;
 
 const CLEAR_COUNT = 5;
 
-document.getElementById("start").addEventListener("click", start);
+document.getElementById("start").addEventListener("click", () => {
+  void start();
+});
 
-function start() {
+async function playBgm() {
+  if (!bgm) return;
+
+  try {
+    bgm.volume = 0.45;
+    bgm.currentTime = 0;
+
+    if (bgm.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
+      await new Promise((resolve, reject) => {
+        const onReady = () => {
+          bgm.removeEventListener("canplaythrough", onReady);
+          bgm.removeEventListener("error", onError);
+          resolve();
+        };
+        const onError = () => {
+          bgm.removeEventListener("canplaythrough", onReady);
+          bgm.removeEventListener("error", onError);
+          reject(new Error("BGM load failed"));
+        };
+        bgm.addEventListener("canplaythrough", onReady, { once: true });
+        bgm.addEventListener("error", onError, { once: true });
+        bgm.load();
+      });
+    }
+
+    await bgm.play();
+  } catch (error) {
+    console.warn("BGM playback failed:", error);
+  }
+}
+
+function stopBgm() {
+  if (!bgm) return;
+  bgm.pause();
+  bgm.currentTime = 0;
+}
+
+async function start() {
   playing = true;
   paused = false;
   canHide = false;
   hideCount = 0;
   nextEventAt = performance.now() + random(1500, 2800);
-  lastTime = performance.now();
 
-  bgm.volume = 0.45;
-  bgm.currentTime = 0;
-  bgm.play().catch(() => {});
+  await playBgm();
 
   overlay.classList.add("hide");
   hideBtn.disabled = true;
   player.classList.remove("hidden");
   bubble.className = "";
+  bubble.textContent = "……？";
   game.classList.remove("paused");
 
   updateHud("容疑者を尾行しろ");
@@ -47,8 +85,6 @@ function start() {
 
 function loop(now) {
   if (!playing) return;
-
-  lastTime = now;
 
   if (!paused && now >= nextEventAt) {
     startDanger();
@@ -99,6 +135,7 @@ function successHide() {
 
     player.classList.remove("hidden");
     bubble.className = "";
+    bubble.textContent = "……？";
     paused = false;
     game.classList.remove("paused");
     hideBtn.disabled = true;
@@ -118,8 +155,7 @@ function finish(title, text) {
   paused = true;
   clearTimeout(failTimer);
 
-  bgm.pause();
-  bgm.currentTime = 0;
+  stopBgm();
 
   game.classList.add("paused");
   hideBtn.disabled = true;
@@ -129,7 +165,7 @@ function finish(title, text) {
       <p class="eyebrow">CASE CLOSED</p>
       <h1>${title}</h1>
       <p>${text}</p>
-      <button id="retry">もう一度</button>
+      <button id="retry" type="button">もう一度</button>
     </div>
   `;
 
