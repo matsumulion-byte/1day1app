@@ -1,8 +1,7 @@
 const asset = (p) => new URL(p, import.meta.url).toString();
 
-const bgm = new Audio(asset("./assets/bgm.mp3"));
-bgm.loop = true;
-bgm.preload = "auto";
+const ASSET_BASE = "/apps/2026-05-21";
+const BGM_SRC = `${ASSET_BASE}/assets/bgm.mp3`;
 
 const game = document.getElementById("game");
 const progressEl = document.getElementById("progress");
@@ -11,6 +10,24 @@ const overlay = document.getElementById("overlay");
 const bubble = document.getElementById("bubble");
 const hideBtn = document.getElementById("hideBtn");
 const player = document.getElementById("player");
+const bgm = document.getElementById("bgm");
+
+if (bgm) {
+  bgm.src = BGM_SRC;
+  bgm.loop = true;
+  bgm.preload = "auto";
+  bgm.volume = 0.45;
+
+  bgm.addEventListener("error", () => {
+    console.warn("BGM primary src failed, retry with asset URL");
+    bgm.src = asset("./assets/bgm.mp3");
+    bgm.load();
+  });
+
+  window.addEventListener("load", () => {
+    bgm.load();
+  });
+}
 
 let playing = false;
 let paused = false;
@@ -18,22 +35,36 @@ let canHide = false;
 let hideCount = 0;
 let nextEventAt = 0;
 let failTimer = null;
+let gameStarted = false;
 
 const CLEAR_COUNT = 5;
 
 function playBgmFromGesture() {
-  bgm.volume = 0.45;
-  bgm.currentTime = 0;
+  if (!bgm) return;
 
-  const playPromise = bgm.play();
+  bgm.muted = false;
+  bgm.volume = 0.45;
+
+  const tryPlay = () => {
+    if (bgm.readyState >= HTMLMediaElement.HAVE_METADATA) {
+      try {
+        bgm.currentTime = 0;
+      } catch (_) {
+        /* not ready yet */
+      }
+    }
+    return bgm.play();
+  };
+
+  const playPromise = tryPlay();
   if (!playPromise) return;
 
   playPromise.catch((err) => {
-    console.warn("BGM playback failed:", err);
+    console.warn("BGM play failed:", err, bgm.src);
     bgm.addEventListener(
       "canplay",
       () => {
-        bgm.play().catch(() => {});
+        tryPlay().catch((e) => console.warn("BGM retry failed:", e, bgm.src));
       },
       { once: true }
     );
@@ -42,14 +73,25 @@ function playBgmFromGesture() {
 }
 
 function stopBgm() {
+  if (!bgm) return;
   bgm.pause();
-  bgm.currentTime = 0;
+  try {
+    bgm.currentTime = 0;
+  } catch (_) {
+    /* ignore */
+  }
 }
 
-document.getElementById("start").addEventListener("click", () => {
+function handleStart() {
+  if (gameStarted) return;
+  gameStarted = true;
+
   playBgmFromGesture();
   start();
-});
+}
+
+const startBtn = document.getElementById("start");
+startBtn.addEventListener("click", handleStart);
 
 function start() {
   playing = true;
