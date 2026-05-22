@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+  <title>ツール・ド・マツムラ</title>
+  <link rel="stylesheet" href="/apps/2026-05-22/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <p class="date">5/22 サイクリングの日</p>
+      <h1>ツール・ド・マツムラ</h1>
+      <p class="lead">左右のボタンを交互に押して、松村をゴールへ導け！</p>
+    </header>
+
+    <main class="game">
+      <section class="hud">
+        <div class="hudItem">
+          <span>TIME</span>
+          <strong id="time">0.00</strong>
+        </div>
+        <div class="hudItem">
+          <span>SPEED</span>
+          <strong id="speed">0</strong>
+        </div>
+        <div class="hudItem">
+          <span>DISTANCE</span>
+          <strong><span id="distance">0</span>m</strong>
+        </div>
+      </section>
+
+      <section class="course">
+        <div class="sky">
+          <div class="cloud cloud1"></div>
+          <div class="cloud cloud2"></div>
+        </div>
+
+        <div class="mountain mountain1"></div>
+        <div class="mountain mountain2"></div>
+
+        <div class="roadWrap">
+          <div class="roadLines" id="roadLines"></div>
+          <div class="roadSide left"></div>
+          <div class="roadSide right"></div>
+          <div class="goalLine" id="goalLine">GOAL</div>
+        </div>
+
+        <div class="countdown" id="countdown"></div>
+
+        <div class="rider" id="rider">
+          <img id="riderImage" alt="cyclist" />
+        </div>
+      </section>
+
+      <section class="message" id="message">
+        <p>STARTを押すとカウントダウンが始まります。</p>
+      </section>
+
+      <section class="controls">
+        <button class="pedalButton left" id="leftBtn" type="button">
+          <span>←</span>
+          LEFT
+        </button>
+        <button class="pedalButton right" id="rightBtn" type="button">
+          <span>→</span>
+          RIGHT
+        </button>
+      </section>
+
+      <button class="startButton" id="startBtn" type="button">START</button>
+    </main>
+  </div>
+
+  <div class="resultModal" id="resultModal" aria-hidden="true">
+    <div class="resultCard">
+      <p class="resultLabel">RESULT</p>
+      <h2 id="resultTitle">完走！</h2>
+      <p class="resultTime" id="resultTime">0.00秒</p>
+      <p class="resultText" id="resultText"></p>
+      <button id="retryBtn" type="button">もう一回走る</button>
+    </div>
+  </div>
+
+  <script type="module" src="/apps/2026-05-22/main.js"></script>
+</body>
+</html>

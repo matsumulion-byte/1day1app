@@ -1,0 +1,509 @@
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Hiragino Sans",
+    "Noto Sans JP",
+    sans-serif;
+  background:
+    radial-gradient(circle at 50% 0%, #fff7cf 0%, transparent 30%),
+    linear-gradient(180deg, #7ed7ff 0%, #dff7ff 40%, #86c96f 40%, #4c983f 100%);
+  color: #1d1d1d;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+button {
+  font: inherit;
+  border: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.app {
+  width: min(100%, 560px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 18px 16px 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.date {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 4px 10px;
+  border: 2px solid #1d1d1d;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(32px, 9vw, 48px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-weight: 950;
+  text-shadow: 3px 3px 0 #fff;
+}
+
+.lead {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.game {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hud {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.hudItem {
+  background: rgba(255, 255, 255, 0.88);
+  border: 2px solid #1d1d1d;
+  border-radius: 16px;
+  padding: 8px 6px;
+  text-align: center;
+  box-shadow: 0 4px 0 #1d1d1d;
+}
+
+.hudItem span {
+  display: block;
+  font-size: 10px;
+  font-weight: 900;
+  opacity: 0.68;
+}
+
+.hudItem strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.course {
+  position: relative;
+  flex: 1;
+  min-height: 360px;
+  border: 3px solid #1d1d1d;
+  border-radius: 24px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #8ce3ff 0%, #d9fbff 45%, #72bd56 45%, #3f812f 100%);
+  box-shadow: 0 8px 0 #1d1d1d;
+}
+
+.sky {
+  position: absolute;
+  inset: 0 0 48% 0;
+  overflow: hidden;
+}
+
+.cloud {
+  position: absolute;
+  width: 92px;
+  height: 30px;
+  background: #fff;
+  border: 2px solid #1d1d1d;
+  border-radius: 999px;
+  opacity: 0.95;
+}
+
+.cloud::before,
+.cloud::after {
+  content: "";
+  position: absolute;
+  background: #fff;
+  border: 2px solid #1d1d1d;
+  border-bottom: none;
+  border-radius: 999px 999px 0 0;
+}
+
+.cloud::before {
+  width: 32px;
+  height: 24px;
+  left: 16px;
+  top: -18px;
+}
+
+.cloud::after {
+  width: 42px;
+  height: 30px;
+  left: 40px;
+  top: -24px;
+}
+
+.cloud1 {
+  top: 44px;
+  left: 28px;
+}
+
+.cloud2 {
+  top: 84px;
+  right: 18px;
+  transform: scale(0.78);
+}
+
+.mountain {
+  position: absolute;
+  bottom: 49%;
+  background: #5ca150;
+  border: 3px solid #1d1d1d;
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+
+.mountain1 {
+  left: -30px;
+  width: 180px;
+  height: 100px;
+}
+
+.mountain2 {
+  right: -20px;
+  width: 220px;
+  height: 120px;
+  background: #6db260;
+}
+
+.roadWrap {
+  position: absolute;
+  left: -8%;
+  right: -8%;
+  bottom: 0;
+  height: 58%;
+  background: linear-gradient(180deg, #5d5d5d 0%, #2b2b2b 100%);
+  clip-path: polygon(26% 0%, 74% 0%, 100% 100%, 0% 100%);
+}
+
+.roadLines {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent 0 20px,
+    #fff 20px 48px,
+    transparent 48px 78px
+  );
+  background-size: 10px 78px;
+  background-position: 50% 0;
+  background-repeat: repeat-y;
+  opacity: 0.95;
+}
+
+.roadSide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 16px;
+  background: repeating-linear-gradient(
+    180deg,
+    #fffbcc 0 18px,
+    #f54444 18px 36px
+  );
+}
+
+.roadSide.left {
+  left: 19%;
+  transform: skewY(18deg);
+  transform-origin: bottom;
+}
+
+.roadSide.right {
+  right: 19%;
+  transform: skewY(-18deg);
+  transform-origin: bottom;
+}
+
+.goalLine {
+  position: absolute;
+  left: 50%;
+  top: 12%;
+  transform: translateX(-50%);
+  width: 42%;
+  padding: 4px 0;
+  background: repeating-linear-gradient(
+    90deg,
+    #fff 0 12px,
+    #1d1d1d 12px 24px
+  );
+  border: 2px solid #1d1d1d;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 950;
+  color: #f33;
+  opacity: 0;
+}
+
+.countdown {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-items: center;
+  z-index: 15;
+  font-size: clamp(72px, 22vw, 128px);
+  font-weight: 950;
+  color: #fff;
+  text-shadow:
+    4px 4px 0 #1d1d1d,
+    -2px -2px 0 #1d1d1d,
+    2px -2px 0 #1d1d1d,
+    -2px 2px 0 #1d1d1d;
+  pointer-events: none;
+}
+
+.countdown.show {
+  display: grid;
+  animation: countdownPop 0.52s ease-out;
+}
+
+@keyframes countdownPop {
+  0% {
+    transform: scale(0.68);
+    opacity: 0;
+  }
+  45% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.rider {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  width: min(50vw, 220px);
+  max-width: 220px;
+  transform: translateX(-50%);
+  transform-origin: 50% 85%;
+  z-index: 10;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.25));
+}
+
+.rider img {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+.rider.running {
+  animation: riderBounce 0.16s infinite alternate;
+}
+
+.rider.leftKick {
+  transform: translateX(-50%) rotate(-1.8deg);
+}
+
+.rider.rightKick {
+  transform: translateX(-50%) rotate(1.8deg);
+}
+
+.rider.miss {
+  animation: riderMiss 0.24s;
+}
+
+@keyframes riderBounce {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 -4px;
+  }
+}
+
+@keyframes riderMiss {
+  0% { transform: translateX(-50%) rotate(0deg); }
+  25% { transform: translateX(-50%) rotate(-4deg); }
+  50% { transform: translateX(-50%) rotate(4deg); }
+  100% { transform: translateX(-50%) rotate(0deg); }
+}
+
+.message {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 2px solid #1d1d1d;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 0 #1d1d1d;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.message p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pedalButton {
+  height: 88px;
+  border: 3px solid #1d1d1d;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 7px 0 #1d1d1d;
+  font-size: 15px;
+  font-weight: 950;
+  letter-spacing: 0.05em;
+}
+
+.pedalButton span {
+  display: block;
+  font-size: 32px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.pedalButton:active,
+.pedalButton.pressed {
+  transform: translateY(5px);
+  box-shadow: 0 2px 0 #1d1d1d;
+}
+
+.left {
+  background: #b8ecff;
+}
+
+.right {
+  background: #ffd2e0;
+}
+
+.startButton {
+  height: 54px;
+  border: 3px solid #1d1d1d;
+  border-radius: 999px;
+  background: #fff046;
+  box-shadow: 0 6px 0 #1d1d1d;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.startButton:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #1d1d1d;
+}
+
+.resultModal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.52);
+  z-index: 30;
+}
+
+.resultModal.show {
+  display: grid;
+}
+
+.resultCard {
+  width: min(100%, 360px);
+  padding: 24px 20px 20px;
+  border: 3px solid #1d1d1d;
+  border-radius: 24px;
+  background: #fff;
+  text-align: center;
+  box-shadow: 0 8px 0 #1d1d1d;
+}
+
+.resultLabel {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #1d1d1d;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.resultCard h2 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.15;
+}
+
+.resultTime {
+  margin: 10px 0;
+  font-size: 24px;
+  font-weight: 950;
+}
+
+.resultText {
+  margin: 0 0 18px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+.resultCard button {
+  width: 100%;
+  height: 50px;
+  border: 3px solid #1d1d1d;
+  border-radius: 999px;
+  background: #fff046;
+  box-shadow: 0 5px 0 #1d1d1d;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+@media (min-width: 768px) {
+  .app {
+    width: 620px;
+  }
+
+  .course {
+    min-height: 420px;
+  }
+
+  .controls {
+    max-width: 430px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .pedalButton {
+    height: 76px;
+  }
+}
