@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>恋文メーカー</title>
+  <link rel="stylesheet" href="/apps/2026-05-23/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <p class="date">5/23 ラブレターの日</p>
+      <h1>恋文メーカー</h1>
+      <p class="lead">名前を入れて、恋文をしたためよう。</p>
+    </section>
+
+    <section class="panel">
+      <label class="field">
+        <span>宛名</span>
+        <input id="toName" type="text" placeholder="例：松村さん" maxlength="16" />
+      </label>
+
+      <label class="field">
+        <span>差出人</span>
+        <input id="fromName" type="text" placeholder="空欄でもOK" maxlength="16" />
+      </label>
+
+      <button id="generateBtn" class="main-btn" type="button">恋文をしたためる</button>
+    </section>
+
+    <section id="letterWrap" class="letter-wrap hidden">
+      <div class="letter-paper">
+        <p id="letterText" class="letter-text"></p>
+      </div>
+
+      <div class="actions">
+        <button id="againBtn" class="sub-btn" type="button">もう一通書く</button>
+        <button id="copyBtn" class="sub-btn" type="button">コピーする</button>
+      </div>
+    </section>
+
+    <button id="soundBtn" class="sound-btn" type="button" aria-label="BGM切り替え">♪</button>
+  </main>
+
+  <script type="module" src="/apps/2026-05-23/main.js"></script>
+</body>
+</html>
