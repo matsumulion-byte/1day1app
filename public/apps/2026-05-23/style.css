@@ -94,6 +94,9 @@
     color: #4a2d2d;
     outline: none;
     font-size: 16px;
+    user-select: text;
+    -webkit-user-select: text;
+    touch-action: manipulation;
   }
   
   .field input:focus {

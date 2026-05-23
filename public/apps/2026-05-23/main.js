@@ -190,11 +190,3 @@ generateBtn.addEventListener("click", generateLetter);
 againBtn.addEventListener("click", generateLetter);
 copyBtn.addEventListener("click", copyLetter);
 soundBtn.addEventListener("click", toggleSound);
-
-document.addEventListener(
-  "touchend",
-  (event) => {
-    event.preventDefault();
-  },
-  { passive: false }
-);
