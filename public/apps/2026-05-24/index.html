@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>自然豊かなゴルフ場をつくろう！</title>
+  <link rel="stylesheet" href="/apps/2026-05-24/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="game">
+      <canvas id="gameCanvas"></canvas>
+
+      <div class="hud">
+        <div class="title">自然豊かなゴルフ場をつくろう！</div>
+        <div class="progressBox">
+          <div class="progressLabel">
+            <span>開発率</span>
+            <span id="progressText">0%</span>
+          </div>
+          <div class="progressBar">
+            <div id="progressFill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="caption" class="caption hidden">フナが絶滅しました。</div>
+
+      <div id="message" class="message">
+        自然豊かな土地を、自然豊かなゴルフ場にしていきましょう。
+      </div>
+
+      <button id="startButton" class="startButton">START</button>
+
+      <div id="resultModal" class="modal hidden">
+        <div class="modalCard">
+          <p class="modalTitle">完成！</p>
+          <p id="resultText" class="modalText"></p>
+          <button id="restartButton">もう一回つくる</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-05-24/main.js"></script>
+</body>
+</html>

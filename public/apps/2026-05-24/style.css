@@ -1,0 +1,234 @@
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #11180f;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    touch-action: none;
+    user-select: none;
+  }
+  
+  .app {
+    width: 100%;
+    height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: 12px;
+  }
+  
+  .game {
+    position: relative;
+    width: min(100%, 430px);
+    height: min(100dvh - 24px, 760px);
+    overflow: hidden;
+    border-radius: 28px;
+    background: #69b957;
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.42);
+  }
+  
+  #gameCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+  
+  .hud {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    display: grid;
+    gap: 10px;
+    pointer-events: none;
+  }
+  
+  .title {
+    width: fit-content;
+    max-width: 100%;
+    padding: 9px 13px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #173018;
+    font-size: 15px;
+    font-weight: 1000;
+    letter-spacing: 0.02em;
+    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.12);
+  }
+  
+  .progressBox {
+    width: 100%;
+    padding: 10px 12px 12px;
+    border-radius: 18px;
+    background: rgba(20, 48, 22, 0.82);
+    color: #fff;
+  }
+  
+  .progressLabel {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 7px;
+    font-size: 13px;
+    font-weight: 900;
+  }
+  
+  .progressBar {
+    height: 14px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.24);
+  }
+  
+  #progressFill {
+    width: 0%;
+    height: 100%;
+    border-radius: 999px;
+    background: #f5e76d;
+    transition: width 0.25s ease;
+  }
+  
+  .caption {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    top: 46%;
+    transform: translateY(-50%);
+    padding: 18px 16px;
+    border-radius: 18px;
+    background: rgba(0, 0, 0, 0.76);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 1000;
+    line-height: 1.35;
+    text-align: center;
+    letter-spacing: 0.03em;
+    z-index: 5;
+    animation: captionPop 1.45s ease both;
+  }
+  
+  @keyframes captionPop {
+    0% {
+      opacity: 0;
+      transform: translateY(-44%) scale(0.94);
+    }
+    12% {
+      opacity: 1;
+      transform: translateY(-50%) scale(1);
+    }
+    80% {
+      opacity: 1;
+      transform: translateY(-50%) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-56%) scale(0.98);
+    }
+  }
+  
+  .message {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 18px;
+    min-height: 52px;
+    display: grid;
+    place-items: center;
+    padding: 12px 14px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #173018;
+    font-size: 14px;
+    font-weight: 900;
+    line-height: 1.45;
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+    pointer-events: none;
+  }
+  
+  .startButton {
+    position: absolute;
+    left: 50%;
+    bottom: 96px;
+    transform: translateX(-50%);
+    z-index: 10;
+    padding: 15px 34px;
+    border: 0;
+    border-radius: 999px;
+    background: #11180f;
+    color: #fff;
+    font: inherit;
+    font-size: 18px;
+    font-weight: 1000;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+  }
+  
+  .modal {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    padding: 22px;
+    background: rgba(8, 16, 8, 0.62);
+  }
+  
+  .modalCard {
+    width: 100%;
+    max-width: 340px;
+    padding: 28px 22px 22px;
+    border-radius: 28px;
+    background: #fff;
+    color: #173018;
+    text-align: center;
+    box-shadow: 0 18px 58px rgba(0, 0, 0, 0.34);
+  }
+  
+  .modalTitle {
+    margin: 0 0 12px;
+    font-size: 30px;
+    font-weight: 1000;
+  }
+  
+  .modalText {
+    margin: 0 0 22px;
+    color: #324532;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.75;
+    white-space: pre-line;
+  }
+  
+  button {
+    appearance: none;
+    border: 0;
+    font: inherit;
+  }
+  
+  #restartButton {
+    padding: 12px 22px;
+    border-radius: 999px;
+    background: #173018;
+    color: #fff;
+    font-weight: 1000;
+    cursor: pointer;
+  }
+  
+  .hidden {
+    display: none;
+  }
+  
+  @media (min-width: 720px) {
+    .game {
+      width: 430px;
+      height: 760px;
+    }
+  }
