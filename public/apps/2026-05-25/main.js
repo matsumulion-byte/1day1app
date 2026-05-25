@@ -40,17 +40,6 @@ const targetMessages = [
   "それだけ叩け",
 ];
 
-const wrongMessages = [
-  "それはちくわです",
-  "骨に希望を見るな",
-  "ソーセージを信じるな",
-  "スプーンは親指ではない",
-  "ただの棒です",
-  "GOODって書いてあるだけです",
-  "バナナに意味を持たせるな",
-  "煙を叩くな",
-];
-
 const missMessages = [
   "親指は沈みました",
   "GOODは溶けました",
@@ -296,13 +285,13 @@ function handleTap(instance) {
 
 function getWrongMessage(id) {
   const fixed = {
-    choki: "それはチョキです",
     down: "それは逆です",
-    pa: "パーは親指ではない",
-    leg: "足は親指ではない",
+    choki: "チョキではありません",
+    pa: "パーではありません",
+    leg: "足です",
   };
 
-  return fixed[id] ?? randomChoice(wrongMessages);
+  return fixed[id] ?? "親指ではありません";
 }
 
 function hideItem(instance) {
@@ -376,41 +365,48 @@ function getResult(goodCount, missCount) {
   if (missCount === 0 && goodCount >= 12) {
     return {
       title: "親指鑑定士",
-      text: "溶鉱炉の中から、前向きな手だけを正確に見抜きました。",
+      text: "グーでもチョキでもパーでもなく、正しい親指だけを見抜きました。",
+    };
+  }
+
+  if (missCount === 0) {
+    return {
+      title: "ノーミス親指",
+      text: "足にも惑わされず、最後までサムズアップだけを信じました。",
     };
   }
 
   if (goodCount >= 10 && missCount <= 1) {
     return {
-      title: "ほぼ前向き",
-      text: "少しだけ変なものを叩きましたが、だいたい親指を信じられています。",
+      title: "ほぼ親指",
+      text: "一度だけ迷いましたが、だいたい正しい親指を選べています。",
     };
   }
 
   if (goodCount >= 7 && missCount <= 2) {
     return {
-      title: "かなり怪しい親指係",
-      text: "親指とちくわの区別が、ところどころ曖昧でした。",
+      title: "手の形に弱い人",
+      text: "グー、チョキ、パーの圧に少しだけ判断が揺らぎました。",
     };
   }
 
   if (missCount >= MAX_MISS) {
     return {
-      title: "なんでも肯定する人",
-      text: "ソーセージにも、骨にも、煙にも、等しく希望を見出しました。",
+      title: "なんでも叩く人",
+      text: "出てきたものをだいたい叩きました。足も含めて。",
     };
   }
 
   if (goodCount <= 4) {
     return {
-      title: "溶鉱炉を眺めていた人",
-      text: "親指は何度か現れましたが、だいたい沈んでいきました。",
+      title: "親指を見失った人",
+      text: "サムズアップは何度か出ていましたが、だいたい沈んでいきました。",
     };
   }
 
   return {
-    title: "チャンスに弱い",
-    text: "親指は見えていました。押す覚悟だけが足りませんでした。",
+    title: "惜しい親指係",
+    text: "サムズアップは見えていました。あとは足を叩かない勇気です。",
   };
 }
 
