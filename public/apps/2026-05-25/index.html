@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>シュワちゃんを探せ</title>
+  <link rel="stylesheet" href="/apps/2026-05-25/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="title-screen" id="titleScreen">
+      <div class="title-inner">
+        <p class="date">5/25 ターミネーターの日</p>
+        <h1>シュワちゃんを探せ</h1>
+        <p class="lead">
+          溶鉱炉から出てくるものをよく見ろ。<br>
+          親指だったらタップ。<br>
+          それ以外は見逃せ。
+        </p>
+
+        <button class="start-btn" id="startBtn">START</button>
+
+        <p class="note">
+          ※ BGMは初回タップ後に再生されます
+        </p>
+      </div>
+    </section>
+
+    <section class="game-screen" id="gameScreen" aria-hidden="true">
+      <header class="hud">
+        <div class="hud-item">
+          <span class="label">TIME</span>
+          <span class="value" id="timeText">30</span>
+        </div>
+        <div class="hud-item">
+          <span class="label">GOOD</span>
+          <span class="value" id="scoreText">0</span>
+        </div>
+        <div class="hud-item">
+          <span class="label">MISS</span>
+          <span class="value" id="missText">0/3</span>
+        </div>
+      </header>
+
+      <div class="message" id="message">親指だけ叩け</div>
+
+      <div class="furnace-area">
+        <div class="heat haze"></div>
+        <div class="holes" id="holes"></div>
+      </div>
+    </section>
+
+    <section class="result-screen" id="resultScreen" aria-hidden="true">
+      <div class="result-card">
+        <p class="result-label">RESULT</p>
+        <h2 id="resultTitle">親指鑑定士</h2>
+        <p id="resultText">世界の親指を見極めました。</p>
+
+        <div class="result-stats">
+          <div>
+            <span>GOOD</span>
+            <strong id="finalScore">0</strong>
+          </div>
+          <div>
+            <span>MISS</span>
+            <strong id="finalMiss">0</strong>
+          </div>
+        </div>
+
+        <button class="restart-btn" id="restartBtn">もう一回</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-05-25/main.js"></script>
+</body>
+</html>

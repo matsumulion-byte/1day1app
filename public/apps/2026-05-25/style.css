@@ -1,0 +1,722 @@
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  overflow: hidden;
+  background: #080608;
+  color: #f5eee7;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Hiragino Sans",
+    "Yu Gothic",
+    sans-serif;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+button {
+  font: inherit;
+  touch-action: manipulation;
+}
+
+.app {
+  position: relative;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 80%, rgba(255, 105, 18, 0.32), transparent 42%),
+    linear-gradient(180deg, #151018 0%, #070507 55%, #130707 100%);
+}
+
+.app::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.title-screen,
+.game-screen,
+.result-screen {
+  position: absolute;
+  inset: 0;
+  padding: 20px;
+}
+
+.title-screen,
+.result-screen {
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 75%, rgba(255, 96, 13, 0.45), transparent 42%),
+    rgba(8, 6, 8, 0.92);
+}
+
+.game-screen {
+  z-index: 1;
+  display: none;
+  grid-template-rows: auto auto 1fr;
+  gap: 14px;
+  padding: 14px;
+  place-items: stretch;
+}
+
+.result-screen {
+  display: none;
+}
+
+.title-inner,
+.result-card {
+  width: min(92vw, 440px);
+  padding: 28px 22px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 176, 88, 0.35);
+  background: rgba(12, 8, 10, 0.82);
+  box-shadow:
+    0 0 40px rgba(255, 72, 0, 0.22),
+    inset 0 0 0 1px rgba(255, 220, 160, 0.08);
+  text-align: center;
+}
+
+.date {
+  margin: 0 0 12px;
+  color: #ffb36b;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.title-inner h1,
+.result-card h2 {
+  margin: 0;
+  font-size: clamp(32px, 10vw, 48px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: #fff3e0;
+  text-shadow: 0 0 24px rgba(255, 90, 0, 0.45);
+}
+
+.lead {
+  margin: 18px 0 22px;
+  color: #e8d4c0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.75;
+}
+
+.note {
+  margin: 16px 0 0;
+  color: rgba(255, 190, 140, 0.72);
+  font-size: 12px;
+}
+
+.start-btn,
+.restart-btn {
+  width: 100%;
+  padding: 15px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffb347, #e85a0f);
+  color: #1a0804;
+  font-size: 17px;
+  font-weight: 950;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  box-shadow:
+    0 0 22px rgba(255, 88, 0, 0.55),
+    0 5px 0 #7a2208;
+}
+
+.start-btn:active,
+.restart-btn:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 0 16px rgba(255, 88, 0, 0.45),
+    0 2px 0 #7a2208;
+}
+
+.hud {
+  z-index: 2;
+  width: min(100%, 720px);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.hud-item {
+  padding: 9px 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 177, 96, 0.28);
+  background: rgba(0, 0, 0, 0.42);
+  text-align: center;
+}
+
+.hud-item .label {
+  display: block;
+  color: #ffb36b;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.hud-item .value {
+  display: block;
+  margin-top: 2px;
+  font-size: 22px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.message {
+  z-index: 2;
+  min-height: 42px;
+  width: min(100%, 720px);
+  margin-inline: auto;
+  display: grid;
+  place-items: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.42);
+  color: #ffe4c1;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.message.good {
+  color: #fff1b8;
+}
+
+.message.bad {
+  color: #ff9b8e;
+}
+
+.result-label {
+  margin: 0 0 10px;
+  color: #ffb36b;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+}
+
+.result-card p {
+  color: #f1d4bf;
+}
+
+.result-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 22px 0;
+}
+
+.result-stats div {
+  border: 1px solid rgba(255, 177, 96, 0.28);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.result-stats span {
+  display: block;
+  color: #ffb36b;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.result-stats strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.hidden {
+  display: none !important;
+}
+.furnace-area {
+    position: relative;
+    width: min(100%, 760px);
+    height: 100%;
+    min-height: 440px;
+    margin-inline: auto;
+    overflow: hidden;
+    border-radius: 24px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.04), transparent 16%),
+      radial-gradient(circle at 50% 100%, rgba(255, 100, 10, 0.56), transparent 50%),
+      linear-gradient(180deg, #171219 0%, #0b080a 42%, #160907 100%);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 176, 88, 0.18),
+      inset 0 -90px 110px rgba(255, 65, 0, 0.2),
+      0 0 34px rgba(255, 72, 0, 0.16);
+  }
+  
+  /* 奥の工場っぽい壁 */
+  .furnace-area::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, transparent 0 10%, rgba(255,255,255,0.04) 10% 11%, transparent 11% 22%),
+      linear-gradient(180deg, transparent 0 34%, rgba(255, 115, 35, 0.08) 34% 35%, transparent 35% 100%);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  
+  /* 溶けた金属の液面 */
+  .furnace-area::after {
+    content: "";
+    position: absolute;
+    left: -8%;
+    right: -8%;
+    bottom: -7%;
+    height: 38%;
+    border-radius: 50% 50% 0 0 / 22% 22% 0 0;
+    background:
+      radial-gradient(ellipse at 20% 35%, #fff1a3 0 8%, transparent 18%),
+      radial-gradient(ellipse at 55% 24%, #ffe080 0 9%, transparent 22%),
+      radial-gradient(ellipse at 82% 38%, #ffc35d 0 7%, transparent 18%),
+      linear-gradient(180deg, #ffdf75 0%, #ff7b19 28%, #d83208 58%, #5e1008 100%);
+    box-shadow:
+      0 -22px 50px rgba(255, 86, 0, 0.5),
+      inset 0 18px 24px rgba(255, 244, 165, 0.42),
+      inset 0 -34px 60px rgba(60, 6, 4, 0.7);
+    animation: lavaWave 1.4s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  
+  /* 熱気 */
+  .heat {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at 18% 60%, rgba(255, 174, 58, 0.16), transparent 22%),
+      radial-gradient(ellipse at 55% 54%, rgba(255, 80, 18, 0.16), transparent 28%),
+      radial-gradient(ellipse at 80% 62%, rgba(255, 174, 58, 0.13), transparent 22%);
+    opacity: 0.9;
+    filter: blur(1px);
+    animation: shimmer 0.55s infinite alternate;
+  }
+  
+  /* 6個の穴ではなく、液面上の6レーン */
+  .holes {
+    position: absolute;
+    left: 3%;
+    right: 3%;
+    bottom: 8%;
+    height: 58%;
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  
+  .hole {
+    position: relative;
+    flex: 1;
+    height: 100%;
+    min-width: 0;
+    overflow: visible;
+    display: block;
+  }
+  
+  /* 穴ではなく、液面の発光スポット */
+  .hole-mouth {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: min(92%, 108px);
+    height: 24px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background:
+      radial-gradient(ellipse at 50% 50%, #fff1a2 0%, #ff9a27 28%, #c72c08 58%, rgba(0,0,0,0.2) 78%);
+    box-shadow:
+      0 0 24px rgba(255, 91, 0, 0.86),
+      0 0 48px rgba(255, 60, 0, 0.34);
+    z-index: 2;
+  }
+  
+  .hole-mouth::after {
+    content: "";
+    position: absolute;
+    inset: 8px 12px 10px;
+    border-radius: 50%;
+    background: rgba(40, 4, 2, 0.26);
+  }
+  
+  /* 出現物。液面から真上に出る */
+  .item {
+    position: absolute;
+    left: 50%;
+    bottom: 4px;
+    width: 88px;
+    height: 138px;
+    transform: translate(-50%, 108%);
+    border: 0;
+    background: none;
+    color: inherit;
+    padding: 0;
+    cursor: pointer;
+    transition:
+      transform 150ms cubic-bezier(.2,.9,.2,1),
+      filter 150ms ease;
+    z-index: 4;
+  }
+  
+  .item.up {
+    transform: translate(-50%, 0%);
+  }
+  
+  .item.down {
+    transform: translate(-50%, 112%);
+  }
+  
+  .item:active {
+    filter: brightness(1.35);
+  }
+  
+  /* 液面に隠れるマスク。出現物の根本を隠して“沈んでる”感を出す */
+  .hole::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -18px;
+    width: 120%;
+    height: 56px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(255, 226, 111, 0.95), rgba(255, 98, 15, 0.88) 42%, rgba(112, 18, 7, 0.92) 75%, transparent 76%);
+    z-index: 5;
+    pointer-events: none;
+  }
+  
+  /* 物体共通 */
+  .object {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    display: grid;
+    place-items: center;
+  }
+  
+  /* ロボ手：横から見て親指が分かるように大きめ */
+  .object.hand {
+    width: 46px;
+    height: 100px;
+    border-radius: 22px 22px 16px 16px;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.34), transparent 32%),
+      linear-gradient(180deg, #d7dfde, #7c8586 62%, #303738);
+    box-shadow:
+      inset -8px 0 14px rgba(0,0,0,0.36),
+      0 0 18px rgba(255, 102, 25, 0.42);
+  }
+  
+  .object.hand::before {
+    content: "";
+    position: absolute;
+    left: -25px;
+    top: 34px;
+    width: 34px;
+    height: 22px;
+    border-radius: 18px 8px 8px 18px;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.25), transparent 45%),
+      linear-gradient(180deg, #dce4e3, #6b7475);
+    transform-origin: right center;
+    box-shadow: inset -4px 0 7px rgba(0,0,0,0.28);
+  }
+  
+  /* 正解：親指が斜め上 */
+  .object.hand.thumb::before {
+    top: 15px;
+    left: -25px;
+    height: 28px;
+    transform: rotate(-46deg);
+  }
+  
+  /* 逆親指 */
+  .object.hand.downthumb::before {
+    top: 62px;
+    left: -25px;
+    height: 28px;
+    transform: rotate(46deg);
+  }
+  
+  .object.hand::after {
+    content: "";
+    position: absolute;
+    right: 6px;
+    top: 13px;
+    width: 8px;
+    height: 54px;
+    border-radius: 999px;
+    background: rgba(12, 15, 16, 0.36);
+    box-shadow:
+      -10px 0 0 rgba(12, 15, 16, 0.26),
+      -20px 0 0 rgba(12, 15, 16, 0.2);
+  }
+  
+  .object.peace {
+    width: 48px;
+    height: 78px;
+    border-radius: 22px 22px 16px 16px;
+    background: linear-gradient(180deg, #cfd8d7, #5f6768);
+  }
+  
+  .object.peace::before,
+  .object.peace::after {
+    content: "";
+    position: absolute;
+    top: -44px;
+    width: 17px;
+    height: 58px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #dce5e4, #707879);
+  }
+  
+  .object.peace::before {
+    left: 9px;
+    transform: rotate(-10deg);
+  }
+  
+  .object.peace::after {
+    right: 9px;
+    transform: rotate(10deg);
+  }
+  
+  .object.pointer {
+    width: 42px;
+    height: 82px;
+    border-radius: 20px 20px 14px 14px;
+    background: linear-gradient(180deg, #ced7d6, #5d6566);
+  }
+  
+  .object.pointer::before {
+    content: "";
+    position: absolute;
+    top: -58px;
+    left: 50%;
+    width: 18px;
+    height: 70px;
+    border-radius: 999px;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, #e0e8e7, #727b7c);
+  }
+  
+  .object.food {
+    width: 30px;
+    height: 104px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #7b3015, #f0a052 45%, #4f190a);
+    box-shadow: 0 0 16px rgba(255, 128, 33, 0.36);
+  }
+  
+  .object.food.banana {
+    width: 78px;
+    height: 42px;
+    border-radius: 0 0 70px 70px;
+    border-bottom: 18px solid #d8a239;
+    background: transparent;
+    transform: translateX(-50%) rotate(-20deg);
+  }
+  
+  .object.food.chikuwa {
+    width: 36px;
+    height: 104px;
+    border-radius: 999px;
+    background:
+      radial-gradient(circle at 50% 50%, #36160d 0 18%, transparent 19%),
+      linear-gradient(90deg, #7d3a18, #d89952 45%, #5b230f);
+  }
+  
+  .object.spoon {
+    width: 22px;
+    height: 106px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #818988, #e8eeee 48%, #636969);
+    transform: translateX(-50%) rotate(15deg);
+  }
+  
+  .object.spoon::before {
+    content: "";
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    width: 38px;
+    height: 50px;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at 42% 38%, #f6ffff, #828989 72%);
+  }
+  
+  .object.bone {
+    width: 22px;
+    height: 96px;
+    background: linear-gradient(90deg, #cfc3aa, #fff3d4, #a99775);
+    transform: translateX(-50%) rotate(-18deg);
+    border-radius: 999px;
+  }
+  
+  .object.bone::before,
+  .object.bone::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    width: 48px;
+    height: 28px;
+    transform: translateX(-50%);
+    background:
+      radial-gradient(circle at 25% 50%, #fff3d4 0 34%, transparent 36%),
+      radial-gradient(circle at 75% 50%, #fff3d4 0 34%, transparent 36%);
+  }
+  
+  .object.bone::before {
+    top: -18px;
+  }
+  
+  .object.bone::after {
+    bottom: -18px;
+  }
+  
+  .object.board {
+    width: 78px;
+    height: 52px;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #ffd77c, #ba4818);
+    color: #2b0d05;
+    font-size: 17px;
+    font-weight: 950;
+    transform: translateX(-50%) rotate(5deg);
+    box-shadow: 0 0 18px rgba(255, 146, 37, 0.45);
+  }
+  
+  .object.board::before {
+    content: "GOOD";
+  }
+  
+  .object.smoke {
+    width: 76px;
+    height: 92px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 62%, rgba(164, 164, 164, 0.76), transparent 35%),
+      radial-gradient(circle at 55% 42%, rgba(210, 210, 210, 0.72), transparent 36%),
+      radial-gradient(circle at 68% 66%, rgba(125, 125, 125, 0.55), transparent 34%);
+    filter: blur(1px);
+    opacity: 0.85;
+  }
+
+  .object-img {
+    position: absolute;
+    left: 50%;
+    bottom: 12px;
+    width: 88px;
+    height: auto;
+    max-height: 120px;
+    object-fit: contain;
+    transform: translateX(-50%);
+    filter:
+      drop-shadow(0 0 12px rgba(255, 96, 20, 0.55))
+      contrast(1.05);
+    pointer-events: none;
+  }
+
+  .thumb-img {
+    width: 96px;
+  }
+
+  .hit {
+    position: absolute;
+    left: 50%;
+    top: 16%;
+    transform: translateX(-50%);
+    z-index: 8;
+    font-size: 24px;
+    font-weight: 950;
+    color: #ffe17a;
+    text-shadow: 0 0 12px rgba(255, 80, 0, 0.9);
+    animation: hitPop 420ms ease-out forwards;
+    pointer-events: none;
+  }
+  
+  .miss-pop {
+    color: #ff8a7a;
+  }
+  
+  @keyframes lavaWave {
+    from {
+      transform: translateY(0) scaleX(1);
+      filter: brightness(0.96);
+    }
+    to {
+      transform: translateY(-5px) scaleX(1.025);
+      filter: brightness(1.12);
+    }
+  }
+  
+  @keyframes shimmer {
+    from {
+      transform: translateY(0) skewX(-1deg);
+      filter: blur(0.5px);
+    }
+    to {
+      transform: translateY(-6px) skewX(1deg);
+      filter: blur(1.7px);
+    }
+  }
+  
+  @keyframes hitPop {
+    0% {
+      opacity: 0;
+      transform: translateX(-50%) translateY(10px) scale(0.72);
+    }
+    25% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-34px) scale(1.2);
+    }
+  }
+  
+  @media (min-width: 680px) {
+    .furnace-area {
+      min-height: 470px;
+    }
+  
+    .holes {
+      left: 5%;
+      right: 5%;
+      bottom: 9%;
+      height: 60%;
+    }
+  
+    .item {
+      width: 104px;
+      height: 152px;
+    }
+  }
