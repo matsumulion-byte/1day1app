@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>まばたきするな！24秒ル・マン</title>
+  <link rel="stylesheet" href="/apps/2026-05-26/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="game-header">
+      <p class="label">LE MANS 24 SEC</p>
+      <h1>まばたきするな！<br />24秒ル・マン</h1>
+      <p class="lead">24時間耐久を24秒に圧縮。目を閉じたら即クラッシュ。</p>
+    </section>
+
+    <section class="race-screen">
+      <div class="road">
+        <div class="sky">
+          <span class="star s1"></span>
+          <span class="star s2"></span>
+          <span class="star s3"></span>
+          <span class="star s4"></span>
+        </div>
+
+        <div class="track">
+          <div class="lane lane1"></div>
+          <div class="lane lane2"></div>
+          <div class="lane lane3"></div>
+          <div class="car">
+            <div class="car-body"></div>
+            <div class="car-light left"></div>
+            <div class="car-light right"></div>
+          </div>
+        </div>
+
+        <div class="hud">
+          <div>
+            <span class="hud-label">TIME</span>
+            <strong id="timeText">24.0</strong>
+          </div>
+          <div>
+            <span class="hud-label">EYES</span>
+            <strong id="eyeText">--</strong>
+          </div>
+        </div>
+
+        <div class="danger" id="dangerText">目を開けてカメラを見てください</div>
+      </div>
+    </section>
+
+    <section class="camera-panel">
+      <div class="camera-wrap">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="overlay"></canvas>
+        <div class="camera-cover" id="cameraCover">
+          <p id="statusText">カメラ準備中...</p>
+        </div>
+      </div>
+
+      <div class="eye-meter">
+        <div class="meter-head">
+          <span>目の開き具合</span>
+          <span id="meterValue">--</span>
+        </div>
+        <div class="meter-bar">
+          <div class="meter-fill" id="meterFill"></div>
+          <div class="meter-line"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="controls">
+      <button id="cameraButton" class="primary">カメラを許可する</button>
+      <button id="startButton" class="primary" disabled>スタート</button>
+      <button id="retryButton" class="secondary" hidden>もう一回</button>
+      <p class="note">
+        ※カメラ映像はブラウザ内で処理します。暗い場所・メガネの反射・顔が横を向く状態では誤判定が出ます。
+      </p>
+    </section>
+  </main>
+
+  <div class="modal" id="resultModal" hidden>
+    <div class="modal-card">
+      <p class="result-kicker" id="resultKicker">RESULT</p>
+      <h2 id="resultTitle">結果</h2>
+      <p id="resultText"></p>
+      <button id="modalRetryButton" class="primary">もう一回</button>
+    </div>
+  </div>
+
+  <script type="module" src="/apps/2026-05-26/main.js"></script>
+</body>
+</html>

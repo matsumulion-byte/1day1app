@@ -1,0 +1,474 @@
+* {
+    box-sizing: border-box;
+  }
+  
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: #07070b;
+    color: #fff;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-text-size-adjust: 100%;
+  }
+  
+  body {
+    overflow-x: hidden;
+  }
+  
+  button {
+    font: inherit;
+    border: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+  
+  .app {
+    width: min(100%, 480px);
+    margin: 0 auto;
+    min-height: 100svh;
+    padding: 18px 14px 24px;
+  }
+  
+  .game-header {
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  
+  .label {
+    margin: 0 0 6px;
+    color: #e7d46b;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    font-weight: 800;
+  }
+  
+  h1 {
+    margin: 0;
+    font-size: clamp(30px, 9vw, 44px);
+    line-height: 1.02;
+    letter-spacing: -0.05em;
+  }
+  
+  .lead {
+    margin: 10px auto 0;
+    max-width: 360px;
+    color: #c6c6cf;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  
+  .race-screen {
+    margin-top: 16px;
+  }
+  
+  .road {
+    position: relative;
+    height: 280px;
+    overflow: hidden;
+    border: 2px solid #242432;
+    border-radius: 24px;
+    background:
+      radial-gradient(circle at 50% 20%, rgba(255, 230, 130, 0.22), transparent 26%),
+      linear-gradient(#090a15 0%, #111326 45%, #19191d 45%, #050505 100%);
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+  }
+  
+  .sky {
+    position: absolute;
+    inset: 0 0 42%;
+    overflow: hidden;
+  }
+  
+  .star {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  }
+  
+  .s1 { left: 12%; top: 24%; }
+  .s2 { left: 42%; top: 12%; }
+  .s3 { left: 66%; top: 28%; }
+  .s4 { left: 83%; top: 18%; }
+  
+  .track {
+    position: absolute;
+    left: 50%;
+    bottom: -16px;
+    width: 118%;
+    height: 68%;
+    transform: translateX(-50%);
+    clip-path: polygon(39% 0, 61% 0, 96% 100%, 4% 100%);
+    background:
+      linear-gradient(90deg, transparent 0 46%, rgba(255, 255, 255, 0.7) 46% 48%, transparent 48% 52%, rgba(255, 255, 255, 0.7) 52% 54%, transparent 54% 100%),
+      linear-gradient(#25252d, #09090c);
+  }
+  
+  .road.running .track {
+    animation: roadShake 0.12s linear infinite;
+  }
+  
+  .lane {
+    position: absolute;
+    left: 50%;
+    width: 6px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateX(-50%);
+    border-radius: 999px;
+    animation: laneMove 0.55s linear infinite;
+  }
+  
+  .lane1 { top: 10%; }
+  .lane2 { top: 42%; animation-delay: -0.18s; }
+  .lane3 { top: 74%; animation-delay: -0.36s; }
+  
+  .car {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    width: 82px;
+    height: 112px;
+    transform: translateX(-50%);
+  }
+  
+  .car-body {
+    position: absolute;
+    inset: 10px 12px 0;
+    border-radius: 22px 22px 12px 12px;
+    background:
+      linear-gradient(90deg, transparent 0 16%, rgba(255, 255, 255, 0.25) 16% 19%, transparent 19% 81%, rgba(255, 255, 255, 0.25) 81% 84%, transparent 84% 100%),
+      linear-gradient(#d71920, #7b0a10);
+    box-shadow:
+      inset 0 12px 12px rgba(255, 255, 255, 0.18),
+      0 8px 22px rgba(0, 0, 0, 0.45);
+  }
+  
+  .car-body::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 14px;
+    width: 38px;
+    height: 26px;
+    transform: translateX(-50%);
+    border-radius: 10px 10px 4px 4px;
+    background: linear-gradient(#1f2330, #090a0f);
+    border: 2px solid rgba(255, 255, 255, 0.22);
+  }
+  
+  .car-body::after {
+    content: "24";
+    position: absolute;
+    left: 50%;
+    top: 48px;
+    transform: translateX(-50%);
+    font-size: 24px;
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  
+  .car-light {
+    position: absolute;
+    bottom: -18px;
+    width: 28px;
+    height: 72px;
+    background: linear-gradient(rgba(255, 238, 144, 0.8), transparent);
+    filter: blur(2px);
+    opacity: 0.75;
+    clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
+  }
+  
+  .car-light.left {
+    left: 5px;
+    transform: rotate(10deg);
+  }
+  
+  .car-light.right {
+    right: 5px;
+    transform: rotate(-10deg);
+  }
+  
+  .hud {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    pointer-events: none;
+  }
+  
+  .hud > div {
+    min-width: 92px;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(8px);
+  }
+  
+  .hud-label {
+    display: block;
+    color: #9d9da8;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+  }
+  
+  .hud strong {
+    display: block;
+    margin-top: 2px;
+    font-size: 25px;
+    line-height: 1;
+  }
+  
+  .danger {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    width: calc(100% - 28px);
+    transform: translateX(-50%);
+    padding: 9px 10px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.58);
+    color: #fff;
+    font-size: 13px;
+    text-align: center;
+  }
+  
+  .danger.warning {
+    background: rgba(214, 18, 24, 0.78);
+    animation: flash 0.22s linear infinite alternate;
+  }
+  
+  .camera-panel {
+    display: grid;
+    grid-template-columns: 132px 1fr;
+    gap: 12px;
+    align-items: center;
+    margin-top: 14px;
+  }
+  
+  .camera-wrap {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border: 2px solid #292936;
+    border-radius: 22px;
+    background: #111;
+  }
+  
+  video,
+  canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  
+  video {
+    object-fit: cover;
+    transform: scaleX(-1);
+  }
+  
+  canvas {
+    transform: scaleX(-1);
+    pointer-events: none;
+  }
+  
+  .camera-cover {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 12px;
+    background: rgba(8, 8, 12, 0.82);
+    text-align: center;
+  }
+  
+  .camera-cover p {
+    margin: 0;
+    color: #d6d6dc;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  
+  .camera-cover.ready {
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  .eye-meter {
+    padding: 14px;
+    border: 1px solid #262635;
+    border-radius: 20px;
+    background: #101018;
+  }
+  
+  .meter-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+    color: #d7d7df;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  
+  .meter-bar {
+    position: relative;
+    height: 18px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #242431;
+  }
+  
+  .meter-fill {
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #d71920, #e7d46b, #54d66f);
+    transition: width 0.08s linear;
+  }
+  
+  .meter-line {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    left: 38%;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.75);
+  }
+  
+  .controls {
+    margin-top: 16px;
+    display: grid;
+    gap: 10px;
+  }
+  
+  .primary,
+  .secondary {
+    width: 100%;
+    min-height: 52px;
+    border-radius: 16px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+  }
+  
+  .primary {
+    background: #e7d46b;
+    color: #121212;
+    box-shadow: 0 8px 0 #8b7b22;
+  }
+  
+  .primary:active {
+    transform: translateY(4px);
+    box-shadow: 0 4px 0 #8b7b22;
+  }
+  
+  .secondary {
+    border: 1px solid #343444;
+    background: #181824;
+    color: #fff;
+  }
+  
+  .note {
+    margin: 2px 0 0;
+    color: #92929e;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(8px);
+  }
+  
+  .modal-card {
+    width: min(100%, 380px);
+    padding: 24px 18px 18px;
+    border: 1px solid #333342;
+    border-radius: 26px;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(231, 212, 107, 0.14), transparent 36%),
+      #111119;
+    text-align: center;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+  }
+  
+  .result-kicker {
+    margin: 0 0 8px;
+    color: #e7d46b;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+  }
+  
+  .modal-card h2 {
+    margin: 0;
+    font-size: 34px;
+    letter-spacing: -0.06em;
+  }
+  
+  .modal-card p {
+    color: #d4d4dc;
+    line-height: 1.7;
+  }
+  
+  @keyframes laneMove {
+    from {
+      transform: translate(-50%, -80px) scaleY(0.35);
+      opacity: 0;
+    }
+    35% {
+      opacity: 1;
+    }
+    to {
+      transform: translate(-50%, 170px) scaleY(1.6);
+      opacity: 0;
+    }
+  }
+  
+  @keyframes roadShake {
+    0% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(2px); }
+    100% { transform: translateX(-50%) translateY(0); }
+  }
+  
+  @keyframes flash {
+    from { opacity: 0.78; }
+    to { opacity: 1; }
+  }
+  
+  @media (max-width: 360px) {
+    .road {
+      height: 250px;
+    }
+  
+    .camera-panel {
+      grid-template-columns: 112px 1fr;
+    }
+  
+    .hud strong {
+      font-size: 22px;
+    }
+  }
