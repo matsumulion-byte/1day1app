@@ -402,7 +402,15 @@
     background: rgba(0, 0, 0, 0.72);
     backdrop-filter: blur(8px);
   }
-  
+
+  .modal[hidden] {
+    display: none;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
   .modal-card {
     width: min(100%, 380px);
     padding: 24px 18px 18px;
