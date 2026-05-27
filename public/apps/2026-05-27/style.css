@@ -1,0 +1,316 @@
+* {
+    box-sizing: border-box;
+  }
+  
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+  }
+  
+  body {
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Times New Roman", serif;
+    color: #2b2118;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(255,255,255,0.75), transparent 26%),
+      radial-gradient(circle at 80% 20%, rgba(166, 65, 42, 0.08), transparent 30%),
+      linear-gradient(135deg, #efe1bf 0%, #d7bd85 100%);
+    min-height: 100svh;
+    overflow-x: hidden;
+  }
+  
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.3;
+    background-image:
+      linear-gradient(90deg, rgba(75, 48, 24, 0.055) 1px, transparent 1px),
+      linear-gradient(0deg, rgba(75, 48, 24, 0.035) 1px, transparent 1px);
+    background-size: 18px 18px;
+    mix-blend-mode: multiply;
+  }
+  
+  .app {
+    width: min(100%, 520px);
+    min-height: 100svh;
+    margin: 0 auto;
+    padding: 14px 18px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .hero {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .date {
+    margin: 0 0 6px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: rgba(43, 33, 24, 0.65);
+  }
+  
+  h1 {
+    margin: 0;
+    font-size: clamp(27px, 7.4vw, 38px);
+    line-height: 1.12;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+  }
+  
+  .lead {
+    margin: 10px 0 0;
+    font-size: 12px;
+    line-height: 1.65;
+    color: rgba(43, 33, 24, 0.72);
+  }
+  
+  .stage {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+  }
+  
+  .poem-card {
+    position: relative;
+    width: min(84vw, 350px);
+    height: min(56svh, 470px);
+    min-height: 390px;
+    padding: 0;
+    display: block;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.3), transparent 12%, transparent 88%, rgba(120,70,28,0.08)),
+      linear-gradient(180deg, #fbf4dd 0%, #f2e3b9 100%);
+    border: 1px solid rgba(75, 44, 20, 0.26);
+    border-radius: 18px;
+    box-shadow:
+      0 14px 26px rgba(67, 39, 14, 0.19),
+      inset 0 0 0 8px rgba(255, 255, 255, 0.24),
+      inset 0 0 0 10px rgba(93, 55, 20, 0.075);
+    overflow: hidden;
+  }
+  
+  .poem-card::before,
+  .poem-card::after {
+    content: "";
+    position: absolute;
+    inset: 14px;
+    border: 1px solid rgba(104, 64, 28, 0.17);
+    border-radius: 12px;
+    pointer-events: none;
+  }
+  
+  .poem-card::after {
+    inset: auto 24px 24px auto;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: 2px solid rgba(132, 25, 25, 0.22);
+    transform: rotate(-16deg);
+  }
+  
+  .poem-area {
+    position: absolute;
+    top: 34px;
+    left: 28px;
+    right: 28px;
+    height: 210px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    z-index: 2;
+  }
+
+  .poem {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-size: clamp(22px, 5.5vw, 28px);
+    line-height: 1.8;
+    letter-spacing: 0.08em;
+    color: #1f1711;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+  }
+
+  .poem p {
+    margin: 0 0 0 14px;
+    white-space: nowrap;
+  }
+
+  .person-image {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    width: 84%;
+    max-height: 248px;
+    object-fit: contain;
+    transform: translateX(-50%);
+    z-index: 1;
+    filter:
+      drop-shadow(0 8px 8px rgba(70, 40, 18, 0.16))
+      sepia(0.08);
+  }
+
+  .poet {
+    position: absolute;
+    left: 22px;
+    bottom: 26px;
+    writing-mode: vertical-rl;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: rgba(43, 33, 24, 0.52);
+    z-index: 3;
+  }
+  
+  .poem-card.changed {
+    animation: cardPop 300ms ease-out;
+  }
+  
+  @keyframes cardPop {
+    0% {
+      transform: translateY(3px) scale(0.988);
+      filter: blur(1px);
+    }
+    100% {
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+  }
+  
+  .controls {
+    width: min(100%, 420px);
+    display: grid;
+    grid-template-columns: 1.35fr 0.95fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  
+  button {
+    appearance: none;
+    border: 0;
+    border-radius: 999px;
+    min-height: 48px;
+    padding: 0 16px;
+    font-family: inherit;
+    font-size: 16px;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .primary {
+    color: #fffaf0;
+    background: linear-gradient(180deg, #57331e, #2f1d14);
+    box-shadow: 0 8px 16px rgba(47, 29, 20, 0.22);
+  }
+  
+  .secondary {
+    color: #3b2819;
+    background: rgba(255, 248, 226, 0.72);
+    border: 1px solid rgba(75, 44, 20, 0.24);
+  }
+  
+  button:active {
+    transform: translateY(1px);
+  }
+  
+  .review {
+    min-height: 24px;
+    margin-top: 10px;
+    text-align: center;
+  }
+  
+  .review p {
+    margin: 0;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    color: rgba(43, 33, 24, 0.7);
+  }
+  
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translate(-50%, 18px);
+    opacity: 0;
+    padding: 10px 16px;
+    border-radius: 999px;
+    color: #fffaf0;
+    background: rgba(37, 24, 15, 0.88);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    pointer-events: none;
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+  
+  .toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  
+  @media (max-width: 380px) {
+    .app {
+      padding-inline: 14px;
+    }
+  
+    h1 {
+      font-size: 28px;
+    }
+  
+    .lead {
+      font-size: 11px;
+    }
+  
+    .poem-card {
+      width: 86vw;
+      height: 54svh;
+      min-height: 360px;
+    }
+
+    .poem-area {
+      top: 28px;
+      left: 22px;
+      right: 22px;
+      height: 190px;
+    }
+
+    .poem {
+      font-size: 21px;
+      line-height: 1.75;
+    }
+  
+    .controls {
+      margin-top: 14px;
+    }
+  
+    button {
+      min-height: 46px;
+      font-size: 15px;
+    }
+  }
+  
+  @media (min-width: 720px) {
+    .app {
+      justify-content: center;
+      padding-top: 28px;
+      padding-bottom: 28px;
+    }
+  
+    .stage {
+      margin-top: 22px;
+    }
+  
+    .poem-card {
+      width: 380px;
+      height: 520px;
+    }
+  }

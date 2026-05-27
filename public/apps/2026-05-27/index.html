@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>百人一首っぽい言葉メーカー</title>
+  <link rel="stylesheet" href="/apps/2026-05-27/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <p class="date">五月二十七日　百人一首の日</p>
+      <h1>百人一首っぽい<br>言葉メーカー</h1>
+      <p class="lead">
+        五音と七音をならべて、<br>
+        それらしき一首を詠みます。
+      </p>
+    </section>
+
+    <section class="stage">
+      <div class="poem-card" id="poemCard">
+        <div class="poem-area">
+          <div class="poem" id="poem">
+            <p>花の色</p>
+            <p>夢にまぎるる</p>
+            <p>袖の露</p>
+            <p>山かげ遠き</p>
+            <p>月ぞかなしき</p>
+          </div>
+        </div>
+
+        <img id="personImage" class="person-image" src="/apps/2026-05-27/assets/person-01.png" alt="" />
+
+        <div class="poet" id="poet">詠み人知らず</div>
+      </div>
+    </section>
+
+    <section class="controls">
+      <button id="generateBtn" class="primary">一首詠む</button>
+      <button id="copyBtn" class="secondary">写す</button>
+    </section>
+
+    <section class="review">
+      <p id="comment">いとあはれ</p>
+    </section>
+  </main>
+
+  <div class="toast" id="toast">写しました</div>
+
+  <script type="module" src="/apps/2026-05-27/main.js"></script>
+</body>
+</html>
