@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+  <title>花火メーカー</title>
+  <link rel="stylesheet" href="/apps/2026-05-28/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <p class="sub">5/28 花火の日</p>
+      <h1>花火を作ってみよう</h1>
+    </header>
+
+    <section class="top">
+      <canvas id="sky"></canvas>
+
+      <button id="launchBtn" class="launch">
+        打ち上げる
+      </button>
+    </section>
+
+    <section class="panel">
+      <div class="stats">
+        <div>容量 <span id="capacityText">0 / 30</span></div>
+        <div>火薬 <span id="powderText">1</span></div>
+      </div>
+
+      <div class="tools">
+        <button class="tool active" data-type="red">
+          🔴 赤星
+        </button>
+
+        <button class="tool" data-type="blue">
+          🔵 青星
+        </button>
+
+        <button class="tool" data-type="gold">
+          🟡 金星
+        </button>
+
+        <button class="tool" data-type="powder">
+          💥 火薬
+        </button>
+      </div>
+
+      <div class="shapeRow">
+        <button class="shape active" data-shape="burst">大輪</button>
+        <button class="shape" data-shape="willow">柳</button>
+        <button class="shape" data-shape="ring">リング</button>
+        <button class="shape" data-shape="chaos">事故</button>
+      </div>
+
+      <div class="shellWrap">
+        <canvas id="shell"></canvas>
+      </div>
+
+      <div class="bottomBtns">
+        <button id="clearBtn">空にする</button>
+        <button id="randomBtn">雑につめる</button>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="/apps/2026-05-28/main.js"></script>
+</body>
+</html>
