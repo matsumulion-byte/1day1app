@@ -249,7 +249,7 @@ function explode(x,y){
       }
 
       const speed =
-      random(70,180) * multiplier;
+      random(28,90) * multiplier;
 
       particles.push({
         x,
@@ -257,7 +257,10 @@ function explode(x,y){
         vx:Math.cos(angle)*speed,
         vy:Math.sin(angle)*speed,
         color:colors[item.type],
-        life:random(1.2,2.2),
+        life:
+          shape==="willow"
+            ? random(3.8,5.5)
+            : random(1.6,2.4),
         type:shape
       });
     }
@@ -333,9 +336,10 @@ function drawSky(){
     p.y += p.vy*.016;
 
     if(p.type==="willow"){
-      p.vy += 4;
+      p.vx *= 0.985;
+      p.vy += 0.9;
     }else{
-      p.vy += 1.3;
+      p.vy += 0.18;
     }
 
     p.life -= .016;
@@ -351,9 +355,14 @@ function drawSky(){
 
     sctx.beginPath();
     sctx.moveTo(p.x,p.y);
+    const tail =
+      p.type==="willow"
+        ? 0.12
+        : 0.03;
+
     sctx.lineTo(
-      p.x-p.vx*.03,
-      p.y-p.vy*.03
+      p.x-p.vx*tail,
+      p.y-p.vy*tail
     );
 
     sctx.strokeStyle=p.color;
