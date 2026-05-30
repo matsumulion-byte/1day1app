@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>一筆掃除機</title>
+  <link rel="stylesheet" href="/apps/2026-05-30/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="title-area">
+      <p class="date-label">5/30 掃除機の日</p>
+      <h1>一筆掃除機</h1>
+      <p class="lead">
+        コードを絡ませずに、部屋中のホコリを一筆で吸い切れ！
+      </p>
+    </section>
+
+    <section class="status-panel">
+      <div>
+        <span class="label">STAGE</span>
+        <span id="stageText" class="value">1</span>
+      </div>
+      <div>
+        <span class="label">DUST</span>
+        <span id="dustText" class="value">0/0</span>
+      </div>
+    </section>
+
+    <section class="game-frame">
+      <div id="board" class="board" aria-label="ゲーム盤"></div>
+    </section>
+
+    <section class="message-box">
+      <p id="message">矢印キー、または下のボタンで掃除機を動かしてください。</p>
+    </section>
+
+    <section class="sound-area">
+      <button id="bgmBtn" class="sound-btn">♪ BGM ON</button>
+    </section>
+
+    <section class="controls" aria-label="操作ボタン">
+      <button class="control-btn up" data-dir="up">▲</button>
+      <button class="control-btn left" data-dir="left">◀</button>
+      <button class="control-btn down" data-dir="down">▼</button>
+      <button class="control-btn right" data-dir="right">▶</button>
+    </section>
+
+    <section class="actions">
+      <button id="resetBtn" class="sub-btn">やり直す</button>
+      <button id="nextBtn" class="main-btn hidden">次の部屋へ</button>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-05-30/main.js"></script>
+</body>
+</html>
