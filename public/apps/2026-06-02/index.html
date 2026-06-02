@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>裏切りの松村</title>
+  <link rel="stylesheet" href="/apps/2026-06-02/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="top">
+      <p class="date">6/2 裏切りの日</p>
+      <h1>裏切りの松村</h1>
+    </section>
+
+    <section class="game-card">
+      <div id="startScreen" class="start-screen">
+        <div class="matsumura-area start-visual">
+          <img id="startMatsumura" src="" alt="松村" />
+        </div>
+
+        <div class="rule-box">
+          <p>松村と10回勝負します。</p>
+          <p>毎ターン「協力する」か「裏切る」を選んでください。</p>
+          <p>松村も同時に選択します。</p>
+
+          <div class="score-table">
+            <div class="head">あなた</div>
+            <div class="head">松村</div>
+            <div class="head">得点</div>
+
+            <div>協力</div>
+            <div>協力</div>
+            <strong>+2</strong>
+
+            <div>裏切り</div>
+            <div>協力</div>
+            <strong>+5</strong>
+
+            <div>協力</div>
+            <div>裏切り</div>
+            <strong>-1</strong>
+
+            <div>裏切り</div>
+            <div>裏切り</div>
+            <strong>0</strong>
+          </div>
+
+          <p class="note">高得点を目指してください。</p>
+        </div>
+
+        <button id="startBtn" class="start-btn">ゲーム開始</button>
+      </div>
+
+      <div id="playScreen" class="play-screen hidden">
+        <div class="status">
+          <div>TURN <span id="turn">1</span>/10</div>
+          <div>YOU <span id="score">0</span></div>
+          <div>MATSU <span id="matsuScore">0</span></div>
+        </div>
+
+        <div class="matsumura-area">
+          <img id="matsumura" src="" alt="松村" />
+        </div>
+
+        <div class="dialogue" id="dialogue">信じてるよ。</div>
+
+        <div class="choice-area" id="choiceArea">
+          <button id="cooperateBtn" class="choice cooperate">協力する</button>
+          <button id="betrayBtn" class="choice betray">裏切る</button>
+        </div>
+
+        <div class="result" id="result"></div>
+
+        <button id="restartBtn" class="restart hidden">もう一回</button>
+      </div>
+    </section>
+
+    <button id="soundBtn" class="sound">BGM</button>
+  </main>
+
+  <script type="module" src="/apps/2026-06-02/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    min-height: 100%;
+    background: #161616;
+    color: #f4f0e8;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+  }
+  
+  button {
+    font: inherit;
+  }
+  
+  .app {
+    width: min(100%, 520px);
+    min-height: 100dvh;
+    margin: 0 auto;
+    padding: 18px 16px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+  }
+  
+  .top {
+    text-align: center;
+  }
+  
+  .date {
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: #b9ad9a;
+  }
+  
+  h1 {
+    margin: 0;
+    font-size: clamp(34px, 10vw, 54px);
+    line-height: 1;
+    letter-spacing: 0.04em;
+  }
+  
+  .game-card {
+    position: relative;
+    background: #24201c;
+    border: 2px solid #4b4036;
+    border-radius: 24px;
+    padding: 16px;
+    box-shadow: 0 16px 0 #0d0d0d;
+  }
+  
+  .start-screen,
+  .play-screen {
+    width: 100%;
+  }
+
+.start-screen {
+  transition: opacity 0.5s ease;
+}
+
+.start-screen.fadeout {
+  opacity: 0;
+}
+  
+  .status {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 800;
+    font-size: 14px;
+    color: #f0d28a;
+  }
+  
+  .matsumura-area {
+    height: 310px;
+    display: grid;
+    place-items: end center;
+    overflow: hidden;
+    margin-top: 8px;
+    background:
+      radial-gradient(circle at center bottom, rgba(255,255,255,0.12), transparent 48%),
+      linear-gradient(#2f2924, #181614);
+    border-radius: 18px;
+    border: 1px solid #51463d;
+  }
+  
+  .start-visual {
+    height: 220px;
+    margin-top: 0;
+  }
+  
+  #matsumura,
+  #startMatsumura {
+    max-width: 92%;
+    max-height: 300px;
+    object-fit: contain;
+    transform-origin: center bottom;
+    transition: transform 0.16s ease, filter 0.16s ease;
+  }
+  
+  #startMatsumura {
+    max-height: 210px;
+  }
+  
+  #matsumura.shake {
+    animation: shake 0.34s linear;
+  }
+  
+  #matsumura.drop {
+    transform: translateY(8px) scale(0.98);
+    filter: saturate(0.55);
+  }
+  
+  .rule-box {
+    margin-top: 14px;
+    padding: 14px;
+    background: #f4f0e8;
+    color: #211d19;
+    border-radius: 16px;
+  }
+  
+  .rule-box h2 {
+    margin: 0 0 10px;
+    font-size: 22px;
+  }
+  
+  .rule-box p {
+    margin: 8px 0;
+    font-weight: 800;
+    line-height: 1.55;
+  }
+  
+  .score-table {
+    margin: 14px 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr 70px;
+    gap: 7px 8px;
+    padding: 12px;
+    background: #211d19;
+    color: #f4f0e8;
+    border-radius: 12px;
+    font-size: 14px;
+    align-items: center;
+  }
+  
+  .score-table .head {
+    color: #b9ad9a;
+    font-size: 12px;
+    font-weight: 900;
+  }
+  
+  .score-table strong {
+    color: #f0d28a;
+    text-align: right;
+  }
+  
+  .note {
+    color: #b53531;
+  }
+  
+  .start-btn {
+    width: 100%;
+    height: 58px;
+    margin-top: 14px;
+    border: 0;
+    border-radius: 999px;
+    background: #c43d36;
+    color: #fff;
+    font-weight: 900;
+    font-size: 20px;
+    cursor: pointer;
+  }
+  
+  .dialogue {
+    min-height: 70px;
+    margin-top: 14px;
+    padding: 14px;
+    background: #f4f0e8;
+    color: #211d19;
+    border-radius: 16px;
+    font-weight: 800;
+    line-height: 1.55;
+  }
+  
+  .choice-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  
+  .choice,
+  .restart,
+  .sound {
+    border: 0;
+    border-radius: 999px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+  
+  .choice {
+    height: 58px;
+    font-size: 18px;
+  }
+  
+  .cooperate {
+    background: #e8d5a4;
+    color: #201a14;
+  }
+  
+  .betray {
+    background: #c43d36;
+    color: #fff;
+  }
+  
+  .choice:disabled {
+    opacity: 0.55;
+  }
+  
+  .result {
+    min-height: 28px;
+    margin-top: 12px;
+    text-align: center;
+    font-weight: 900;
+    white-space: pre-line;
+    color: #f0d28a;
+  }
+  
+  .restart {
+    width: 100%;
+    height: 54px;
+    margin-top: 12px;
+    background: #f4f0e8;
+    color: #191919;
+  }
+  
+  .sound {
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    width: 62px;
+    height: 42px;
+    background: #f4f0e8;
+    color: #191919;
+    font-size: 12px;
+  }
+  
+  .hidden {
+    display: none;
+  }
+  
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-3px); }
+  }
+  
+  @media (max-width: 380px) {
+    .app {
+      padding: 12px 12px 22px;
+    }
+  
+    .matsumura-area {
+      height: 270px;
+    }
+  
+    .start-visual {
+      height: 190px;
+    }
+  
+    #matsumura {
+      max-height: 260px;
+    }
+  
+    #startMatsumura {
+      max-height: 180px;
+    }
+  
+    .choice {
+      height: 54px;
+      font-size: 16px;
+    }
+  
+    .score-table {
+      font-size: 13px;
+      grid-template-columns: 1fr 1fr 56px;
+    }
+  }
