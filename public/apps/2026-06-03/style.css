@@ -140,12 +140,13 @@
     border-radius: 999px;
     transform: translate(-50%, -50%);
     background:
-      radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.95), transparent 18%),
+      radial-gradient(circle at 50% 32%, rgba(255, 255, 255, 0.95), transparent 20%),
       linear-gradient(180deg, #f3fff9, #9cffc8);
     box-shadow:
       0 0 18px rgba(138, 255, 189, 0.42),
       inset 0 -8px 14px rgba(0, 0, 0, 0.12);
-    transition: left 0.16s ease-out;
+    transition: transform 0.16s ease-out;
+    will-change: transform;
   }
 
   .tilt-direction {
@@ -214,7 +215,7 @@
 
   .is-level .bubble {
     background:
-      radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.95), transparent 18%),
+      radial-gradient(circle at 50% 32%, rgba(255, 255, 255, 0.95), transparent 20%),
       linear-gradient(180deg, #ffffff, #b7ffd5);
   }
   
