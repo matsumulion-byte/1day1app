@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>水平測れるよマシーン</title>
+  <link rel="stylesheet" href="/apps/2026-06-03/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="card">
+      <p class="date">6/3 測量の日</p>
+      <h1>水平測れるよマシーン</h1>
+      <p class="lead">まっすぐかどうかだけ、見ます。</p>
+
+      <div class="level-wrap" aria-label="水準器">
+        <div class="level-line"></div>
+        <div class="level-tube">
+          <div class="center-mark"></div>
+          <div id="bubble" class="bubble"></div>
+        </div>
+      </div>
+
+      <div class="readout">
+        <p id="status" class="status">センサーを起動してください</p>
+        <p class="angle"><span id="angle">--.-</span>°</p>
+      </div>
+
+      <button id="startBtn" class="start-btn">センサーを使う</button>
+
+      <p id="note" class="note">
+        端末のセンサーを使用しています。正確な測量には使用しないでください。
+      </p>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-06-03/main.js"></script>
+</body>
+</html>
