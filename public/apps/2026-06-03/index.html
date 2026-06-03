@@ -14,7 +14,11 @@
       <p class="lead">まっすぐかどうかだけ、見ます。</p>
 
       <div class="level-wrap" aria-label="水準器">
-        <div class="level-line"></div>
+        <div class="level-guide">
+          <span>左が低い</span>
+          <span>右が低い</span>
+        </div>
+
         <div class="level-tube">
           <div class="center-mark"></div>
           <div id="bubble" class="bubble"></div>
@@ -24,6 +28,7 @@
       <div class="readout">
         <p id="status" class="status">センサーを起動してください</p>
         <p class="angle"><span id="angle">--.-</span>°</p>
+        <p id="tiltDirection" class="tilt-direction">中央に気泡が入ると水平です</p>
       </div>
 
       <button id="startBtn" class="start-btn">センサーを使う</button>
