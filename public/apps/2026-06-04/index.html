@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>歯みがきジャッジメント</title>
+  <meta name="description" content="10秒みがいて、今日の歯みがき称号をもらうミニアプリ。" />
+  <link rel="stylesheet" href="/apps/2026-06-04/style.css?v=20260604-1" />
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <p class="date">6/4 虫歯予防デー</p>
+      <h1>歯みがき<br>ジャッジメント</h1>
+      <p class="lead">10秒みがいて、口内の運命を決めます。</p>
+    </section>
+
+    <section class="judge-card" aria-label="歯みがき採点">
+      <div class="status-row">
+        <div>
+          <span class="label">TIME</span>
+          <strong id="timeLeft">10.0</strong>
+        </div>
+        <div>
+          <span class="label">SCORE</span>
+          <strong id="score">0</strong>
+        </div>
+        <div>
+          <span class="label">PACE</span>
+          <strong id="pace">--</strong>
+        </div>
+      </div>
+
+      <div id="mouth" class="mouth" aria-label="みがくエリア">
+        <div class="gum gum-top"></div>
+        <div class="gum gum-bottom"></div>
+        <div class="tooth-grid" id="toothGrid"></div>
+        <div id="brush" class="brush">
+          <div class="brush-head"></div>
+          <div class="brush-neck"></div>
+          <div class="brush-handle"></div>
+        </div>
+        <div id="foamLayer" class="foam-layer"></div>
+      </div>
+
+      <div class="zone-board">
+        <div class="zone" data-zone="front">
+          <span>前歯</span>
+          <b id="frontGauge"></b>
+        </div>
+        <div class="zone" data-zone="left">
+          <span>左奥</span>
+          <b id="leftGauge"></b>
+        </div>
+        <div class="zone" data-zone="right">
+          <span>右奥</span>
+          <b id="rightGauge"></b>
+        </div>
+        <div class="zone" data-zone="gum">
+          <span>歯ぐき</span>
+          <b id="gumGauge"></b>
+        </div>
+      </div>
+
+      <p id="comment" class="comment">センサーでも、ドラッグでも、ボタンでも判定します。</p>
+
+      <div class="controls">
+        <button id="startBtn" class="primary">診断開始</button>
+        <button id="brushBtn" class="secondary">シャカシャカ</button>
+      </div>
+    </section>
+
+    <section id="resultPanel" class="result-panel hidden" aria-live="polite">
+      <p class="result-label">判定</p>
+      <h2 id="resultTitle">---</h2>
+      <p id="resultText"></p>
+      <button id="retryBtn" class="primary">もう一回みがく</button>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-06-04/main.js?v=20260604-1"></script>
+</body>
+</html>
