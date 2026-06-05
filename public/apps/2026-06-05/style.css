@@ -1,0 +1,282 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(255, 217, 80, 0.24), transparent 26%),
+    radial-gradient(circle at 88% 18%, rgba(64, 215, 255, 0.22), transparent 28%),
+    linear-gradient(135deg, #171718 0%, #242424 46%, #101112 100%);
+  color: #f8f4e8;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Hiragino Sans",
+    "Yu Gothic",
+    sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.app {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.maker {
+  width: min(100%, 980px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(310px, 0.82fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.preview-panel,
+.control-panel {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 24px;
+  background: rgba(13, 14, 15, 0.76);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.preview-panel {
+  min-height: 630px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 22px;
+}
+
+.date {
+  margin: 0 0 14px;
+  color: rgba(248, 244, 232, 0.62);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+.logo-stage {
+  display: grid;
+  place-items: center;
+  min-height: 420px;
+  padding: 14px;
+  border-radius: 20px;
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.06) 25%, transparent 25% 50%, rgba(255, 255, 255, 0.06) 50% 75%, transparent 75%),
+    rgba(255, 255, 255, 0.04);
+  background-size: 28px 28px;
+  overflow: hidden;
+}
+
+.logo-stage svg {
+  width: 100%;
+  max-width: 680px;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 20px 32px rgba(0, 0, 0, 0.28));
+  animation: logoIn 0.32s ease both;
+}
+
+.tagline {
+  min-height: 1.6em;
+  margin: 16px 0 0;
+  color: rgba(248, 244, 232, 0.76);
+  font-size: 16px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 26px;
+}
+
+h1 {
+  margin: 0 0 22px;
+  font-size: clamp(42px, 7vw, 68px);
+  line-height: 0.94;
+  letter-spacing: 0;
+}
+
+.field {
+  display: block;
+}
+
+.field span,
+.option-grid span {
+  display: block;
+  margin-bottom: 8px;
+  color: rgba(248, 244, 232, 0.62);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.field input {
+  width: 100%;
+  height: 58px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  outline: 0;
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+}
+
+.field input:focus {
+  border-color: rgba(255, 230, 102, 0.72);
+  box-shadow: 0 0 0 4px rgba(255, 230, 102, 0.1);
+}
+
+.mode-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.mode,
+.secondary,
+.primary {
+  border: 0;
+  border-radius: 999px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.mode {
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(248, 244, 232, 0.7);
+  font-size: 12px;
+}
+
+.mode.is-active {
+  background: #f8f4e8;
+  color: #151515;
+}
+
+.option-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.option-grid label {
+  min-width: 0;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: #ffe657;
+}
+
+.button-row {
+  display: grid;
+  grid-template-columns: 0.82fr 1.18fr;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.secondary,
+.primary {
+  min-height: 54px;
+}
+
+.secondary {
+  background: rgba(255, 255, 255, 0.11);
+  color: #f8f4e8;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.primary {
+  background: #ffe657;
+  color: #151515;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.26);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+@keyframes logoIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 780px) {
+  .app {
+    padding: 14px;
+  }
+
+  .maker {
+    grid-template-columns: 1fr;
+  }
+
+  .preview-panel {
+    min-height: auto;
+    padding: 16px;
+  }
+
+  .logo-stage {
+    min-height: 260px;
+  }
+
+  .control-panel {
+    padding: 20px;
+  }
+
+  h1 {
+    margin-bottom: 16px;
+    font-size: clamp(38px, 12vw, 52px);
+  }
+}
+
+@media (max-width: 390px) {
+  .mode-row,
+  .option-grid,
+  .button-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mode {
+    min-height: 39px;
+  }
+
+  .field input {
+    height: 52px;
+    font-size: 19px;
+  }
+
+  .secondary,
+  .primary {
+    min-height: 48px;
+  }
+}
