@@ -17,6 +17,7 @@ const MAX_JUMP = 30;
 const TIME_LIMIT = 66;
 const TARGET_FROGS = 6;
 const MAX_LIVES = 3;
+const LEAVES_PER_FROG = 4;
 
 let active = false;
 let finished = false;
@@ -27,6 +28,7 @@ let frogPos = { ...START };
 let frogLeaf = null;
 let frogsHome = 0;
 let lives = MAX_LIVES;
+let leafBudget = LEAVES_PER_FROG;
 let score = 0;
 let combo = 0;
 let stunnedUntil = 0;
@@ -54,7 +56,7 @@ function updateHud() {
   const left = finished ? 0 : active ? clamp(Math.ceil(TIME_LIMIT - elapsed), 0, TIME_LIMIT) : TIME_LIMIT;
   timeLeftEl.textContent = String(left);
   frogCountEl.textContent = `${frogsHome}/${TARGET_FROGS}  ${"♥".repeat(lives)}`;
-  scoreEl.textContent = String(score);
+  scoreEl.textContent = String(leafBudget);
 }
 
 function clearObjects() {
@@ -145,6 +147,9 @@ function loseLife(reason) {
   lives -= 1;
   combo = 0;
   frogLeaf = null;
+  leafBudget = LEAVES_PER_FROG;
+  leaves.forEach((leaf) => leaf.el.remove());
+  leaves = [];
   setFrogPosition(START);
   frog.classList.remove("jumping");
   void frog.offsetWidth;
@@ -184,8 +189,10 @@ function jumpTo(target) {
   if (target.id === "goal") {
     respawning = true;
     score += 120 + combo * 20 + lives * 30;
+    score += leafBudget * 45;
     frogsHome += 1;
     combo = 0;
+    leafBudget = LEAVES_PER_FROG;
     updateHud();
 
     if (frogsHome >= TARGET_FROGS) {
@@ -237,9 +244,19 @@ function placeLeaf(pos) {
     return;
   }
 
+  if (leafBudget <= 0) {
+    setMessage("葉っぱ切れです。今ある葉っぱが流れて近づくのを待つしかありません。");
+    return;
+  }
+
   const leaf = createLeaf(pos);
+  leafBudget -= 1;
   tryJumpToLeaf(leaf);
+  if (leafBudget === 0 && distance(frogPos, GOAL) > MAX_JUMP) {
+    setMessage("最後の葉っぱです。流れに乗って届く瞬間を待ちましょう。");
+  }
   markReachableLeaves();
+  updateHud();
 }
 
 function updateObjects(dt, now) {
@@ -354,6 +371,7 @@ function resetGame() {
   frogLeaf = null;
   frogsHome = 0;
   lives = MAX_LIVES;
+  leafBudget = LEAVES_PER_FROG;
   score = 0;
   combo = 0;
   stunnedUntil = 0;
@@ -366,7 +384,7 @@ function resetGame() {
   startBtn.disabled = false;
   startBtn.textContent = "スタート";
   frog.classList.remove("is-stunned", "jumping", "splash");
-  setMessage("流れる葉っぱで6匹のかえるを帰してください。遠い葉っぱは流れて近づくのを待ちます。");
+  setMessage("1匹につき葉っぱは4枚。流れを読んで6匹のかえるを帰してください。");
   updateHud();
 }
 
@@ -378,7 +396,7 @@ function startGame() {
   nextDropAt = startedAt + 900;
   startBtn.disabled = true;
   startBtn.textContent = "帰宅中";
-  setMessage("タップで葉っぱを置く。届けば自動ジャンプ。雨粒と流れに注意。");
+  setMessage("タップで葉っぱを置く。4枚以内に家までつないでください。");
   updateHud();
   animationId = window.requestAnimationFrame(tick);
 }
