@@ -100,8 +100,12 @@ h1 {
 
 .hud strong {
   display: block;
-  font-size: 25px;
+  min-height: 1.1em;
+  overflow: hidden;
+  font-size: 24px;
   line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pond {
@@ -160,6 +164,27 @@ h1 {
   pointer-events: none;
 }
 
+.danger-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.drop {
+  position: absolute;
+  width: 16px;
+  height: 34px;
+  border-radius: 999px 999px 999px 0;
+  background:
+    radial-gradient(circle at 34% 22%, rgba(255, 255, 255, 0.9), transparent 18%),
+    linear-gradient(180deg, rgba(204, 250, 255, 0.92), rgba(92, 191, 255, 0.6));
+  box-shadow:
+    0 0 14px rgba(137, 224, 255, 0.5),
+    inset 0 -6px 10px rgba(22, 93, 130, 0.18);
+  transform: translate(-50%, -50%) rotate(18deg);
+}
+
 .goal {
   position: absolute;
   right: 7%;
@@ -212,6 +237,17 @@ h1 {
   animation: frogHop 0.36s ease;
 }
 
+.frog.is-stunned {
+  animation: frogStun 0.16s linear infinite;
+  filter:
+    drop-shadow(0 12px 16px rgba(0, 0, 0, 0.28))
+    drop-shadow(0 0 16px rgba(173, 235, 255, 0.72));
+}
+
+.frog.splash {
+  animation: frogSplash 0.42s ease;
+}
+
 .leaf {
   position: absolute;
   z-index: 3;
@@ -243,6 +279,7 @@ h1 {
 .leaf.is-reachable {
   outline: 3px solid rgba(241, 255, 133, 0.88);
   outline-offset: 2px;
+  filter: drop-shadow(0 0 12px rgba(241, 255, 133, 0.42));
 }
 
 .leaf.is-far {
@@ -341,6 +378,31 @@ h2 {
   from {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.62) rotate(0deg);
+  }
+}
+
+@keyframes frogStun {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) rotate(-4deg);
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(4deg);
+  }
+}
+
+@keyframes frogSplash {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  45% {
+    opacity: 0.55;
+    transform: translate(-50%, -42%) scale(0.82);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
