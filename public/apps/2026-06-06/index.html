@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>ケロっと帰宅</title>
+  <meta name="description" content="6/6 かえるの日。葉っぱを置いて、雨の池からかえるを家まで帰すミニゲーム。" />
+  <link rel="stylesheet" href="/apps/2026-06-06/style.css?v=20260606-2" />
+</head>
+<body>
+  <main class="app">
+    <section class="game-shell">
+      <header class="top">
+        <p class="date">6/6 かえるの日</p>
+        <h1>ケロっと帰宅</h1>
+        <p id="message" class="message">葉っぱを置いて、かえるをおうちまで帰してください。</p>
+      </header>
+
+      <div class="hud" aria-label="ゲーム状況">
+        <div>
+          <span>TIME</span>
+          <strong id="timeLeft">30</strong>
+        </div>
+        <div>
+          <span>LEAF</span>
+          <strong id="leafLeft">12</strong>
+        </div>
+        <div>
+          <span>JUMP</span>
+          <strong id="jumpCount">0</strong>
+        </div>
+      </div>
+
+      <section id="pond" class="pond" aria-label="池">
+        <div class="rain" aria-hidden="true"></div>
+        <div class="goal" aria-label="かえるの家">
+          <span>HOME</span>
+        </div>
+        <div id="frog" class="frog" aria-label="かえる">
+          <svg viewBox="0 0 120 100" role="img" aria-hidden="true">
+            <ellipse cx="60" cy="58" rx="42" ry="32" fill="#74de72"/>
+            <circle cx="38" cy="30" r="19" fill="#74de72"/>
+            <circle cx="82" cy="30" r="19" fill="#74de72"/>
+            <circle cx="38" cy="29" r="8" fill="#102116"/>
+            <circle cx="82" cy="29" r="8" fill="#102116"/>
+            <circle cx="41" cy="26" r="3" fill="#fff"/>
+            <circle cx="85" cy="26" r="3" fill="#fff"/>
+            <path d="M38 63 Q60 80 82 63" fill="none" stroke="#17351f" stroke-width="5" stroke-linecap="round"/>
+            <path d="M22 76 Q8 86 5 69" fill="none" stroke="#58bd55" stroke-width="10" stroke-linecap="round"/>
+            <path d="M98 76 Q112 86 115 69" fill="none" stroke="#58bd55" stroke-width="10" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </section>
+
+      <div class="controls">
+        <button id="startBtn" class="primary">スタート</button>
+        <button id="resetBtn" class="secondary">やり直し</button>
+      </div>
+
+      <section id="resultPanel" class="result hidden" aria-live="polite">
+        <p>帰宅判定</p>
+        <h2 id="resultTitle">---</h2>
+        <span id="resultText">---</span>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-06-06/main.js?v=20260606-2"></script>
+</body>
+</html>
