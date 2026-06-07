@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>水滴遊び</title>
+  <meta name="description" content="6/7。窓ガラスの水滴をなぞって、流れと音を作る小さなインタラクティブアプリ。" />
+  <link rel="stylesheet" href="/apps/2026-06-07/style.css?v=20260607-1" />
+</head>
+<body>
+  <main class="app">
+    <canvas id="rainCanvas" aria-label="水滴遊び"></canvas>
+
+    <section class="glass-ui" aria-label="水滴遊びの操作">
+      <div>
+        <p class="date">6/7</p>
+        <h1>水滴<br>遊び</h1>
+      </div>
+
+      <div class="meters">
+        <div>
+          <span>FLOW</span>
+          <strong id="flowMeter">00</strong>
+        </div>
+        <div>
+          <span>TONE</span>
+          <strong id="toneMeter">--</strong>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="rainBtn" type="button">雨を足す</button>
+        <button id="clearBtn" type="button">拭く</button>
+      </div>
+    </section>
+
+    <p id="caption" class="caption">ガラスをなぞると、水滴の道と音が残ります。</p>
+  </main>
+
+  <script type="module" src="/apps/2026-06-07/main.js?v=20260607-2"></script>
+</body>
+</html>
