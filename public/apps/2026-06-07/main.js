@@ -32,6 +32,7 @@ let pointer = {
   px: 0,
   py: 0
 };
+let lastTapAt = 0;
 
 const rand = (min, max) => min + Math.random() * (max - min);
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -389,6 +390,7 @@ function getPointer(event) {
 }
 
 canvas.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
   ensureAudio();
   const point = getPointer(event);
   pointer = {
@@ -404,6 +406,7 @@ canvas.addEventListener("pointerdown", (event) => {
 });
 
 canvas.addEventListener("pointermove", (event) => {
+  event.preventDefault();
   if (!pointer.active) {
     return;
   }
@@ -431,12 +434,26 @@ canvas.addEventListener("pointermove", (event) => {
   }
 });
 
-canvas.addEventListener("pointerup", () => {
+canvas.addEventListener("pointerup", (event) => {
+  event.preventDefault();
   pointer.active = false;
 });
 
-canvas.addEventListener("pointercancel", () => {
+canvas.addEventListener("pointercancel", (event) => {
+  event.preventDefault();
   pointer.active = false;
+});
+
+document.addEventListener("touchend", (event) => {
+  const now = Date.now();
+  if (now - lastTapAt < 420) {
+    event.preventDefault();
+  }
+  lastTapAt = now;
+}, { passive: false });
+
+document.addEventListener("gesturestart", (event) => {
+  event.preventDefault();
 });
 
 rainBtn.addEventListener("click", () => {

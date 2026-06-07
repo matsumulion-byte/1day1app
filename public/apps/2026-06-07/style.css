@@ -8,6 +8,9 @@ body {
   min-height: 100%;
   margin: 0;
   overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  -webkit-text-size-adjust: 100%;
   background:
     linear-gradient(180deg, #c6d1d2 0%, #7f9298 45%, #232b31 100%);
   color: #f7fbfb;
@@ -22,6 +25,7 @@ body {
 
 button {
   font: inherit;
+  touch-action: manipulation;
 }
 
 .app {
@@ -30,6 +34,9 @@ button {
   height: 100dvh;
   min-height: 520px;
   overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
   background:
     linear-gradient(90deg, transparent 0 14%, rgba(255, 255, 255, 0.09) 14% 14.5%, transparent 14.5% 62%, rgba(255, 255, 255, 0.08) 62% 62.5%, transparent 62.5%),
     linear-gradient(180deg, rgba(243, 247, 236, 0.8) 0 9%, rgba(83, 105, 111, 0.28) 9% 42%, rgba(19, 25, 31, 0.68) 42% 100%);
