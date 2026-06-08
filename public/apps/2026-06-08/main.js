@@ -1,4 +1,5 @@
 const plate = document.getElementById("plate");
+const targetGuide = document.getElementById("targetGuide");
 const foodLayer = document.getElementById("foodLayer");
 const spillLayer = document.getElementById("spillLayer");
 const foodBar = document.getElementById("foodBar");
@@ -12,8 +13,8 @@ const resultTextEl = document.getElementById("resultText");
 const retryBtn = document.getElementById("retryBtn");
 const bgm = document.getElementById("bgm");
 
-const LIMIT = 24;
-const ROUND_SECONDS = 45;
+const LIMIT = 12;
+const ROUND_SECONDS = 30;
 
 const foods = [
   { id: "karaage", name: "唐揚げ", icon: "🍗", color: "#d88a32", group: "brown", weight: 13, fullness: 12, score: 18, size: 62 },
@@ -75,6 +76,7 @@ let timeLeft = ROUND_SECONDS;
 let timerId = null;
 let running = false;
 let lastTapAt = 0;
+let selectedFoodId = null;
 
 bgm.loop = true;
 bgm.volume = 0.38;
@@ -90,8 +92,26 @@ function setupFoodButtons() {
     button.className = "food-btn";
     button.dataset.food = food.id;
     button.innerHTML = `<span class="icon">${food.icon}</span><span class="name">${food.name}</span>`;
-    button.addEventListener("click", () => addFood(food.id));
+    button.addEventListener("click", () => selectFood(food.id));
     foodBar.append(button);
+  }
+}
+
+function selectFood(foodId) {
+  if (selectedFoodId === foodId && running) {
+    addFood(foodId);
+    return;
+  }
+  selectedFoodId = foodId;
+  updateFoodSelection();
+  const food = foods.find((entry) => entry.id === foodId);
+  messageEl.textContent = `${food.name} を選択中。皿の置きたい場所を押してください。`;
+  showTargetGuide();
+}
+
+function updateFoodSelection() {
+  for (const button of foodBar.querySelectorAll(".food-btn")) {
+    button.classList.toggle("is-selected", button.dataset.food === selectedFoodId);
   }
 }
 
@@ -104,6 +124,8 @@ function startGame() {
   spillLayer.innerHTML = "";
   resultEl.classList.add("hidden");
   messageEl.textContent = "一周目から本気でいきます。";
+  selectedFoodId = null;
+  hideTargetGuide();
   setButtonsDisabled(false);
   updateStats();
   playBgm();
@@ -129,6 +151,8 @@ function prepareGame() {
   spillLayer.innerHTML = "";
   resultEl.classList.add("hidden");
   messageEl.textContent = "一周目から本気でいきます。";
+  selectedFoodId = null;
+  hideTargetGuide();
   setButtonsDisabled(false);
   plate.style.setProperty("--tilt", "0deg");
   if (timerId) {
@@ -155,12 +179,18 @@ function stopBgm() {
 function setButtonsDisabled(disabled) {
   for (const button of foodBar.querySelectorAll("button")) {
     button.disabled = disabled;
+    if (disabled) {
+      button.classList.remove("is-selected");
+    }
   }
 }
 
-function addFood(foodId) {
+function addFood(foodId, targetPoint = null) {
+  const shouldKeepTargeting = Boolean(targetPoint);
   if (!running) {
     startGame();
+    selectedFoodId = shouldKeepTargeting ? foodId : null;
+    updateFoodSelection();
   }
   if (!running || items.length >= LIMIT) {
     return;
@@ -168,7 +198,7 @@ function addFood(foodId) {
 
   const food = foods.find((entry) => entry.id === foodId);
   const sameFoodCount = items.filter((item) => item.id === food.id).length;
-  const spot = getPlateSpot(items.length, food, sameFoodCount);
+  const spot = targetPoint || getPlateSpot(items.length, food, sameFoodCount);
   const item = {
     ...food,
     uid: `${food.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -190,12 +220,16 @@ function addFood(foodId) {
     messageEl.textContent = `${food.name}だけで皿が埋まりはじめました。`;
   } else if (sameFoodCount >= 4) {
     messageEl.textContent = `${food.name}山ができてきました。`;
+  } else if (shouldKeepTargeting) {
+    messageEl.textContent = `${food.name} を置きました。続けて皿を押すと同じ料理を置けます。`;
   } else {
     messageEl.textContent = messages[Math.floor(rand(0, messages.length))];
   }
 
   if (items.length >= LIMIT) {
     finishGame();
+  } else if (shouldKeepTargeting) {
+    showTargetGuide();
   }
 }
 
@@ -220,6 +254,41 @@ function getPlateSpot(index, food, sameFoodCount) {
     y: spot.y * liquidBias + rand(-7, 7) - lap * 8,
     rot: rand(-13, 13)
   };
+}
+
+function getPlatePoint(event) {
+  const rect = plate.getBoundingClientRect();
+  const x = event.clientX - rect.left - rect.width / 2;
+  const y = event.clientY - rect.top - rect.height / 2;
+  const scale = 420 / rect.width;
+  const scaledX = x * scale;
+  const scaledY = y * scale;
+  const radius = Math.hypot(scaledX, scaledY);
+  const maxRadius = 118;
+  if (radius > maxRadius) {
+    const ratio = maxRadius / radius;
+    return {
+      x: scaledX * ratio,
+      y: scaledY * ratio,
+      rot: rand(-13, 13)
+    };
+  }
+  return {
+    x: scaledX,
+    y: scaledY,
+    rot: rand(-13, 13)
+  };
+}
+
+function showTargetGuide() {
+  targetGuide.classList.add("is-visible");
+}
+
+function hideTargetGuide() {
+  targetGuide.classList.remove("is-visible");
+  for (const button of foodBar.querySelectorAll(".food-btn")) {
+    button.classList.remove("is-selected");
+  }
 }
 
 function renderFood(item) {
@@ -274,8 +343,8 @@ function radiusFor(foodId) {
 
 function maybeDropFood() {
   const stability = getStability();
-  const risk = Math.max(0, 58 - stability) + Math.max(0, getFullness() - 138) * 0.45;
-  if (items.length < 15 || Math.random() * 100 > risk) {
+  const risk = Math.max(0, 58 - stability) + Math.max(0, getFullness() - 92) * 0.45;
+  if (items.length < 9 || Math.random() * 100 > risk) {
     return null;
   }
 
@@ -406,6 +475,14 @@ foodBar.addEventListener("pointerdown", (event) => {
   if (event.target.closest(".food-btn")) {
     playBgm();
   }
+});
+
+plate.addEventListener("pointerdown", (event) => {
+  if (!selectedFoodId) {
+    return;
+  }
+  event.preventDefault();
+  addFood(selectedFoodId, getPlatePoint(event));
 });
 
 document.addEventListener("visibilitychange", () => {
