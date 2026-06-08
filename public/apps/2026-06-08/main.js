@@ -16,27 +16,42 @@ const LIMIT = 12;
 const ROUND_SECONDS = 30;
 
 const foods = [
-  { id: "karaage", name: "唐揚げ", icon: "揚", color: "#d88a32", group: "brown", weight: 13, fullness: 14, score: 18, size: 64 },
-  { id: "potato", name: "ポテト", icon: "芋", color: "#f0c94d", group: "yellow", weight: 8, fullness: 9, score: 11, size: 54 },
-  { id: "curry", name: "カレー", icon: "辛", color: "#a86224", group: "brown", weight: 16, fullness: 18, score: 20, size: 70 },
-  { id: "salad", name: "サラダ", icon: "菜", color: "#62b85f", group: "green", weight: 5, fullness: 5, score: 12, size: 58 },
-  { id: "sushi", name: "寿司", icon: "寿", color: "#f7f2dc", group: "white", weight: 7, fullness: 7, score: 15, size: 56 },
-  { id: "roast", name: "ロースト肉", icon: "肉", color: "#b94d35", group: "red", weight: 17, fullness: 16, score: 23, size: 72 },
-  { id: "pudding", name: "プリン", icon: "甘", color: "#f4d46a", group: "yellow", weight: 6, fullness: 8, score: 20, size: 58 },
-  { id: "soup", name: "スープ", icon: "汁", color: "#d66339", group: "red", weight: 12, fullness: 10, score: 14, size: 62 },
-  { id: "bread", name: "パン", icon: "焼", color: "#d6a15e", group: "brown", weight: 6, fullness: 8, score: 10, size: 58 },
-  { id: "fruit", name: "フルーツ", icon: "果", color: "#e96d86", group: "pink", weight: 4, fullness: 4, score: 14, size: 52 },
-  { id: "pasta", name: "パスタ", icon: "麺", color: "#e9b84d", group: "yellow", weight: 11, fullness: 12, score: 16, size: 66 },
-  { id: "fish", name: "焼き魚", icon: "魚", color: "#9fb0b1", group: "white", weight: 10, fullness: 9, score: 16, size: 64 }
+  { id: "karaage", name: "唐揚げ", icon: "🍗", color: "#d88a32", group: "brown", weight: 13, fullness: 14, score: 18, size: 58 },
+  { id: "potato", name: "ポテト", icon: "🍟", color: "#f0c94d", group: "yellow", weight: 8, fullness: 9, score: 11, size: 54 },
+  { id: "curry", name: "カレー", icon: "🍛", color: "#a86224", group: "brown", weight: 16, fullness: 18, score: 20, size: 82 },
+  { id: "salad", name: "サラダ", icon: "🥗", color: "#62b85f", group: "green", weight: 5, fullness: 5, score: 12, size: 62 },
+  { id: "sushi", name: "寿司", icon: "🍣", color: "#f7f2dc", group: "white", weight: 7, fullness: 7, score: 15, size: 58 },
+  { id: "roast", name: "ロースト肉", icon: "🥩", color: "#b94d35", group: "red", weight: 17, fullness: 16, score: 23, size: 72 },
+  { id: "pudding", name: "プリン", icon: "🍮", color: "#f4d46a", group: "yellow", weight: 6, fullness: 8, score: 20, size: 58 },
+  { id: "soup", name: "スープ", icon: "🥣", color: "#d66339", group: "red", weight: 12, fullness: 10, score: 14, size: 68 },
+  { id: "bread", name: "パン", icon: "🥐", color: "#d6a15e", group: "brown", weight: 6, fullness: 8, score: 10, size: 58 },
+  { id: "fruit", name: "フルーツ", icon: "🍓", color: "#e96d86", group: "pink", weight: 4, fullness: 4, score: 14, size: 54 },
+  { id: "pasta", name: "パスタ", icon: "🍝", color: "#e9b84d", group: "yellow", weight: 11, fullness: 12, score: 16, size: 72 },
+  { id: "fish", name: "焼き魚", icon: "🐟", color: "#9fb0b1", group: "white", weight: 10, fullness: 9, score: 16, size: 68 }
 ];
 
 const messages = [
-  "その皿、まだいけます。",
-  "茶色が強くなってきました。",
-  "プリンの居場所を守ってください。",
-  "野菜で急に帳尻が合います。",
-  "皿のふちが仕事をしています。",
-  "二周目の気持ちが出ています。"
+  "中央から外へ、いい感じに埋まってきました。",
+  "茶色が増えたら、野菜かフルーツで逃げましょう。",
+  "プリンは最後まで守るとちょっと偉いです。",
+  "端に重いものを置くと皿が傾きます。",
+  "彩りが増えるとスコアが伸びます。",
+  "欲張るほど、皿のふちが忙しくなります。"
+];
+
+const plateSpots = [
+  { x: 0, y: 16 },
+  { x: -58, y: -28 },
+  { x: 58, y: -30 },
+  { x: -72, y: 38 },
+  { x: 72, y: 36 },
+  { x: 0, y: -70 },
+  { x: -18, y: 82 },
+  { x: 34, y: 70 },
+  { x: -96, y: -2 },
+  { x: 96, y: 0 },
+  { x: -34, y: -92 },
+  { x: 42, y: -92 }
 ];
 
 let items = [];
@@ -137,14 +152,13 @@ function addFood(foodId) {
   }
 
   const food = foods.find((entry) => entry.id === foodId);
-  const angle = rand(-Math.PI, Math.PI);
-  const distance = rand(8, 92) + items.length * 1.8;
+  const spot = getPlateSpot(items.length, food);
   const item = {
     ...food,
     uid: `${food.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    x: Math.cos(angle) * distance,
-    y: Math.sin(angle) * distance * 0.72 + rand(-8, 8),
-    rot: rand(-22, 22),
+    x: spot.x,
+    y: spot.y,
+    rot: spot.rot,
     stack: items.length
   };
 
@@ -165,11 +179,22 @@ function addFood(foodId) {
   }
 }
 
+function getPlateSpot(index, food) {
+  const spot = plateSpots[index % plateSpots.length];
+  const lap = Math.floor(index / plateSpots.length);
+  const liquidBias = food.id === "curry" || food.id === "soup" || food.id === "pasta" ? 0.55 : 1;
+  return {
+    x: spot.x * liquidBias + rand(-9, 9) + lap * rand(-8, 8),
+    y: spot.y * liquidBias + rand(-7, 7) - lap * 8,
+    rot: rand(-13, 13)
+  };
+}
+
 function renderFood(item) {
   const node = document.createElement("div");
-  node.className = "food";
+  node.className = `food food-${item.id}`;
   node.dataset.uid = item.uid;
-  node.textContent = item.icon;
+  node.innerHTML = `<span>${item.icon}</span>`;
   node.style.setProperty("--x", item.x.toFixed(1));
   node.style.setProperty("--y", item.y.toFixed(1));
   node.style.setProperty("--rot", `${item.rot.toFixed(1)}deg`);
@@ -182,8 +207,8 @@ function renderFood(item) {
 }
 
 function radiusFor(foodId) {
-  if (foodId === "sushi" || foodId === "fish") {
-    return "24px";
+  if (foodId === "sushi" || foodId === "fish" || foodId === "bread" || foodId === "roast") {
+    return "28px";
   }
   if (foodId === "curry" || foodId === "soup" || foodId === "pasta") {
     return "38%";
@@ -193,8 +218,8 @@ function radiusFor(foodId) {
 
 function maybeDropFood() {
   const stability = getStability();
-  const risk = Math.max(0, 72 - stability) + Math.max(0, getFullness() - 88) * 0.8;
-  if (items.length < 5 || Math.random() * 100 > risk) {
+  const risk = Math.max(0, 64 - stability) + Math.max(0, getFullness() - 92) * 0.7;
+  if (items.length < 8 || Math.random() * 100 > risk) {
     return null;
   }
 
@@ -220,7 +245,7 @@ function renderSpill(item) {
   const node = document.createElement("div");
   const table = document.querySelector(".table").getBoundingClientRect();
   node.className = "spill";
-  node.textContent = item.icon;
+  node.innerHTML = `<span>${item.icon}</span>`;
   node.style.left = `${clamp(table.width / 2 + item.x + rand(-100, 100), 32, table.width - 32)}px`;
   node.style.top = `${clamp(table.height / 2 + item.y + rand(120, 210), 40, table.height - 28)}px`;
   node.style.setProperty("--rot", `${rand(-34, 34).toFixed(1)}deg`);
