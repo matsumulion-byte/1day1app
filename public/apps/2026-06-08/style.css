@@ -206,7 +206,7 @@ h1 {
 .spill span {
   position: relative;
   z-index: 2;
-  filter: drop-shadow(0 2px 0 rgba(255, 255, 255, 0.32));
+  display: block;
 }
 
 .food::after {
@@ -297,6 +297,239 @@ h1 {
   background:
     radial-gradient(circle at 75% 44%, #27383b 0 4%, transparent 5%),
     linear-gradient(135deg, #c8d1cf, #7f999a);
+}
+
+.karaage-pile,
+.fries,
+.salad-bowl,
+.fruit,
+.pasta {
+  position: absolute;
+  inset: 0;
+}
+
+.nugget,
+.berry,
+.leaf,
+.fry,
+.noodle {
+  position: absolute;
+  display: block;
+}
+
+.nugget {
+  width: 42%;
+  height: 36%;
+  border-radius: 42% 58% 46% 54%;
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 226, 143, 0.52), transparent 24%),
+    linear-gradient(135deg, #f1ad49, #a85822);
+  box-shadow: inset 0 -5px 8px rgba(91, 39, 15, 0.2);
+}
+
+.nugget:nth-child(1) { left: 8%; top: 25%; transform: rotate(-18deg); }
+.nugget:nth-child(2) { left: 32%; top: 8%; transform: rotate(12deg); }
+.nugget:nth-child(3) { left: 47%; top: 34%; transform: rotate(-4deg); }
+.nugget:nth-child(4) { left: 20%; top: 52%; transform: rotate(20deg); }
+.nugget:nth-child(5) { left: 58%; top: 57%; transform: rotate(-20deg); }
+
+.fry {
+  width: 13%;
+  height: 76%;
+  top: 10%;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffe486, #d99b32);
+  box-shadow: inset 0 -5px 7px rgba(120, 67, 14, 0.16);
+  transform-origin: 50% 82%;
+}
+
+.fry:nth-child(1) { left: 11%; transform: rotate(-23deg); }
+.fry:nth-child(2) { left: 23%; transform: rotate(-11deg); }
+.fry:nth-child(3) { left: 35%; transform: rotate(2deg); }
+.fry:nth-child(4) { left: 47%; transform: rotate(11deg); }
+.fry:nth-child(5) { left: 58%; transform: rotate(20deg); }
+.fry:nth-child(6) { left: 68%; transform: rotate(31deg); }
+.fry:nth-child(7) { left: 76%; transform: rotate(42deg); }
+
+.curry-plate,
+.soup,
+.pudding {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.curry-plate .rice {
+  position: absolute;
+  left: 9%;
+  top: 16%;
+  width: 48%;
+  height: 68%;
+  border-radius: 48% 42% 46% 52%;
+  background:
+    radial-gradient(circle at 28% 34%, #ffffff 0 10%, transparent 11%),
+    radial-gradient(circle at 62% 66%, #ffffff 0 8%, transparent 9%),
+    #fff6df;
+}
+
+.curry-plate .roux {
+  position: absolute;
+  right: 4%;
+  top: 12%;
+  width: 62%;
+  height: 74%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 38%, rgba(255, 199, 85, 0.46), transparent 16%),
+    radial-gradient(circle at 65% 62%, rgba(92, 43, 15, 0.34), transparent 18%),
+    linear-gradient(135deg, #b56a28, #6d3416);
+}
+
+.curry-plate .carrot {
+  position: absolute;
+  right: 20%;
+  top: 30%;
+  width: 11%;
+  height: 11%;
+  border-radius: 50%;
+  background: #f58a32;
+  box-shadow: -18px 18px 0 #e2b24c, 14px 26px 0 #f58a32;
+}
+
+.leaf {
+  width: 30%;
+  height: 22%;
+  border-radius: 70% 20% 70% 20%;
+  background: linear-gradient(135deg, #bdf06d, #258f49);
+}
+
+.leaf:nth-child(1) { left: 8%; top: 30%; transform: rotate(-24deg); }
+.leaf:nth-child(2) { left: 26%; top: 14%; transform: rotate(18deg); }
+.leaf:nth-child(3) { left: 50%; top: 16%; transform: rotate(-8deg); }
+.leaf:nth-child(4) { left: 62%; top: 36%; transform: rotate(30deg); }
+.leaf:nth-child(5) { left: 36%; top: 40%; transform: rotate(-32deg); }
+.leaf:nth-child(6) { left: 16%; top: 56%; transform: rotate(16deg); }
+.leaf:nth-child(7) { left: 48%; top: 61%; transform: rotate(-18deg); }
+.leaf:nth-child(8) { left: 70%; top: 61%; transform: rotate(14deg); }
+.leaf:nth-child(9) { left: 5%; top: 10%; transform: rotate(32deg); }
+
+.sushi-set {
+  position: absolute;
+  inset: 7% 5%;
+  display: flex;
+  gap: 7%;
+}
+
+.sushi-set i {
+  flex: 1;
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, #ef6d5d 0 44%, #fff8df 44% 100%);
+  box-shadow: inset 0 -5px 0 rgba(40, 20, 13, 0.08);
+}
+
+.steak {
+  position: absolute;
+  inset: 5%;
+  border-radius: 48% 38% 44% 52%;
+  background:
+    radial-gradient(ellipse at 46% 45%, #f1b58f 0 18%, transparent 19%),
+    linear-gradient(135deg, #7c2522, #c95f3f 62%, #7c2522);
+}
+
+.pudding {
+  background:
+    linear-gradient(180deg, #8a4c20 0 22%, #f5d965 22% 100%);
+}
+
+.pudding i {
+  position: absolute;
+  left: 20%;
+  top: 12%;
+  width: 60%;
+  height: 18%;
+  border-radius: 50%;
+  background: rgba(80, 32, 10, 0.36);
+}
+
+.soup {
+  background:
+    radial-gradient(circle at 38% 35%, #ffce6d 0 7%, transparent 8%),
+    radial-gradient(circle at 62% 56%, #ffe09b 0 6%, transparent 7%),
+    linear-gradient(135deg, #ee743d, #8f321e);
+}
+
+.soup i {
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  top: 18%;
+  height: 14%;
+  border-radius: 50%;
+  background: rgba(255, 244, 198, 0.35);
+}
+
+.bread {
+  position: absolute;
+  inset: 7%;
+  border-radius: 50% 46% 42% 48%;
+  background:
+    radial-gradient(ellipse at 34% 30%, #ffe2a7 0 18%, transparent 19%),
+    linear-gradient(135deg, #bd7838, #f3bd74);
+}
+
+.fruit .berry {
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 28%, #ffd3d3 0 15%, transparent 16%),
+    linear-gradient(135deg, #ff6b86, #b82245);
+}
+
+.berry:nth-child(1) { left: 12%; top: 18%; }
+.berry:nth-child(2) { left: 40%; top: 10%; }
+.berry:nth-child(3) { left: 60%; top: 34%; }
+.berry:nth-child(4) { left: 22%; top: 44%; }
+.berry:nth-child(5) { left: 48%; top: 62%; }
+.berry:nth-child(6) { left: 70%; top: 66%; }
+
+.noodle {
+  left: 12%;
+  width: 76%;
+  height: 9%;
+  border-radius: 999px;
+  background: #f6d46b;
+  box-shadow: 0 2px 0 rgba(105, 63, 13, 0.14);
+}
+
+.noodle:nth-child(1) { top: 20%; transform: rotate(10deg); }
+.noodle:nth-child(2) { top: 28%; transform: rotate(-7deg); }
+.noodle:nth-child(3) { top: 36%; transform: rotate(14deg); }
+.noodle:nth-child(4) { top: 44%; transform: rotate(-11deg); }
+.noodle:nth-child(5) { top: 52%; transform: rotate(8deg); }
+.noodle:nth-child(6) { top: 60%; transform: rotate(-5deg); }
+.noodle:nth-child(7) { top: 68%; transform: rotate(13deg); }
+.noodle:nth-child(8) { top: 76%; transform: rotate(-8deg); }
+
+.fish {
+  position: absolute;
+  inset: 5%;
+  border-radius: 50% 44% 44% 50%;
+  background:
+    radial-gradient(circle at 76% 38%, #1f3033 0 4%, transparent 5%),
+    linear-gradient(135deg, #d3dedb, #789493);
+}
+
+.fish i {
+  position: absolute;
+  left: -8%;
+  top: 30%;
+  width: 24%;
+  height: 40%;
+  clip-path: polygon(0 50%, 100% 0, 100% 100%);
+  background: #789493;
 }
 
 .food.is-falling {

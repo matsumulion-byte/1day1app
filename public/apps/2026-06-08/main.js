@@ -12,22 +12,22 @@ const resultTextEl = document.getElementById("resultText");
 const retryBtn = document.getElementById("retryBtn");
 const bgm = document.getElementById("bgm");
 
-const LIMIT = 12;
-const ROUND_SECONDS = 30;
+const LIMIT = 24;
+const ROUND_SECONDS = 45;
 
 const foods = [
-  { id: "karaage", name: "唐揚げ", icon: "🍗", color: "#d88a32", group: "brown", weight: 13, fullness: 14, score: 18, size: 58 },
-  { id: "potato", name: "ポテト", icon: "🍟", color: "#f0c94d", group: "yellow", weight: 8, fullness: 9, score: 11, size: 54 },
-  { id: "curry", name: "カレー", icon: "🍛", color: "#a86224", group: "brown", weight: 16, fullness: 18, score: 20, size: 82 },
-  { id: "salad", name: "サラダ", icon: "🥗", color: "#62b85f", group: "green", weight: 5, fullness: 5, score: 12, size: 62 },
-  { id: "sushi", name: "寿司", icon: "🍣", color: "#f7f2dc", group: "white", weight: 7, fullness: 7, score: 15, size: 58 },
-  { id: "roast", name: "ロースト肉", icon: "🥩", color: "#b94d35", group: "red", weight: 17, fullness: 16, score: 23, size: 72 },
-  { id: "pudding", name: "プリン", icon: "🍮", color: "#f4d46a", group: "yellow", weight: 6, fullness: 8, score: 20, size: 58 },
-  { id: "soup", name: "スープ", icon: "🥣", color: "#d66339", group: "red", weight: 12, fullness: 10, score: 14, size: 68 },
-  { id: "bread", name: "パン", icon: "🥐", color: "#d6a15e", group: "brown", weight: 6, fullness: 8, score: 10, size: 58 },
-  { id: "fruit", name: "フルーツ", icon: "🍓", color: "#e96d86", group: "pink", weight: 4, fullness: 4, score: 14, size: 54 },
-  { id: "pasta", name: "パスタ", icon: "🍝", color: "#e9b84d", group: "yellow", weight: 11, fullness: 12, score: 16, size: 72 },
-  { id: "fish", name: "焼き魚", icon: "🐟", color: "#9fb0b1", group: "white", weight: 10, fullness: 9, score: 16, size: 68 }
+  { id: "karaage", name: "唐揚げ", icon: "🍗", color: "#d88a32", group: "brown", weight: 13, fullness: 12, score: 18, size: 62 },
+  { id: "potato", name: "ポテト", icon: "🍟", color: "#f0c94d", group: "yellow", weight: 8, fullness: 8, score: 11, size: 58 },
+  { id: "curry", name: "カレー", icon: "🍛", color: "#a86224", group: "brown", weight: 16, fullness: 15, score: 20, size: 88 },
+  { id: "salad", name: "サラダ", icon: "🥗", color: "#62b85f", group: "green", weight: 5, fullness: 5, score: 12, size: 66 },
+  { id: "sushi", name: "寿司", icon: "🍣", color: "#f7f2dc", group: "white", weight: 7, fullness: 7, score: 15, size: 62 },
+  { id: "roast", name: "ロースト肉", icon: "🥩", color: "#b94d35", group: "red", weight: 17, fullness: 14, score: 23, size: 76 },
+  { id: "pudding", name: "プリン", icon: "🍮", color: "#f4d46a", group: "yellow", weight: 6, fullness: 7, score: 20, size: 62 },
+  { id: "soup", name: "スープ", icon: "🥣", color: "#d66339", group: "red", weight: 12, fullness: 9, score: 14, size: 72 },
+  { id: "bread", name: "パン", icon: "🥐", color: "#d6a15e", group: "brown", weight: 6, fullness: 7, score: 10, size: 62 },
+  { id: "fruit", name: "フルーツ", icon: "🍓", color: "#e96d86", group: "pink", weight: 4, fullness: 4, score: 14, size: 58 },
+  { id: "pasta", name: "パスタ", icon: "🍝", color: "#e9b84d", group: "yellow", weight: 11, fullness: 11, score: 16, size: 78 },
+  { id: "fish", name: "焼き魚", icon: "🐟", color: "#9fb0b1", group: "white", weight: 10, fullness: 8, score: 16, size: 72 }
 ];
 
 const messages = [
@@ -53,6 +53,21 @@ const plateSpots = [
   { x: -34, y: -92 },
   { x: 42, y: -92 }
 ];
+
+const foodZones = {
+  curry: { x: 4, y: 18, spread: 30 },
+  karaage: { x: -48, y: 12, spread: 42 },
+  potato: { x: 50, y: 16, spread: 40 },
+  salad: { x: -58, y: -44, spread: 42 },
+  sushi: { x: 48, y: -52, spread: 40 },
+  roast: { x: 0, y: -54, spread: 36 },
+  pudding: { x: 58, y: 60, spread: 30 },
+  soup: { x: -8, y: 48, spread: 30 },
+  bread: { x: -78, y: 54, spread: 36 },
+  fruit: { x: 78, y: -4, spread: 38 },
+  pasta: { x: 8, y: 2, spread: 34 },
+  fish: { x: -2, y: -82, spread: 34 }
+};
 
 let items = [];
 let spills = [];
@@ -152,7 +167,8 @@ function addFood(foodId) {
   }
 
   const food = foods.find((entry) => entry.id === foodId);
-  const spot = getPlateSpot(items.length, food);
+  const sameFoodCount = items.filter((item) => item.id === food.id).length;
+  const spot = getPlateSpot(items.length, food, sameFoodCount);
   const item = {
     ...food,
     uid: `${food.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -170,6 +186,10 @@ function addFood(foodId) {
   const fallen = maybeDropFood();
   if (fallen) {
     messageEl.textContent = `${fallen.name} が皿から逃げました。`;
+  } else if (sameFoodCount >= 7) {
+    messageEl.textContent = `${food.name}だけで皿が埋まりはじめました。`;
+  } else if (sameFoodCount >= 4) {
+    messageEl.textContent = `${food.name}山ができてきました。`;
   } else {
     messageEl.textContent = messages[Math.floor(rand(0, messages.length))];
   }
@@ -179,7 +199,19 @@ function addFood(foodId) {
   }
 }
 
-function getPlateSpot(index, food) {
+function getPlateSpot(index, food, sameFoodCount) {
+  if (sameFoodCount > 0) {
+    const zone = foodZones[food.id];
+    const angle = sameFoodCount * 2.38 + rand(-0.18, 0.18);
+    const distance = Math.min(zone.spread, 9 + sameFoodCount * 5.2);
+    const pileLift = Math.floor(sameFoodCount / 4) * -7;
+    return {
+      x: zone.x + Math.cos(angle) * distance + rand(-5, 5),
+      y: zone.y + Math.sin(angle) * distance * 0.7 + pileLift + rand(-4, 4),
+      rot: rand(-15, 15)
+    };
+  }
+
   const spot = plateSpots[index % plateSpots.length];
   const lap = Math.floor(index / plateSpots.length);
   const liquidBias = food.id === "curry" || food.id === "soup" || food.id === "pasta" ? 0.55 : 1;
@@ -194,7 +226,8 @@ function renderFood(item) {
   const node = document.createElement("div");
   node.className = `food food-${item.id}`;
   node.dataset.uid = item.uid;
-  node.innerHTML = `<span>${item.icon}</span>`;
+  node.innerHTML = getFoodMarkup(item.id);
+  node.setAttribute("aria-label", item.name);
   node.style.setProperty("--x", item.x.toFixed(1));
   node.style.setProperty("--y", item.y.toFixed(1));
   node.style.setProperty("--rot", `${item.rot.toFixed(1)}deg`);
@@ -204,6 +237,29 @@ function renderFood(item) {
   node.style.setProperty("--radius", radiusFor(item.id));
   node.style.zIndex = String(20 + item.stack);
   foodLayer.append(node);
+}
+
+function getFoodMarkup(foodId) {
+  const dots = (count, className = "dot") => Array.from({ length: count }, (_, index) => (
+    `<i class="${className}" style="--i:${index}"></i>`
+  )).join("");
+
+  const markups = {
+    karaage: `<span class="karaage-pile">${dots(5, "nugget")}</span>`,
+    potato: `<span class="fries">${dots(7, "fry")}</span>`,
+    curry: `<span class="curry-plate"><i class="rice"></i><i class="roux"></i><i class="carrot"></i></span>`,
+    salad: `<span class="salad-bowl">${dots(9, "leaf")}</span>`,
+    sushi: `<span class="sushi-set"><i></i><i></i></span>`,
+    roast: `<span class="steak"><i></i></span>`,
+    pudding: `<span class="pudding"><i></i></span>`,
+    soup: `<span class="soup"><i></i><i></i></span>`,
+    bread: `<span class="bread"><i></i></span>`,
+    fruit: `<span class="fruit">${dots(6, "berry")}</span>`,
+    pasta: `<span class="pasta">${dots(8, "noodle")}</span>`,
+    fish: `<span class="fish"><i></i></span>`
+  };
+
+  return markups[foodId] || "";
 }
 
 function radiusFor(foodId) {
@@ -218,8 +274,8 @@ function radiusFor(foodId) {
 
 function maybeDropFood() {
   const stability = getStability();
-  const risk = Math.max(0, 64 - stability) + Math.max(0, getFullness() - 92) * 0.7;
-  if (items.length < 8 || Math.random() * 100 > risk) {
+  const risk = Math.max(0, 58 - stability) + Math.max(0, getFullness() - 138) * 0.45;
+  if (items.length < 15 || Math.random() * 100 > risk) {
     return null;
   }
 
@@ -245,7 +301,7 @@ function renderSpill(item) {
   const node = document.createElement("div");
   const table = document.querySelector(".table").getBoundingClientRect();
   node.className = "spill";
-  node.innerHTML = `<span>${item.icon}</span>`;
+  node.innerHTML = getFoodMarkup(item.id);
   node.style.left = `${clamp(table.width / 2 + item.x + rand(-100, 100), 32, table.width - 32)}px`;
   node.style.top = `${clamp(table.height / 2 + item.y + rand(120, 210), 40, table.height - 28)}px`;
   node.style.setProperty("--rot", `${rand(-34, 34).toFixed(1)}deg`);
@@ -319,8 +375,12 @@ function getResultTitle() {
   const brownCount = items.filter((item) => item.group === "brown").length;
   const hasPudding = items.some((item) => item.id === "pudding");
   const hasSalad = items.some((item) => item.id === "salad");
+  const curryCount = items.filter((item) => item.id === "curry").length;
+  const karaageCount = items.filter((item) => item.id === "karaage").length;
 
   if (spills.length >= 3) return "皿の限界を知る者";
+  if (curryCount >= 10) return "カレーだけ本気";
+  if (karaageCount >= 10) return "唐揚げ山脈";
   if (brownCount >= 5) return "茶色の王";
   if (hasPudding && stability >= 72) return "プリン死守型";
   if (hasSalad && brownCount >= 3) return "野菜で帳尻";
