@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>バイキング盛りつけバトル</title>
+  <meta name="description" content="6/8 バイキングの日。料理を皿に盛って、欲張りすぎない一皿を作るミニゲーム。" />
+  <link rel="stylesheet" href="/apps/2026-06-08/style.css?v=20260608-1" />
+</head>
+<body>
+  <main class="app">
+    <audio id="bgm" src="/apps/2026-06-08/assets/bgm.mp3" preload="auto" loop playsinline></audio>
+
+    <section class="game">
+      <header class="top">
+        <p class="date">6/8 バイキングの日</p>
+        <h1>バイキング<br>盛りつけバトル</h1>
+      </header>
+
+      <div class="hud" aria-label="ゲーム状況">
+        <div>
+          <span>TIME</span>
+          <strong id="timeLeft">30</strong>
+        </div>
+        <div>
+          <span>DISH</span>
+          <strong id="dishCount">0/12</strong>
+        </div>
+        <div>
+          <span>BALANCE</span>
+          <strong id="balanceScore">100</strong>
+        </div>
+      </div>
+
+      <section class="table" aria-label="盛りつけ台">
+        <div class="steam" aria-hidden="true"></div>
+        <div id="spillLayer" class="spill-layer" aria-hidden="true"></div>
+        <div id="plate" class="plate" aria-label="皿">
+          <div class="plate-rim"></div>
+          <div class="plate-core"></div>
+          <div id="foodLayer" class="food-layer"></div>
+        </div>
+      </section>
+
+      <p id="message" class="message" aria-live="polite">一周目から本気でいきます。</p>
+
+      <section id="foodBar" class="food-bar" aria-label="料理">
+      </section>
+
+      <section id="result" class="result hidden" aria-live="polite">
+        <p>盛りつけ判定</p>
+        <h2 id="resultTitle">---</h2>
+        <span id="resultText">---</span>
+        <button id="retryBtn" type="button">もう一皿</button>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-06-08/main.js?v=20260608-3"></script>
+</body>
+</html>
