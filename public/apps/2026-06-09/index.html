@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>あやしい通知 間違い探し</title>
+  <meta name="description" content="6/9 サイバー防災の日。通知カードの怪しい場所をタップして見抜くミニ訓練。" />
+  <link rel="stylesheet" href="/apps/2026-06-09/style.css?v=20260609-3" />
+</head>
+<body>
+  <main class="app">
+    <section class="trainer">
+      <header class="top">
+        <p class="date">6/9 サイバー防災の日</p>
+        <h1>あやしい通知<br>間違い探し</h1>
+      </header>
+
+      <div class="hud" aria-label="訓練状況">
+        <div>
+          <span>CASE</span>
+          <strong id="caseCount">1/5</strong>
+        </div>
+        <div>
+          <span>FOUND</span>
+          <strong id="foundCount">0/4</strong>
+        </div>
+        <div>
+          <span>SCORE</span>
+          <strong id="score">0</strong>
+        </div>
+      </div>
+
+      <section class="stage">
+        <article id="card" class="notice-card" aria-label="通知カード"></article>
+      </section>
+
+      <p id="message" class="message" aria-live="polite">怪しいところを直接タップしてください。</p>
+
+      <div class="controls">
+        <button id="hintBtn" type="button">ヒント</button>
+        <button id="nextBtn" type="button">次へ</button>
+      </div>
+
+      <section id="result" class="result hidden" aria-live="polite">
+        <p>鑑識結果</p>
+        <h2 id="resultTitle">---</h2>
+        <span id="resultText">---</span>
+        <button id="retryBtn" type="button">もう一回</button>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/2026-06-09/main.js?v=20260609-6"></script>
+</body>
+</html>
