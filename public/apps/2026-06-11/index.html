@@ -1,0 +1,835 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>雨漏りパニック</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: ui-rounded, "Hiragino Maru Gothic ProN", "Hiragino Sans", system-ui, sans-serif;
+      --ink: #f8fbff;
+      --muted: #aeb8c8;
+      --panel: rgba(10, 18, 32, 0.74);
+      --line: rgba(255, 255, 255, 0.15);
+      --accent: #68e0d2;
+      --warm: #ffd166;
+      --danger: #ff6b6b;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #0b1018;
+      color: var(--ink);
+      touch-action: none;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      min-height: 100dvh;
+    }
+
+    .app {
+      position: relative;
+      width: min(100vw, 480px);
+      height: 100dvh;
+      max-height: 920px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(28, 45, 69, 0.95), rgba(14, 20, 32, 0.98) 46%, #12121a 100%),
+        radial-gradient(circle at 20% 8%, rgba(104, 224, 210, 0.22), transparent 34%);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 32px 90px rgba(0,0,0,0.5);
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .hud {
+      position: absolute;
+      top: max(12px, env(safe-area-inset-top));
+      left: 12px;
+      right: 12px;
+      z-index: 3;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: start;
+      pointer-events: none;
+    }
+
+    .score {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+      min-width: 0;
+    }
+
+    .meter,
+    .chip {
+      min-height: 44px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.24);
+    }
+
+    .meter {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 8px;
+    }
+
+    .meter-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .bar {
+      height: 9px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+    }
+
+    .bar span {
+      display: block;
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #68e0d2, #ffd166, #ff6b6b);
+      transition: width 120ms linear;
+    }
+
+    .chip {
+      min-width: 74px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .chip small {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .chip strong {
+      display: block;
+      margin-top: 1px;
+      font-size: 21px;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .pause {
+      width: 44px;
+      height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      font-size: 18px;
+      font-weight: 900;
+      pointer-events: auto;
+    }
+
+    .thumb-zone {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2;
+      height: 38%;
+      cursor: grab;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: linear-gradient(180deg, rgba(7, 12, 22, 0.2), rgba(7, 12, 22, 0.74));
+      backdrop-filter: blur(8px);
+    }
+
+    .modal {
+      width: min(100%, 372px);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 8px;
+      padding: 22px;
+      background: rgba(11, 18, 30, 0.9);
+      box-shadow: 0 22px 80px rgba(0,0,0,0.48);
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(32px, 11vw, 48px);
+      line-height: 0.96;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 30px;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      margin-top: 12px;
+      color: #d9e2f2;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 18px 0;
+    }
+
+    .stat {
+      padding: 11px 8px;
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.06);
+      text-align: center;
+    }
+
+    .stat small {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 21px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    button {
+      min-height: 48px;
+      border: 0;
+      border-radius: 8px;
+      font: inherit;
+      font-weight: 900;
+    }
+
+    .primary {
+      color: #081018;
+      background: linear-gradient(135deg, #68e0d2, #ffd166);
+      box-shadow: 0 12px 26px rgba(104,224,210,0.18);
+    }
+
+    .secondary {
+      color: var(--ink);
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.16);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .hint {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      z-index: 3;
+      color: rgba(248, 251, 255, 0.78);
+      text-align: center;
+      font-size: 12px;
+      font-weight: 800;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+      pointer-events: none;
+    }
+
+    @media (min-width: 720px) {
+      .app {
+        height: min(100dvh, 860px);
+        border-radius: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="雨漏りパニック">
+    <canvas id="game" aria-hidden="true"></canvas>
+
+    <section class="hud" aria-live="polite">
+      <div class="score">
+        <div class="chip">
+          <small>SCORE</small>
+          <strong id="score">0</strong>
+        </div>
+        <div class="meter">
+          <div class="meter-label">
+            <span>FLOOD</span>
+            <span id="floodText">0%</span>
+          </div>
+          <div class="bar"><span id="floodBar"></span></div>
+        </div>
+      </div>
+      <button class="pause" id="pause" type="button" aria-label="一時停止">Ⅱ</button>
+    </section>
+
+    <div class="thumb-zone" id="thumbZone" aria-label="バケツ操作エリア"></div>
+    <div class="hint" id="hint">下半分をドラッグしてバケツを動かす</div>
+
+    <section class="overlay" id="startOverlay">
+      <div class="modal">
+        <h1>雨漏り<br>パニック</h1>
+        <p class="lead">落ちてくる雨をバケツで受け止める。床が水でいっぱいになる前に、雑巾でしのぐ。</p>
+        <div class="stats">
+          <div class="stat"><small>操作</small><strong>DRAG</strong></div>
+          <div class="stat"><small>回復</small><strong>雑巾</strong></div>
+          <div class="stat"><small>記録</small><strong id="bestStart">0</strong></div>
+        </div>
+        <div class="actions">
+          <button class="primary" id="start" type="button">はじめる</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="endOverlay">
+      <div class="modal">
+        <h2>床、終了。</h2>
+        <p class="lead" id="endCopy">バケツ係、おつかれさまでした。</p>
+        <div class="stats">
+          <div class="stat"><small>SCORE</small><strong id="finalScore">0</strong></div>
+          <div class="stat"><small>BEST</small><strong id="bestScore">0</strong></div>
+          <div class="stat"><small>TIME</small><strong id="finalTime">0s</strong></div>
+        </div>
+        <div class="actions">
+          <button class="primary" id="retry" type="button">もう一回</button>
+          <button class="secondary" id="menu" type="button">タイトルへ</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const scoreEl = document.getElementById("score");
+    const floodEl = document.getElementById("floodBar");
+    const floodTextEl = document.getElementById("floodText");
+    const startOverlay = document.getElementById("startOverlay");
+    const endOverlay = document.getElementById("endOverlay");
+    const startBtn = document.getElementById("start");
+    const retryBtn = document.getElementById("retry");
+    const menuBtn = document.getElementById("menu");
+    const pauseBtn = document.getElementById("pause");
+    const thumbZone = document.getElementById("thumbZone");
+    const hint = document.getElementById("hint");
+    const finalScore = document.getElementById("finalScore");
+    const bestScore = document.getElementById("bestScore");
+    const bestStart = document.getElementById("bestStart");
+    const finalTime = document.getElementById("finalTime");
+    const endCopy = document.getElementById("endCopy");
+
+    const storeKey = "rain-bucket-panic-best";
+    let best = Number(localStorage.getItem(storeKey) || 0);
+    bestStart.textContent = best;
+
+    const state = {
+      mode: "menu",
+      width: 0,
+      height: 0,
+      dpr: 1,
+      time: 0,
+      last: 0,
+      score: 0,
+      flood: 0,
+      spawn: 0,
+      mopSpawn: 5.2,
+      combo: 0,
+      shakes: 0,
+      bucket: { x: 0, y: 0, w: 82, h: 48, targetX: 0 },
+      drops: [],
+      splashes: [],
+      mops: [],
+      ripples: [],
+      audio: null
+    };
+
+    function resize() {
+      state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      state.width = canvas.clientWidth;
+      state.height = canvas.clientHeight;
+      canvas.width = Math.floor(state.width * state.dpr);
+      canvas.height = Math.floor(state.height * state.dpr);
+      ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+      state.bucket.y = state.height - Math.max(106, state.height * 0.14);
+      state.bucket.w = Math.max(70, Math.min(92, state.width * 0.22));
+      state.bucket.h = Math.max(42, Math.min(54, state.width * 0.13));
+      if (!state.bucket.x) {
+        state.bucket.x = state.width * 0.5;
+        state.bucket.targetX = state.bucket.x;
+      }
+    }
+
+    function resetGame() {
+      state.mode = "playing";
+      state.time = 0;
+      state.last = performance.now();
+      state.score = 0;
+      state.flood = 0;
+      state.spawn = 0.25;
+      state.mopSpawn = 5.4;
+      state.combo = 0;
+      state.drops = [];
+      state.splashes = [];
+      state.mops = [];
+      state.ripples = [];
+      state.shakes = 0;
+      state.bucket.x = state.width * 0.5;
+      state.bucket.targetX = state.bucket.x;
+      scoreEl.textContent = "0";
+      floodEl.style.width = "0%";
+      floodTextEl.textContent = "0%";
+      startOverlay.classList.add("hidden");
+      endOverlay.classList.add("hidden");
+      hint.style.opacity = "1";
+      pauseBtn.textContent = "Ⅱ";
+      ensureAudio();
+    }
+
+    function ensureAudio() {
+      if (state.audio) return;
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const audio = new AudioContext();
+      state.audio = audio;
+    }
+
+    function beep(freq, duration, type = "sine", gain = 0.035) {
+      if (!state.audio) return;
+      const now = state.audio.currentTime;
+      const osc = state.audio.createOscillator();
+      const amp = state.audio.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+      amp.gain.setValueAtTime(gain, now);
+      amp.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      osc.connect(amp).connect(state.audio.destination);
+      osc.start(now);
+      osc.stop(now + duration);
+    }
+
+    function spawnDrop() {
+      const difficulty = Math.min(1, state.time / 55);
+      const big = Math.random() < 0.1 + difficulty * 0.09;
+      const x = 28 + Math.random() * (state.width - 56);
+      state.drops.push({
+        x,
+        y: -20,
+        r: big ? 13 : 8,
+        speed: (170 + Math.random() * 80 + difficulty * 155) * (big ? 0.86 : 1),
+        value: big ? 3 : 1,
+        big,
+        wobble: Math.random() * Math.PI * 2
+      });
+    }
+
+    function spawnMop() {
+      state.mops.push({
+        x: 36 + Math.random() * (state.width - 72),
+        y: -28,
+        w: 52,
+        h: 24,
+        speed: 142 + Math.random() * 40,
+        spin: Math.random() * Math.PI
+      });
+    }
+
+    function update(dt) {
+      if (state.mode !== "playing") return;
+      state.time += dt;
+      state.shakes = Math.max(0, state.shakes - dt * 13);
+      hint.style.opacity = state.time > 3.2 ? "0" : "1";
+
+      const difficulty = Math.min(1, state.time / 60);
+      state.spawn -= dt;
+      if (state.spawn <= 0) {
+        spawnDrop();
+        if (state.time > 22 && Math.random() < 0.34) spawnDrop();
+        state.spawn = Math.max(0.23, 0.82 - difficulty * 0.45 - Math.random() * 0.22);
+      }
+
+      state.mopSpawn -= dt;
+      if (state.mopSpawn <= 0) {
+        spawnMop();
+        state.mopSpawn = 7.5 + Math.random() * 4.5;
+      }
+
+      state.bucket.x += (state.bucket.targetX - state.bucket.x) * Math.min(1, dt * 15);
+      const bucketLeft = state.bucket.x - state.bucket.w / 2;
+      const bucketRight = state.bucket.x + state.bucket.w / 2;
+      const catchY = state.bucket.y - 6;
+
+      for (let i = state.drops.length - 1; i >= 0; i -= 1) {
+        const drop = state.drops[i];
+        drop.wobble += dt * 5;
+        drop.y += drop.speed * dt;
+        drop.x += Math.sin(drop.wobble) * dt * 10;
+
+        const inBucket = drop.y + drop.r > catchY && drop.y < state.bucket.y + state.bucket.h * 0.35 && drop.x > bucketLeft - 4 && drop.x < bucketRight + 4;
+        if (inBucket) {
+          state.drops.splice(i, 1);
+          state.combo += 1;
+          state.score += drop.value + Math.floor(Math.min(state.combo, 12) / 4);
+          scoreEl.textContent = state.score;
+          addSplash(drop.x, catchY, "#a7f8ff", drop.big ? 10 : 6);
+          beep(drop.big ? 360 : 510, 0.055, "triangle", 0.03);
+          continue;
+        }
+
+        if (drop.y - drop.r > state.height - 58) {
+          state.drops.splice(i, 1);
+          state.combo = 0;
+          state.flood += drop.big ? 11 : 5.8;
+          state.shakes = drop.big ? 7 : 4;
+          addSplash(drop.x, state.height - 55, "#68e0d2", drop.big ? 16 : 10);
+          state.ripples.push({ x: drop.x, y: state.height - 55, r: 4, life: 0.8 });
+          beep(drop.big ? 120 : 170, 0.08, "sawtooth", 0.028);
+          updateFlood();
+          if (state.flood >= 100) endGame();
+        }
+      }
+
+      for (let i = state.mops.length - 1; i >= 0; i -= 1) {
+        const mop = state.mops[i];
+        mop.y += mop.speed * dt;
+        mop.spin += dt * 4;
+        const caught = mop.y + mop.h > catchY && mop.y < state.bucket.y + state.bucket.h && mop.x > bucketLeft - 12 && mop.x < bucketRight + 12;
+        if (caught) {
+          state.mops.splice(i, 1);
+          state.flood = Math.max(0, state.flood - 22);
+          state.score += 5;
+          scoreEl.textContent = state.score;
+          updateFlood();
+          addSplash(mop.x, catchY, "#ffd166", 14);
+          beep(720, 0.08, "square", 0.025);
+          continue;
+        }
+        if (mop.y > state.height + 40) state.mops.splice(i, 1);
+      }
+
+      for (let i = state.splashes.length - 1; i >= 0; i -= 1) {
+        const p = state.splashes[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 540 * dt;
+        p.life -= dt;
+        if (p.life <= 0) state.splashes.splice(i, 1);
+      }
+
+      for (let i = state.ripples.length - 1; i >= 0; i -= 1) {
+        const ripple = state.ripples[i];
+        ripple.r += dt * 76;
+        ripple.life -= dt;
+        if (ripple.life <= 0) state.ripples.splice(i, 1);
+      }
+    }
+
+    function updateFlood() {
+      const value = Math.min(100, Math.max(0, state.flood));
+      floodEl.style.width = `${value}%`;
+      floodTextEl.textContent = `${Math.round(value)}%`;
+    }
+
+    function addSplash(x, y, color, count) {
+      for (let i = 0; i < count; i += 1) {
+        state.splashes.push({
+          x,
+          y,
+          vx: (Math.random() - 0.5) * 170,
+          vy: -70 - Math.random() * 90,
+          r: 2 + Math.random() * 3,
+          color,
+          life: 0.36 + Math.random() * 0.24
+        });
+      }
+    }
+
+    function endGame() {
+      state.mode = "ended";
+      best = Math.max(best, state.score);
+      localStorage.setItem(storeKey, String(best));
+      finalScore.textContent = state.score;
+      bestScore.textContent = best;
+      bestStart.textContent = best;
+      finalTime.textContent = `${Math.round(state.time)}s`;
+      endCopy.textContent = state.score >= best && state.score > 0 ? "新記録。床は負けたけど、バケツ係は勝った。" : "バケツ係、おつかれさまでした。";
+      endOverlay.classList.remove("hidden");
+      beep(90, 0.18, "sawtooth", 0.04);
+    }
+
+    function drawRoom() {
+      const w = state.width;
+      const h = state.height;
+      const shakeX = (Math.random() - 0.5) * state.shakes;
+      ctx.save();
+      ctx.translate(shakeX, 0);
+
+      const wall = ctx.createLinearGradient(0, 0, 0, h);
+      wall.addColorStop(0, "#1f3148");
+      wall.addColorStop(0.55, "#162032");
+      wall.addColorStop(1, "#171620");
+      ctx.fillStyle = wall;
+      ctx.fillRect(-10, 0, w + 20, h);
+
+      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      for (let x = 22; x < w; x += 74) {
+        ctx.fillRect(x, 0, 1, h);
+      }
+
+      ctx.fillStyle = "rgba(7,12,20,0.28)";
+      ctx.fillRect(0, h - 94, w, 94);
+
+      ctx.strokeStyle = "rgba(255,255,255,0.1)";
+      ctx.lineWidth = 1;
+      for (let y = h - 86; y < h; y += 18) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y - 14);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "rgba(0,0,0,0.22)";
+      ctx.fillRect(0, 0, w, 48);
+      ctx.fillStyle = "rgba(104, 224, 210, 0.2)";
+      for (let i = 0; i < 4; i += 1) {
+        const x = (i + 0.7) * w / 4;
+        ctx.beginPath();
+        ctx.ellipse(x, 46, 16 + i * 3, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      drawFlood();
+      ctx.restore();
+    }
+
+    function drawFlood() {
+      const level = state.height - 54 - (state.flood / 100) * Math.min(150, state.height * 0.23);
+      const water = ctx.createLinearGradient(0, level, 0, state.height);
+      water.addColorStop(0, "rgba(104,224,210,0.48)");
+      water.addColorStop(1, "rgba(50,126,177,0.72)");
+      ctx.fillStyle = water;
+      ctx.beginPath();
+      ctx.moveTo(0, state.height);
+      for (let x = 0; x <= state.width + 12; x += 12) {
+        const y = level + Math.sin(x * 0.035 + state.time * 2.8) * 4;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(state.width, state.height);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(217, 251, 255, 0.36)";
+      ctx.lineWidth = 2;
+      for (const ripple of state.ripples) {
+        ctx.globalAlpha = Math.max(0, ripple.life);
+        ctx.beginPath();
+        ctx.ellipse(ripple.x, ripple.y, ripple.r, ripple.r * 0.28, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawDrop(drop) {
+      ctx.save();
+      ctx.translate(drop.x, drop.y);
+      ctx.fillStyle = drop.big ? "#79f2ff" : "#bdf8ff";
+      ctx.shadowColor = "rgba(104,224,210,0.65)";
+      ctx.shadowBlur = drop.big ? 14 : 8;
+      ctx.beginPath();
+      ctx.moveTo(0, -drop.r * 1.4);
+      ctx.bezierCurveTo(drop.r, -drop.r * 0.3, drop.r * 0.9, drop.r * 1.15, 0, drop.r * 1.35);
+      ctx.bezierCurveTo(-drop.r * 0.9, drop.r * 1.15, -drop.r, -drop.r * 0.3, 0, -drop.r * 1.4);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawMop(mop) {
+      ctx.save();
+      ctx.translate(mop.x, mop.y);
+      ctx.rotate(Math.sin(mop.spin) * 0.22);
+      ctx.fillStyle = "#ffd166";
+      ctx.fillRect(-mop.w / 2, -mop.h / 2, mop.w, mop.h);
+      ctx.fillStyle = "#7a5430";
+      ctx.fillRect(-4, -34, 8, 34);
+      ctx.strokeStyle = "rgba(120,84,48,0.5)";
+      ctx.lineWidth = 2;
+      for (let x = -18; x <= 18; x += 9) {
+        ctx.beginPath();
+        ctx.moveTo(x, -8);
+        ctx.lineTo(x * 0.7, 12);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawBucket() {
+      const b = state.bucket;
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.fillStyle = "rgba(0,0,0,0.26)";
+      ctx.beginPath();
+      ctx.ellipse(0, b.h * 0.64, b.w * 0.58, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      const body = ctx.createLinearGradient(-b.w / 2, 0, b.w / 2, b.h);
+      body.addColorStop(0, "#d7e3f2");
+      body.addColorStop(0.5, "#7f9fbd");
+      body.addColorStop(1, "#4b6885");
+      ctx.fillStyle = body;
+      ctx.beginPath();
+      ctx.moveTo(-b.w * 0.48, -b.h * 0.12);
+      ctx.lineTo(b.w * 0.48, -b.h * 0.12);
+      ctx.lineTo(b.w * 0.36, b.h * 0.72);
+      ctx.lineTo(-b.w * 0.36, b.h * 0.72);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#f8fbff";
+      ctx.beginPath();
+      ctx.ellipse(0, -b.h * 0.12, b.w * 0.52, b.h * 0.18, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#3a5871";
+      ctx.beginPath();
+      ctx.ellipse(0, -b.h * 0.1, b.w * 0.42, b.h * 0.1, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(248,251,255,0.7)";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(0, -b.h * 0.06, b.w * 0.47, Math.PI * 1.08, Math.PI * 1.92);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawSplashes() {
+      for (const p of state.splashes) {
+        ctx.globalAlpha = Math.max(0, p.life * 2.5);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, state.width, state.height);
+      drawRoom();
+      for (const drop of state.drops) drawDrop(drop);
+      for (const mop of state.mops) drawMop(mop);
+      drawBucket();
+      drawSplashes();
+      requestAnimationFrame(loop);
+    }
+
+    function loop(now) {
+      const dt = Math.min(0.033, ((now || performance.now()) - state.last) / 1000 || 0);
+      state.last = now || performance.now();
+      update(dt);
+      draw();
+    }
+
+    function setTargetFromClientX(clientX) {
+      const rect = canvas.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const pad = state.bucket.w * 0.55;
+      state.bucket.targetX = Math.max(pad, Math.min(state.width - pad, x));
+    }
+
+    function beginPointer(event) {
+      if (state.mode !== "playing") return;
+      thumbZone.setPointerCapture(event.pointerId);
+      setTargetFromClientX(event.clientX);
+    }
+
+    function movePointer(event) {
+      if (state.mode !== "playing") return;
+      setTargetFromClientX(event.clientX);
+    }
+
+    startBtn.addEventListener("click", resetGame);
+    retryBtn.addEventListener("click", resetGame);
+    menuBtn.addEventListener("click", () => {
+      state.mode = "menu";
+      endOverlay.classList.add("hidden");
+      startOverlay.classList.remove("hidden");
+    });
+    pauseBtn.addEventListener("click", () => {
+      if (state.mode === "playing") {
+        state.mode = "paused";
+        pauseBtn.textContent = "▶";
+      } else if (state.mode === "paused") {
+        state.mode = "playing";
+        state.last = performance.now();
+        pauseBtn.textContent = "Ⅱ";
+      }
+    });
+
+    thumbZone.addEventListener("pointerdown", beginPointer);
+    thumbZone.addEventListener("pointermove", movePointer);
+    window.addEventListener("keydown", (event) => {
+      if (state.mode !== "playing") return;
+      const step = state.width * 0.08;
+      if (event.key === "ArrowLeft") state.bucket.targetX -= step;
+      if (event.key === "ArrowRight") state.bucket.targetX += step;
+      const pad = state.bucket.w * 0.55;
+      state.bucket.targetX = Math.max(pad, Math.min(state.width - pad, state.bucket.targetX));
+    });
+    window.addEventListener("resize", resize);
+
+    resize();
+    requestAnimationFrame((now) => {
+      state.last = now;
+      draw();
+    });
+  </script>
+</body>
+</html>
