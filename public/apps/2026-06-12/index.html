@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ウソ日記</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="masthead">
+        <div>
+          <p class="date-mark">2026.06.12 / diary day</p>
+          <h1>ウソ日記</h1>
+          <p class="lead">今日あった本当のことを、なかったことみたいに書く。</p>
+        </div>
+        <div class="ink-stamp" aria-label="6月12日">
+          <span>6/12</span>
+          <small>日記の日</small>
+        </div>
+      </header>
+
+      <nav class="tabs" aria-label="表示切り替え">
+        <button class="tab-button active" type="button" data-tab="create">つくる</button>
+        <button class="tab-button" type="button" data-tab="archive">
+          保存した日記 <span id="savedCount">0</span>
+        </button>
+      </nav>
+
+      <section class="workspace active" id="createPanel">
+        <form class="editor" id="diaryForm">
+          <label class="field">
+            <span>今日あった本当のこと</span>
+            <textarea
+              id="truthInput"
+              rows="3"
+              maxlength="80"
+              placeholder="例: コンビニでコーヒーを買った"
+              required
+            ></textarea>
+          </label>
+
+          <div class="controls-grid">
+            <fieldset class="control-block">
+              <legend>ウソの濃さ</legend>
+              <input id="lieLevel" type="range" min="10" max="100" step="10" value="40" />
+              <div class="range-row">
+                <span>ほぼ本当</span>
+                <strong id="lieLabel">40%</strong>
+                <span>だいたい嘘</span>
+              </div>
+            </fieldset>
+
+            <fieldset class="control-block">
+              <legend>文体</legend>
+              <div class="segmented" id="styleGroup">
+                <label><input type="radio" name="style" value="ふつうの日記" checked />ふつう</label>
+                <label><input type="radio" name="style" value="小学生の日記" />小学生</label>
+                <label><input type="radio" name="style" value="純文学っぽい" />純文学</label>
+                <label><input type="radio" name="style" value="怪談っぽい" />怪談</label>
+                <label><input type="radio" name="style" value="SNS投稿っぽい" />SNS</label>
+                <label><input type="radio" name="style" value="観察記録っぽい" />観察</label>
+              </div>
+            </fieldset>
+
+            <fieldset class="control-block wide">
+              <legend>ウソの方向</legend>
+              <div class="direction-grid" id="directionGroup">
+                <label><input type="radio" name="direction" value="不穏" checked />不穏</label>
+                <label><input type="radio" name="direction" value="泣ける" />泣ける</label>
+                <label><input type="radio" name="direction" value="青春" />青春</label>
+                <label><input type="radio" name="direction" value="SF" />SF</label>
+                <label><input type="radio" name="direction" value="コメディ" />コメディ</label>
+                <label><input type="radio" name="direction" value="意味不明" />意味不明</label>
+              </div>
+            </fieldset>
+          </div>
+
+          <div class="button-row">
+            <button class="primary" type="submit">日記を改ざんする</button>
+            <button class="secondary" id="exampleButton" type="button">例文を入れる</button>
+          </div>
+        </form>
+
+        <aside class="result-panel" aria-live="polite">
+          <div class="paper" id="emptyState">
+            <p class="paper-kicker">未記入</p>
+            <h2>本当のことを1つだけ書く</h2>
+            <p>
+              その出来事を芯にして、少しだけ変な一日を作ります。濃さを上げるほど、日記は現実から遠ざかります。
+            </p>
+          </div>
+
+          <article class="paper hidden" id="resultCard">
+            <div class="paper-head">
+              <div>
+                <p class="paper-kicker" id="resultMeta">2026年6月12日</p>
+                <h2>今日、なかったこと</h2>
+              </div>
+              <span class="paper-tag" id="resultTag">不穏 / 40%</span>
+            </div>
+            <p class="diary-body" id="diaryBody"></p>
+            <div class="button-row compact">
+              <button class="primary" id="saveButton" type="button">保存</button>
+              <button class="secondary" id="copyButton" type="button">コピー</button>
+              <button class="secondary" id="rerollButton" type="button">もう一回</button>
+            </div>
+            <p class="toast" id="toast" role="status"></p>
+          </article>
+        </aside>
+      </section>
+
+      <section class="workspace" id="archivePanel">
+        <div class="archive-head">
+          <div>
+            <p class="date-mark">local archive</p>
+            <h2>保存したウソ日記</h2>
+          </div>
+          <button class="secondary danger" id="clearButton" type="button">全削除</button>
+        </div>
+        <div class="archive-list" id="archiveList"></div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
