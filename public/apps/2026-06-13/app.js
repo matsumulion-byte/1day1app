@@ -42,8 +42,10 @@ const targetLabels = {
 
 const wheel = document.querySelector("#wheel");
 const spinButton = document.querySelector("#spinButton");
-const resultText = document.querySelector("#resultText");
+const resultModal = document.querySelector("#resultModal");
+const resultTitle = document.querySelector("#resultTitle");
 const resultMeta = document.querySelector("#resultMeta");
+const closeModal = document.querySelector("#closeModal");
 
 let currentResult = null;
 let spinIndex = 0;
@@ -65,16 +67,15 @@ function pickKindness() {
 }
 
 function renderResult() {
-  resultText.classList.remove("blank-result");
-  resultText.textContent = currentResult.text;
+  resultTitle.textContent = currentResult.text;
   resultMeta.textContent = targetLabels[currentResult.target];
+  resultModal.hidden = false;
+  closeModal.focus();
 }
 
 function clearResult() {
   currentResult = null;
-  resultText.classList.add("blank-result");
-  resultText.textContent = "回すまで内緒";
-  resultMeta.textContent = `${targetLabels[selectedTarget()]}を選択中`;
+  resultModal.hidden = true;
 }
 
 function spin() {
@@ -99,6 +100,17 @@ function spin() {
 }
 
 spinButton.addEventListener("click", spin);
+closeModal.addEventListener("click", clearResult);
+resultModal.addEventListener("click", (event) => {
+  if (event.target.dataset.close) {
+    clearResult();
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !resultModal.hidden) {
+    clearResult();
+  }
+});
 document.querySelectorAll("input[name='target']").forEach((input) => {
   input.addEventListener("change", () => {
     clearResult();

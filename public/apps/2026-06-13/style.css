@@ -57,21 +57,15 @@ input:focus-visible {
   width: min(1180px, calc(100% - 36px));
   min-height: 100vh;
   margin: 0 auto;
-  padding: 28px 0;
+  padding: 24px 0;
 }
 
 .hero {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 24px;
-  min-height: 21vh;
-  padding-bottom: 22px;
+  padding-bottom: 18px;
 }
 
 .date-kicker,
-.result-label,
-#resultMeta {
+.result-label {
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 850;
@@ -88,39 +82,17 @@ p {
 }
 
 h1 {
-  max-width: 820px;
-  font-size: clamp(3rem, 8.6vw, 7.7rem);
-  line-height: 0.9;
+  white-space: nowrap;
+  font-size: clamp(2.4rem, 6.4vw, 6.4rem);
+  line-height: 1;
   letter-spacing: 0;
-}
-
-.date-badge {
-  display: grid;
-  place-items: center;
-  width: 118px;
-  height: 118px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-  box-shadow: var(--shadow);
-}
-
-.date-badge span {
-  font-size: 3.5rem;
-  font-weight: 950;
-  line-height: 0.85;
-}
-
-.date-badge small {
-  color: var(--muted);
-  font-size: 1.5rem;
-  font-weight: 850;
 }
 
 .roulette-layout {
   display: grid;
-  grid-template-columns: minmax(270px, 360px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
   gap: 18px;
+  align-items: stretch;
 }
 
 .controls,
@@ -140,7 +112,7 @@ h1 {
 
 .chip-set {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin: 0;
   padding: 0;
@@ -189,8 +161,7 @@ button {
 .wheel-panel {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(300px, 0.9fr) minmax(280px, 0.78fr);
-  gap: 28px;
+  place-items: center;
   align-items: center;
   min-height: 560px;
   overflow: hidden;
@@ -274,39 +245,57 @@ button {
 .s5 { --angle: 270deg; }
 .s6 { --angle: 330deg; }
 
-.result-card {
-  position: relative;
-  z-index: 2;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 24px;
-  background: rgba(255, 250, 241, 0.94);
+.result-modal[hidden] {
+  display: none;
 }
 
-.result-card h2 {
-  min-height: 138px;
-  padding: 18px 0;
-  font-size: clamp(1.55rem, 3.5vw, 2.65rem);
+.result-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 24, 22, 0.56);
+}
+
+.modal-card {
+  position: relative;
+  z-index: 1;
+  width: min(520px, 100%);
+  border: 1px solid rgba(255, 250, 241, 0.48);
+  border-radius: 8px;
+  padding: 24px;
+  background: #fffaf1;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.28);
+}
+
+.modal-card h2 {
+  margin: 14px 0 22px;
+  font-size: clamp(1.8rem, 7vw, 3.6rem);
   line-height: 1.12;
   letter-spacing: 0;
   overflow-wrap: anywhere;
 }
 
-.blank-result {
-  color: rgba(23, 33, 30, 0.32);
+.close-button {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: #fffaf1;
+  font-size: 1rem;
+  font-weight: 950;
 }
 
 @media (max-width: 900px) {
-  .hero,
-  .roulette-layout,
-  .wheel-panel {
+  .roulette-layout {
     grid-template-columns: 1fr;
-  }
-
-  .hero {
-    align-items: start;
-    flex-direction: column;
-    min-height: auto;
   }
 
   .wheel-panel {
@@ -322,17 +311,110 @@ button {
 }
 
 @media (max-width: 520px) {
+  html,
+  body {
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
   .app {
-    width: min(100% - 24px, 1180px);
-    padding: 18px 0;
+    width: min(100% - 20px, 1180px);
+    min-height: 100dvh;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    padding: 10px 0;
   }
 
-  .date-badge {
-    width: 96px;
-    height: 96px;
+  .hero {
+    padding-bottom: 8px;
   }
 
-  .result-card h2 {
-    min-height: 128px;
+  .date-kicker {
+    margin-bottom: 4px;
+    font-size: 0.7rem;
+  }
+
+  h1 {
+    font-size: clamp(1.85rem, 8vw, 2.35rem);
+  }
+
+  .roulette-layout {
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .controls {
+    order: 2;
+    gap: 9px;
+    padding: 10px;
+  }
+
+  .wheel-panel {
+    order: 1;
+    min-height: 0;
+    padding: 16px 12px 10px;
+  }
+
+  .chip-set {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  legend {
+    grid-column: 1 / -1;
+    font-size: 0.68rem;
+  }
+
+  .chip-set label {
+    justify-content: center;
+    min-height: 38px;
+    gap: 5px;
+    padding: 0 4px;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  .chip-set input {
+    width: 13px;
+    height: 13px;
+  }
+
+  .spin-button {
+    min-height: 56px;
+    font-size: 1.2rem;
+  }
+
+  .wheel {
+    width: min(78vw, 310px);
+    border-width: 8px;
+    box-shadow:
+      inset 0 0 0 2px rgba(23, 33, 30, 0.22),
+      inset 0 0 0 24px rgba(255, 250, 241, 0.18),
+      0 20px 44px rgba(23, 33, 30, 0.24);
+  }
+
+  .wheel::after {
+    border-width: 6px;
+  }
+
+  .pointer {
+    top: -5px;
+    border-right-width: 14px;
+    border-left-width: 14px;
+    border-top-width: 27px;
+  }
+
+  .slice span {
+    margin-top: 30px;
+    font-size: 0.82rem;
+  }
+
+  .modal-card {
+    padding: 18px;
+  }
+
+  .modal-card h2 {
+    margin: 12px 0 18px;
+    font-size: clamp(1.7rem, 8vw, 2.55rem);
   }
 }
