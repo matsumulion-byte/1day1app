@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>小さな親切ルーレット</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero" aria-labelledby="app-title">
+        <div class="title-block">
+          <p class="date-kicker">06.13 / 小さな親切運動スタートの日</p>
+          <h1 id="app-title">小さな親切ルーレット</h1>
+        </div>
+        <div class="date-badge" aria-label="6月13日">
+          <span>6</span>
+          <small>13</small>
+        </div>
+      </section>
+
+      <section class="roulette-layout">
+        <section class="controls" aria-label="ルーレット設定">
+          <fieldset class="chip-set">
+            <legend>相手</legend>
+            <label><input type="radio" name="target" value="near" checked /> 近くの人</label>
+            <label><input type="radio" name="target" value="work" /> 仕事・学校</label>
+            <label><input type="radio" name="target" value="town" /> まち</label>
+            <label><input type="radio" name="target" value="self" /> 自分</label>
+          </fieldset>
+
+          <button class="spin-button" id="spinButton" type="button">
+            <span>回す</span>
+          </button>
+        </section>
+
+        <section class="wheel-panel" aria-label="親切ルーレット">
+          <div class="wheel-stage">
+            <div class="pointer" aria-hidden="true"></div>
+            <div class="wheel" id="wheel">
+              <div class="slice s1"><span>一声</span></div>
+              <div class="slice s2"><span>手伝う</span></div>
+              <div class="slice s3"><span>譲る</span></div>
+              <div class="slice s4"><span>拾う</span></div>
+              <div class="slice s5"><span>褒める</span></div>
+              <div class="slice s6"><span>整える</span></div>
+            </div>
+          </div>
+          <article class="result-card">
+            <p class="result-label">今日の一手</p>
+            <h2 id="resultText" class="blank-result">回すまで内緒</h2>
+            <p id="resultMeta">相手を選んで回す</p>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
