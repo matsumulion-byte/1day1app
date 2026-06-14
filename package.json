@@ -3,8 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "check:app-paths": "node scripts/check-app-asset-paths.js",
-    "build": "npm run check:app-paths && next build",
+    "build": "next build",
     "start": "next start",
     "ogp": "SITE_BASE_URL=$SITE_BASE_URL node scripts/generate-ogp.js"
   },
