@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BLOODLINE 400</title>
+    <link rel="stylesheet" href="styles.css?v=grade-error" />
+  </head>
+  <body>
+    <main class="machine" aria-label="BLOODLINE 400">
+      <section class="header">
+        <div>
+          <p class="kicker">FICTIONAL ARCADE UNIT / DO NOT REPLICATE</p>
+          <h1>BLOODLINE 400</h1>
+        </div>
+        <div class="status-stack">
+          <span id="roundLabel">ROUND 01</span>
+          <span id="shiftLabel">SHIFT 0/5</span>
+          <span id="machineMood">CALIBRATED</span>
+        </div>
+      </section>
+
+      <section class="console">
+        <section class="goal-panel" aria-label="goal">
+          <div>
+            <span>GOAL</span>
+            <strong>400mlに一番近く止める</strong>
+          </div>
+          <div>
+            <span>FAIL</span>
+            <strong>赤ライン超過で即終了</strong>
+          </div>
+          <div>
+            <span>SHIFT</span>
+            <strong id="quotaLabel">5人で2000ml</strong>
+          </div>
+        </section>
+
+        <aside class="panel donor-panel">
+          <p class="panel-label">DONOR FILE</p>
+          <h2 id="donorName">LOADING</h2>
+          <dl>
+            <div>
+              <dt>TYPE</dt>
+              <dd id="bloodType">--</dd>
+            </div>
+            <div>
+              <dt>HYDRATION</dt>
+              <dd id="hydration">--</dd>
+            </div>
+            <div>
+              <dt>NERVES</dt>
+              <dd id="nerves">--</dd>
+            </div>
+            <div>
+              <dt>SAFE LIMIT</dt>
+              <dd id="limitReadout">VARIABLE</dd>
+            </div>
+          </dl>
+          <div class="signal">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </aside>
+
+        <section class="bag-stage" aria-live="polite">
+          <div class="screen-noise"></div>
+          <div class="warning" id="warning">TARGET: 400ml</div>
+          <div class="bag-wrap">
+            <div class="tube"></div>
+            <div class="blood-bag" aria-label="blood bag fill meter">
+              <div class="target-band"><span>BEST 390-410</span></div>
+              <div class="target-line"></div>
+              <div class="over-line" id="overLine"></div>
+              <div class="blood-fill" id="bloodFill"></div>
+              <div class="shine"></div>
+              <span id="mlReadout">000ml</span>
+            </div>
+          </div>
+          <div class="result" id="resultText">HOLD TO DRAW. RELEASE TO SEAL.</div>
+        </section>
+
+        <aside class="panel meter-panel">
+          <p class="panel-label">SAFETY TELEMETRY</p>
+          <div class="danger-meter">
+            <div id="dangerFill"></div>
+            <span>SAFE</span>
+            <span>CAUTION</span>
+            <span>STOP</span>
+          </div>
+          <div class="scoreboard">
+            <div>
+              <p>SCORE</p>
+              <strong id="score">0</strong>
+            </div>
+            <div>
+              <p>STREAK</p>
+              <strong id="streak">0</strong>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="controls">
+        <button id="drawButton" class="draw-button" type="button">HOLD TO DRAW</button>
+        <button id="restButton" type="button">REST</button>
+        <button id="waterButton" type="button">WATER</button>
+        <button id="talkButton" type="button">TALK</button>
+        <button id="nextButton" type="button" hidden>NEXT FILE</button>
+      </section>
+    </main>
+
+    <div class="failure-overlay" id="failureOverlay" aria-hidden="true">
+      <div class="flatline"></div>
+      <p id="failureCode">DONOR SIGNAL LOST</p>
+      <strong id="failureMessage">SAFETY DEVICE DID NOT RESPOND</strong>
+      <button id="failureBackButton" class="failure-back" type="button" hidden>最初から戻る</button>
+    </div>
+
+    <div class="shift-overlay" id="shiftOverlay" aria-hidden="true">
+      <p id="shiftResult">SHIFT COMPLETE</p>
+      <strong id="shiftScore">0000ml / 2000ml</strong>
+      <span id="shiftVerdict">QUOTA MET</span>
+      <button id="shiftBackButton" type="button">最初から戻る</button>
+    </div>
+
+    <script src="script.js?v=grade-error"></script>
+  </body>
+</html>
