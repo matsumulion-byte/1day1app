@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>オウムの松村</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app" aria-label="オウムの松村">
+      <section class="stage">
+        <div class="date-badge">
+          <span>6/15</span>
+          <strong>オウムとインコの日</strong>
+        </div>
+
+        <div class="perch" aria-hidden="true">
+          <div class="sound-rings">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <img id="matsumuraImage" src="./matsumura.png" alt="" />
+          <div class="parrot-fallback" id="parrotFallback">
+            <div class="crest"></div>
+            <div class="body">
+              <span class="eye"></span>
+              <span class="beak"></span>
+              <span class="wing"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="speech" aria-live="polite">
+          <p id="statusText">マイクを押して、松村に話しかけてください。</p>
+          <div class="meter" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls" aria-label="録音コントロール">
+        <button class="mic-button" id="recordButton" type="button" aria-label="録音">
+          <span class="mic-icon" aria-hidden="true"></span>
+          <strong id="recordLabel">おして話す</strong>
+        </button>
+        <button id="replayButton" type="button" disabled>もう一回</button>
+        <button id="clearButton" type="button" disabled>忘れる</button>
+      </section>
+
+      <section class="tuning" aria-label="松村ボイス設定">
+        <label>
+          <span>はやさ</span>
+          <input id="speedControl" type="range" min="1.05" max="1.75" value="1.32" step="0.01" />
+        </label>
+        <label>
+          <span>エコー</span>
+          <input id="echoControl" type="range" min="0" max="0.45" value="0.16" step="0.01" />
+        </label>
+        <label class="toggle">
+          <input id="repeatControl" type="checkbox" checked />
+          <span>ちょいリピート</span>
+        </label>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
