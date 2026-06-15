@@ -5,6 +5,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "check:app": "node scripts/check-day-app.js",
     "ogp": "SITE_BASE_URL=$SITE_BASE_URL node scripts/generate-ogp.js"
   },
   "dependencies": {
