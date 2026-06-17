@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>214箱の自由の松村</title>
+    <link rel="stylesheet" href="/apps/2026-06-17/styles.css" />
+  </head>
+  <body>
+    <main class="app" aria-label="214箱の自由の松村">
+      <header class="topbar">
+        <div>
+          <p class="date">6/17 自由の女神がニューヨーク港に届いた日</p>
+          <h1>214箱の自由の松村</h1>
+        </div>
+        <div class="manifest" aria-live="polite">
+          <span>復元率</span>
+          <strong id="progressText">0/8</strong>
+        </div>
+      </header>
+
+      <section class="gamebar" aria-label="検品ゲーム情報">
+        <div class="game-stat">
+          <span>TIME</span>
+          <strong id="timeText">20.0</strong>
+        </div>
+        <div class="order-card" aria-live="polite">
+          <span>次の検品</span>
+          <strong id="orderText">松村像を開始</strong>
+        </div>
+        <div class="game-stat">
+          <span>MISS</span>
+          <strong id="missText">0</strong>
+        </div>
+      </section>
+
+      <section class="harbor" aria-label="自由の松村復元ドック">
+        <div class="skyline" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <div class="assembly">
+          <div class="target" id="targetBoard" aria-label="松村像の復元台"></div>
+          <div class="pedestal">
+            <span>LIBERTY MATSUMURA</span>
+          </div>
+          <p class="completion" id="completionText">木箱から部品を運んで、松村像を港に立てよう。</p>
+        </div>
+
+        <div class="dock">
+          <div class="dock-title">
+            <span>ARRIVED JUNE 17</span>
+            <strong>輸送箱</strong>
+          </div>
+          <div class="crate-grid" id="crateGrid" aria-label="松村像の部品箱"></div>
+        </div>
+      </section>
+
+      <section class="controls" aria-label="操作">
+        <button id="hintButton" type="button">検品スタート</button>
+        <button id="scatterButton" type="button">箱を混ぜる</button>
+        <button id="resetButton" type="button">積み直す</button>
+      </section>
+    </main>
+
+    <script src="/apps/2026-06-17/script.js"></script>
+  </body>
+</html>
