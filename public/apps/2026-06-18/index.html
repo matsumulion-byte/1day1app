@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>おにぎりローラー</title>
+    <link rel="stylesheet" href="/apps/2026-06-18/styles.css" />
+  </head>
+  <body>
+    <main class="app" aria-label="6月18日 おにぎりの日ゲーム">
+      <header class="topbar">
+        <div>
+          <p class="date">6/18 おにぎりの日</p>
+          <h1>おにぎりローラー</h1>
+        </div>
+        <button id="startButton" class="start-button" type="button">スタート</button>
+      </header>
+
+      <section class="hud" aria-label="ゲーム情報">
+        <div>
+          <span>SCORE</span>
+          <strong id="scoreText">0</strong>
+        </div>
+        <div>
+          <span>TIME</span>
+          <strong id="timeText">45</strong>
+        </div>
+        <div>
+          <span>COMBO</span>
+          <strong id="comboText">0</strong>
+        </div>
+      </section>
+
+      <section class="field-wrap" aria-label="ゲーム画面">
+        <canvas id="gameCanvas" width="960" height="540"></canvas>
+        <div id="message" class="message" aria-live="polite">
+          <strong>米を転がせ</strong>
+          <span>具材をはじいて、梅干しだけは避ける。</span>
+        </div>
+      </section>
+
+      <section class="controls" aria-label="操作">
+        <button class="pad up" type="button" data-dir="up" aria-label="上">↑</button>
+        <button class="pad left" type="button" data-dir="left" aria-label="左">←</button>
+        <button class="pad down" type="button" data-dir="down" aria-label="下">↓</button>
+        <button class="pad right" type="button" data-dir="right" aria-label="右">→</button>
+        <button id="dashButton" class="dash-button" type="button">ダッシュ</button>
+      </section>
+    </main>
+
+    <script src="/apps/2026-06-18/script.js"></script>
+  </body>
+</html>
