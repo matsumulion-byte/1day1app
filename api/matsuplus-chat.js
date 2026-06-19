@@ -58,7 +58,7 @@ export default async function handler(req, res) {
         reasoning: { effort: "low" },
         instructions,
         input,
-        max_output_tokens: 120
+        max_output_tokens: 300
       })
     });
 
@@ -67,7 +67,9 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: data.error?.message || "OpenAI API request failed" });
     }
 
-    return res.status(200).json({ reply: extractText(data), fallback: false });
+    const reply = extractText(data);
+    if (!reply) return res.status(502).json({ error: "OpenAI API returned an empty reply" });
+    return res.status(200).json({ reply, fallback: false });
   } catch (error) {
     return res.status(500).json({ error: error.message || "server error" });
   }
