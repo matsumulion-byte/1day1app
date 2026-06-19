@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>マツプラス</title>
+  <link rel="stylesheet" href="/apps/2026-06-19/styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="game" aria-label="マツプラス">
+      <header class="topbar">
+        <div>
+          <p class="date">6.19 Romance Day</p>
+          <h1>マツプラス</h1>
+        </div>
+        <div class="clock">
+          <span>記念日</span>
+          <strong id="affection">82</strong>
+        </div>
+      </header>
+
+      <section class="stage">
+        <img class="character" src="/apps/2026-06-19/assets/ai-matsumura-v4.png" alt="AI松村のポートレート">
+        <div class="nameplate">
+          <span>AI松村</span>
+          <small>恋人モード</small>
+        </div>
+      </section>
+
+      <section id="chatPanel" class="chat-log">
+        <header class="chat-toolbar">
+          <span>会話</span>
+          <button id="toggleChat" type="button" aria-label="会話欄を小さくする" aria-expanded="true" title="会話欄を小さくする">
+            <span class="chevron" aria-hidden="true"></span>
+          </button>
+        </header>
+        <div id="chatMessages" class="chat-messages" aria-live="polite">
+          <p class="system">AI松村と待ち合わせしました</p>
+          <article class="bubble matsu">
+            <p>遅い。……って言うほど待ってないけど。来てくれて、普通にうれしい。</p>
+          </article>
+        </div>
+      </section>
+
+      <form id="chatForm" class="composer">
+        <input id="messageInput" type="text" autocomplete="off" placeholder="例: 今日ちょっと疲れた" aria-label="AI松村に送るメッセージ">
+        <button type="submit">話す</button>
+      </form>
+    </section>
+  </main>
+  <script src="/apps/2026-06-19/script.js"></script>
+</body>
+</html>
