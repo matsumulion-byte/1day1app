@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1322">
+  <meta name="description" content="朝まで眠りを守る、真夜中の蚊取りタワーディフェンス。">
+  <title>蚊取り戦線 — 朝まで、眠りを守れ。</title>
+  <link rel="stylesheet" href="/apps/2026-06-20/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div>
+        <p class="eyebrow">6.20 / MIDNIGHT DEFENSE</p>
+        <h1>蚊取り戦線</h1>
+      </div>
+      <div class="status" aria-label="ゲーム状況">
+        <div><span>睡眠</span><strong id="sleepValue">100</strong></div>
+        <div><span>安眠</span><strong id="peaceValue">120</strong></div>
+        <div><span>時刻</span><strong id="clockValue">0:00</strong></div>
+      </div>
+    </header>
+
+    <section class="game-wrap">
+      <div class="canvas-frame">
+        <canvas id="gameCanvas" width="960" height="600" aria-label="蚊取り戦線のゲーム画面"></canvas>
+
+        <section id="resultOverlay" class="overlay hidden">
+          <div class="overlay-card result-card">
+            <p id="resultKicker" class="kicker">DAWN HAS COME</p>
+            <h2 id="resultTitle">朝まで守りきった。</h2>
+            <p id="resultText">安らかな朝です。</p>
+            <dl class="result-stats">
+              <div><dt>撃退</dt><dd id="resultKills">0匹</dd></div>
+              <div><dt>残り睡眠</dt><dd id="resultSleep">100%</dd></div>
+            </dl>
+            <button id="retryButton" class="primary-button" type="button">もう一度眠る</button>
+          </div>
+        </section>
+      </div>
+
+      <aside class="control-panel">
+        <div class="mission">
+          <p class="kicker">MISSION</p>
+          <h2>蚊を倒して<br>朝まで眠りを守れ</h2>
+          <p>蚊は窓から侵入し、点線に沿ってベッドへ向かいます。</p>
+        </div>
+
+        <ol class="howto" aria-label="遊び方">
+          <li id="guideChoose" class="active"><b>1</b><span><strong>アイテムを選ぶ</strong><small>まずは蚊取り線香がおすすめ</small></span></li>
+          <li id="guidePlace"><b>2</b><span><strong>床に配置する</strong><small>点線の近くが効果的</small></span></li>
+          <li id="guideWave"><b>3</b><span><strong>襲来ボタンを押す</strong><small>蚊を全滅させると次の夜へ</small></span></li>
+        </ol>
+
+        <div class="wave-row">
+          <div>
+            <span class="label">WAVE</span>
+            <strong><span id="waveValue">0</span> / 5</strong>
+          </div>
+          <button id="waveButton" class="wave-button" type="button" disabled>まず1台置こう</button>
+        </div>
+
+        <div class="tower-grid" role="group" aria-label="防衛アイテム">
+          <button class="tower-card" type="button" data-tower="coil">
+            <span class="tower-icon coil-icon" aria-hidden="true"></span>
+            <span class="tower-copy"><b>蚊取り線香</b><small>範囲に継続ダメージ</small></span>
+            <span class="cost">40</span>
+          </button>
+          <button class="tower-card" type="button" data-tower="fan">
+            <span class="tower-icon fan-icon" aria-hidden="true">✣</span>
+            <span class="tower-copy"><b>扇風機</b><small>減速して押し戻す</small></span>
+            <span class="cost">60</span>
+          </button>
+          <button class="tower-card" type="button" data-tower="lamp">
+            <span class="tower-icon lamp-icon" aria-hidden="true">ϟ</span>
+            <span class="tower-copy"><b>電撃灯</b><small>近い蚊に高火力</small></span>
+            <span class="cost">85</span>
+          </button>
+          <button class="tower-card" type="button" data-tower="screen">
+            <span class="tower-icon screen-icon" aria-hidden="true">▦</span>
+            <span class="tower-copy"><b>網戸補強</b><small>入口でまとめて弱体化</small></span>
+            <span class="cost">50</span>
+          </button>
+        </div>
+
+        <div class="tip-row">
+          <p id="gameMessage">アイテムを選んで部屋に配置</p>
+          <button id="soundButton" class="icon-button" type="button" aria-label="サウンドを切る" title="サウンド切替">♪</button>
+        </div>
+      </aside>
+    </section>
+
+    <footer>
+      <span>DAY 20 / 365</span>
+      <span>EARPHONES RECOMMENDED</span>
+    </footer>
+  </main>
+  <script src="/apps/2026-06-20/script.js"></script>
+</body>
+</html>
