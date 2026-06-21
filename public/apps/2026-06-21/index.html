@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#f3a33a">
+  <meta name="description" content="一年でいちばん長い昼を、影から影へ逃げて生き延びるゲーム。">
+  <title>日没まで、影にいろ。</title>
+  <link rel="stylesheet" href="/apps/2026-06-21/styles.css">
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <p class="date">6.21 / SUMMER SOLSTICE</p>
+        <h1>日没まで、<br>影にいろ。</h1>
+      </div>
+      <button id="soundButton" class="sound" type="button" aria-label="サウンド切替">♪</button>
+    </header>
+
+    <section class="game-shell">
+      <div class="hud">
+        <div><span>時刻</span><strong id="clock">9:00</strong></div>
+        <div class="sun-meter"><span>日没まで</span><i><b id="dayBar"></b></i></div>
+        <div class="right"><span>救出</span><strong id="rescueCount">0匹</strong></div>
+      </div>
+      <canvas id="game" width="390" height="620" aria-label="影を渡り歩き日没まで生き残るゲーム"></canvas>
+      <div id="flash" class="flash"></div>
+
+      <section id="startScreen" class="overlay">
+        <div class="card">
+          <p class="label">HOW TO SURVIVE</p>
+          <div class="demo"><span class="finger">●</span><span class="arrow">↗</span><span class="hero-dot"></span></div>
+          <h2>日なたの子を<br>影まで運べ</h2>
+          <p>近づくと抱き上げ、影に入ると救出。<br>残り体力の少ない子を見極めよう。</p>
+          <button id="startButton" class="primary" type="button">救出をはじめる</button>
+        </div>
+      </section>
+
+      <section id="resultScreen" class="overlay hidden">
+        <div class="card result">
+          <p id="resultLabel" class="label">SUNSET</p>
+          <div id="resultSun" class="result-sun"></div>
+          <h2 id="resultTitle">今年いちばん長い昼を、<br>生き延びた。</h2>
+          <p id="resultText">救出 0匹</p>
+          <button id="retryButton" class="primary" type="button">もう一度逃げる</button>
+        </div>
+      </section>
+    </section>
+
+    <footer><span>DAY 172 / 365</span><span>HOLD TO MOVE</span></footer>
+  </main>
+  <script src="/apps/2026-06-21/script.js"></script>
+</body>
+</html>
