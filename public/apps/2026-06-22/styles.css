@@ -1,0 +1,40 @@
+:root { color-scheme:light; --ink:#152d39; --cream:#fff8e7; --sea:#68c8d0; --red:#ec684c; --yellow:#ffd45c; }
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { margin:0; min-height:100%; background:#f6ebce; color:var(--ink); font-family:"Helvetica Neue","Hiragino Sans","Yu Gothic",sans-serif; }
+body { overscroll-behavior:none; }
+button { font:inherit; }
+.app { width:min(100%,460px); min-height:100svh; margin:auto; padding:max(16px,env(safe-area-inset-top)) 16px max(12px,env(safe-area-inset-bottom)); display:flex; flex-direction:column; }
+header { display:flex; justify-content:space-between; align-items:flex-start; padding:2px 2px 12px; }
+.date,.label { margin:0 0 6px; color:#d8523b; font-size:10px; font-weight:900; letter-spacing:.18em; }
+h1 { margin:0; font-size:clamp(28px,8vw,38px); line-height:.92; letter-spacing:-.08em; }
+h1 span { color:var(--red); }
+.sound { width:42px; height:42px; border:2px solid var(--ink); border-radius:50%; background:transparent; color:var(--ink); font-size:18px; font-weight:900; }
+.sound.off { opacity:.35; }
+.game-shell { position:relative; overflow:hidden; flex:1; min-height:555px; max-height:720px; border:2px solid var(--ink); border-radius:22px; background:var(--sea); box-shadow:5px 6px 0 var(--ink); touch-action:none; }
+canvas { display:block; width:100%; height:100%; object-fit:cover; }
+.hud { position:absolute; z-index:3; top:0; left:0; right:0; height:62px; display:grid; grid-template-columns:1fr 1.35fr 1fr; align-items:center; padding:8px 13px; background:rgba(255,248,231,.94); border-bottom:2px solid var(--ink); }
+.hud > div { min-width:0; }
+.hud > div+div { border-left:1px solid rgba(21,45,57,.25); padding-left:12px; }
+.hud span { display:block; font-size:8px; font-weight:900; letter-spacing:.1em; }
+.hud strong { font-size:23px; line-height:1; letter-spacing:-.06em; }
+.hud small,.hud i { margin-left:3px; font-size:10px; font-style:normal; font-weight:900; }
+.hud .goal strong { color:var(--red); font-size:27px; }
+.hud .combo { text-align:right; }
+.overlay { position:absolute; z-index:8; inset:62px 0 0; display:grid; place-items:center; padding:22px; background:rgba(21,45,57,.28); backdrop-filter:blur(3px); }
+.overlay.hidden { display:none; }
+.card { width:100%; max-width:320px; padding:25px 22px 22px; text-align:center; border:2px solid var(--ink); border-radius:20px; background:var(--cream); box-shadow:5px 6px 0 var(--ink); }
+.card h2 { margin:9px 0 12px; font-size:27px; line-height:1.16; letter-spacing:-.06em; }
+.card > p:not(.label) { margin:0 0 18px; font-size:13px; line-height:1.75; font-weight:700; }
+.crab-mark { height:63px; display:flex; justify-content:center; align-items:center; gap:5px; }
+.crab-mark b { display:grid; place-items:center; width:57px; height:49px; border:2px solid var(--ink); border-radius:48% 48% 42% 42%; background:var(--red); color:white; font-size:24px; }
+.crab-mark i { width:27px; height:27px; border:5px solid var(--red); border-bottom-color:transparent; border-radius:50%; transform:rotate(-22deg); }
+.crab-mark i:last-child { transform:rotate(22deg); }
+.howto { display:flex; align-items:center; justify-content:center; gap:13px; margin:16px 0 11px; padding:10px; border:1.5px dashed var(--ink); border-radius:12px; }
+.howto span { color:var(--red); font-size:22px; font-weight:900; }
+.howto b { font-size:12px; }
+.primary { width:100%; min-height:53px; border:2px solid var(--ink); border-radius:13px; background:var(--ink); color:white; font-weight:900; box-shadow:0 4px 0 #d2aa63; }
+.primary:active { transform:translateY(3px); box-shadow:0 1px 0 #d2aa63; }
+.result-crab { margin:4px 0 0; font-size:72px; line-height:1; filter:drop-shadow(0 4px 0 rgba(21,45,57,.18)); }
+.result-crab.fail { filter:grayscale(1); transform:rotate(180deg); }
+footer { display:flex; justify-content:space-between; padding:13px 3px 0; font-size:9px; font-weight:900; letter-spacing:.13em; }
+@media (max-height:700px) { .app{padding-top:9px}.app>header{padding-bottom:7px}h1{font-size:27px}.game-shell{min-height:510px}footer{display:none}.card{padding-top:19px}.crab-mark{height:54px} }
