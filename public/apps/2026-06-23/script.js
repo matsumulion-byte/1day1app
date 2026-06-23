@@ -1,6 +1,7 @@
 (()=>{
 "use strict";
 const canvas=document.querySelector("#game"),ctx=canvas.getContext("2d"),W=390,H=600,TOP=66;
+const gameShell=document.querySelector(".game-shell");
 const $=s=>document.querySelector(s);
 const ui={event:$("#eventValue"),kind:$("#eventKind"),name:$("#eventName"),total:$("#totalValue"),start:$("#startScreen"),brief:$("#briefScreen"),mini:$("#eventResultScreen"),final:$("#finalScreen"),briefNum:$("#briefNumber"),briefIcon:$("#briefIcon"),briefTitle:$("#briefTitle"),briefText:$("#briefText"),medal:$("#eventMedal"),miniTitle:$("#eventResultTitle"),miniText:$("#eventResultText"),finalScore:$("#finalScore"),rankMark:$("#rankMark"),rankTitle:$("#rankTitle"),rankCopy:$("#rankCopy"),list:$("#resultList"),sound:$("#soundButton")};
 const LIFT_TARGET=.82;
@@ -52,5 +53,7 @@ function tone(freq,dur,type="sine",vol=.03){if(state.muted)return;const A=window
 function share(){const text=`指先オリンピックで${total()}点！「${ui.rankTitle.textContent}」でした。\n#指先オリンピック #1日1アプリ`;if(navigator.share)navigator.share({title:"指先オリンピック",text}).catch(()=>{});else navigator.clipboard?.writeText(text).then(()=>{ui.rankCopy.textContent="結果をコピーしました！"})}
 canvas.addEventListener("pointerdown",e=>{e.preventDefault();canvas.setPointerCapture?.(e.pointerId);down(e)});canvas.addEventListener("pointermove",move);canvas.addEventListener("pointerup",up);canvas.addEventListener("pointercancel",up);
 canvas.addEventListener("dblclick",e=>e.preventDefault());
+let lastTouchEnd=0;
+gameShell.addEventListener("touchend",e=>{const now=Date.now();if(now-lastTouchEnd<320)e.preventDefault();lastTouchEnd=now},{passive:false});
 $("#startButton").addEventListener("click",begin);$("#playButton").addEventListener("click",play);$("#nextButton").addEventListener("click",next);$("#retryButton").addEventListener("click",begin);$("#shareButton").addEventListener("click",share);ui.sound.addEventListener("click",()=>{state.muted=!state.muted;ui.sound.classList.toggle("off",state.muted);ui.sound.textContent=state.muted?"×":"♪"});draw();
 })();
