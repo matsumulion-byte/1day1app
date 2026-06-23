@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#f3e9d0">
+  <meta name="description" content="指一本で5種目に挑む、6月23日の10秒ミニゲーム大会。">
+  <title>指先オリンピック</title>
+  <link rel="stylesheet" href="/apps/2026-06-23/styles.css">
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <p class="date">6.23 / OLYMPIC DAY</p>
+        <h1>指先<br><span>オリンピック</span></h1>
+      </div>
+      <button id="soundButton" class="round-button" type="button" aria-label="サウンド切替">♪</button>
+    </header>
+
+    <section class="game-shell">
+      <div class="scoreboard">
+        <div><span>種目</span><strong id="eventValue">0</strong><small>/ 5</small></div>
+        <div class="event"><span id="eventKind">FINGER GAMES</span><strong id="eventName">開会式</strong></div>
+        <div class="points"><span>総合点</span><strong id="totalValue">0</strong></div>
+      </div>
+      <canvas id="game" width="390" height="600" aria-label="指先オリンピックのゲーム画面"></canvas>
+
+      <section id="startScreen" class="overlay">
+        <div class="card start-card">
+          <div class="torch" aria-hidden="true"><i></i><b></b></div>
+          <p class="eyebrow">5 EVENTS / ONE FINGER</p>
+          <h2>指一本で、<br>世界をめざせ。</h2>
+          <p>連打、長押し、タイミング、スワイプ、左右タップ。<br>5種目の合計点で称号が決まる。</p>
+          <button id="startButton" class="primary" type="button">開会する</button>
+        </div>
+      </section>
+
+      <section id="briefScreen" class="overlay hidden">
+        <div class="card brief-card">
+          <p id="briefNumber" class="eyebrow">EVENT 1 / 5</p>
+          <div id="briefIcon" class="event-icon">☝</div>
+          <h2 id="briefTitle">連打100m</h2>
+          <p id="briefText">画面をできるだけ速く連打。</p>
+          <button id="playButton" class="primary" type="button">位置について</button>
+        </div>
+      </section>
+
+      <section id="eventResultScreen" class="overlay hidden">
+        <div class="card mini-result">
+          <p class="eyebrow">EVENT COMPLETE</p>
+          <div id="eventMedal" class="mini-medal">A</div>
+          <h2 id="eventResultTitle">好記録！</h2>
+          <p id="eventResultText">0点</p>
+          <button id="nextButton" class="primary" type="button">次の種目へ</button>
+        </div>
+      </section>
+
+      <section id="finalScreen" class="overlay final-overlay hidden">
+        <div id="resultCard" class="card final-card">
+          <p class="eyebrow">OFFICIAL RESULT / 6.23</p>
+          <div id="rankMark" class="rank-mark">町</div>
+          <h2 id="rankTitle">町内級アスリート</h2>
+          <div class="final-score"><strong id="finalScore">0</strong><span> / 5000点</span></div>
+          <div id="resultList" class="result-list"></div>
+          <p id="rankCopy" class="rank-copy">参加することに意義がありすぎる。</p>
+          <div class="final-actions">
+            <button id="shareButton" class="secondary" type="button">結果をシェア</button>
+            <button id="retryButton" class="primary" type="button">再挑戦</button>
+          </div>
+        </div>
+      </section>
+    </section>
+    <footer><span>5 EVENTS</span><span>50 SECONDS</span><span>ONE FINGER</span></footer>
+  </main>
+  <script src="/apps/2026-06-23/script.js"></script>
+</body>
+</html>
