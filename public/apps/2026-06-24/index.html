@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#071b20">
+  <meta name="description" content="6月24日・UFOの日。夜空の怪しい光を撮影して正体を見抜く、未確認飛行物体監視ゲーム。">
+  <title>UFO、たぶん来てる。</title>
+  <link rel="stylesheet" href="/apps/2026-06-24/styles.css">
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <p class="date">6.24 / WORLD UFO DAY</p>
+        <h1>UFO、<span>たぶん来てる。</span></h1>
+      </div>
+      <button id="soundButton" class="icon-button" type="button" aria-label="サウンド切替">♪</button>
+    </header>
+
+    <section class="console">
+      <div class="statusbar">
+        <div><span>CASE</span><strong id="caseValue">00</strong><small>/08</small></div>
+        <div class="status"><i id="statusLamp"></i><span id="statusText">STANDBY</span></div>
+        <div><span>SCORE</span><strong id="scoreValue">0000</strong></div>
+      </div>
+
+      <div class="screen-wrap">
+        <canvas id="sky" width="390" height="570" aria-label="未確認飛行物体の監視画面"></canvas>
+        <div class="scanlines" aria-hidden="true"></div>
+
+        <section id="startScreen" class="overlay">
+          <div class="card start-card">
+            <div class="dish" aria-hidden="true"><b></b><i></i></div>
+            <p class="eyebrow">極秘 / 第三種監視業務</p>
+            <h2>夜空の異常を、<br>見逃すな。</h2>
+            <p>怪しい物体をタップして撮影。<br>拡大写真から、その正体を報告せよ。</p>
+            <button id="startButton" class="primary" type="button">監視を開始</button>
+          </div>
+        </section>
+
+        <section id="briefScreen" class="overlay hidden">
+          <div class="transmission">
+            <p class="eyebrow">INCOMING REPORT</p>
+            <div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <h2 id="briefPlace">奥多摩方面</h2>
+            <p id="briefReport">「星じゃない光が動いています」</p>
+            <button id="watchButton" class="primary" type="button">回線を接続</button>
+          </div>
+        </section>
+
+        <section id="judgeScreen" class="overlay judge hidden">
+          <div class="evidence">
+            <div class="photo-frame"><canvas id="photo" width="300" height="200"></canvas><span>ENHANCE × 400</span></div>
+            <p id="photoQuality" class="quality">撮影精度 82%</p>
+            <h2>これは何だ？</h2>
+            <div class="choices">
+              <button data-answer="ufo">未確認飛行物体</button>
+              <button data-answer="aircraft">航空機</button>
+              <button data-answer="living">鳥・生物</button>
+              <button data-answer="debris">漂流物</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="resultScreen" class="overlay hidden">
+          <div class="card result-card">
+            <p id="resultStamp" class="stamp">IDENTIFIED</p>
+            <div id="resultIcon" class="result-icon">?</div>
+            <h2 id="resultTitle">正解</h2>
+            <p id="resultText">ただの気球でした。</p>
+            <strong id="earnedValue" class="earned">+000</strong>
+            <button id="nextButton" class="primary" type="button">次の通報へ</button>
+          </div>
+        </section>
+
+        <section id="finalScreen" class="overlay final hidden">
+          <div class="card final-card">
+            <p class="eyebrow">監視業務終了 / 6.24</p>
+            <div id="rankSeal" class="rank-seal">信</div>
+            <h2 id="rankTitle">信頼できる観測員</h2>
+            <p class="final-score"><strong id="finalScore">0</strong><span> PTS</span></p>
+            <div class="report-grid"><div><b id="correctValue">0</b><span>正確な報告</span></div><div><b id="ufoValue">0</b><span>UFO発見</span></div></div>
+            <p id="rankCopy">あなたの報告書は、たぶん政府に届いた。</p>
+            <div class="actions"><button id="shareButton" class="secondary" type="button">報告を共有</button><button id="retryButton" class="primary" type="button">再監視</button></div>
+          </div>
+        </section>
+      </div>
+      <footer><span>第24夜空監視所</span><span>REC ●</span><span>JAPAN / 2026</span></footer>
+    </section>
+  </main>
+  <script src="/apps/2026-06-24/script.js"></script>
+</body>
+</html>
