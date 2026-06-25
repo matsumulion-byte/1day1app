@@ -57,7 +57,7 @@ async function main() {
   }
 
   const html = fs.readFileSync(indexPath, "utf8");
-  const expectedPrefix = `/apps/${date}/`;
+  const expectedPrefixes = [`/apps/${date}/`, `/${date}/`];
 
   if (html.includes('href="./') || html.includes('src="./')) {
     fail("index.html contains relative ./ asset paths");
@@ -68,12 +68,15 @@ async function main() {
     .filter((ref) => !ref.startsWith("http") && !ref.startsWith("#"));
 
   for (const ref of assetRefs) {
-    if (!ref.startsWith(expectedPrefix)) {
-      fail(`asset path must start with ${expectedPrefix}: ${ref}`);
+    if (!expectedPrefixes.some((prefix) => ref.startsWith(prefix))) {
+      fail(`asset path must start with ${expectedPrefixes.join(" or ")}: ${ref}`);
       continue;
     }
 
-    const localPath = path.join(root, "public", ref.replace(/^\//, ""));
+    const appRelativeRef = ref.startsWith(`/${date}/`)
+      ? `/apps${ref}`
+      : ref;
+    const localPath = path.join(root, "public", appRelativeRef.replace(/^\//, ""));
     if (!exists(localPath)) {
       fail(`asset does not exist: ${ref}`);
     }

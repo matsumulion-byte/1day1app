@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#050506">
+  <meta name="description" content="限界角度が見えないまま、松村をギリギリまで倒して耐えるチキンレース。">
+  <title>松グラビティ</title>
+  <link rel="stylesheet" href="/2026-06-25/styles.css">
+</head>
+<body>
+  <main class="app">
+    <section class="stage ready" aria-label="松グラビティ ゲームステージ">
+      <div class="light light-left"></div>
+      <div class="light light-right"></div>
+      <div class="backlights" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+
+      <header class="hud">
+        <div>
+          <p>6.25 / ZERO GRAVITY</p>
+          <h1>松グラビティ</h1>
+        </div>
+        <div class="scorebox">
+          <span>BEST</span>
+          <strong id="best">0</strong>
+        </div>
+      </header>
+
+      <div class="arena" id="arena">
+        <div class="danger-rings" id="rings"></div>
+        <div class="countdown" id="countdown"></div>
+        <div class="crack" id="crack">...</div>
+        <div class="shadow" id="shadow"></div>
+        <div class="leaner" id="leaner">
+          <img src="/2026-06-25/assets/matsugravity.png" alt="前傾姿勢の松村">
+        </div>
+        <div class="toe-line"></div>
+      </div>
+
+      <section class="panel" id="panel">
+        <p class="kicker" id="kicker">HOLD TO LEAN</p>
+        <h2 id="title">限界は、<br>知らされない。</h2>
+        <p id="message">押している間だけ前へ倒れる。離した瞬間、そこで3秒耐えたら勝ち。</p>
+        <button id="mainButton" type="button">スタート</button>
+      </section>
+
+      <div class="actionbar" id="actionbar">
+        <button id="leanButton" type="button">攻める</button>
+        <p id="hint">離すとHOLD判定</p>
+      </div>
+    </section>
+  </main>
+  <script src="/2026-06-25/script.js"></script>
+</body>
+</html>
