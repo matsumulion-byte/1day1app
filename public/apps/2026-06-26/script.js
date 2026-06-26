@@ -191,6 +191,7 @@
 
     moveTop(state.player, dt);
     moveTop(state.cpu, dt);
+    openingAssist(dt);
     collide();
     keepOrOut(state.player);
     keepOrOut(state.cpu);
@@ -206,6 +207,49 @@
     }
 
     if (state.firstHit && state.roundTime > 13.5) {
+      finish(state.player.energy >= state.cpu.energy ? "player" : "cpu", "judge");
+      return;
+    }
+
+    resolveStalemate();
+  }
+
+  function openingAssist(dt) {
+    if (state.firstHit || !state.player.launched || !state.cpu.launched || state.roundTime < 2.2) return;
+    const pull = Math.min(1, (state.roundTime - 2.2) / 4.5);
+    nudgeToward(state.player, state.cpu, dt * pull * .9);
+    nudgeToward(state.cpu, state.player, dt * pull * .9);
+  }
+
+  function nudgeToward(top, target, amount) {
+    if (!top.alive || !target.alive) return;
+    const dx = target.x - top.x;
+    const dy = target.y - top.y;
+    const dist = Math.max(1, length(dx, dy));
+    const speed = Math.max(120, length(top.vx, top.vy));
+    const blend = Math.min(.22, amount);
+    top.vx = top.vx * (1 - blend) + (dx / dist) * speed * blend;
+    top.vy = top.vy * (1 - blend) + (dy / dist) * speed * blend;
+  }
+
+  function resolveStalemate() {
+    if (state.firstHit || !state.player.launched || !state.cpu.launched) return;
+    const playerSpeed = length(state.player.vx, state.player.vy);
+    const cpuSpeed = length(state.cpu.vx, state.cpu.vy);
+    const stalled = state.roundTime > 4.5 && playerSpeed < 42 && cpuSpeed < 42;
+    const longMiss = state.roundTime > 11;
+
+    if (stalled && !longMiss) {
+      const n = normalize({ x: state.cpu.x - state.player.x, y: state.cpu.y - state.player.y });
+      state.player.vx += n.x * 46;
+      state.player.vy += n.y * 46;
+      state.cpu.vx -= n.x * 46;
+      state.cpu.vy -= n.y * 46;
+      ui.status.textContent = "停滞。風が吹き返して再接近。";
+      return;
+    }
+
+    if (longMiss) {
       finish(state.player.energy >= state.cpu.energy ? "player" : "cpu", "judge");
     }
   }
@@ -230,7 +274,16 @@
     top.y += top.vy * dt;
     top.vx *= top.grip;
     top.vy *= top.grip;
-    const speed = length(top.vx, top.vy);
+    let speed = length(top.vx, top.vy);
+    if (!state.firstHit && top.launched && speed < 36) {
+      const opponent = top.kind === "player" ? state.cpu : state.player;
+      const keep = speed > 2
+        ? { x: top.vx / speed, y: top.vy / speed }
+        : normalize({ x: opponent.x - top.x, y: opponent.y - top.y });
+      top.vx = keep.x * 36;
+      top.vy = keep.y * 36;
+      speed = 36;
+    }
     const staminaDrain = state.firstHit ? 9.5 : 2.2;
     top.energy = Math.max(0, top.energy - dt * (staminaDrain + speed * .018));
     top.spinRate *= Math.max(0, 1 - dt * (state.firstHit ? .2 : .08));
@@ -363,7 +416,7 @@
     const toPlayer = normalize({ x: target.x - c.x, y: target.y - c.y });
     const flank = normalize({ x: -toPlayer.y, y: toPlayer.x });
     const flankSide = diff.id === "storm" ? -1 : (Math.random() > .5 ? 1 : -1);
-    const aimBlend = diff.id === "storm" ? .62 : 1;
+    const aimBlend = diff.id === "storm" ? .76 : 1;
     const n = normalize({
       x: toPlayer.x * aimBlend + flank.x * (1 - aimBlend) * flankSide,
       y: toPlayer.y * aimBlend + flank.y * (1 - aimBlend) * flankSide
