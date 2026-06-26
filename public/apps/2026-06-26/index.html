@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#071019">
+  <meta name="description" content="台風を引っぱって放ち、CPU台風と円形フィールドで押し合うベーゴマ風ミニゲーム。">
+  <title>台風ベーゴマ VS</title>
+  <link rel="stylesheet" href="/apps/2026-06-26/styles.css">
+</head>
+<body>
+  <main class="app">
+    <section class="game-shell" aria-label="台風ベーゴマ VS">
+      <header class="topbar">
+        <div>
+          <p>6.26 / SPIN ARENA</p>
+          <h1>台風ベーゴマ VS</h1>
+        </div>
+        <div class="scorebox" aria-live="polite">
+          <span>ROUND</span>
+          <strong id="roundLabel">1</strong>
+        </div>
+      </header>
+
+      <div class="meters" aria-label="スコア">
+        <div class="meter player-meter"><span>PLAYER</span><strong id="playerWins">0</strong></div>
+        <div class="meter cpu-meter"><span>CPU</span><strong id="cpuWins">0</strong></div>
+      </div>
+
+      <div class="typhoon-card typhoon-card-a" aria-hidden="true">
+        <strong>台風7号</strong>
+        <span>中心気圧　950 hPa</span>
+        <span>最大風速　45 m/s</span>
+        <span>進路　北北東 20km/h</span>
+      </div>
+
+      <div class="typhoon-card typhoon-card-b" aria-hidden="true">
+        <strong>台風8号</strong>
+        <span>中心気圧　965 hPa</span>
+        <span>最大風速　35 m/s</span>
+        <span>進路　北北西 25km/h</span>
+      </div>
+
+      <canvas id="arena" aria-label="台風ベーゴマのフィールド"></canvas>
+
+      <section class="setup" id="setup">
+        <button id="startButton" type="button">対戦する</button>
+      </section>
+
+      <div class="launch-panel" id="launchPanel">
+        <p id="statusText">自分の台風を引っぱって離す</p>
+        <button id="gustButton" type="button" aria-label="突風">GUST</button>
+        <button id="resetButton" type="button" aria-label="リセット">RESET</button>
+      </div>
+
+      <div class="result" id="result" aria-live="polite">
+        <p id="resultKicker">RESULT</p>
+        <h2 id="resultTitle">勝負あり</h2>
+        <button id="nextButton" type="button">次のラウンド</button>
+      </div>
+    </section>
+  </main>
+  <script src="/apps/2026-06-26/script.js"></script>
+</body>
+</html>
