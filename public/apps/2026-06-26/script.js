@@ -27,7 +27,7 @@
     { id: "storm", label: "さいきょう", aim: .2, power: 1.06, delay: .34, energy: 100 }
   ];
 
-  const playerType = { id: "power", label: "低気圧", radius: 30, mass: 1.08, power: 1.08, grip: .994, chaos: .05, energy: 110, gust: 1 };
+  const playerType = { id: "power", label: "低気圧", radius: 30, mass: 1.02, power: 1.04, grip: .994, chaos: .05, energy: 100, gust: 1 };
 
   const types = [
     { id: "tropical", label: "熱帯低気圧", radius: 27, mass: .9, power: .78, grip: .991, chaos: .035, energy: 62 },
@@ -247,14 +247,20 @@
     }
   }
 
+  function hitSkillBonus(top) {
+    return top.kind === "player"
+      ? 1 + top.launchQuality * .48
+      : .92 + top.launchQuality * .58;
+  }
+
   function guideOpeningHit(dt) {
     if (state.firstHit || !state.player.launched || !state.cpu.launched) return;
     pullTowardOpponent(state.player, state.cpu, dt);
     pullTowardOpponent(state.cpu, state.player, dt);
-    const missTimer = Math.max(0, state.roundTime - 1.7);
+    const missTimer = Math.max(0, state.roundTime - 2.4);
     if (missTimer > 0) {
-      pullTowardOpponent(state.player, state.cpu, dt * (1 + missTimer * 1.2));
-      pullTowardOpponent(state.cpu, state.player, dt * (1 + missTimer * 1.2));
+      pullTowardOpponent(state.player, state.cpu, dt * (1 + missTimer * .45));
+      pullTowardOpponent(state.cpu, state.player, dt * (1 + missTimer * .45));
     }
   }
 
@@ -264,9 +270,9 @@
     const dy = opponent.y - top.y;
     const dist = Math.max(1, length(dx, dy));
     const closing = (top.vx * dx + top.vy * dy) / dist;
-    const speed = Math.max(320, length(top.vx, top.vy));
-    const blend = state.roundTime > 1.1 ? .42 : .24;
-    const assist = Math.max(240, 520 - closing) * 3.2 / top.mass;
+    const speed = Math.max(280, length(top.vx, top.vy));
+    const blend = state.roundTime > 1.5 ? .26 : .14;
+    const assist = Math.max(140, 420 - closing) * 2.2 / top.mass;
     top.vx = top.vx * (1 - blend) + (dx / dist) * speed * blend;
     top.vy = top.vy * (1 - blend) + (dy / dist) * speed * blend;
     top.vx += (dx / dist) * assist * dt;
@@ -298,14 +304,15 @@
     const aAttack = Math.max(0, -(a.vx * nx + a.vy * ny)) * a.mass * a.hitBonus;
     const bAttack = Math.max(0, b.vx * nx + b.vy * ny) * b.mass * b.hitBonus;
     const baseDamage = Math.min(12, impulse * .026);
-    const playerSkillBonus = a.kind === "player" ? 1 + a.launchQuality * .75 : 1;
-    const cpuSkillBonus = b.kind === "cpu" ? .86 + b.launchQuality * .42 : 1;
-    a.energy = Math.max(0, a.energy - (baseDamage + bAttack * .012 * cpuSkillBonus) / a.mass);
-    b.energy = Math.max(0, b.energy - (baseDamage + aAttack * .014 * playerSkillBonus) / b.mass);
-    a.vx -= nx * impulse * b.mass;
-    a.vy -= ny * impulse * b.mass;
-    b.vx += nx * impulse * a.mass;
-    b.vy += ny * impulse * a.mass;
+    a.energy = Math.max(0, a.energy - (baseDamage + bAttack * .013 * hitSkillBonus(b)) / a.mass);
+    b.energy = Math.max(0, b.energy - (baseDamage + aAttack * .013 * hitSkillBonus(a)) / b.mass);
+    const stormCpu = state.difficulty.id === "storm";
+    const knockPlayer = a.kind === "player" && stormCpu ? 1.12 : 1;
+    const knockCpu = b.kind === "cpu" && stormCpu ? .9 : 1;
+    a.vx -= nx * impulse * b.mass * knockPlayer;
+    a.vy -= ny * impulse * b.mass * knockPlayer;
+    b.vx += nx * impulse * a.mass * knockCpu;
+    b.vy += ny * impulse * a.mass * knockCpu;
     a.spinRate *= -1.01;
     b.spinRate *= -1.01;
     state.shake = .8;
@@ -350,10 +357,10 @@
     const aimDot = Math.max(0, n.x * targetBias.x + n.y * targetBias.y);
     const pullRatio = pull / maxPull;
     top.launchQuality = Math.max(.15, Math.min(1, aimDot * .68 + pullRatio * .32));
-    top.hitBonus = .86 + top.launchQuality * .52;
+    top.hitBonus = .84 + top.launchQuality * .44;
     const power = (240 + pull * 4.15) * top.power;
-    top.vx = (n.x * .7 + targetBias.x * .3) * power;
-    top.vy = (n.y * .7 + targetBias.y * .3) * power;
+    top.vx = (n.x * .84 + targetBias.x * .16) * power;
+    top.vy = (n.y * .84 + targetBias.y * .16) * power;
     top.launched = true;
     if (top.kind === "player") state.cpuTimer = Math.min(state.cpuTimer, .18);
     burst(top.x, top.y, 10);
@@ -368,16 +375,17 @@
     const p = state.player;
     const diff = state.difficulty;
     const target = p.launched ? { x: p.x + p.vx * .14, y: p.y + p.vy * .14 } : p;
-    const miss = diff.aim * state.arenaRadius;
+    const miss = (diff.id === "storm" ? .12 : diff.aim) * state.arenaRadius;
     const tx = target.x + (Math.random() - .5) * miss;
     const ty = target.y + (Math.random() - .5) * miss;
     const n = normalize({ x: tx - c.x, y: ty - c.y });
-    const ringBias = diff.id === "hard" || diff.id === "storm" ? .09 : 0;
+    const ringBias = diff.id === "hard" || diff.id === "storm" ? .11 : 0;
     const tangent = normalize({ x: -(c.y - state.center.y), y: c.x - state.center.x });
-    c.launchQuality = Math.max(.28, 1 - diff.aim * .42);
-    c.hitBonus = .82 + c.launchQuality * .34;
-    c.vx = (n.x + tangent.x * ringBias) * 390 * diff.power * c.power;
-    c.vy = (n.y + tangent.y * ringBias) * 390 * diff.power * c.power;
+    c.launchQuality = Math.max(diff.id === "storm" ? .8 : .28, 1 - diff.aim * .42);
+    c.hitBonus = .88 + c.launchQuality * .5;
+    const launchPower = 404 * diff.power * c.power * (diff.id === "storm" ? 1.08 : 1);
+    c.vx = (n.x + tangent.x * ringBias) * launchPower;
+    c.vy = (n.y + tangent.y * ringBias) * launchPower;
     c.launched = true;
     burst(c.x, c.y, 10);
     ui.status.textContent = "押し出せ。外に出たら負け。";
