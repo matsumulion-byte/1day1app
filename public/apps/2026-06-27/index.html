@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>どっちが本物の松村？</title>
+  <link rel="stylesheet" href="/apps/2026-06-27/styles.css" />
+</head>
+<body>
+  <main class="app">
+    <section id="start" class="screen active">
+      <h1>どっちが本物の松村？</h1>
+      <p>
+        AIで少しだけ加工した松村と、<br>
+        本物の松村がいます。
+      </p>
+      <p class="strong">本物だと思う方を選んでください。</p>
+      <button id="startBtn">スタート</button>
+    </section>
+
+    <section id="quiz" class="screen">
+      <h1>どっちが本物の松村？</h1>
+
+      <div class="cards">
+        <button class="card" data-index="0">
+          <img id="img0" src="" alt="Aの松村">
+          <span>A</span>
+        </button>
+
+        <button class="card" data-index="1">
+          <img id="img1" src="" alt="Bの松村">
+          <span>B</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="result" class="screen">
+      <h1 id="resultTitle"></h1>
+      <p id="resultText"></p>
+
+      <div class="answerBox">
+        <p id="answerText"></p>
+      </div>
+
+      <button id="retryBtn">もう一回</button>
+    </section>
+  </main>
+
+  <script src="/apps/2026-06-27/script.js"></script>
+</body>
+</html>
