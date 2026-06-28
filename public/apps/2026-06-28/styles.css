@@ -196,16 +196,19 @@ button:disabled {
 
 .market {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   flex: 1;
   align-content: center;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
   padding-bottom: 120px;
 }
 
 .card {
   position: relative;
-  min-height: 258px;
+  min-height: 280px;
   padding: 14px 12px 12px;
   border-radius: 24px;
   background: rgba(255, 250, 235, 0.93);

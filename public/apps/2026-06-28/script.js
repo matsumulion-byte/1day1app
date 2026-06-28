@@ -21,10 +21,6 @@ const resultSmallEl = document.getElementById("resultSmall");
 const masterItems = [
   { id: "castella", name: "カステラ", icon: "🍰", base: 130, tags: ["長崎", "菓子"] },
   { id: "coffee", name: "コーヒー", icon: "☕", base: 160, tags: ["横浜", "流行"] },
-  { id: "hat", name: "シルクハット", icon: "🎩", base: 230, tags: ["文明開化", "服飾"] },
-  { id: "telescope", name: "望遠鏡", icon: "🔭", base: 270, tags: ["舶来", "機械"] },
-  { id: "perfume", name: "香水", icon: "🧴", base: 190, tags: ["舶来", "贅沢"] },
-  { id: "squid", name: "イカ", icon: "🦑", base: 90, tags: ["函館", "海産"] },
   { id: "chikuwa", name: "ちくわ", icon: "🟫", base: 45, tags: ["謎"] },
   { id: "matsumura", name: "松村", icon: "👓", base: 300, tags: ["在庫過多"] },
 ];
@@ -39,26 +35,6 @@ const newsPool = [
     text: "長崎でカステラが話題。甘いものはだいたい売れます。",
     target: "castella",
     multiplier: 1.45
-  },
-  {
-    text: "函館でイカが暴騰。海がざわついています。",
-    target: "squid",
-    multiplier: 1.85
-  },
-  {
-    text: "文明開化ブーム。シルクハットをかぶれば偉そうに見えます。",
-    target: "hat",
-    multiplier: 1.6
-  },
-  {
-    text: "遠くを見たい人が急増。望遠鏡が売れています。",
-    target: "telescope",
-    multiplier: 1.45
-  },
-  {
-    text: "香水ブーム到来。港が急にいい匂いです。",
-    target: "perfume",
-    multiplier: 1.5
   },
   {
     text: "ちくわを舶来品と言い張る商人が現れました。",
@@ -268,7 +244,6 @@ function labelItem(id) {
 
   if (item.id === "chikuwa") creditLoss = 22;
   if (item.id === "matsumura") creditLoss = 30;
-  if (item.id === "squid") creditLoss = 14;
 
   credit = Math.max(0, credit - creditLoss);
 
