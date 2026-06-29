@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zebra Beat Crossing</title>
+  <link rel="stylesheet" href="/apps/2026-06-29/styles.css" />
+</head>
+<body>
+  <main class="app">
+    <section id="startScreen" class="screen active">
+      <div class="intro">
+        <p class="kicker">6.29 Beat Day</p>
+        <h1>Zebra Beat<br>Crossing</h1>
+        <p class="lead">
+          4人組バンドを横断歩道の向こうへ。<br>
+          流れてくるビートが白線に重なったら叩こう。
+        </p>
+        <div class="keys" aria-label="操作キー">
+          <span>A</span><span>S</span><span>D</span><span>F</span>
+        </div>
+        <button id="startBtn">演奏開始</button>
+      </div>
+    </section>
+
+    <section id="resultScreen" class="screen">
+      <div class="intro">
+        <p id="resultRank" class="kicker">RESULT</p>
+        <h2 id="resultTitle">アンコール待ち</h2>
+        <p id="resultScore" class="scoreText">0</p>
+        <p id="resultMessage" class="lead"></p>
+        <button id="retryBtn">もう一度渡る</button>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="Zebra Beat Crossing game">
+      <div class="skyline">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+
+      <div class="hud">
+        <div>
+          <small>Score</small>
+          <strong id="score">0</strong>
+        </div>
+        <div>
+          <small>Combo</small>
+          <strong id="combo">0</strong>
+        </div>
+        <div>
+          <small>Time</small>
+          <strong id="time">45</strong>
+        </div>
+        <div>
+          <small>Fans</small>
+          <strong id="fans">100%</strong>
+        </div>
+      </div>
+
+      <div class="road">
+        <div class="walkers" id="walkers"></div>
+        <div class="hitLine"></div>
+        <div class="lanes" id="lanes"></div>
+      </div>
+
+      <div id="message" class="message">A S D F で白線ジャストを狙え</div>
+      <div class="touchPads" id="touchPads"></div>
+    </section>
+  </main>
+
+  <script src="/apps/2026-06-29/script.js"></script>
+</body>
+</html>
