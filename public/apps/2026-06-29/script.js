@@ -10,6 +10,7 @@ const lanesEl = document.getElementById("lanes");
 const walkersEl = document.getElementById("walkers");
 const messageEl = document.getElementById("message");
 const touchPadsEl = document.getElementById("touchPads");
+const bgmEl = document.getElementById("bgm");
 const resultRankEl = document.getElementById("resultRank");
 const resultTitleEl = document.getElementById("resultTitle");
 const resultScoreEl = document.getElementById("resultScore");
@@ -37,6 +38,62 @@ let beatTimer = 0;
 let countdownTimer = null;
 let messageTimer = null;
 let animationId = null;
+let audioUnlocked = false;
+
+async function unlockAudio() {
+  if (!bgmEl) return;
+
+  bgmEl.volume = 0.72;
+  if (bgmEl.readyState === 0) {
+    bgmEl.load();
+  }
+
+  try {
+    await bgmEl.play();
+    audioUnlocked = true;
+  } catch {
+    audioUnlocked = false;
+  }
+
+  if (!running) {
+    bgmEl.pause();
+    bgmEl.currentTime = 0;
+  }
+}
+
+function playBgm() {
+  if (!bgmEl) return;
+
+  bgmEl.volume = 0.72;
+  bgmEl.currentTime = 0;
+  if (bgmEl.readyState === 0) {
+    bgmEl.load();
+  }
+  const playPromise = bgmEl.play();
+
+  if (playPromise) {
+    playPromise.then(() => {
+      audioUnlocked = true;
+    }).catch(() => {
+      audioUnlocked = false;
+      setMessage("音が止まっていたら、もう一度タップして開始");
+    });
+  }
+}
+
+function stopBgm() {
+  if (!bgmEl) return;
+
+  bgmEl.pause();
+  bgmEl.currentTime = 0;
+}
+
+function resumeBgmIfNeeded() {
+  if (!running || !audioUnlocked || !bgmEl || !bgmEl.paused) return;
+  bgmEl.play().catch(() => {
+    audioUnlocked = false;
+  });
+}
 
 function buildStage() {
   lanesEl.innerHTML = "";
@@ -75,6 +132,8 @@ function buildStage() {
 }
 
 function startGame() {
+  if (running) return;
+
   clearInterval(countdownTimer);
   cancelAnimationFrame(animationId);
 
@@ -94,6 +153,7 @@ function startGame() {
   startScreen.classList.remove("active");
   resultScreen.classList.remove("active");
   setMessage("白線に重なった瞬間を叩こう");
+  playBgm();
   renderHud();
   updateWalkers();
 
@@ -175,6 +235,7 @@ function updateNotes(delta) {
 function hitLane(laneIndex) {
   if (!running) return;
 
+  resumeBgmIfNeeded();
   flash(laneIndex);
   const roadHeight = lanesEl.getBoundingClientRect().height;
   const target = roadHeight - 72;
@@ -259,6 +320,7 @@ function endGame() {
   running = false;
   clearInterval(countdownTimer);
   cancelAnimationFrame(animationId);
+  stopBgm();
 
   const crossed = progress >= 100;
   const finalScore = Math.round(score + fans * 8 + bestCombo * 22 + Math.max(0, time) * 35);
@@ -287,7 +349,12 @@ function endGame() {
   resultScreen.classList.add("active");
 }
 
+document.addEventListener("pointerdown", unlockAudio, { passive: true });
+document.addEventListener("touchstart", unlockAudio, { passive: true });
+
 document.addEventListener("keydown", event => {
+  unlockAudio();
+
   const index = keys.indexOf(event.key.toLowerCase());
   if (index >= 0) {
     event.preventDefault();
@@ -300,6 +367,14 @@ document.addEventListener("keydown", event => {
   }
 });
 
+startBtn.addEventListener("pointerdown", event => {
+  event.preventDefault();
+  startGame();
+});
+retryBtn.addEventListener("pointerdown", event => {
+  event.preventDefault();
+  startGame();
+});
 startBtn.addEventListener("click", startGame);
 retryBtn.addEventListener("click", startGame);
 buildStage();

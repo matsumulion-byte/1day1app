@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Zebra Beat Crossing</title>
+  <title>横断歩道リズムゲーム</title>
   <link rel="stylesheet" href="/apps/2026-06-29/styles.css" />
 </head>
 <body>
@@ -11,7 +11,7 @@
     <section id="startScreen" class="screen active">
       <div class="intro">
         <p class="kicker">6.29 Beat Day</p>
-        <h1>Zebra Beat<br>Crossing</h1>
+        <h1>横断歩道<br>リズムゲーム</h1>
         <p class="lead">
           4人組バンドを横断歩道の向こうへ。<br>
           流れてくるビートが白線に重なったら叩こう。
@@ -66,6 +66,8 @@
       <div id="message" class="message">A S D F で白線ジャストを狙え</div>
       <div class="touchPads" id="touchPads"></div>
     </section>
+
+    <audio id="bgm" src="/apps/2026-06-29/cross-the-street.mp3" preload="auto" loop></audio>
   </main>
 
   <script src="/apps/2026-06-29/script.js"></script>
