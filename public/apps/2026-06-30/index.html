@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>上半期 勝手にベスト5</title>
+  <link rel="stylesheet" href="/apps/2026-06-30/styles.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="stage">
+      <div class="ticker" aria-hidden="true">
+        <span>H1 BEST FIVE AWARDS</span>
+        <span>STRICTLY RANDOM</span>
+        <span>2026 FIRST HALF</span>
+      </div>
+
+      <div class="spotlight spotlightLeft"></div>
+      <div class="spotlight spotlightRight"></div>
+
+      <section class="hero" aria-labelledby="title">
+        <p class="kicker">2026.06.30</p>
+        <h1 id="title">上半期<br>勝手にベスト5</h1>
+        <p class="lead">覚えのない半年を、厳正なるルーレットで発表します。</p>
+        <button id="startBtn" class="startBtn">発表する</button>
+      </section>
+
+      <section class="ceremony" aria-live="polite">
+        <div class="current">
+          <div id="rankLabel" class="rankLabel">待機中</div>
+          <div id="drumroll" class="drumroll">審査員が記憶の隙間を確認しています</div>
+          <div id="winnerText" class="winnerText">ボタンを押すと勝手に始まります</div>
+        </div>
+
+        <ol id="resultList" class="resultList" aria-label="発表されたベスト5"></ol>
+      </section>
+
+      <div id="confetti" class="confetti" aria-hidden="true"></div>
+    </section>
+  </main>
+
+  <script src="/apps/2026-06-30/script.js"></script>
+</body>
+</html>
