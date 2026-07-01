@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>適当ナビ - ナビの日</title>
+    <link rel="stylesheet" href="/apps/2026-07-01/styles.css" />
+  </head>
+  <body>
+    <main class="app" aria-label="適当ナビ">
+      <section class="map-panel">
+        <div class="map" aria-hidden="true">
+          <div class="road road-main"></div>
+          <div class="road road-cross"></div>
+          <div class="road road-soft"></div>
+          <div class="block block-a"></div>
+          <div class="block block-b"></div>
+          <div class="block block-c"></div>
+          <div class="block block-d"></div>
+          <div class="pin pin-start"></div>
+          <div class="pin pin-now"></div>
+          <div class="route-dot dot-1"></div>
+          <div class="route-dot dot-2"></div>
+          <div class="route-dot dot-3"></div>
+          <div class="route-dot dot-4"></div>
+          <div class="compass">N</div>
+        </div>
+      </section>
+
+      <section class="console-panel">
+        <div class="status-row">
+          <p class="date">7/1 ナビの日</p>
+          <p class="signal" id="signal">GPS: たぶん正常</p>
+        </div>
+
+        <h1>適当ナビ</h1>
+        <p class="subtitle">目的地は不明です。雰囲気で案内します。</p>
+
+        <div class="screen" role="status" aria-live="polite">
+          <p class="distance" id="distance">あと 240m くらい</p>
+          <p class="direction" id="direction">次の角を、気持ち左です。</p>
+          <p class="note" id="note">迷ってはいません。道がこちらに合わせていないだけです。</p>
+        </div>
+
+        <div class="controls" aria-label="ナビ操作">
+          <button class="primary" id="reroute" type="button">再探索</button>
+          <button id="mode" type="button">雑さ変更</button>
+        </div>
+
+        <div class="ticker" id="ticker">周辺情報: さっき見た店はもう通り過ぎました</div>
+      </section>
+    </main>
+
+    <script src="/apps/2026-07-01/script.js"></script>
+  </body>
+</html>
