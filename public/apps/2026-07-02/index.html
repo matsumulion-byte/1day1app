@@ -26,12 +26,18 @@
       <canvas id="game" width="900" height="560" aria-label="Octopus treasure game"></canvas>
 
       <div class="controls">
-        <button id="leftBtn" type="button" aria-label="move left">←</button>
+        <button id="leftBtn" type="button" aria-label="move left">
+          <span>←</span>
+          <small>船へ戻る</small>
+        </button>
         <button id="startBtn" type="button">START</button>
-        <button id="rightBtn" type="button" aria-label="move right">→</button>
+        <button id="rightBtn" type="button" aria-label="move right">
+          <span>→</span>
+          <small>巣へ進む</small>
+        </button>
       </div>
 
-      <p id="message" class="message">タコ足のすき間を読んで、真珠を盗んで帰れ。</p>
+      <p id="message" class="message">右でタコの巣へ進む。真珠を取ったら左で船へ戻る。</p>
     </section>
   </main>
 

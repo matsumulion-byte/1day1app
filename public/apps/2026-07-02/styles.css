@@ -78,6 +78,24 @@ h1 {
   cursor: pointer;
 }
 
+.controls button {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  padding: 6px 12px;
+}
+
+.controls button span {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.controls button small {
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .iconBtn:active,
 .controls button:active {
   transform: translateY(4px);
@@ -127,6 +145,7 @@ canvas {
   flex: 1;
   color: #fffdf2;
   background: var(--red);
+  font-size: 20px;
 }
 
 .message {

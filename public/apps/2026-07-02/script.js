@@ -60,7 +60,7 @@ function resetGame() {
   carrying = false;
   startedAt = performance.now();
   invincibleUntil = performance.now() + 900;
-  messageEl.textContent = "真珠まで進んで、左端の船まで持ち帰れ。";
+  messageEl.textContent = "右で巣へ進む。真珠を取ったら左で船へ戻る。";
   startBtn.textContent = "RESTART";
   updateHud();
   cancelAnimationFrame(raf);
@@ -86,6 +86,12 @@ function move(dir) {
   pos = Math.max(0, Math.min(diverX.length - 1, pos + dir));
   invincibleUntil = Math.max(invincibleUntil, now + 170);
   beep(dir > 0 ? 520 : 390, 0.035);
+
+  if (!carrying && pos > 0 && pos < diverX.length - 1) {
+    messageEl.textContent = "そのまま右へ。巣の前まで行くと真珠を取る。";
+  } else if (carrying && pos > 0) {
+    messageEl.textContent = "真珠を持った。左へ戻れ。ここからタコ足に捕まる。";
+  }
 
   if (pos === diverX.length - 1 && !carrying) {
     carrying = true;
@@ -157,6 +163,21 @@ function drawLCDBackground() {
     ctx.lineTo(795, y + 50);
     ctx.stroke();
   }
+
+  ctx.fillStyle = "#10251f";
+  ctx.font = "900 18px monospace";
+  ctx.fillText("GO RIGHT: STEAL", 118, 530);
+  ctx.fillText("GO LEFT: ESCAPE", 540, 530);
+  ctx.beginPath();
+  ctx.moveTo(296, 524);
+  ctx.lineTo(382, 524);
+  ctx.lineTo(364, 512);
+  ctx.moveTo(604, 524);
+  ctx.lineTo(518, 524);
+  ctx.lineTo(536, 512);
+  ctx.strokeStyle = "#10251f";
+  ctx.lineWidth = 7;
+  ctx.stroke();
 }
 
 function drawCave() {
