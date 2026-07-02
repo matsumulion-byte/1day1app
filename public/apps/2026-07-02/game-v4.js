@@ -11,7 +11,7 @@ const soundBtn = document.getElementById("soundBtn");
 
 const W = canvas.width;
 const H = canvas.height;
-const laneX = [166, 288, 410, 532, 654];
+const laneX = [96, 222, 348, 474, 600, 726];
 const playerY = 438;
 const dangerY = 382;
 const keys = new Set();
@@ -20,8 +20,8 @@ let state = "ready";
 let score = 0;
 let pearls = 0;
 let lives = 3;
-let lane = 2;
-let pearlLane = 4;
+let lane = 0;
+let pearlLane = 5;
 let lastMove = 0;
 let invincibleUntil = 0;
 let startedAt = 0;
@@ -29,14 +29,19 @@ let raf = 0;
 let audioOn = false;
 let audioCtx = null;
 
-const tentacles = laneX.map((x, index) => ({
+const tentacles = laneX.slice(1).map((x, index) => ({
   x,
+  lane: index + 1,
   phase: index * 1.17,
   speed: 0.92 + index * 0.11,
   reach: 0,
   warning: false,
   danger: false,
 }));
+
+function tentacleForLane(index) {
+  return tentacles.find((tentacle) => tentacle.lane === index);
+}
 
 function beep(freq, length = 0.06, type = "square") {
   if (!audioOn) return;
@@ -57,11 +62,11 @@ function resetGame() {
   score = 0;
   pearls = 0;
   lives = 3;
-  lane = 2;
-  pearlLane = 4;
+  lane = 0;
+  pearlLane = 5;
   startedAt = performance.now();
   invincibleUntil = performance.now() + 1000;
-  messageEl.textContent = "左右で逃げる。上から降りる触手の真下にいるとアウト。";
+  messageEl.textContent = "左端のHOMEは安全。右へ出て真珠を取り、触手の真下を避ける。";
   startBtn.textContent = "RESTART";
   updateHud();
   cancelAnimationFrame(raf);
@@ -84,15 +89,19 @@ function move(dir) {
   if (now - lastMove < 105) return;
   lastMove = now;
   lane = Math.max(0, Math.min(laneX.length - 1, lane + dir));
-  messageEl.textContent = tentacles[lane].danger
-    ? "そこは触手の真下。すぐ横へ逃げろ。"
-    : "赤い列を避けて、光っている真珠の列へ。";
+  const tentacle = tentacleForLane(lane);
+  messageEl.textContent = lane === 0
+    ? "HOMEは安全。触手が引いた列を選んで外へ出る。"
+    : tentacle?.danger
+      ? "そこは触手の真下。HOMEか隣のSAFE列へ逃げろ。"
+      : "赤い列を避けて、光っている真珠の列へ。";
   beep(dir > 0 ? 520 : 390, 0.035);
   collectPearl();
 }
 
 function collectPearl() {
-  if (lane !== pearlLane || tentacles[lane].danger) return;
+  const tentacle = tentacleForLane(lane);
+  if (lane !== pearlLane || tentacle?.danger) return;
 
   pearls += 1;
   score += 300 + pearls * 40;
@@ -104,13 +113,12 @@ function collectPearl() {
 
 function pickPearlLane() {
   const safeLanes = tentacles
-    .map((tentacle, index) => ({ tentacle, index }))
-    .filter(({ tentacle, index }) => !tentacle.danger && index !== lane)
-    .map(({ index }) => index);
+    .filter((tentacle) => !tentacle.danger && tentacle.lane !== lane)
+    .map((tentacle) => tentacle.lane);
   if (safeLanes.length) {
     return safeLanes[Math.floor(Math.random() * safeLanes.length)];
   }
-  return (lane + 2) % laneX.length;
+  return Math.max(1, (lane + 2) % laneX.length);
 }
 
 function updateTentacles(now) {
@@ -119,8 +127,8 @@ function updateTentacles(now) {
     const aggression = Math.min(1.35, 1 + pearls * 0.035);
     const wave = (Math.sin(t * tentacle.speed * aggression + tentacle.phase) + 1) / 2;
     const snap = Math.pow(wave, 1.85);
-    tentacle.reach = 80 + snap * (330 + index * 9);
-    const tip = 54 + tentacle.reach;
+    tentacle.reach = 38 + snap * (300 + index * 10);
+    const tip = 112 + tentacle.reach;
     tentacle.warning = tip > dangerY - 72;
     tentacle.danger = tip > dangerY;
   });
@@ -128,9 +136,9 @@ function updateTentacles(now) {
 
 function crash(now) {
   lives -= 1;
-  lane = 2;
+  lane = 0;
   invincibleUntil = now + 1200;
-  messageEl.textContent = lives > 0 ? "捕まった。赤い列の真下にいた。" : "GAME OVER / タコの勝ち";
+  messageEl.textContent = lives > 0 ? "捕まった。HOMEからやり直し。" : "GAME OVER / タコの勝ち";
   beep(120, 0.18, "sawtooth");
   updateHud();
 
@@ -153,32 +161,51 @@ function drawLCDBackground() {
   ctx.strokeStyle = "#10251f";
   ctx.lineWidth = 5;
   ctx.beginPath();
-  ctx.moveTo(92, dangerY);
-  ctx.lineTo(716, dangerY);
+  ctx.moveTo(154, dangerY);
+  ctx.lineTo(772, dangerY);
   ctx.stroke();
   ctx.font = "900 13px monospace";
   ctx.fillText("HIT LINE", 724, dangerY + 4);
 }
 
 function drawOctopus() {
+  const headX = W / 2;
   ctx.fillStyle = "#10251f";
   ctx.beginPath();
-  ctx.arc(W / 2, 64, 74, 0, Math.PI * 2);
+  ctx.ellipse(headX, 70, 90, 66, 0, 0, Math.PI * 2);
   ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(headX - 66, 118, 24, 0, Math.PI * 2);
+  ctx.arc(headX - 24, 130, 24, 0, Math.PI * 2);
+  ctx.arc(headX + 24, 130, 24, 0, Math.PI * 2);
+  ctx.arc(headX + 66, 118, 24, 0, Math.PI * 2);
+  ctx.fill();
+
   ctx.fillStyle = "#b7caa4";
   ctx.beginPath();
-  ctx.arc(W / 2 - 24, 45, 13, 0, Math.PI * 2);
-  ctx.arc(W / 2 + 24, 45, 13, 0, Math.PI * 2);
+  ctx.arc(headX - 30, 54, 15, 0, Math.PI * 2);
+  ctx.arc(headX + 30, 54, 15, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = "#10251f";
-  ctx.fillRect(W / 2 - 26, 40, 7, 12);
-  ctx.fillRect(W / 2 + 22, 40, 7, 12);
+  ctx.fillRect(headX - 33, 48, 8, 13);
+  ctx.fillRect(headX + 27, 48, 8, 13);
+  ctx.strokeStyle = "#b7caa4";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.arc(headX, 80, 20, 0.15 * Math.PI, 0.85 * Math.PI);
+  ctx.stroke();
+  ctx.fillStyle = "#10251f";
+  ctx.font = "900 16px monospace";
+  ctx.fillText("OCTOPUS", headX - 36, 146);
 }
 
 function drawLanes() {
   laneX.forEach((x, index) => {
-    const tentacle = tentacles[index];
-    ctx.fillStyle = tentacle.danger
+    const tentacle = tentacleForLane(index);
+    ctx.fillStyle = index === 0
+      ? "rgba(16, 37, 31, 0.2)"
+      : tentacle.danger
       ? "rgba(214, 75, 60, 0.28)"
       : tentacle.warning
         ? "rgba(227, 174, 61, 0.22)"
@@ -189,25 +216,26 @@ function drawLanes() {
     ctx.lineWidth = index === lane ? 5 : 2;
     ctx.strokeRect(x - 42, 124, 84, 350);
 
-    ctx.fillStyle = tentacle.danger ? "#d64b3c" : "#10251f";
+    ctx.fillStyle = tentacle?.danger ? "#d64b3c" : "#10251f";
     ctx.font = "900 15px monospace";
-    ctx.fillText(tentacle.danger ? "DANGER" : tentacle.warning ? "WAIT" : "SAFE", x - 30, 116);
+    const label = index === 0 ? "HOME" : tentacle.danger ? "DANGER" : tentacle.warning ? "WAIT" : "SAFE";
+    ctx.fillText(label, x - 30, 116);
   });
 }
 
 function drawTentacles() {
   ctx.lineCap = "round";
   tentacles.forEach((tentacle, index) => {
-    const tip = 54 + tentacle.reach;
+    const tip = 112 + tentacle.reach;
     ctx.strokeStyle = tentacle.danger ? "#d64b3c" : "#10251f";
     ctx.lineWidth = 22;
     ctx.beginPath();
-    ctx.moveTo(tentacle.x, 54);
-    ctx.quadraticCurveTo(tentacle.x + Math.sin(tentacle.phase) * 22, tip / 2, tentacle.x, tip);
+    ctx.moveTo(tentacle.x, 112);
+    ctx.quadraticCurveTo(tentacle.x + Math.sin(tentacle.phase) * 22, (112 + tip) / 2, tentacle.x, tip);
     ctx.stroke();
 
     ctx.fillStyle = "#b7caa4";
-    for (let y = 96; y < tip - 18; y += 42) {
+    for (let y = 144; y < tip - 18; y += 42) {
       ctx.beginPath();
       ctx.arc(tentacle.x + (index % 2 ? 9 : -9), y, 6, 0, Math.PI * 2);
       ctx.fill();
@@ -275,7 +303,8 @@ function loop(now) {
 
   if (state === "playing") {
     score += pearls;
-    if (now > invincibleUntil && tentacles[lane].danger) {
+    const tentacle = tentacleForLane(lane);
+    if (now > invincibleUntil && tentacle?.danger) {
       crash(now);
     }
     collectPearl();
