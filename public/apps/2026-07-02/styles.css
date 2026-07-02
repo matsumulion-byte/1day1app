@@ -1,0 +1,164 @@
+:root {
+  --ink: #10251f;
+  --lcd: #b7caa4;
+  --lcd-dark: #5a6d55;
+  --case: #f2e9d7;
+  --red: #d64b3c;
+  --blue: #0f5d78;
+  --gold: #e3ae3d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  background:
+    radial-gradient(circle at 18% 14%, rgba(227, 174, 61, 0.22), transparent 28%),
+    linear-gradient(135deg, #0d3f4a 0%, #1b6d77 45%, #f2d07c 100%);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+.shell {
+  width: min(980px, 100%);
+}
+
+.cabinet {
+  width: 100%;
+  border: 5px solid #17312e;
+  border-radius: 8px;
+  background: var(--case);
+  box-shadow: 0 18px 0 #0b272a, 0 30px 55px rgba(0, 0, 0, 0.28);
+  padding: clamp(14px, 3vw, 28px);
+}
+
+.topbar,
+.scoreboard,
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kicker {
+  margin: 0 0 5px;
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(32px, 7vw, 70px);
+  line-height: 0.9;
+  letter-spacing: 0;
+}
+
+.iconBtn,
+.controls button {
+  min-width: 60px;
+  min-height: 48px;
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  background: #fff8e9;
+  box-shadow: 0 5px 0 var(--ink);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.iconBtn:active,
+.controls button:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--ink);
+}
+
+.scoreboard {
+  margin: 20px 0 14px;
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  background: #fbf4e1;
+  padding: 10px 12px;
+}
+
+.scoreboard div {
+  display: grid;
+  gap: 4px;
+  min-width: 80px;
+}
+
+.scoreboard span {
+  font-size: 11px;
+  color: var(--blue);
+  font-weight: 900;
+}
+
+.scoreboard strong {
+  font-size: clamp(18px, 4vw, 30px);
+  line-height: 1;
+}
+
+canvas {
+  width: 100%;
+  aspect-ratio: 900 / 560;
+  display: block;
+  border: 5px solid var(--ink);
+  border-radius: 8px;
+  background: var(--lcd);
+  image-rendering: pixelated;
+}
+
+.controls {
+  margin-top: 18px;
+}
+
+#startBtn {
+  flex: 1;
+  color: #fffdf2;
+  background: var(--red);
+}
+
+.message {
+  min-height: 24px;
+  margin: 16px 0 0;
+  color: #163832;
+  font-size: clamp(13px, 2.8vw, 16px);
+  font-weight: 800;
+  text-align: center;
+}
+
+@media (max-width: 620px) {
+  body {
+    padding: 10px;
+  }
+
+  .cabinet {
+    padding: 12px;
+  }
+
+  .scoreboard {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .scoreboard div {
+    min-width: 0;
+  }
+
+  .iconBtn,
+  .controls button {
+    min-width: 56px;
+    min-height: 46px;
+  }
+}

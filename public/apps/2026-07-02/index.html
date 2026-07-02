@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OCTO LOOT</title>
+  <link rel="stylesheet" href="/apps/2026-07-02/styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <section class="cabinet" aria-label="OCTO LOOT game">
+      <header class="topbar">
+        <div>
+          <p class="kicker">JULY 2 / OCTOPUS DAY</p>
+          <h1>OCTO LOOT</h1>
+        </div>
+        <button id="soundBtn" class="iconBtn" type="button" aria-label="sound">♪</button>
+      </header>
+
+      <div class="scoreboard">
+        <div><span>SCORE</span><strong id="score">0000</strong></div>
+        <div><span>PEARLS</span><strong id="pearls">0</strong></div>
+        <div><span>LIVES</span><strong id="lives">3</strong></div>
+      </div>
+
+      <canvas id="game" width="900" height="560" aria-label="Octopus treasure game"></canvas>
+
+      <div class="controls">
+        <button id="leftBtn" type="button" aria-label="move left">←</button>
+        <button id="startBtn" type="button">START</button>
+        <button id="rightBtn" type="button" aria-label="move right">→</button>
+      </div>
+
+      <p id="message" class="message">タコ足のすき間を読んで、真珠を盗んで帰れ。</p>
+    </section>
+  </main>
+
+  <script src="/apps/2026-07-02/script.js"></script>
+</body>
+</html>
