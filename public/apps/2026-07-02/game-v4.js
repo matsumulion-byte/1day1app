@@ -9,6 +9,9 @@ const leftBtn = document.getElementById("leftBtn");
 const rightBtn = document.getElementById("rightBtn");
 const soundBtn = document.getElementById("soundBtn");
 
+document.addEventListener("dblclick", (event) => event.preventDefault(), { passive: false });
+document.addEventListener("gesturestart", (event) => event.preventDefault(), { passive: false });
+
 const W = canvas.width;
 const H = canvas.height;
 const laneX = [96, 222, 348, 474, 600, 726];
