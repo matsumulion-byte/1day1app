@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>七味調合所</title>
+  <link rel="stylesheet" href="/apps/2026-07-03/styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="mast">
+      <div>
+        <p class="date">2026.07.03 / 7 flavors</p>
+        <h1>七味調合所</h1>
+      </div>
+      <div class="counter" aria-live="polite">
+        <span id="selectedCount">0</span><small>/7</small>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <aside class="ingredients" aria-label="素材を選ぶ">
+        <div class="sectionHead">
+          <h2>素材棚</h2>
+          <button id="randomBtn" type="button">おまかせ7種</button>
+        </div>
+        <div id="ingredientGrid" class="ingredientGrid"></div>
+      </aside>
+
+      <section class="blend" aria-label="配合を決める">
+        <div class="sectionHead">
+          <h2>調合台</h2>
+          <div id="totalBadge" class="totalBadge">0%</div>
+        </div>
+
+        <div id="emptyState" class="emptyState">
+          素材棚から7つ選ぶと、ここで配合を調整できます。
+        </div>
+
+        <div id="blendRows" class="blendRows"></div>
+
+        <div class="actions">
+          <button id="balanceBtn" type="button">100%に整える</button>
+          <button id="clearBtn" type="button">空にする</button>
+        </div>
+      </section>
+
+      <section class="labelArea" aria-label="できあがり">
+        <div id="labelCard" class="labelCard">
+          <p class="labelNo">No. 073</p>
+          <h2 id="blendName">七つを選ぶ</h2>
+          <p id="blendNote">実際の七味系素材だけで、自分の配合を作る。</p>
+          <div id="flavorBars" class="flavorBars"></div>
+          <div id="recipeList" class="recipeList"></div>
+          <p id="sourceNote" class="sourceNote">素材は公開されている七味系商品の原材料をもとにしています。配合比は創作です。</p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/apps/2026-07-03/script.js"></script>
+</body>
+</html>

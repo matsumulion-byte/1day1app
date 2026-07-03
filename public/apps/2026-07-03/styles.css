@@ -1,0 +1,415 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+  background: #f7f1e8;
+  color: #251914;
+}
+
+button {
+  font: inherit;
+}
+
+.app {
+  min-height: 100vh;
+  padding: 18px;
+  background:
+    linear-gradient(90deg, rgba(90, 38, 24, 0.08) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(90, 38, 24, 0.08) 1px, transparent 1px),
+    #f7f1e8;
+  background-size: 34px 34px;
+}
+
+.mast {
+  max-width: 1280px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 2px;
+}
+
+.date {
+  margin: 0 0 6px;
+  color: #8a3121;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(34px, 7vw, 76px);
+  line-height: 0.95;
+}
+
+.counter {
+  min-width: 104px;
+  height: 78px;
+  border: 2px solid #251914;
+  background: #fffaf2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 6px 6px 0 #251914;
+}
+
+.counter span {
+  font-size: 42px;
+  font-weight: 950;
+}
+
+.counter small {
+  align-self: end;
+  margin: 0 0 17px 3px;
+  font-weight: 900;
+}
+
+.workspace {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(360px, 1.2fr) minmax(320px, 0.95fr) minmax(320px, 0.9fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.ingredients,
+.blend,
+.labelCard {
+  border: 2px solid #251914;
+  background: rgba(255, 250, 242, 0.96);
+  box-shadow: 6px 6px 0 #251914;
+}
+
+.ingredients,
+.blend {
+  padding: 14px;
+}
+
+.sectionHead {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.sectionHead h2 {
+  font-size: 20px;
+}
+
+.sectionHead button,
+.actions button {
+  min-height: 38px;
+  border: 2px solid #251914;
+  background: #251914;
+  color: #fffaf2;
+  padding: 7px 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.ingredientGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.ingredient {
+  min-height: 118px;
+  padding: 10px;
+  border: 2px solid rgba(37, 25, 20, 0.22);
+  background: #fffdf8;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.ingredient:hover {
+  transform: translateY(-2px);
+  border-color: #8a3121;
+}
+
+.ingredient.selected {
+  background: #ffe0bf;
+  border-color: #251914;
+}
+
+.ingredient:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.ingredientTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ingredientName {
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.kind {
+  padding: 3px 7px;
+  border: 1px solid rgba(37, 25, 20, 0.28);
+  color: #8a3121;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.source {
+  color: #5d5047;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.emptyState {
+  min-height: 160px;
+  border: 2px dashed rgba(37, 25, 20, 0.28);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  color: #7b6d61;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 850;
+  line-height: 1.6;
+}
+
+.blendRows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.blendRow {
+  border: 2px solid rgba(37, 25, 20, 0.18);
+  background: #fffdf8;
+  padding: 9px;
+}
+
+.rowTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 7px;
+  font-weight: 950;
+}
+
+.rowTop button {
+  width: 28px;
+  height: 28px;
+  border: 2px solid #251914;
+  background: #fff;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.rowControl {
+  display: grid;
+  grid-template-columns: 1fr 54px;
+  gap: 9px;
+  align-items: center;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: #b63a22;
+}
+
+.percent {
+  text-align: right;
+  font-weight: 950;
+}
+
+.totalBadge {
+  min-width: 70px;
+  padding: 6px 10px;
+  border: 2px solid #251914;
+  background: #f2c94c;
+  text-align: center;
+  font-weight: 950;
+}
+
+.totalBadge.ok {
+  background: #8bcf8b;
+}
+
+.totalBadge.bad {
+  background: #f49c8b;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.actions button:nth-child(2) {
+  background: #fffaf2;
+  color: #251914;
+}
+
+.labelCard {
+  min-height: 620px;
+  padding: 18px;
+  position: sticky;
+  top: 18px;
+  background:
+    linear-gradient(180deg, #fffaf2 0%, #fffaf2 68%, #251914 68%, #251914 100%);
+}
+
+.labelNo {
+  color: #8a3121;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.labelCard h2 {
+  margin-top: 8px;
+  font-size: clamp(29px, 4vw, 46px);
+  line-height: 1;
+}
+
+#blendNote {
+  min-height: 54px;
+  margin-top: 12px;
+  color: #5d5047;
+  font-weight: 850;
+  line-height: 1.55;
+}
+
+.flavorBars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.flavor {
+  display: grid;
+  grid-template-columns: 58px 1fr 36px;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.track {
+  height: 12px;
+  border: 1px solid #251914;
+  background: #efe3d2;
+}
+
+.fill {
+  height: 100%;
+  background: #b63a22;
+}
+
+.recipeList {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 2px solid rgba(37, 25, 20, 0.18);
+  display: grid;
+  gap: 7px;
+}
+
+.recipeItem {
+  display: grid;
+  grid-template-columns: 1fr 52px;
+  gap: 8px;
+  font-weight: 900;
+}
+
+.sourceNote {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+  color: #fffaf2;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.55;
+}
+
+@media (max-width: 1080px) {
+  .workspace {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .labelArea {
+    grid-column: 1 / -1;
+  }
+
+  .labelCard {
+    min-height: 440px;
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .app {
+    padding: 12px;
+  }
+
+  .mast {
+    align-items: center;
+  }
+
+  .counter {
+    min-width: 78px;
+    height: 62px;
+    box-shadow: 4px 4px 0 #251914;
+  }
+
+  .counter span {
+    font-size: 32px;
+  }
+
+  .counter small {
+    margin-bottom: 12px;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .ingredientGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .ingredients,
+  .blend,
+  .labelCard {
+    box-shadow: 4px 4px 0 #251914;
+  }
+
+  .labelCard {
+    min-height: 520px;
+  }
+}
