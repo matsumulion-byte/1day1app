@@ -275,12 +275,11 @@ input[type="range"] {
 }
 
 .labelCard {
-  min-height: 620px;
+  min-height: 0;
   padding: 18px;
   position: sticky;
   top: 18px;
-  background:
-    linear-gradient(180deg, #fffaf2 0%, #fffaf2 68%, #251914 68%, #251914 100%);
+  background: #fffaf2;
 }
 
 .labelNo {
@@ -347,10 +346,9 @@ input[type="range"] {
 }
 
 .sourceNote {
-  position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: 18px;
+  margin-top: 18px;
+  padding: 10px 12px;
+  background: #251914;
   color: #fffaf2;
   font-size: 12px;
   font-weight: 750;
@@ -367,7 +365,6 @@ input[type="range"] {
   }
 
   .labelCard {
-    min-height: 440px;
     position: static;
   }
 }
@@ -409,7 +406,4 @@ input[type="range"] {
     box-shadow: 4px 4px 0 #251914;
   }
 
-  .labelCard {
-    min-height: 520px;
-  }
 }
