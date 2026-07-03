@@ -7,13 +7,6 @@ const ingredients = [
     score: { hot: 95, aroma: 30, numbing: 4, savory: 18, sweet: 4, wild: 18 },
   },
   {
-    id: "birdseye",
-    name: "バードアイ唐辛子",
-    kind: "辛味",
-    source: "BIRD EYE",
-    score: { hot: 100, aroma: 22, numbing: 2, savory: 10, sweet: 2, wild: 42 },
-  },
-  {
     id: "sansho",
     name: "山椒",
     kind: "しびれ",
@@ -157,6 +150,15 @@ const flavorLabels = [
   ["wild", "個性"],
 ];
 
+const flavorWeights = {
+  hot: 1.16,
+  aroma: 0.74,
+  numbing: 1.22,
+  savory: 1.08,
+  sweet: 1.28,
+  wild: 1.15,
+};
+
 const selected = new Map();
 
 const ingredientGrid = document.getElementById("ingredientGrid");
@@ -221,7 +223,7 @@ function renderLabel() {
 
   blendName.textContent = ready ? makeName(scores, entries) : entries.length === 7 ? "配合を100%へ" : "七つを選ぶ";
   blendNote.textContent = ready
-    ? makeNote(scores)
+    ? makeNote(scores, entries)
     : entries.length === 7
       ? "合計が100%になると、ラベルと味の輪郭が完成します。"
       : "実際の七味系素材だけで、自分の配合を作る。";
@@ -265,30 +267,83 @@ function calculateScores(entries, total) {
 }
 
 function makeName(scores, entries) {
-  const topScore = flavorLabels
-    .map(([key, label]) => ({ key, label, value: scores[key] }))
-    .sort((a, b) => b.value - a.value)[0];
   const main = [...entries].sort((a, b) => b.percent - a.percent)[0];
+  const accent = [...entries]
+    .filter((entry) => entry.id !== main.id)
+    .sort((a, b) => b.percent - a.percent)[0];
+  const topScore = getLeadFlavor(scores, main);
   const prefixes = {
     hot: "火口",
-    aroma: "香雲",
-    numbing: "雷鳴",
-    savory: "旨潮",
-    sweet: "夕橙",
+    aroma: "香房",
+    numbing: "雷山椒",
+    savory: "旨蔵",
+    sweet: "甘橙",
     wild: "異国",
   };
-  return `${prefixes[topScore.key]} ${main.name}七味`;
+  const joins = {
+    hot: "焦がし",
+    aroma: "香る",
+    numbing: "しびれ",
+    savory: "だし",
+    sweet: "まろみ",
+    wild: "旅路",
+  };
+  return `${prefixes[topScore.key]} ${main.name}${accent ? `と${accent.name}` : ""}の${joins[topScore.key]}七味`;
 }
 
-function makeNote(scores) {
-  const top = flavorLabels
-    .map(([key, label]) => ({ label, value: scores[key] }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 2)
-    .map((item) => item.label)
-    .join("と");
+function makeNote(scores, entries) {
+  const ranked = getRankedFlavors(scores);
+  const main = [...entries].sort((a, b) => b.percent - a.percent)[0];
+  const lead = getLeadFlavor(scores, main);
+  const second = ranked.find((item) => item.key !== lead.key) || ranked[1];
+  const top = [lead, second].map((item) => item.label).join("と");
+  const uses = {
+    hot: "焼き鳥、豚汁、麻婆豆腐",
+    aroma: "うどん、蕎麦、湯豆腐",
+    numbing: "ラーメン、餃子、唐揚げ",
+    savory: "味噌汁、炒めもの、卵かけご飯",
+    sweet: "かぼちゃ煮、焼き餅、照り焼き",
+    wild: "カレー、ラム、焼き野菜",
+  };
 
-  return `${top}が前に出る配合。うどん、焼き鳥、味噌汁、炒めもののどこに振るかを考えたくなる一瓶です。`;
+  return `${top}が前に出る配合。まず合わせたいのは、${uses[lead.key]}あたりです。`;
+}
+
+function getLeadFlavor(scores, main) {
+  const ranked = getRankedFlavors(scores);
+  if (!main || main.percent < 24) return ranked[0];
+
+  const keyByKind = {
+    "辛味": "hot",
+    "しびれ": "numbing",
+    "旨み": "savory",
+    "香ばしさ": "savory",
+    "香辛料": "wild",
+    "酸味": "wild",
+    "香味": "aroma",
+    "香り": "aroma",
+    "香草": "aroma",
+  };
+  const leadKey = keyByKind[main.kind] || ranked[0].key;
+  const flavor = flavorLabels.find(([key]) => key === leadKey);
+
+  return {
+    key: flavor[0],
+    label: flavor[1],
+    value: scores[flavor[0]],
+    signal: scores[flavor[0]] * flavorWeights[flavor[0]],
+  };
+}
+
+function getRankedFlavors(scores) {
+  return flavorLabels
+    .map(([key, label]) => ({
+      key,
+      label,
+      value: scores[key],
+      signal: scores[key] * flavorWeights[key],
+    }))
+    .sort((a, b) => b.signal - a.signal);
 }
 
 function toggleIngredient(id) {
@@ -312,6 +367,34 @@ function normalizeToHundred() {
     entry.percent = base + (rest > 0 ? 1 : 0);
     rest -= 1;
   });
+}
+
+function applyRandomComposition(entries) {
+  const weights = entries.map((_, index) => {
+    if (index === 0) return 28 + Math.random() * 22;
+    if (index === 1) return 16 + Math.random() * 12;
+    return 4 + Math.random() * 15;
+  });
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  let used = 0;
+
+  entries.forEach((entry, index) => {
+    if (index === entries.length - 1) {
+      entry.percent = Math.max(1, 100 - used);
+      return;
+    }
+    entry.percent = Math.max(1, Math.round((weights[index] / totalWeight) * 100));
+    used += entry.percent;
+  });
+
+  let diff = 100 - getTotal();
+  while (diff !== 0) {
+    const candidates = entries.filter((entry) => diff > 0 || entry.percent > 1);
+    if (!candidates.length) break;
+    const target = candidates[Math.floor(Math.random() * candidates.length)];
+    target.percent += diff > 0 ? 1 : -1;
+    diff += diff > 0 ? -1 : 1;
+  }
 }
 
 function balanceFromCurrent() {
@@ -345,11 +428,12 @@ function balanceFromCurrent() {
 
 function setRandomSeven() {
   selected.clear();
-  [...ingredients]
+  const picks = [...ingredients]
     .sort(() => Math.random() - 0.5)
-    .slice(0, 7)
-    .forEach((item) => selected.set(item.id, { ...item, percent: 14 }));
-  normalizeToHundred();
+    .slice(0, 7);
+
+  picks.forEach((item) => selected.set(item.id, { ...item, percent: 14 }));
+  applyRandomComposition(Array.from(selected.values()));
   render();
 }
 
