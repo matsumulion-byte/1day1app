@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Firework Sequencer</title>
+  <link rel="stylesheet" href="/apps/2026-07-04/styles.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="skyPanel" aria-label="花火を配置する夜空">
+      <canvas id="skyCanvas"></canvas>
+      <div class="topBar">
+        <div>
+          <p class="date">Jul 4</p>
+          <h1>Firework<br>Sequencer</h1>
+        </div>
+        <div class="counter"><span id="countText">0</span>/12</div>
+      </div>
+      <div id="hint" class="hint">夜空をタップして花火を置く</div>
+    </section>
+
+    <section class="controls" aria-label="花火シーケンサー操作">
+      <div class="toolbar">
+        <button id="playBtn" class="primary" type="button">再生</button>
+        <button id="randomBtn" type="button">自動</button>
+        <button id="undoBtn" type="button">戻す</button>
+        <button id="clearBtn" type="button">消す</button>
+      </div>
+
+      <div class="field">
+        <label for="timingRange">打ち上げ順</label>
+        <div class="rangeRow">
+          <input id="timingRange" type="range" min="1" max="8" value="1" />
+          <output id="timingText" for="timingRange">1</output>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>色</label>
+        <div id="colorSwatches" class="swatches"></div>
+      </div>
+
+      <div class="field">
+        <label>サイズ</label>
+        <div class="segmented">
+          <button class="sizeBtn active" data-size="small" type="button">S</button>
+          <button class="sizeBtn" data-size="medium" type="button">M</button>
+          <button class="sizeBtn" data-size="large" type="button">L</button>
+        </div>
+      </div>
+
+      <ol id="timeline" class="timeline" aria-label="配置した花火の順番"></ol>
+    </section>
+  </main>
+
+  <script src="/apps/2026-07-04/script.js"></script>
+</body>
+</html>
