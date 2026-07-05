@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>勝手に二刀流メーカー</title>
+  <link rel="stylesheet" href="/apps/2026-07-05/styles.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="scoreboard" aria-label="勝手にあなたの二刀流を決めますメーカー">
+      <div class="topline">
+        <span>Jul 5</span>
+        <span>Two-Way Roulette</span>
+      </div>
+
+      <h1>勝手にあなたの<br>二刀流を決めます</h1>
+
+      <div class="slots" aria-live="polite">
+        <article class="slot">
+          <p class="slotLabel">第一刀</p>
+          <div class="reel" id="firstReel">ベーコンポテトパイで口を火傷する</div>
+        </article>
+
+        <div class="versus" aria-hidden="true">×</div>
+
+        <article class="slot">
+          <p class="slotLabel">第二刀</p>
+          <div class="reel" id="secondReel">内弁慶</div>
+        </article>
+      </div>
+
+      <p class="result" id="resultText">
+        あなたは「ベーコンポテトパイで口を火傷する」と「内弁慶」の二刀流です
+      </p>
+
+      <button class="drawButton" id="drawButton" type="button">二刀流を決める</button>
+    </section>
+  </main>
+
+  <script src="/apps/2026-07-05/script.js"></script>
+</body>
+</html>
