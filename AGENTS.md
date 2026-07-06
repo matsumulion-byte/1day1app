@@ -78,3 +78,17 @@ npm run build
 Also verify the app in a browser at mobile size. For games, confirm the core interaction is playable and does not trigger page zoom, text selection, or scroll.
 
 Stage only the intended app files. Do not stage unrelated files such as `.vscode/`.
+
+## Correction Handling
+
+When the user points out a repeated mistake or says the same correction has already been made before, do not only apologize.
+
+Required response:
+
+- Identify the actual recurring failure pattern, not only the latest surface example.
+- Record a concrete recurrence-prevention rule in the appropriate durable instruction file before claiming the issue is fixed.
+- Use the canonical repository instructions in this file for daily app work; do not record prevention rules in `/Users/matsumurahironori/Documents/1day1app` as a substitute.
+- State exactly where the prevention rule was recorded.
+- If the correction is about daily app idea quality, include the specific prohibited pattern and the replacement standard.
+
+For daily app date ideas, the prohibited pattern is shallow date-digit matching such as `7/6 -> 76 seconds`. Use real anniversaries, seasonal context, user-relevant situations, or genuinely useful daily workflows instead. If the date hook is weak, say so and propose a non-date-dependent idea.

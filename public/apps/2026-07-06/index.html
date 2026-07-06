@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>具材ドラフト会議</title>
+  <link rel="stylesheet" href="/apps/2026-07-06/styles.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="draft-board" aria-label="具材ドラフト会議">
+      <header class="board-header">
+        <div>
+          <p class="date-label">Jul 6 / Salad Anniversary</p>
+          <h1>具材ドラフト会議</h1>
+        </div>
+        <button class="reset-button" id="resetButton" type="button">新テーマ</button>
+      </header>
+
+      <section class="theme-panel" aria-live="polite">
+        <p class="panel-label">本日の指名テーマ</p>
+        <h2 id="themeName">夏バテ対策サラダ</h2>
+        <p id="themeFlavor">涼しさと回復力。重すぎる具材はベンチ。</p>
+      </section>
+
+      <section class="score-row" aria-label="ドラフト状況">
+        <article class="team-card player">
+          <p class="team-name">あなた</p>
+          <div class="pick-list" id="playerPicks"></div>
+          <p class="score" id="playerScore">0</p>
+        </article>
+        <div class="round-badge" id="roundBadge">1巡目</div>
+        <article class="team-card cpu">
+          <p class="team-name">CPU</p>
+          <div class="pick-list" id="cpuPicks"></div>
+          <p class="score" id="cpuScore">0</p>
+        </article>
+      </section>
+
+      <section class="pool-panel">
+        <div class="pool-head">
+          <p class="panel-label">指名候補</p>
+          <p id="turnText">あなたの指名</p>
+        </div>
+        <div class="ingredient-grid" id="ingredientGrid"></div>
+      </section>
+
+      <section class="result-panel" id="resultPanel" aria-live="polite" hidden>
+        <p class="panel-label">ドラフト結果</p>
+        <h2 id="resultTitle">判定待ち</h2>
+        <p id="resultCopy"></p>
+        <div class="result-stats">
+          <div>
+            <span>MVP具材</span>
+            <strong id="mvpPick">-</strong>
+          </div>
+          <div>
+            <span>惜しかった具材</span>
+            <strong id="weakPick">-</strong>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/apps/2026-07-06/script.js"></script>
+</body>
+</html>
