@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>カメラブラインド・ラン | 防犯カメラの日</title>
+  <meta name="description" content="防犯カメラの視界をすり抜けて鍵を取り、出口へ向かうステルスミニゲーム。">
+  <link rel="stylesheet" href="/apps/2026-07-08/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="hud" aria-label="ゲーム情報">
+      <div>
+        <p class="date">7/8 防犯カメラの日</p>
+        <h1>カメラブラインド・ラン</h1>
+      </div>
+      <div class="stats" aria-live="polite">
+        <span id="levelLabel">LEVEL 1</span>
+        <span id="keyLabel">KEY 0/1</span>
+        <span id="timeLabel">00.0</span>
+      </div>
+    </section>
+
+    <section class="stage-wrap">
+      <canvas id="game" width="960" height="620" aria-label="防犯カメラを避けるゲーム"></canvas>
+      <div id="banner" class="banner">
+        <strong>見つからずに鍵を取って出口へ</strong>
+        <span>矢印 / WASD で移動、Shift で慎重歩き</span>
+        <button id="startButton" type="button">START</button>
+      </div>
+    </section>
+
+    <section class="controls" aria-label="操作">
+      <button class="move" data-dir="up" aria-label="上へ">▲</button>
+      <button class="move" data-dir="left" aria-label="左へ">◀</button>
+      <button class="move" data-dir="down" aria-label="下へ">▼</button>
+      <button class="move" data-dir="right" aria-label="右へ">▶</button>
+      <button id="slowButton" class="slow" type="button" aria-label="慎重歩き">SLOW</button>
+      <button id="resetButton" class="reset" type="button" aria-label="やり直し">RESET</button>
+    </section>
+  </main>
+  <script src="/apps/2026-07-08/script.js"></script>
+</body>
+</html>
