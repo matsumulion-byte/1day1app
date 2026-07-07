@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>七夕短冊メーカー</title>
+  <meta name="description" content="願いごとを縦書きの短冊にして、笹に飾れる七夕ミニアプリ。" />
+  <link rel="stylesheet" href="/apps/2026-07-07/styles-20260707b.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="sky" aria-label="七夕短冊メーカー">
+      <div class="stars" aria-hidden="true"></div>
+      <div class="milky-way" aria-hidden="true"></div>
+
+      <section class="bamboo-stage" aria-label="短冊を飾る笹">
+        <div class="moon" aria-hidden="true"></div>
+        <div class="bamboo" aria-hidden="true">
+          <span class="stem stem-main"></span>
+          <span class="stem stem-side stem-side-a"></span>
+          <span class="stem stem-side stem-side-b"></span>
+          <span class="leaf leaf-a"></span>
+          <span class="leaf leaf-b"></span>
+          <span class="leaf leaf-c"></span>
+          <span class="leaf leaf-d"></span>
+          <span class="leaf leaf-e"></span>
+          <span class="leaf leaf-f"></span>
+          <span class="leaf leaf-g"></span>
+          <span class="leaf leaf-h"></span>
+        </div>
+        <div id="hangingArea" class="hanging-area" aria-live="polite"></div>
+      </section>
+
+      <section class="maker" aria-label="短冊を作る">
+        <header class="title">
+          <p>7/7 Tanabata</p>
+          <h1>短冊メーカー</h1>
+        </header>
+
+        <label class="field">
+          <span>願いごと</span>
+          <textarea id="wishInput" maxlength="42" rows="4" placeholder="願いごとを書いてください">すこやかに、たのしく過ごせますように</textarea>
+        </label>
+
+        <div class="palette" aria-label="短冊の色">
+          <button class="swatch is-active" type="button" data-color="sakura" aria-label="桜色"></button>
+          <button class="swatch" type="button" data-color="lemon" aria-label="檸檬色"></button>
+          <button class="swatch" type="button" data-color="mizu" aria-label="水色"></button>
+          <button class="swatch" type="button" data-color="fuji" aria-label="藤色"></button>
+          <button class="swatch" type="button" data-color="wakaba" aria-label="若葉色"></button>
+        </div>
+
+        <div class="preview-wrap">
+          <div id="preview" class="tanzaku color-sakura" aria-label="短冊プレビュー">
+            <span class="hole"></span>
+            <span id="previewText" class="wish-text">すこやかに、たのしく過ごせますように</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="hangBtn" class="primary" type="button">笹に飾る</button>
+          <button id="downloadBtn" type="button">PNG保存</button>
+          <button id="clearBtn" type="button">飾りを外す</button>
+        </div>
+
+        <p id="status" class="status">願いごとを入力して、短冊を笹に飾れます。</p>
+      </section>
+    </section>
+  </main>
+
+  <script src="/apps/2026-07-07/script-20260707b.js"></script>
+</body>
+</html>
