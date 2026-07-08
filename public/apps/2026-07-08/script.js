@@ -12,6 +12,7 @@ const W = 960;
 const H = 620;
 const keys = new Set();
 const pointer = { up: false, down: false, left: false, right: false };
+const touchBlockTargets = [document.body, document.querySelector(".stage-wrap"), document.querySelector(".controls")];
 
 const levels = [
   {
@@ -329,11 +330,34 @@ document.querySelectorAll(".move").forEach((button) => {
   button.addEventListener("pointerup", () => set(false));
   button.addEventListener("pointercancel", () => set(false));
   button.addEventListener("pointerleave", () => set(false));
+  button.addEventListener("contextmenu", (event) => event.preventDefault());
 });
 
-slowButton.addEventListener("pointerdown", () => slowButton.classList.add("active"));
-slowButton.addEventListener("pointerup", () => slowButton.classList.remove("active"));
-slowButton.addEventListener("pointercancel", () => slowButton.classList.remove("active"));
+touchBlockTargets.forEach((target) => {
+  target?.addEventListener("contextmenu", (event) => event.preventDefault());
+  target?.addEventListener("selectstart", (event) => event.preventDefault());
+  target?.addEventListener("dragstart", (event) => event.preventDefault());
+  target?.addEventListener("dblclick", (event) => event.preventDefault());
+});
+
+function releaseTouchControls() {
+  Object.keys(pointer).forEach((dir) => {
+    pointer[dir] = false;
+  });
+  document.querySelectorAll(".move.active").forEach((button) => button.classList.remove("active"));
+  slowButton.classList.remove("active");
+}
+
+slowButton.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  slowButton.setPointerCapture(event.pointerId);
+  slowButton.classList.add("active");
+});
+slowButton.addEventListener("pointerup", releaseTouchControls);
+slowButton.addEventListener("pointercancel", releaseTouchControls);
+slowButton.addEventListener("pointerleave", releaseTouchControls);
+window.addEventListener("pointerup", releaseTouchControls);
+window.addEventListener("blur", releaseTouchControls);
 startButton.addEventListener("click", startGame);
 resetButton.addEventListener("click", () => {
   state.level = 0;
