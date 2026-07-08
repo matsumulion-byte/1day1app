@@ -25,12 +25,14 @@ Every touch-oriented daily app must prevent accidental browser gestures before i
 
 Required baseline:
 
+- For directional movement controls, use a real D-pad layout by default: up above, left/down/right on the row below. Do not ship a flat horizontal row of arrow buttons for movement.
+- Make touch controls large, fixed-size, and positioned so every required button is visible in the initial mobile viewport.
 - Set a mobile viewport that disables unintended user scaling where appropriate.
 - Set `touch-action` explicitly for the page, controls, and interactive canvas/game area.
 - Prevent double-tap zoom on repeated taps.
-- Prevent text selection and tap highlight on game controls.
+- Prevent long-press selection, callout/context menus, dragging, and tap highlight on game controls.
 - Prevent the game canvas from scrolling or zooming during play.
-- Test at a mobile viewport before reporting completion.
+- Test at a mobile viewport before reporting completion, including holding a control and double-tapping a control.
 
 For plain HTML apps, include the equivalent of:
 
