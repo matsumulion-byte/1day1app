@@ -139,6 +139,66 @@ h1 {
   opacity: 0;
 }
 
+.resultCard {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: min(320px, calc(100% - 32px));
+  padding: 14px;
+  color: #1c2430;
+  background: rgba(255, 255, 255, 0.88);
+  border: 3px solid rgba(28, 36, 48, 0.82);
+  border-radius: 8px;
+  box-shadow: 0 8px 0 rgba(28, 36, 48, 0.18);
+  opacity: 0;
+  transform: translateY(18px) scale(0.96);
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.resultCard.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.resultLabel {
+  margin: 0 0 4px;
+  color: #8d2c22;
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+#resultGrade {
+  display: inline-grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin-right: 10px;
+  color: #fff;
+  background: #ef4d3a;
+  border: 3px solid #1c2430;
+  border-radius: 50%;
+  font-size: 1.9rem;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+#resultTitle {
+  display: inline-block;
+  max-width: calc(100% - 72px);
+  font-size: 1.15rem;
+  font-weight: 900;
+  vertical-align: middle;
+}
+
+#resultComment {
+  margin: 10px 0 0;
+  color: #394653;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
 .controls {
   display: grid;
   grid-template-columns: minmax(92px, 130px) minmax(76px, 110px) minmax(76px, 110px) minmax(170px, 1fr);
@@ -205,6 +265,13 @@ input[type="range"] {
 
   .stageWrap {
     min-height: 55svh;
+  }
+
+  .resultCard {
+    right: 10px;
+    bottom: 10px;
+    width: calc(100% - 20px);
+    padding: 12px;
   }
 
   .controls {
