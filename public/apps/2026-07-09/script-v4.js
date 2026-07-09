@@ -8,11 +8,6 @@ const speedInput = document.getElementById("speedInput");
 const lengthValue = document.getElementById("lengthValue");
 const dropValue = document.getElementById("dropValue");
 const ratingValue = document.getElementById("ratingValue");
-const resultCard = document.getElementById("resultCard");
-const resultLabel = document.getElementById("resultLabel");
-const resultGrade = document.getElementById("resultGrade");
-const resultTitle = document.getElementById("resultTitle");
-const resultComment = document.getElementById("resultComment");
 const judgeModal = document.getElementById("judgeModal");
 const judgeClose = document.getElementById("judgeClose");
 const judgeRetry = document.getElementById("judgeRetry");
@@ -68,7 +63,6 @@ function pushPoint(point) {
 function beginDraw(event) {
   event.preventDefault();
   running = false;
-  hideResult();
   hideJudgeModal();
   drawing = true;
   history.push(points.slice());
@@ -201,19 +195,6 @@ function getRatingTip(metrics) {
   if (metrics.turns < 7) return "左右に大きく振ると、カーブ判定がもっと派手になります。";
   if (metrics.loops === 0) return "一回転っぽい丸を入れると、ループ職人を狙えます。";
   return "かなり完成度高め。次は速度を上げて見せ場を増やしてみよう。";
-}
-
-function showResult(label = "コース判定") {
-  const rating = getFinalRating();
-  resultLabel.textContent = label;
-  resultGrade.textContent = rating.grade;
-  resultTitle.textContent = `${rating.title} ${rating.score}点`;
-  resultComment.textContent = rating.comment;
-  resultCard.classList.add("show");
-}
-
-function hideResult() {
-  resultCard.classList.remove("show");
 }
 
 function showJudgeModal() {
@@ -420,7 +401,6 @@ function animate(time) {
     progress = length;
     running = false;
     runButton.textContent = "もう一回";
-    showResult("完走判定");
     showJudgeModal();
   }
   draw();
@@ -430,19 +410,16 @@ function animate(time) {
 function runCoaster() {
   if (points.length < 8) return;
   running = true;
-  hideResult();
   hideJudgeModal();
   progress = 0;
   lastTime = 0;
   carLean = 0;
   runButton.textContent = "走行中";
-  showResult("コース判定");
   requestAnimationFrame(animate);
 }
 
 function undo() {
   running = false;
-  hideResult();
   hideJudgeModal();
   if (history.length > 0) {
     points = history.pop();
@@ -458,7 +435,6 @@ function undo() {
 
 function clearTrack() {
   running = false;
-  hideResult();
   hideJudgeModal();
   history.push(points.slice());
   points = [];
