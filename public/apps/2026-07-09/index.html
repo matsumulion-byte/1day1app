@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>指先ローラーコースター</title>
+  <link rel="stylesheet" href="/apps/2026-07-09/styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="day">7月9日 ジェットコースターの日</p>
+        <h1>指先ローラーコースター</h1>
+      </div>
+      <div class="scoreboard" aria-label="コース情報">
+        <div>
+          <span>距離</span>
+          <strong id="lengthValue">0m</strong>
+        </div>
+        <div>
+          <span>落差</span>
+          <strong id="dropValue">0m</strong>
+        </div>
+        <div>
+          <span>評価</span>
+          <strong id="ratingValue">待機中</strong>
+        </div>
+      </div>
+    </header>
+
+    <section class="stageWrap" aria-label="コース作成エリア">
+      <canvas id="coasterCanvas"></canvas>
+      <div id="hint" class="hint">指でレールを一筆書き</div>
+    </section>
+
+    <footer class="controls">
+      <button id="runButton" class="primary" type="button">発車</button>
+      <button id="undoButton" type="button" aria-label="一つ戻す">戻す</button>
+      <button id="clearButton" type="button" aria-label="消す">消す</button>
+      <label class="speed">
+        <span>速度</span>
+        <input id="speedInput" type="range" min="0.6" max="2.2" step="0.1" value="1.2" />
+      </label>
+    </footer>
+  </main>
+
+  <script src="/apps/2026-07-09/script.js"></script>
+</body>
+</html>
