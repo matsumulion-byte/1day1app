@@ -49,8 +49,43 @@
         <input id="speedInput" type="range" min="0.6" max="2.2" step="0.1" value="1.2" />
       </label>
     </footer>
+
+    <section id="judgeModal" class="judgeModal" aria-hidden="true" aria-labelledby="judgeTitle" role="dialog">
+      <div class="judgePanel">
+        <p id="judgeLabel" class="judgeLabel">完走判定</p>
+        <button id="judgeClose" class="judgeClose" type="button" aria-label="判定を閉じる">×</button>
+        <div class="judgeHero">
+          <strong id="judgeGrade">S</strong>
+          <div>
+            <h2 id="judgeTitle">絶叫設計士</h2>
+            <p id="judgeScore">92点</p>
+          </div>
+        </div>
+        <p id="judgeComment" class="judgeComment">落差、曲線、勢いがそろった名物コース。行列ができます。</p>
+        <dl class="judgeStats">
+          <div>
+            <dt>距離</dt>
+            <dd id="judgeLength">0m</dd>
+          </div>
+          <div>
+            <dt>落差</dt>
+            <dd id="judgeDrop">0m</dd>
+          </div>
+          <div>
+            <dt>カーブ</dt>
+            <dd id="judgeTurns">0</dd>
+          </div>
+          <div>
+            <dt>ループ</dt>
+            <dd id="judgeLoops">なし</dd>
+          </div>
+        </dl>
+        <p id="judgeTip" class="judgeTip">次はもっと高い山を描くとスコアが伸びます。</p>
+        <button id="judgeRetry" class="judgeRetry" type="button">もう一度つくる</button>
+      </div>
+    </section>
   </main>
 
-  <script src="/apps/2026-07-09/script-v3.js"></script>
+  <script src="/apps/2026-07-09/script-v4.js"></script>
 </body>
 </html>

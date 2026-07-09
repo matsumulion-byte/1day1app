@@ -244,6 +244,152 @@ input[type="range"] {
   accent-color: var(--green);
 }
 
+.judgeModal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(28, 36, 48, 0.54);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+  z-index: 10;
+}
+
+.judgeModal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.judgePanel {
+  position: relative;
+  width: min(520px, 100%);
+  max-height: min(720px, calc(100svh - 36px));
+  overflow: auto;
+  padding: 22px;
+  color: #1c2430;
+  background: #fff9e7;
+  border: 4px solid #1c2430;
+  border-radius: 8px;
+  box-shadow: 0 16px 0 rgba(28, 36, 48, 0.28);
+  transform: translateY(14px) scale(0.96);
+  transition: transform 160ms ease;
+}
+
+.judgeModal.show .judgePanel {
+  transform: translateY(0) scale(1);
+}
+
+.judgeLabel {
+  margin: 0 0 8px;
+  color: #8d2c22;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.judgeClose {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0;
+  border: 3px solid #1c2430;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: none;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.judgeHero {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 14px;
+  align-items: center;
+  margin-right: 34px;
+}
+
+#judgeGrade {
+  display: grid;
+  place-items: center;
+  width: 86px;
+  height: 86px;
+  color: #fff;
+  background: #ef4d3a;
+  border: 4px solid #1c2430;
+  border-radius: 50%;
+  font-size: 3rem;
+  line-height: 1;
+}
+
+#judgeTitle {
+  margin: 0;
+  font-size: clamp(1.55rem, 5vw, 2.35rem);
+  line-height: 1;
+}
+
+#judgeScore {
+  margin: 8px 0 0;
+  color: #2e8c65;
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.judgeComment {
+  margin: 16px 0;
+  padding: 12px;
+  background: rgba(245, 200, 76, 0.28);
+  border-radius: 8px;
+  font-weight: 900;
+  line-height: 1.55;
+}
+
+.judgeStats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 0;
+}
+
+.judgeStats div {
+  padding: 10px;
+  background: #fff;
+  border: 2px solid rgba(28, 36, 48, 0.18);
+  border-radius: 8px;
+}
+
+.judgeStats dt {
+  color: #52606e;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.judgeStats dd {
+  margin: 4px 0 0;
+  font-size: 1.08rem;
+  font-weight: 900;
+}
+
+.judgeTip {
+  margin: 14px 0 0;
+  color: #394653;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.judgeRetry {
+  width: 100%;
+  margin-top: 16px;
+  color: #fff;
+  background: #2e8c65;
+}
+
 @media (max-width: 720px) {
   body {
     overflow: auto;
@@ -280,5 +426,24 @@ input[type="range"] {
 
   .speed {
     grid-column: 1 / -1;
+  }
+
+  .judgePanel {
+    padding: 18px;
+  }
+
+  .judgeHero {
+    grid-template-columns: 70px 1fr;
+    gap: 10px;
+  }
+
+  #judgeGrade {
+    width: 70px;
+    height: 70px;
+    font-size: 2.35rem;
+  }
+
+  .judgeStats {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
