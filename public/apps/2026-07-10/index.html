@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#080817" />
+  <title>ウノレトう々ソ光線カメラ</title>
+  <link rel="stylesheet" href="/apps/2026-07-10/styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="brand">
+      <div class="date"><span>07</span><i></i><span>10</span></div>
+      <div>
+        <p>ウノレトう々ソの日</p>
+        <h1>光線ポーズ<br /><em>判定カメラ</em></h1>
+      </div>
+      <button id="soundButton" class="iconButton" type="button" aria-label="音を切り替える">♪</button>
+    </header>
+
+    <section class="viewer" aria-label="光線カメラ">
+      <video id="video" playsinline muted></video>
+      <canvas id="canvas"></canvas>
+      <div id="standby" class="standby">
+        <div class="heroMark" aria-hidden="true"><b></b><i></i></div>
+        <p>カメラを起動して<br />全身を映してね</p>
+      </div>
+      <div class="scanlines"></div>
+      <div class="corners" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div id="status" class="status"><span></span> 待機中</div>
+      <div id="countdown" class="countdown"></div>
+      <div id="flash" class="flash"></div>
+      <div id="beam" class="beam"><i></i><b></b></div>
+      <div id="result" class="result" aria-live="polite">
+        <p>ニセモノ度</p>
+        <strong><span id="score">0</span><small>%</small></strong>
+        <h2 id="beamName">ウノレト光線</h2>
+        <div id="comment">そのズレが、世界を救う。</div>
+      </div>
+      <div class="privacy">映像は保存・送信されません</div>
+    </section>
+
+    <section class="meterPanel">
+      <div class="meterLabel"><span>へんなポーズ力</span><b id="meterText">0%</b></div>
+      <div class="meter"><i id="meterFill"></i><span class="danger">似すぎ</span><span class="great">最高</span></div>
+      <p id="guide">肘を曲げて、左右ちがうポーズをしてみよう</p>
+    </section>
+
+    <nav class="controls" aria-label="カメラ操作">
+      <button id="cameraButton" class="cameraButton" type="button"><span></span><b>カメラ起動</b></button>
+      <button id="shootButton" class="shootButton" type="button" disabled><i></i><span>光線発射</span></button>
+      <button id="switchButton" class="smallButton" type="button" disabled><span>↻</span>反転</button>
+      <button id="saveButton" class="smallButton" type="button" hidden><span>↓</span>保存</button>
+    </nav>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js" crossorigin="anonymous"></script>
+  <script src="/apps/2026-07-10/script.js"></script>
+</body>
+</html>
