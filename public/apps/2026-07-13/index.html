@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <meta name="theme-color" content="#070a0c" />
-  <meta name="description" content="ワイヤー一本で機密室へ。床に触れずにデータを回収する60秒ステルスゲーム。" />
+  <meta name="description" content="ワイヤー一本で機密室へ。床に触れずにデータを回収する50秒ステルスゲーム。" />
   <title>天井から失礼します — A ZERO-CONTACT MISSION</title>
   <link rel="stylesheet" href="/apps/2026-07-13/styles.css" />
 </head>
@@ -20,7 +20,7 @@
 
     <section class="mission-frame" aria-label="潜入ミッション">
       <div class="hud">
-        <div><span>TIME</span><strong id="timer">60.0</strong></div>
+        <div><span>TIME</span><strong id="timer">50.0</strong></div>
         <div class="hud-center"><span>STATUS</span><strong id="status">STANDBY</strong></div>
         <div><span>FLOOR</span><strong id="distance">—</strong></div>
       </div>
@@ -33,7 +33,7 @@
           <div class="tape-reel" aria-hidden="true"><i></i><i></i></div>
           <p class="overlay-kicker">INCOMING TRANSMISSION</p>
           <h2>床に触れたら、<br />即終了。</h2>
-          <p>長押しで降下。左右で揺れを抑え、<br />機密データを回収して天井へ戻れ。</p>
+          <p>長押しで降下。左右で揺れを抑え、<br />赤いスキャン中は完全に静止せよ。</p>
           <button id="startButton" class="primary-button" type="button">指令を受ける</button>
           <small>この指令は5秒後に消滅します</small>
         </div>

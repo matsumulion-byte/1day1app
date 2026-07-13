@@ -16,7 +16,7 @@ let height = 0;
 let dpr = 1;
 let state = "briefing";
 let lastTime = 0;
-let timeLeft = 60;
+let timeLeft = 50;
 let minDistance = Infinity;
 let targetSide = 1;
 let dataCollected = false;
@@ -25,6 +25,10 @@ let audioContext = null;
 let pointerStartX = null;
 let fanTimer = 5;
 let fanForce = 0;
+let scanTimer = 8;
+let scanWarning = 0;
+let scanActive = 0;
+let scannerY = -100;
 let sparkles = [];
 
 const input = { up: false, down: false, left: false, right: false };
@@ -43,12 +47,16 @@ function resize() {
 
 function resetGame() {
   state = "countdown";
-  timeLeft = 60;
+  timeLeft = 50;
   minDistance = Infinity;
   dataCollected = false;
   targetSide = Math.random() > .5 ? 1 : -1;
   fanTimer = 4 + Math.random() * 2;
   fanForce = 0;
+  scanTimer = 7 + Math.random() * 3;
+  scanWarning = 0;
+  scanActive = 0;
+  scannerY = -100;
   sparkles = [];
   Object.assign(agent, { x: width / 2, y: 58, vx: 0, vy: 0, angle: 0, angularVelocity: 0 });
   Object.keys(input).forEach(key => { input[key] = false; });
@@ -58,7 +66,7 @@ function resetGame() {
   statusEl.textContent = "BRIEFING";
   objectiveEl.textContent = "MEMORIZE THE MISSION";
   distanceEl.textContent = "—";
-  timerEl.textContent = "60.0";
+  timerEl.textContent = "50.0";
 
   let count = 5;
   countdownNumber.textContent = count;
@@ -113,10 +121,44 @@ function update(dt) {
 
   fanTimer -= dt;
   if (fanTimer <= 0) {
-    fanForce = (Math.random() > .5 ? 1 : -1) * (28 + Math.random() * 22);
-    fanTimer = 5 + Math.random() * 4;
-    setTimeout(() => { fanForce = 0; }, 1200);
+    fanForce = (Math.random() > .5 ? 1 : -1) * (36 + Math.random() * 24);
+    fanTimer = 4 + Math.random() * 3.5;
+    setTimeout(() => { fanForce = 0; }, 1500);
     tone(95, .28, .018);
+  }
+
+  if (scanWarning > 0) {
+    scanWarning -= dt;
+    fanForce = 0;
+    statusEl.textContent = "SCAN INCOMING";
+    objectiveEl.textContent = "RELEASE ALL CONTROLS / HOLD STILL";
+    if (scanWarning <= 0) {
+      scanActive = 2.6;
+      tone(760, .12, .045);
+    }
+  } else if (scanActive > 0) {
+    scanActive -= dt;
+    fanForce = 0;
+    const progress = 1 - Math.max(0, scanActive) / 2.6;
+    scannerY = 54 + progress * (height - 105);
+    statusEl.textContent = "HOLD STILL";
+    const bodyCenterY = agent.y + 28;
+    const moving = Math.abs(agent.vx) > 10 || Math.abs(agent.vy) > 8;
+    if (Math.abs(scannerY - bodyCenterY) < 26 && moving) {
+      return finish(false, "動きを検知。", "赤外線スキャンを通過できなかった。");
+    }
+    if (scanActive <= 0) {
+      scannerY = -100;
+      scanTimer = 8 + Math.random() * 5;
+      statusEl.textContent = dataCollected ? "DATA SECURED" : "INFILTRATING";
+      objectiveEl.textContent = dataCollected ? "DATA SECURED / RETURN TO CEILING" : "DESCEND / STEAL THE DATA";
+    }
+  } else {
+    scanTimer -= dt;
+    if (scanTimer <= 0) {
+      scanWarning = .9;
+      tone(230, .16, .04);
+    }
   }
 
   const vertical = (input.down ? 1 : 0) - (input.up ? 1 : 0);
@@ -147,7 +189,7 @@ function update(dt) {
   const terminal = terminalPosition();
   const handX = agent.x + Math.sin(agent.angle) * dims.reach + targetSide * 17;
   const handY = agent.y + 39;
-  const nearTerminal = Math.hypot(handX - terminal.x, handY - terminal.y) < 52;
+  const nearTerminal = Math.hypot(handX - terminal.x, handY - terminal.y) < 42;
   if (!dataCollected && nearTerminal) {
     dataCollected = true;
     sparkles = Array.from({ length: 18 }, () => ({ x: terminal.x, y: terminal.y, vx: (Math.random() - .5) * 90, vy: -Math.random() * 80, life: 1 }));
@@ -217,6 +259,31 @@ function drawRoom() {
   ctx.fillStyle = "rgba(20,28,27,.8)";
   ctx.font = "700 9px ui-monospace, monospace";
   ctx.fillText("THERMAL / PRESSURE SENSITIVE FLOOR", 12, floorY - 9);
+
+  if (scanWarning > 0) {
+    ctx.fillStyle = `rgba(255,70,63,${.15 + Math.sin(scanWarning * 30) * .08})`;
+    ctx.fillRect(0, 24, width, 18);
+    ctx.fillStyle = "#ff463f";
+    ctx.font = "700 8px ui-monospace, monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("MOTION SCAN INCOMING — HOLD STILL", width / 2, 36);
+    ctx.textAlign = "left";
+  }
+
+  if (scanActive > 0) {
+    ctx.save();
+    ctx.shadowColor = "#ff463f";
+    ctx.shadowBlur = 14;
+    ctx.strokeStyle = "rgba(255,70,63,.95)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, scannerY);
+    ctx.lineTo(width, scannerY);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(255,70,63,.1)";
+    ctx.fillRect(0, scannerY - 6, width, 12);
+    ctx.restore();
+  }
 
   const fanOn = Math.abs(fanForce) > 0;
   ctx.save();
