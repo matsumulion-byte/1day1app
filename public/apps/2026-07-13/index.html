@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#070a0c" />
+  <meta name="description" content="ワイヤー一本で機密室へ。床に触れずにデータを回収する60秒ステルスゲーム。" />
+  <title>天井から失礼します — A ZERO-CONTACT MISSION</title>
+  <link rel="stylesheet" href="/apps/2026-07-13/styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="masthead">
+      <div>
+        <p class="date-mark">07.13 / SPECIAL MISSION</p>
+        <h1>天井から<br />失礼します</h1>
+      </div>
+      <button id="soundButton" class="sound-button" type="button" aria-label="サウンドを切り替える">SOUND ON</button>
+    </header>
+
+    <section class="mission-frame" aria-label="潜入ミッション">
+      <div class="hud">
+        <div><span>TIME</span><strong id="timer">60.0</strong></div>
+        <div class="hud-center"><span>STATUS</span><strong id="status">STANDBY</strong></div>
+        <div><span>FLOOR</span><strong id="distance">—</strong></div>
+      </div>
+
+      <div id="gameArea" class="game-area">
+        <canvas id="gameCanvas" aria-label="ワイヤー降下ゲーム"></canvas>
+        <div class="vignette" aria-hidden="true"></div>
+
+        <div id="briefing" class="overlay briefing">
+          <div class="tape-reel" aria-hidden="true"><i></i><i></i></div>
+          <p class="overlay-kicker">INCOMING TRANSMISSION</p>
+          <h2>床に触れたら、<br />即終了。</h2>
+          <p>長押しで降下。左右で揺れを抑え、<br />機密データを回収して天井へ戻れ。</p>
+          <button id="startButton" class="primary-button" type="button">指令を受ける</button>
+          <small>この指令は5秒後に消滅します</small>
+        </div>
+
+        <div id="countdown" class="overlay countdown" hidden>
+          <p>YOUR MISSION</p>
+          <strong id="countdownNumber">5</strong>
+          <span>STEAL THE DATA.<br />TOUCH NOTHING.</span>
+        </div>
+
+        <div id="result" class="overlay result" hidden>
+          <p id="resultKicker" class="overlay-kicker">MISSION COMPLETE</p>
+          <h2 id="resultTitle">痕跡なし。</h2>
+          <p id="resultText"></p>
+          <div class="result-stats">
+            <div><span>最接近</span><strong id="closestStat">—</strong></div>
+            <div><span>残り時間</span><strong id="timeStat">—</strong></div>
+          </div>
+          <button id="retryButton" class="primary-button" type="button">もう一度潜入</button>
+        </div>
+      </div>
+
+      <div class="controls" aria-label="ワイヤー操作">
+        <div class="dpad">
+          <button class="control up" data-control="up" type="button" aria-label="巻き上げる">▲<small>UP</small></button>
+          <button class="control left" data-control="left" type="button" aria-label="左へ移動">◀</button>
+          <button class="control down" data-control="down" type="button" aria-label="降下する">▼<small>DOWN</small></button>
+          <button class="control right" data-control="right" type="button" aria-label="右へ移動">▶</button>
+        </div>
+        <div class="control-copy">
+          <strong id="objective">PRESS & HOLD TO DESCEND</strong>
+          <span>画面を長押ししても降下できます</span>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <span>A ZERO-CONTACT MISSION</span>
+      <span>1DAY1APP / 2026.07.13</span>
+    </footer>
+  </main>
+  <script src="/apps/2026-07-13/script.js"></script>
+</body>
+</html>
