@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#b8aa8a" />
+  <meta name="description" content="マイクにフーーー！ レトロゲームカセットのホコリを飛ばす、おバカな息吹きミニゲーム。" />
+  <title>カセットふーふーチャレンジ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/apps/2026-07-15/styles.css" />
+</head>
+<body>
+  <main class="game-console" aria-live="polite">
+    <div class="brand-bar">
+      <span>FAMILY COMPUTER DAY</span>
+      <span>1983.07.15</span>
+    </div>
+
+    <section id="titleScreen" class="screen title-screen">
+      <div class="title-cart" aria-hidden="true">
+        <span class="dust-cloud">· ✦ ·</span>
+        <div class="mini-label">CASSETTE<br />CLEANING?</div>
+      </div>
+      <p class="eyebrow">1DAY 1APP PRESENTS</p>
+      <h1>カセット<br /><em>ふーふー</em><br />チャレンジ</h1>
+      <p class="intro">あの頃、みんな信じていた。<br />吹けばきっと、つく。</p>
+      <button id="startButton" class="pixel-button" type="button">▶ START</button>
+      <p class="start-note">マイクの使用を許可してください</p>
+    </section>
+
+    <section id="playScreen" class="screen play-screen" hidden>
+      <header class="game-header">
+        <p class="instruction">マイクに向かって<br /><strong>フーーー！</strong></p>
+        <button id="soundButton" class="sound-button" type="button" aria-label="効果音を切り替える">SOUND ON</button>
+      </header>
+
+      <div class="meter-panel">
+        <div class="meter-copy">
+          <span>DUST LEVEL</span>
+          <strong id="dustPercent">100%</strong>
+        </div>
+        <div class="dust-gauge" role="progressbar" aria-label="ホコリゲージ" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+          <div id="dustBar" class="dust-bar"></div>
+        </div>
+      </div>
+
+      <div id="playField" class="play-field">
+        <div id="windEffect" class="wind-effect" aria-hidden="true"><span>💨</span><span>💨</span><span>💨</span></div>
+        <div id="dustParticles" class="dust-particles" aria-hidden="true"></div>
+
+        <div id="cartridge" class="cartridge" aria-label="ホコリをかぶったレトロゲームカセット">
+          <div class="cart-ridges" aria-hidden="true"></div>
+          <div class="cart-label">
+            <small>FAMICOM DAY</small>
+            <b>BLOW<br />QUEST</b>
+            <span>1 PLAYER</span>
+          </div>
+          <div id="dustLayer" class="dust-layer" aria-hidden="true"></div>
+          <div class="connector" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="shine" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div class="input-panel">
+        <div class="volume-row"><span>MIC</span><div class="volume-track"><i id="volumeBar"></i></div></div>
+        <p id="micStatus">マイクを準備しています...</p>
+        <button id="blowButton" class="blow-button" type="button" hidden>長押しで フーーー！</button>
+      </div>
+    </section>
+
+    <section id="bootScreen" class="screen boot-screen" hidden>
+      <p id="bootText">・・・</p>
+    </section>
+
+    <section id="resultScreen" class="screen result-screen" hidden>
+      <p class="result-kicker">SYSTEM MESSAGE</p>
+      <h2>起動しました！</h2>
+      <p class="fake-out">…という気がしただけです。</p>
+      <div class="warning-box">
+        <span>！ご注意！</span>
+        <p>実際にはカセットを吹くことは<br />接点の劣化や湿気の原因になるため<br />現在では推奨されていません。</p>
+      </div>
+      <p class="result-note">正しくお手入れして、<br />思い出のゲームを大切に。</p>
+      <button id="retryButton" class="pixel-button" type="button">もう一度遊ぶ</button>
+    </section>
+
+    <footer><span>© 2026 1DAY1APP</span><span>NO CARTRIDGES WERE BLOWN</span></footer>
+  </main>
+  <script src="/apps/2026-07-15/script.js"></script>
+</body>
+</html>
