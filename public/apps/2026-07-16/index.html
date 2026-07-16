@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#f5dfb5">
+  <meta name="description" content="7月16日・駅弁記念日の30秒お弁当詰めパズル。">
+  <meta property="og:title" content="駅弁つめつめ！">
+  <meta property="og:description" content="30秒で、すき間なく。あなただけの駅弁をつくろう！">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/apps/2026-07-16/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <title>駅弁つめつめ！</title>
+  <link rel="stylesheet" href="/apps/2026-07-16/styles.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header class="topbar">
+      <div class="brand"><span class="stamp">7.16</span><div><small>駅弁記念日</small><h1>駅弁つめつめ！</h1></div></div>
+      <button class="sound-btn" id="soundBtn" aria-label="音のオン・オフ">♪</button>
+    </header>
+
+    <section class="status" aria-label="ゲーム状況">
+      <div><span>のこり</span><strong id="timer">30.0</strong><small>秒</small></div>
+      <div class="progress-wrap"><span>つめ具合</span><div class="progress"><i id="progressBar"></i></div></div>
+      <div><span>スコア</span><strong id="score">0000</strong></div>
+    </section>
+
+    <section class="play-area">
+      <div class="bento-scene">
+        <div class="lid" aria-hidden="true"><b>御<br>辨<br>當</b><span>旅のおともに</span></div>
+        <div class="bento" id="bento" aria-label="4×4の弁当箱">
+          <div class="grid-lines" aria-hidden="true"></div>
+          <div id="placedLayer"></div>
+        </div>
+        <p class="hint" id="hint">具材をつかんで、すき間なく詰めよう</p>
+      </div>
+
+      <aside class="counter">
+        <div class="counter-head"><span>おかず売店</span><small>タップで回転 ↻</small></div>
+        <div class="ingredients" id="ingredients"></div>
+      </aside>
+    </section>
+
+    <button class="reset-btn" id="resetBtn">はじめから</button>
+  </main>
+
+  <div class="overlay show" id="startOverlay">
+    <div class="paper-card start-card">
+      <p class="eyebrow">7月16日　駅弁記念日</p>
+      <h2>日本一の駅弁を<br>つくろう。</h2>
+      <div class="mini-bento" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <p>30秒で具材をドラッグ。<br>すき間なく詰めると高得点！</p>
+      <button class="primary-btn" id="startBtn">駅弁をつくる</button>
+      <small>具材をタップすると回転します</small>
+    </div>
+  </div>
+
+  <div class="overlay" id="resultOverlay">
+    <div class="paper-card result-card">
+      <p class="eyebrow">本日の駅弁、できあがり！</p>
+      <div class="result-seal"><span id="rank">特上</span></div>
+      <h2 id="bentoName">彩り満開<br>ぎゅうぎゅう弁当</h2>
+      <div class="final-score"><span>SCORE</span><strong id="finalScore">7160</strong></div>
+      <div class="breakdown"><span>つめ具合 <b id="fillResult">100%</b></span><span>彩りボーナス <b id="colorResult">+700</b></span></div>
+      <button class="primary-btn" id="retryBtn">もう一度つくる</button>
+      <button class="share-btn" id="shareBtn">結果をシェア</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status">結果をコピーしました</div>
+  <script src="/apps/2026-07-16/script.js"></script>
+</body>
+</html>
