@@ -12,7 +12,7 @@ const foods = [
 const foodClass = id => id === 'shumai' ? 'food-rice' : `food-${id}`;
 const $ = s => document.querySelector(s);
 const ingredients = $('#ingredients'), bento = $('#bento'), placedLayer = $('#placedLayer');
-let board, placed, running = false, startedAt = 0, raf, score = 0, soundOn = true, drag = null;
+let board, running = false, startedAt = 0, raf, score = 0, soundOn = true, drag = null;
 document.addEventListener('dblclick', event => event.preventDefault(), {passive:false});
 document.addEventListener('gesturestart', event => event.preventDefault(), {passive:false});
 document.addEventListener('contextmenu', event => event.preventDefault());
@@ -26,7 +26,7 @@ function renderBins(){
   });
 }
 function resetGame(showStart=false){
-  cancelAnimationFrame(raf); board = Array(16).fill(null); placed = {}; score = 0; running = false;
+  cancelAnimationFrame(raf); board = Array(16).fill(null); score = 0; running = false;
   foods.forEach(f => { f.w = f.id==='rice'||f.id==='karaage'?2:(f.id==='salmon'?2:1); f.h = f.id==='rice'||f.id==='karaage'?2:(f.id==='egg'?2:1); });
   placedLayer.innerHTML=''; renderBins(); updateStatus(30); $('#resultOverlay').classList.remove('show');
   if(showStart) $('#startOverlay').classList.add('show');
@@ -44,11 +44,11 @@ function updateStatus(left){
   $('#score').textContent=String(score).padStart(4,'0');
 }
 function rotateFood(id){
-  if(!running || placed[id])return; const f=foods.find(x=>x.id===id); if(f.w===f.h)return;
+  if(!running)return; const f=foods.find(x=>x.id===id); if(f.w===f.h)return;
   [f.w,f.h]=[f.h,f.w]; const el=document.querySelector(`[data-id="${id}"] .ingredient`); el.style.setProperty('--w',f.w);el.style.setProperty('--h',f.h); beep(350,.04);
 }
 function startDrag(e){
-  if(!running)return; const bin=e.currentTarget, id=bin.dataset.id; if(placed[id])return;
+  if(!running)return; const bin=e.currentTarget, id=bin.dataset.id;
   const f=foods.find(x=>x.id===id), source=bin.querySelector('.ingredient'), rect=source.getBoundingClientRect();
   const ghost=source.cloneNode(true); ghost.classList.add('dragging'); document.body.appendChild(ghost);
   drag={id,f,bin,ghost,startX:e.clientX,startY:e.clientY,moved:false,ox:e.clientX-rect.left,oy:e.clientY-rect.top};
@@ -68,17 +68,19 @@ function cancelDrag(){cleanupDrag()}
 function cleanupDrag(){if(!drag)return;drag.ghost.remove();drag=null}
 function canPlace(f,x,y){if(x<0||y<0||x+f.w>4||y+f.h>4)return false;for(let yy=y;yy<y+f.h;yy++)for(let xx=x;xx<x+f.w;xx++)if(board[yy*4+xx])return false;return true}
 function placeFood(f,x,y){
-  for(let yy=y;yy<y+f.h;yy++)for(let xx=x;xx<x+f.w;xx++)board[yy*4+xx]=f.id; placed[f.id]={x,y,w:f.w,h:f.h};
+  for(let yy=y;yy<y+f.h;yy++)for(let xx=x;xx<x+f.w;xx++)board[yy*4+xx]=f.id;
   const wrap=document.createElement('div');wrap.className='placed';wrap.style.cssText=`--x:${x};--y:${y};--w:${f.w};--h:${f.h}`;wrap.innerHTML=`<div class="ingredient ${foodClass(f.id)}"></div>`;placedLayer.appendChild(wrap);
-  document.querySelector(`[data-id="${f.id}"]`).classList.add('used');beep(600+Object.keys(placed).length*45,.06);updateStatus(Math.max(0,30-(performance.now()-startedAt)/1000));
+  const placedCount=placedLayer.querySelectorAll('.placed').length;beep(600+placedCount*35,.06);updateStatus(Math.max(0,30-(performance.now()-startedAt)/1000));
   if(board.every(Boolean))setTimeout(finish,350);
 }
 function colorBonus(){
-  let bonus=0; for(let y=0;y<4;y++)for(let x=0;x<4;x++){const a=foods.find(f=>f.id===board[y*4+x]);[[1,0],[0,1]].forEach(([dx,dy])=>{if(x+dx<4&&y+dy<4){const b=foods.find(f=>f.id===board[(y+dy)*4+x+dx]);if(a&&b&&a.id!==b.id&&a.color!==b.color)bonus+=50}})} return bonus;
+  let bonus=0; for(let y=0;y<4;y++)for(let x=0;x<4;x++){const a=foods.find(f=>f.id===board[y*4+x]);[[1,0],[0,1]].forEach(([dx,dy])=>{if(x+dx<4&&y+dy<4){const b=foods.find(f=>f.id===board[(y+dy)*4+x+dx]);if(a&&b&&a.id!==b.id&&a.color!==b.color)bonus+=50}})}
+  const variety=new Set(board.filter(Boolean)).size; return bonus+Math.max(0,variety-1)*100;
 }
 function finish(){
   if(!running)return;running=false;cancelAnimationFrame(raf);cleanupDrag(); const fill=board.filter(Boolean).length;const remaining=Math.max(0,30-(performance.now()-startedAt)/1000);const bonus=colorBonus();score=Math.round(fill*250+remaining*100+bonus); const pct=Math.round(fill/16*100);
-  let rank='並',name='旅のおともに\nほっこり弁当'; if(pct===100&&remaining>12){rank='特上';name='彩り満開\nぎゅうぎゅう弁当'}else if(pct===100){rank='上';name='完璧配置の\n満腹弁当'}else if(pct>=70){rank='良';name='気まま旅の\nわくわく弁当'}
+  const counts=board.filter(Boolean).reduce((a,id)=>(a[id]=(a[id]||0)+1,a),{});const favorite=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0];const favoriteName=foods.find(f=>f.id===favorite)?.name;
+  let rank='並',name='旅のおともに\nほっこり弁当'; if(pct===100&&remaining>12){rank='特上';name='彩り満開\nぎゅうぎゅう弁当'}else if(pct===100&&new Set(board).size>=5){rank='上';name='八彩にぎわい\n満腹弁当'}else if(pct===100){rank='上';name=`${favoriteName||'おかず'}たっぷり\n偏愛弁当`}else if(pct>=70){rank='良';name='気まま旅の\nわくわく弁当'}
   $('#rank').textContent=rank;$('#bentoName').innerHTML=name.replace('\n','<br>');$('#finalScore').textContent=score;$('#fillResult').textContent=`${pct}%`;$('#colorResult').textContent=`+${bonus}`;setTimeout(()=>$('#resultOverlay').classList.add('show'),250);beep(760,.1);setTimeout(()=>beep(960,.14),120);
 }
 function beep(freq,duration){if(!soundOn)return;try{const C=window.AudioContext||window.webkitAudioContext;const ctx=beep.ctx||(beep.ctx=new C());const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(.055,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+duration);o.connect(g).connect(ctx.destination);o.start();o.stop(ctx.currentTime+duration)}catch{}}
