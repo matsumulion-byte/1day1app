@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#f5c84b">
+  <meta name="description" content="風を読み、街を守るターン制スモッグパズル">
+  <title>SMOG ALERT 7.18</title>
+  <link rel="stylesheet" href="/apps/2026-07-18/styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="masthead">
+      <div>
+        <p class="eyebrow">TOKYO AIR DEFENSE / 1970</p>
+        <h1>SMOG <span>ALERT</span></h1>
+      </div>
+      <button class="sound" id="soundBtn" aria-label="サウンド切替">SOUND ON</button>
+    </header>
+
+    <section class="status" aria-label="ゲーム状況">
+      <div class="stage-label"><small>AREA</small><strong id="stageName">01 杉並・校庭</strong></div>
+      <div class="meter-wrap"><small>CITIZEN HEALTH</small><div class="meter"><i id="healthBar"></i></div></div>
+      <div class="turn-label"><small>TURN</small><strong><span id="turnNow">0</span>/<span id="turnMax">12</span></strong></div>
+    </section>
+
+    <section class="brief" id="brief">
+      <span class="alert-dot"></span><p id="mission">スモッグを浄化塔へ送れ</p>
+      <span class="remaining">残り <b id="remaining">0</b></span>
+    </section>
+
+    <div class="board-shell">
+      <div class="wind-label" id="windLabel">WIND: STANDBY</div>
+      <div class="board" id="board" role="application" aria-label="スモッグパズル盤面"></div>
+      <div class="swipe-hint" id="swipeHint"><span>SWIPE</span><b>↑</b><i>風を起こせ</i></div>
+    </div>
+
+    <section class="controls">
+      <div class="dpad" aria-label="風向き操作">
+        <button data-dir="up" aria-label="上へ風を吹かせる">↑</button>
+        <button data-dir="left" aria-label="左へ風を吹かせる">←</button>
+        <button data-dir="down" aria-label="下へ風を吹かせる">↓</button>
+        <button data-dir="right" aria-label="右へ風を吹かせる">→</button>
+      </div>
+      <button class="water" id="waterBtn"><span>緊急対策</span><strong>放水</strong><small>濃度を1段階下げる</small></button>
+    </section>
+
+    <footer><span>7.18 PHOTOCHEMICAL SMOG DAY</span><button id="helpBtn">HOW TO PLAY</button></footer>
+  </main>
+
+  <div class="modal open" id="startModal">
+    <div class="modal-card intro-card">
+      <p class="modal-kicker">AIR POLLUTION WARNING</p>
+      <h2>風を読め。<br>街を守れ。</h2>
+      <div class="rule-row"><b>01</b><p>スワイプすると、すべてのスモッグが同時に動く。</p></div>
+      <div class="rule-row"><b>02</b><p>黄色い浄化塔へ運べ。学校や住宅に近づけるな。</p></div>
+      <div class="rule-row"><b>03</b><p>重なると濃くなる。濃い雲ほど街への被害が大きい。</p></div>
+      <button class="primary" id="startBtn">警戒態勢に入る <span>→</span></button>
+      <small>矢印キー / WASDでも操作できます</small>
+    </div>
+  </div>
+
+  <div class="modal" id="resultModal">
+    <div class="modal-card result-card">
+      <p class="modal-kicker" id="resultKicker">AREA CLEAR</p>
+      <div class="result-seal" id="resultSeal">A</div>
+      <h2 id="resultTitle">青空を取り戻した</h2>
+      <p id="resultText">市民の健康を守り抜きました。</p>
+      <div class="score-row"><span>HEALTH</span><b id="resultHealth">100%</b></div>
+      <div class="score-row"><span>PURIFIED</span><b id="resultPurified">0</b></div>
+      <button class="primary" id="nextBtn">次のエリアへ <span>→</span></button>
+      <button class="secondary" id="retryBtn">もう一度</button>
+    </div>
+  </div>
+  <script src="/apps/2026-07-18/script.js"></script>
+</body>
+</html>
