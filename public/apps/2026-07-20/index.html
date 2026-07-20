@@ -11,6 +11,11 @@
   <meta name="twitter:card" content="summary">
   <title>TIDE RUNNER｜潮が満ちる前に。</title>
   <link rel="stylesheet" href="/apps/2026-07-20/styles.css">
+  <style>
+    body,.controls,.controls button{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important}
+    .controls button{appearance:none;-webkit-appearance:none}
+    .controls .left::before{content:"◀"}.controls .right::before{content:"▶"}.controls .dash::before{content:"DASH"}
+  </style>
 </head>
 <body>
   <main class="shell">
@@ -28,10 +33,10 @@
       <canvas id="game" width="960" height="540" aria-label="タイドランナーのゲーム画面"></canvas>
       <div class="message" id="message"></div>
       <div class="stamina"><span>DASH</span><div><i id="staminaBar"></i></div></div>
-      <div class="controls" aria-label="操作ボタン">
-        <button id="leftBtn" aria-label="左へ">◀</button>
-        <button id="dashBtn" class="dash">DASH</button>
-        <button id="rightBtn" aria-label="右へ">▶</button>
+      <div class="controls" aria-label="操作ボタン" oncontextmenu="return false">
+        <button id="leftBtn" class="left" type="button" aria-label="左へ"></button>
+        <button id="dashBtn" class="dash" type="button" aria-label="ダッシュ"></button>
+        <button id="rightBtn" class="right" type="button" aria-label="右へ"></button>
       </div>
     </section>
     <p class="hint"><span>← → / A D</span> 移動　<span>SPACE</span> ダッシュ　満潮は高い岩へ！</p>
