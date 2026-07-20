@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#072b45">
+  <meta name="description" content="海の日の潮位サバイバル・ランゲーム。潮が引いた海を走り、満ちる前に岩場へ逃げよう。">
+  <meta property="og:title" content="TIDE RUNNER｜潮が満ちる前に。">
+  <meta property="og:description" content="干潮を走り、貝を集め、満潮は岩場へ。海の日のスコアアタック。">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <title>TIDE RUNNER｜潮が満ちる前に。</title>
+  <link rel="stylesheet" href="/apps/2026-07-20/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="date"><b>7.20</b><span>海の日</span></div>
+      <div class="title"><small>TIDAL SURVIVAL RUN</small><h1>TIDE RUNNER</h1></div>
+      <button id="soundBtn" class="round" aria-label="サウンド切替">♪</button>
+    </header>
+    <section class="hud" aria-label="ゲーム情報">
+      <div><span>SCORE</span><strong id="score">00000</strong></div>
+      <div class="tide"><span><b id="tideLabel">干潮</b><i id="tideTime">あと 8.0秒</i></span><div class="meter"><em id="tideBar"></em><u id="safeLine"></u></div></div>
+      <div><span>BEST</span><strong id="best">00000</strong></div>
+    </section>
+    <section class="game-wrap">
+      <canvas id="game" width="960" height="540" aria-label="タイドランナーのゲーム画面"></canvas>
+      <div class="message" id="message"></div>
+      <div class="stamina"><span>DASH</span><div><i id="staminaBar"></i></div></div>
+      <div class="controls" aria-label="操作ボタン">
+        <button id="leftBtn" aria-label="左へ">◀</button>
+        <button id="dashBtn" class="dash">DASH</button>
+        <button id="rightBtn" aria-label="右へ">▶</button>
+      </div>
+    </section>
+    <p class="hint"><span>← → / A D</span> 移動　<span>SPACE</span> ダッシュ　満潮は高い岩へ！</p>
+  </main>
+
+  <div class="overlay show" id="startOverlay">
+    <div class="card">
+      <p class="eyebrow">7月20日　海の日</p>
+      <div class="logo-mark" aria-hidden="true"><i></i><b>RUN</b></div>
+      <h2>潮が満ちる前に。</h2>
+      <p>干潮の海底を走って貝を集めよう。<br>警報が鳴ったら、高い岩へ避難。</p>
+      <div class="rules"><span>🐚 貝を集める</span><span>🪨 岩で波をしのぐ</span><span>⚡ DASHで駆け抜ける</span></div>
+      <button id="startBtn" class="primary">RUN THE TIDE</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="resultOverlay">
+    <div class="card result">
+      <p class="eyebrow">TIDE REPORT</p>
+      <p class="rank" id="rank">BEACH SCOUT</p>
+      <h2 id="resultTitle">潮を読み切った！</h2>
+      <div class="big-score"><span>SCORE</span><strong id="finalScore">00000</strong></div>
+      <div class="stats"><span>貝殻 <b id="shellsResult">0</b></span><span>最大コンボ <b id="comboResult">0</b></span><span>到達距離 <b id="distanceResult">0m</b></span></div>
+      <button id="retryBtn" class="primary">もう一度走る</button>
+      <button id="shareBtn" class="secondary">結果をシェア</button>
+    </div>
+  </div>
+  <div class="toast" id="toast">結果をコピーしました</div>
+  <script src="/apps/2026-07-20/script.js"></script>
+</body>
+</html>
