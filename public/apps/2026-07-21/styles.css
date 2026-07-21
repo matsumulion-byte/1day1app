@@ -127,6 +127,10 @@ h1 { margin: 0; font-size: clamp(23px, 4vw, 34px); letter-spacing: .04em; line-h
 .result-grade { width: 100px; height: 100px; display: grid; place-items: center; margin: 8px; color: var(--sun); border: 5px solid var(--sun); border-radius: 50%; font-size: 64px; font-weight: 900; transform: rotate(-6deg); }
 .result-screen h2 { margin: 0; font-size: clamp(21px, 4vw, 34px); }
 .result-screen > p:not(.result-kicker) { margin: 6px 0 16px; color: #cfe0d3; font-size: 13px; }
+.campaign-result > p:not(.result-kicker) { display: grid; grid-template-columns: repeat(3, auto); gap: 6px 16px; align-items: center; }
+.campaign-result > p span { display: flex; flex-direction: column; color: #b8d1bc; font-size: 10px; }
+.campaign-result > p span b { color: var(--white); font-size: 16px; }
+.campaign-result > p em { grid-column: 1 / -1; max-width: 450px; margin-top: 5px; color: #deeadf; font-family: "Kiwi Maru", serif; font-style: normal; line-height: 1.6; }
 .result-actions { display: flex; gap: 10px; }
 .secondary-button { padding: 11px 22px; color: var(--white); border: 1px solid #8bac9c; background: transparent; }
 
@@ -178,6 +182,9 @@ footer { display: flex; justify-content: space-between; padding: 13px clamp(16px
   .tool b { font-size: 9px; }
   .toolbox-heading span { font-size: 9px; }
   .go-button { margin-top: 8px; }
+  .campaign-result > p:not(.result-kicker) { gap: 4px 10px; margin-bottom: 10px; }
+  .campaign-result > p span b { font-size: 13px; }
+  .campaign-result > p em { max-width: 330px; font-size: 11px; }
   footer { display: none; }
 }
 

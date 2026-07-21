@@ -36,6 +36,7 @@
   let phase = 'title', prepLeft = 20, gameLeft = 45, lastTime = 0, spawnClock = 0, spawned = 0;
   let nature = 100, happy = 100, arrived = 0, failed = 0, animationId, prepTimer;
   let soundOn = true, audioCtx;
+  let levelResults = [];
 
   function makeGrid() {
     grid = Array.from({ length: ROWS }, (_, y) => Array.from({ length: COLS }, (_, x) => ({
@@ -60,6 +61,8 @@
     $('totalCount').textContent = level.count;
     $('savedCount').textContent = '0';
     $('resultScreen').classList.add('hidden');
+    $('resultScreen').classList.remove('campaign-result');
+    $('retryButton').style.display = '';
     $('goButton').disabled = false;
     $('goButton').querySelector('strong').textContent = '観光客を入園させる';
     $('phaseHint').textContent = '道具を選んでマスに置こう';
@@ -92,15 +95,48 @@
     const score = nature * .5 + happy * .25 + (arrived / level.count * 100) * .25;
     const grade = score >= 92 ? 'S' : score >= 78 ? 'A' : score >= 62 ? 'B' : 'C';
     const success = arrived >= Math.ceil(level.count * .6) && nature >= 50;
+    levelResults[levelIndex] = { name: level.name, nature: Math.round(nature), happy: Math.round(happy), arrived, total: level.count, score, grade };
     $('resultGrade').textContent = grade;
     $('resultKicker').textContent = success ? 'MISSION COMPLETE' : 'RANGER REPORT';
     $('resultTitle').textContent = success ? (nature >= 90 ? '自然を守りました！' : 'なんとか守りました！') : 'もう一度、作戦会議。';
     $('resultDetail').textContent = `自然保護率 ${Math.round(nature)}% ／ ${arrived}人到着`;
-    $('nextButton').textContent = levelIndex === levels.length - 1 ? '最初のエリアへ' : '次のエリアへ';
+    $('nextButton').textContent = levelIndex === levels.length - 1 ? '総合評価を見る' : '次のエリアへ';
     $('nextButton').style.display = success ? '' : 'none';
     $('resultScreen').classList.remove('hidden');
     document.querySelectorAll('.tool').forEach(b => b.disabled = false);
     beep(success ? 660 : 180, .18);
+  }
+
+  function showCampaignResult() {
+    if (levelResults.length < levels.length || levelResults.some(r => !r)) return;
+    phase = 'campaign';
+    const totalArrived = levelResults.reduce((sum, r) => sum + r.arrived, 0);
+    const totalVisitors = levelResults.reduce((sum, r) => sum + r.total, 0);
+    const avgNature = Math.round(levelResults.reduce((sum, r) => sum + r.nature, 0) / levels.length);
+    const avgHappy = Math.round(levelResults.reduce((sum, r) => sum + r.happy, 0) / levels.length);
+    const overall = avgNature * .5 + avgHappy * .25 + (totalArrived / totalVisitors * 100) * .25;
+    const grade = overall >= 92 ? 'S' : overall >= 78 ? 'A' : overall >= 62 ? 'B' : 'C';
+    let title = '頼れる公園レンジャー！';
+    let comment = '観光客と自然、どちらにも目を配れています。次は自然保護率90%以上を目指そう。';
+    if (grade === 'S') {
+      title = '伝説の公園レンジャー！';
+      comment = '自然を傷つけず、観光客も大満足。未来に残したい見事な案内でした。';
+    } else if (avgNature < 65) {
+      title = '自然の声を、もう少し。';
+      comment = '到着を急ぐより、花畑を避けるルートづくりを優先すると評価が伸びます。';
+    } else if (totalArrived / totalVisitors < .75) {
+      title = '道案内を磨こう！';
+      comment = '自然は守れました。案内板の向きを工夫すれば、もっと多くの人を絶景へ導けます。';
+    }
+    $('resultScreen').classList.add('campaign-result');
+    $('resultKicker').textContent = 'FINAL RANGER REPORT';
+    $('resultGrade').textContent = grade;
+    $('resultTitle').textContent = title;
+    $('resultDetail').innerHTML = `<span>平均自然保護率 <b>${avgNature}%</b></span><span>平均満足度 <b>${avgHappy}%</b></span><span>到着 <b>${totalArrived}/${totalVisitors}人</b></span><em>${comment}</em>`;
+    $('nextButton').textContent = '最初から遊ぶ';
+    $('nextButton').style.display = '';
+    $('retryButton').style.display = 'none';
+    beep(grade === 'S' ? 880 : 720, .2);
   }
 
   function spawnTourist() {
@@ -277,10 +313,14 @@
     if (e.target.closest('button') || e.target === canvas) e.preventDefault();
   });
   document.querySelectorAll('.tool').forEach(btn=>btn.addEventListener('click',()=>{selectedTool=btn.dataset.tool;document.querySelectorAll('.tool').forEach(b=>b.classList.toggle('selected',b===btn));beep(300,.025);}));
-  $('startButton').addEventListener('click',()=>{$('startScreen').classList.add('hidden');setupLevel(0);});
+  $('startButton').addEventListener('click',()=>{$('startScreen').classList.add('hidden');levelResults=[];setupLevel(0);});
   $('goButton').addEventListener('click',beginRun);
   $('retryButton').addEventListener('click',()=>setupLevel(levelIndex));
-  $('nextButton').addEventListener('click',()=>setupLevel((levelIndex+1)%levels.length));
+  $('nextButton').addEventListener('click',()=>{
+    if (phase === 'campaign') { levelResults=[]; setupLevel(0); }
+    else if (levelIndex === levels.length - 1) showCampaignResult();
+    else setupLevel(levelIndex + 1);
+  });
   $('soundButton').addEventListener('click',()=>{soundOn=!soundOn;$('soundButton').classList.toggle('muted',!soundOn);if(soundOn)beep(500,.04);});
   window.addEventListener('resize',draw);
 
