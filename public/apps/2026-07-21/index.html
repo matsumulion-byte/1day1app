@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#173e32">
+  <meta name="description" content="勝手に歩く観光客を、自然を傷つけず絶景まで案内する自然公園レンジャーゲーム。">
+  <title>踏むな！自然公園</title>
+  <link rel="stylesheet" href="/apps/2026-07-21/styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true">▲</div>
+      <div class="brand-copy">
+        <p class="kicker">7.21 自然公園の日</p>
+        <h1>踏むな！自然公園</h1>
+      </div>
+      <button class="sound-button" id="soundButton" type="button" aria-label="効果音のオン・オフ">♪</button>
+    </header>
+
+    <section class="status-panel" aria-label="ゲーム状況">
+      <div class="level-label"><span>AREA</span><strong id="levelNumber">01</strong></div>
+      <div class="meter-group">
+        <div class="meter-title"><span>自然保護率</span><strong id="natureValue">100%</strong></div>
+        <div class="meter"><span id="natureMeter"></span></div>
+      </div>
+      <div class="meter-group">
+        <div class="meter-title"><span>満足度</span><strong id="happyValue">100%</strong></div>
+        <div class="meter happy"><span id="happyMeter"></span></div>
+      </div>
+      <div class="visitor-count"><span>到着</span><strong><b id="savedCount">0</b>/<b id="totalCount">5</b></strong></div>
+    </section>
+
+    <section class="game-card">
+      <div class="mission-banner" id="missionBanner">
+        <span class="mission-icon">!</span>
+        <p id="missionText">希少な花を守り、全員を展望台へ案内せよ</p>
+        <strong id="timerText">準備 20</strong>
+      </div>
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="gameCanvas" width="960" height="560" aria-label="自然公園のゲーム盤"></canvas>
+        <div class="start-screen" id="startScreen">
+          <div class="start-badge">NATIONAL PARK<br>RANGER</div>
+          <h2>観光客は<br><em>勝手に歩く。</em></h2>
+          <p>案内板・ロープ・木道を置いて<br>自然を守りながら絶景へ導こう。</p>
+          <button class="primary-button" id="startButton" type="button">レンジャー出動</button>
+          <small>1 PLAY 約60秒</small>
+        </div>
+        <div class="result-screen hidden" id="resultScreen">
+          <p class="result-kicker" id="resultKicker">MISSION COMPLETE</p>
+          <div class="result-grade" id="resultGrade">A</div>
+          <h2 id="resultTitle">自然を守りました！</h2>
+          <p id="resultDetail">自然保護率 100% ／ 全員到着</p>
+          <div class="result-actions">
+            <button class="primary-button" id="nextButton" type="button">次のエリアへ</button>
+            <button class="secondary-button" id="retryButton" type="button">もう一度</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="toolbox" aria-label="レンジャー道具">
+      <div class="toolbox-heading">
+        <p>RANGER TOOLS</p>
+        <span id="phaseHint">道具を選んでマスに置こう</span>
+      </div>
+      <div class="tools">
+        <button class="tool selected" data-tool="sign" type="button">
+          <span class="tool-icon sign-icon">➜</span>
+          <span class="tool-name">案内板</span>
+          <span class="tool-help">進路変更</span>
+          <b id="signStock">× 3</b>
+        </button>
+        <button class="tool" data-tool="rope" type="button">
+          <span class="tool-icon rope-icon">×</span>
+          <span class="tool-name">ロープ</span>
+          <span class="tool-help">立入禁止</span>
+          <b id="ropeStock">× 3</b>
+        </button>
+        <button class="tool" data-tool="bridge" type="button">
+          <span class="tool-icon bridge-icon">═</span>
+          <span class="tool-name">木道</span>
+          <span class="tool-help">湿地を渡る</span>
+          <b id="bridgeStock">× 2</b>
+        </button>
+        <button class="tool erase" data-tool="erase" type="button">
+          <span class="tool-icon">↶</span>
+          <span class="tool-name">回収</span>
+          <span class="tool-help">置き直す</span>
+        </button>
+      </div>
+      <button class="go-button" id="goButton" type="button" disabled>
+        <span>準備OK</span><strong>観光客を入園させる</strong>
+      </button>
+    </section>
+
+    <footer><span>自然は、みんなのもの。</span><b>JUL 21 / NATURE PARK DAY</b></footer>
+  </main>
+  <script src="/apps/2026-07-21/script.js"></script>
+</body>
+</html>
