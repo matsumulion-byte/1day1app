@@ -15,7 +15,9 @@
   const angleInput = $('angleInput');
   const inputs = [sizeInput, speedInput, angleInput];
   let dpr = 1, w = 0, h = 0, phase = 'intro', progress = 0, stars = [];
-  let scarOpacity = 0, sound = true, audio, impactFx = null;
+  let scarOpacity = 0, sound = true, audio, impactFx = null, impactStart = 0, impactTime = 0;
+  const jupiterMap = new Image();
+  jupiterMap.src = '/apps/2026-07-22/jupiter-map.jpg';
 
   function parameters() {
     const diameter = Number(sizeInput.value) / 10;
@@ -92,15 +94,19 @@
   function drawJupiter() {
     const j = jupiter();
     ctx.save(); ctx.beginPath(); ctx.arc(j.x, j.y, j.r, 0, Math.PI * 2); ctx.clip();
-    const g = ctx.createLinearGradient(j.x - j.r, j.y, j.x + j.r, j.y);
-    g.addColorStop(0, '#21170f'); g.addColorStop(.18, '#a56d3d'); g.addColorStop(.5, '#e1b272'); g.addColorStop(.78, '#8e542f'); g.addColorStop(1, '#130d0a');
-    ctx.fillStyle = g; ctx.fillRect(j.x - j.r, j.y - j.r, j.r * 2, j.r * 2);
-    ['#39261d','#f0d19e','#a56541','#f7dfb0','#6e3b29','#d9985c','#4b2a22','#e6b875'].forEach((c, i) => {
-      const yy = j.y - j.r + (i + .55) * (j.r * 2 / 8);
-      ctx.fillStyle = c; ctx.globalAlpha = .18 + (i % 3) * .08;
-      ctx.beginPath(); ctx.ellipse(j.x, yy, j.r * 1.04, j.r * .085, Math.sin(i) * .02, 0, Math.PI * 2); ctx.fill();
-    });
-    ctx.globalAlpha = .9; ctx.fillStyle = '#a43e26'; ctx.beginPath(); ctx.ellipse(j.x + j.r * .36, j.y + j.r * .23, j.r * .19, j.r * .075, -.08, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#b27a4f'; ctx.fillRect(j.x - j.r, j.y - j.r, j.r * 2, j.r * 2);
+    if (jupiterMap.complete && jupiterMap.naturalWidth) {
+      const strips = Math.max(100, Math.floor(j.r * .85));
+      const rotation = (Date.now() / 180000) % 1;
+      for (let i = 0; i < strips; i++) {
+        const nx = (i + .5) / strips * 2 - 1;
+        const lon = Math.asin(nx) / Math.PI + .5;
+        const sourceX = ((lon + rotation) % 1) * jupiterMap.naturalWidth;
+        const dx = j.x - j.r + i * (j.r * 2 / strips);
+        const stripW = j.r * 2 / strips + 1;
+        ctx.drawImage(jupiterMap, sourceX, 0, Math.max(1, jupiterMap.naturalWidth / strips), jupiterMap.naturalHeight, dx, j.y - j.r, stripW, j.r * 2);
+      }
+    }
     if (scarOpacity > 0 && impactFx) {
       const scale = Math.max(.055, Math.min(.18, impactFx.scarKm / 70000));
       ctx.globalAlpha = scarOpacity * .95; ctx.fillStyle = '#1b0f0c'; ctx.shadowColor = '#ff8c51'; ctx.shadowBlur = 18 * (1 - scarOpacity);
@@ -112,6 +118,51 @@
     shade.addColorStop(.35, 'transparent'); shade.addColorStop(1, 'rgba(0,0,0,.72)');
     ctx.fillStyle = shade; ctx.beginPath(); ctx.arc(j.x, j.y, j.r, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = 'rgba(255,190,120,.3)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  function drawImpactSequence() {
+    if (phase !== 'impact' || !impactFx) return;
+    const p = impactFx, j = jupiter(), t = impactTime;
+    const outwardX = (p.x - j.x) / j.r, outwardY = (p.y - j.y) / j.r;
+    const mag = Math.hypot(outwardX, outwardY) || 1;
+    const ux = outwardX / mag, uy = outwardY / mag;
+    ctx.save();
+    if (t < 1.25) {
+      const k = t / 1.25, radius = (10 + p.diameter * 18) * (1 + k * 1.8);
+      const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius);
+      glow.addColorStop(0, '#ffffff'); glow.addColorStop(.18, '#fff7b0'); glow.addColorStop(.5, `rgba(255,112,34,${1-k*.4})`); glow.addColorStop(1, 'transparent');
+      ctx.globalCompositeOperation = 'screen'; ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(p.x, p.y, radius, 0, Math.PI * 2); ctx.fill();
+    }
+    if (t >= .7 && t < 5.6) {
+      const k = Math.min(1, (t - .7) / 2.7), fall = Math.max(0, (t - 3.4) / 2.2);
+      const height = j.r * (.15 + .38 * k) * (1 - fall * .34);
+      const tipX = p.x + ux * height, tipY = p.y + uy * height;
+      const plume = ctx.createLinearGradient(p.x, p.y, tipX, tipY);
+      plume.addColorStop(0, 'rgba(255,94,28,.15)'); plume.addColorStop(.35, 'rgba(255,177,78,.7)'); plume.addColorStop(1, 'rgba(245,235,218,0)');
+      ctx.globalCompositeOperation = 'screen'; ctx.strokeStyle = plume; ctx.lineCap = 'round'; ctx.lineWidth = 8 + p.diameter * 9;
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.quadraticCurveTo(p.x + ux * height * .6 - uy * 12, p.y + uy * height * .6 + ux * 12, tipX, tipY); ctx.stroke();
+      for (let i = 0; i < 28; i++) {
+        const seed = ((i * 47) % 29) / 29, spread = (seed - .5) * (.25 + fall * .5);
+        const a = Math.min(1, k * 1.8) * (1 - fall * .55);
+        const dist = height * (.22 + ((i * 19) % 23) / 26);
+        const px = p.x + ux * dist - uy * dist * spread, py = p.y + uy * dist + ux * dist * spread;
+        ctx.globalAlpha = a * (.25 + seed * .55); ctx.fillStyle = i % 3 ? '#ff9b4a' : '#fff4cf';
+        ctx.beginPath(); ctx.arc(px, py, 1 + seed * 4, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    if (t >= 3.2 && t < 7.2) {
+      const k = Math.min(1, (t - 3.2) / 3.2);
+      ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = (1-k) * .8;
+      ctx.strokeStyle = '#ff8b43'; ctx.lineWidth = 3 + p.diameter * 2;
+      ctx.beginPath(); ctx.ellipse(p.x, p.y, j.r * (.03 + k * .15), j.r * (.012 + k * .06), .15, 0, Math.PI * 2); ctx.stroke();
+      for (let i = 0; i < 20; i++) {
+        const a = i / 19 * Math.PI * 1.45 + .4;
+        const radius = j.r * k * (.05 + (i % 5) * .018);
+        const px = p.x + Math.cos(a) * radius, py = p.y + Math.sin(a) * radius * .42;
+        ctx.globalAlpha = (1-k) * .7; ctx.fillStyle = '#ffb66d'; ctx.fillRect(px, py, 2, 2);
+      }
+    }
+    ctx.restore();
   }
 
   function drawComet() {
@@ -132,7 +183,7 @@
   function frame() {
     ctx.clearRect(0, 0, w, h); ctx.fillStyle = '#03050a'; ctx.fillRect(0, 0, w, h);
     stars.forEach(s => { ctx.globalAlpha = s.a * (.75 + .25 * Math.sin(Date.now() / 700 + s.x)); ctx.fillStyle = '#dce8ff'; ctx.fillRect(s.x, s.y, s.r, s.r); });
-    ctx.globalAlpha = 1; drawJupiter(); drawTrajectoryGuide(); drawComet(); requestAnimationFrame(frame);
+    ctx.globalAlpha = 1; drawJupiter(); drawTrajectoryGuide(); drawComet(); drawImpactSequence(); requestAnimationFrame(frame);
   }
 
   function tone(freq, duration, type = 'sine', vol = .04) {
@@ -180,20 +231,30 @@
   function impact(p) {
     phase = 'impact'; countdown.classList.add('hidden');
     const end = trajectory(1); impactFx = { ...p, x: end.x, y: end.y };
+    impactStart = performance.now(); impactTime = 0; $('impactCaption').classList.remove('hidden');
     flash.style.animationDuration = `${Math.max(1.1, p.diameter * .9)}s`; flash.classList.add('fire');
     tone(42 + p.speed / 3, 2.2, 'sawtooth', Math.min(.16, .07 + p.diameter * .04));
-    setTimeout(() => { scarOpacity = 1; }, 350);
+    const sequence = now => {
+      impactTime = (now - impactStart) / 1000;
+      $('impactClock').textContent = `T＋${impactTime.toFixed(1)} s`;
+      if (impactTime < 1.1) { $('impactStep').textContent = '01 / ATMOSPHERIC ENTRY'; $('impactDescription').textContent = '大気圏突入・火球形成'; }
+      else if (impactTime < 3.8) { $('impactStep').textContent = '02 / PLUME ASCENT'; $('impactDescription').textContent = '高温の噴煙が上昇'; }
+      else if (impactTime < 6.6) { $('impactStep').textContent = '03 / PLUME FALLBACK'; $('impactDescription').textContent = '噴出物が大気へ再突入'; }
+      else { $('impactStep').textContent = '04 / IMPACT SCAR'; $('impactDescription').textContent = '暗い衝突痕が形成'; scarOpacity = Math.min(1, (impactTime - 6.6) * 2); }
+      if (impactTime < 8.1) requestAnimationFrame(sequence);
+    };
+    requestAnimationFrame(sequence);
     setTimeout(() => {
       $('plumeResult').textContent = Math.round(p.plume / 50) * 50 + ' km';
       $('energyResult').textContent = scientific(p.energy) + ' J';
       $('scarResult').textContent = Math.round(p.scarKm / 100) * 100 + ' km';
       $('gradeResult').textContent = `${p.latitude >= 0 ? '+' : '−'}${Math.abs(p.latitude).toFixed(1)}°`;
-      report.classList.remove('hidden'); phase = 'report';
-    }, 1250);
+      $('impactCaption').classList.add('hidden'); report.classList.remove('hidden'); phase = 'report';
+    }, 8300);
   }
 
   $('retryButton').onclick = () => {
-    phase = 'aim'; progress = 0; scarOpacity = 0; impactFx = null; report.classList.add('hidden'); flash.classList.remove('fire'); reticle.classList.remove('hidden'); launch.disabled = false;
+    phase = 'aim'; progress = 0; scarOpacity = 0; impactFx = null; impactTime = 0; report.classList.add('hidden'); $('impactCaption').classList.add('hidden'); flash.classList.remove('fire'); reticle.classList.remove('hidden'); launch.disabled = false;
     $('distanceReadout').textContent = '6.4 × 10⁸ km'; updatePrediction();
   };
   $('soundButton').onclick = e => { sound = !sound; e.currentTarget.querySelector('b').textContent = sound ? 'ON' : 'OFF'; if (sound) tone(600, .1); };
