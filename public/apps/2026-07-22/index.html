@@ -21,6 +21,10 @@
       <div class="live"><span></span> OBSERVATION LIVE</div>
       <div class="telemetry left-data"><small>TARGET</small><strong>JUPITER</strong><small>DISTANCE</small><strong id="distanceReadout">6.4 × 10⁸ km</strong></div>
       <div class="telemetry right-data"><small>OBJECT</small><strong>SL9 / W</strong><small>VELOCITY</small><strong id="velocityReadout">60 km/s</strong></div>
+      <div class="prediction" id="prediction">
+        <span>PREDICTED IMPACT</span>
+        <b id="flightPrediction">T−5.4 s</b><b id="energyPrediction">1.16 × 10²¹ J</b><b id="latitudePrediction">−8.0° LAT</b>
+      </div>
       <div class="intro" id="intro">
         <p class="eyebrow">THE FINAL FRAGMENT / 1994.07.22</p>
         <h2>木星に残った、<br><em>太陽系の傷跡。</em></h2>
@@ -34,8 +38,9 @@
         <h2>衝突痕を確認。</h2>
         <div class="report-grid">
           <div><span>推定噴煙高度</span><strong id="plumeResult">3,100 km</strong></div>
-          <div><span>衝突エネルギー</span><strong id="energyResult">6.0 × 10²² J</strong></div>
-          <div><span>観測評価</span><strong id="gradeResult">EXCELLENT</strong></div>
+          <div><span>衝突エネルギー</span><strong id="energyResult">1.16 × 10²¹ J</strong></div>
+          <div><span>衝突痕の直径</span><strong id="scarResult">8,900 km</strong></div>
+          <div><span>衝突緯度</span><strong id="gradeResult">−8.0°</strong></div>
         </div>
         <p class="fact">衝突で生じた暗い痕は地球よりも大きく、数か月にわたって観測されました。</p>
         <div class="actions"><button class="primary" id="retryButton" type="button">もう一度観測</button><button class="secondary" id="saveButton" type="button">観測記録を保存</button></div>
