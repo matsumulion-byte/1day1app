@@ -91,6 +91,57 @@
     ctx.restore();
   }
 
+  function drawImpactScar(j) {
+    if (scarOpacity <= 0 || !impactFx) return;
+    const p = impactFx;
+    const base = j.r * Math.max(.07, Math.min(.19, p.scarKm / 66000));
+    const age = Math.max(0, (performance.now() - impactStart) / 1000 - 6.6);
+    const windStretch = Math.min(1.7, 1 + age * .018);
+    const rotation = -.18;
+    const alpha = Math.min(1, scarOpacity);
+    ctx.save();
+    ctx.translate(p.x, p.y); ctx.rotate(rotation); ctx.scale(windStretch, 1);
+
+    // High-altitude soot haze: the broad, soft fan seen around the SL9 sites.
+    const haze = ctx.createRadialGradient(-base * .35, 0, base * .08, -base * .2, 0, base * 1.85);
+    haze.addColorStop(0, `rgba(18,10,9,${.72 * alpha})`);
+    haze.addColorStop(.38, `rgba(38,22,18,${.55 * alpha})`);
+    haze.addColorStop(.72, `rgba(75,47,36,${.28 * alpha})`);
+    haze.addColorStop(1, 'rgba(75,47,36,0)');
+    ctx.fillStyle = haze; ctx.beginPath(); ctx.ellipse(-base * .22, 0, base * 1.85, base * .78, 0, 0, Math.PI * 2); ctx.fill();
+
+    // The asymmetric crescent of plume material falling back downrange.
+    ctx.globalAlpha = .78 * alpha; ctx.strokeStyle = '#24130f'; ctx.lineWidth = base * .34; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.ellipse(-base * .28, 0, base * 1.12, base * .48, 0, Math.PI * .18, Math.PI * 1.45); ctx.stroke();
+    ctx.globalAlpha = .32 * alpha; ctx.strokeStyle = '#a16d53'; ctx.lineWidth = Math.max(1, base * .08);
+    ctx.beginPath(); ctx.ellipse(-base * .28, 0, base * 1.38, base * .61, 0, Math.PI * .15, Math.PI * 1.5); ctx.stroke();
+
+    // Dark central core and warm inner ring.
+    const core = ctx.createRadialGradient(base * .08, 0, 0, base * .08, 0, base * .58);
+    core.addColorStop(0, `rgba(2,2,3,${.98 * alpha})`); core.addColorStop(.48, `rgba(12,8,8,${.96 * alpha})`); core.addColorStop(.72, `rgba(83,42,27,${.72 * alpha})`); core.addColorStop(1, 'rgba(100,55,36,0)');
+    ctx.fillStyle = core; ctx.beginPath(); ctx.ellipse(base * .08, 0, base * .66, base * .42, 0, 0, Math.PI * 2); ctx.fill();
+
+    // Irregular clumps make the deposit look atmospheric, not geometrical.
+    for (let i = 0; i < 34; i++) {
+      const seedA = ((i * 37) % 101) / 101;
+      const seedB = ((i * 61 + 17) % 103) / 103;
+      const theta = seedA * Math.PI * 2;
+      const radius = base * (.18 + seedB * 1.18);
+      const x = Math.cos(theta) * radius - base * seedB * .22;
+      const y = Math.sin(theta) * radius * .38;
+      const r = base * (.018 + ((i * 13) % 11) / 160);
+      ctx.globalAlpha = alpha * (.18 + seedB * .38);
+      ctx.fillStyle = i % 4 ? '#17100f' : '#7b4c39';
+      ctx.beginPath(); ctx.ellipse(x, y, r * (1.2 + seedA), r, theta, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // A faint outer pressure-wave ring.
+    ctx.globalAlpha = .2 * alpha; ctx.strokeStyle = '#e1b99a'; ctx.lineWidth = 1;
+    ctx.setLineDash([base * .08, base * .07]);
+    ctx.beginPath(); ctx.ellipse(-base * .12, 0, base * 1.62, base * .69, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+  }
+
   function drawJupiter() {
     const j = jupiter();
     ctx.save(); ctx.beginPath(); ctx.arc(j.x, j.y, j.r, 0, Math.PI * 2); ctx.clip();
@@ -107,12 +158,7 @@
         ctx.drawImage(jupiterMap, sourceX, 0, Math.max(1, jupiterMap.naturalWidth / strips), jupiterMap.naturalHeight, dx, j.y - j.r, stripW, j.r * 2);
       }
     }
-    if (scarOpacity > 0 && impactFx) {
-      const scale = Math.max(.055, Math.min(.18, impactFx.scarKm / 70000));
-      ctx.globalAlpha = scarOpacity * .95; ctx.fillStyle = '#1b0f0c'; ctx.shadowColor = '#ff8c51'; ctx.shadowBlur = 18 * (1 - scarOpacity);
-      ctx.beginPath(); ctx.ellipse(impactFx.x, impactFx.y, j.r * scale, j.r * scale * .48, .16, 0, Math.PI * 2); ctx.fill();
-      ctx.globalAlpha = scarOpacity * .45; ctx.strokeStyle = '#e06b3e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(impactFx.x, impactFx.y, j.r * scale * 1.35, j.r * scale * .67, .16, 0, Math.PI * 2); ctx.stroke();
-    }
+    drawImpactScar(j);
     ctx.restore();
     const shade = ctx.createRadialGradient(j.x - j.r * .25, j.y - j.r * .25, j.r * .15, j.x, j.y, j.r * 1.1);
     shade.addColorStop(.35, 'transparent'); shade.addColorStop(1, 'rgba(0,0,0,.72)');
