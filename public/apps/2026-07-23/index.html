@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#18342c">
+  <meta name="description" content="宛先の消えた手紙を、消印と文面から正しい相手へ届ける短編推理ゲーム。7月23日、文月ふみの日。">
+  <title>宛先不明課｜届かなかった手紙を、あなたの手で。</title>
+  <link rel="stylesheet" href="/apps/2026-07-23/styles.css">
+</head>
+<body>
+  <main class="office">
+    <header class="topbar">
+      <div class="brand">
+        <span class="postal-mark">〒</span>
+        <div><small>文月二十三日・第四集配局</small><h1>宛先不明課</h1></div>
+      </div>
+      <div class="status">
+        <span id="caseCount">未処理 4通</span>
+        <button id="soundButton" type="button" aria-label="音を切り替える">音 <b>入</b></button>
+      </div>
+    </header>
+
+    <section class="desk">
+      <div class="intro-panel" id="introPanel">
+        <p class="eyebrow">DEAD LETTER OFFICE / JUL. 23</p>
+        <h2>届かなかった手紙を、<br><em>あなたの手で。</em></h2>
+        <p>宛先が雨で消えた手紙が四通。<br>残された言葉と消印から、受取人を探してください。</p>
+        <div class="rule"><span>一</span> 封を開く　<span>二</span> 手掛かりを読む　<span>三</span> 配達先を決める</div>
+        <button class="primary" id="startButton" type="button">本日の配達を始める <span>→</span></button>
+      </div>
+
+      <section class="workarea hidden" id="workarea" aria-live="polite">
+        <aside class="case-rail">
+          <p>本日の未着便</p>
+          <div id="caseDots" class="case-dots"></div>
+          <div class="score-box"><small>配達印</small><strong id="score">0</strong><span>/ 4</span></div>
+        </aside>
+
+        <div class="evidence">
+          <div class="case-heading">
+            <div><p id="caseLabel">第一号</p><h2 id="caseTitle">雨に濡れた封筒</h2></div>
+            <span id="postmark">消印：東京・吉祥寺</span>
+          </div>
+
+          <div class="envelope-scene" id="envelopeScene">
+            <button class="envelope" id="envelope" type="button" aria-label="封筒を開く">
+              <span class="flap"></span>
+              <span class="stamp"><b>85</b><i>文月</i></span>
+              <span class="address">宛先<br><b>雨で判読不能</b></span>
+              <span class="postmark-ring" id="postmarkRing">TOKYO<br>7.23</span>
+              <span class="open-hint">クリックして開封</span>
+            </button>
+            <article class="letter" id="letter">
+              <p class="letter-date" id="letterDate"></p>
+              <div id="letterBody"></div>
+              <p class="signature" id="signature"></p>
+            </article>
+          </div>
+
+          <div class="clue-strip" id="clueStrip"></div>
+        </div>
+
+        <aside class="residents">
+          <div class="resident-head"><p>配達区域住民票</p><span>候補者を選択</span></div>
+          <div id="candidateList" class="candidate-list"></div>
+          <button id="deliverButton" class="deliver" type="button" disabled>この人へ配達する</button>
+        </aside>
+      </section>
+
+      <section class="result-overlay hidden" id="resultOverlay">
+        <div class="result-card">
+          <div class="result-stamp" id="resultStamp">配達</div>
+          <p class="eyebrow" id="resultEyebrow">DELIVERY COMPLETE</p>
+          <h2 id="resultTitle">手紙は、届きました。</h2>
+          <p id="resultText"></p>
+          <button class="primary" id="nextButton" type="button">次の手紙へ <span>→</span></button>
+        </div>
+      </section>
+
+      <section class="ending hidden" id="ending">
+        <p class="eyebrow">ALL LETTERS PROCESSED</p>
+        <div class="ending-mark">〒</div>
+        <h2 id="endingTitle">四通すべて、配達完了。</h2>
+        <p id="endingMessage"></p>
+        <div class="ending-score"><span>本日の配達印</span><strong id="finalScore">4 / 4</strong></div>
+        <p class="fumi-note">毎月23日は「ふみの日」。なかでも7月は文月の「ふみの日」です。</p>
+        <button class="primary" id="restartButton" type="button">もう一度仕分ける</button>
+      </section>
+    </section>
+
+    <footer>
+      <span>第四集配局　宛先不明郵便物取扱規程</span>
+      <p>手紙には、住所より先に届く言葉がある。</p>
+      <span>JUL 23 / FUMI NO HI</span>
+    </footer>
+  </main>
+  <script src="/apps/2026-07-23/script.js"></script>
+</body>
+</html>
