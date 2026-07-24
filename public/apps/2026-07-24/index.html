@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f2efe8" />
+    <meta name="description" content="6つの質問から、あなたの内側にある性質を抽出します。" />
+    <title>あなたの本質、抽出します。</title>
+    <link rel="stylesheet" href="/apps/2026-07-24/styles.css" />
+  </head>
+  <body>
+    <main id="app" class="app">
+      <section id="intro" class="screen intro is-active" aria-labelledby="intro-title">
+        <div class="topline">
+          <span>ESSENCE ANALYSIS</span>
+          <span>01—06</span>
+        </div>
+        <div class="intro-copy">
+          <p class="eyebrow">内面特性分析</p>
+          <h1 id="intro-title">あなたの本質、<br /><em>抽出</em>します。</h1>
+          <p class="lead">何を選ぶかより、どう迷うか。<br />6つの質問から、あなたの内側にある性質を分析します。</p>
+          <button id="start" class="button primary" type="button">
+            診断をはじめる
+            <span aria-hidden="true">→</span>
+          </button>
+          <p class="meta">所要時間：約1分　／　回答は保存されません</p>
+        </div>
+        <div class="orbital" aria-hidden="true">
+          <span class="orbit orbit-a"></span>
+          <span class="orbit orbit-b"></span>
+          <span class="core"></span>
+        </div>
+      </section>
+
+      <section id="quiz" class="screen quiz" aria-labelledby="question">
+        <header class="quiz-header">
+          <button id="back" class="text-button" type="button" aria-label="前の質問に戻る">← 戻る</button>
+          <p><span id="current">01</span> / 06</p>
+        </header>
+        <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+        <div class="question-wrap">
+          <p id="question-kicker" class="eyebrow">QUESTION 01</p>
+          <h2 id="question">予定のない休日。<br />どう過ごしたい？</h2>
+          <div id="answers" class="answers"></div>
+        </div>
+      </section>
+
+      <section id="analyzing" class="screen analyzing" aria-live="polite">
+        <div class="scan" aria-hidden="true"><span></span></div>
+        <p class="eyebrow">ANALYZING</p>
+        <h2>回答の奥にある傾向を<br />抽出しています。</h2>
+        <p id="analysis-copy" class="analysis-copy">選択の一貫性を確認中…</p>
+        <div class="analysis-line"><span></span></div>
+      </section>
+
+      <section id="reveal" class="screen reveal" aria-live="polite">
+        <div id="serious-result" class="serious-result">
+          <p class="eyebrow">YOUR ESSENCE</p>
+          <p id="pre-result" class="pre-result"></p>
+          <h2 id="trait-line"></h2>
+          <p class="pause">この性質を、ひとことで表すなら。</p>
+        </div>
+        <div id="punchline" class="punchline" aria-hidden="true">
+          <div class="sunburst" aria-hidden="true"></div>
+          <p class="tiny">CONCLUSIÓN</p>
+          <h2>つまり——<br /><strong>テキーラです。</strong></h2>
+          <div class="agave" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+      </section>
+
+      <section id="result" class="screen result" aria-labelledby="result-name">
+        <header class="result-header">
+          <span>YOUR TRUE ESSENCE</span>
+          <span>07.24</span>
+        </header>
+        <div class="result-hero">
+          <div class="stamp">100%<br />AGAVE</div>
+          <p class="result-label">あなたは</p>
+          <h2 id="result-name"></h2>
+          <p id="result-en" class="result-en"></p>
+          <p id="result-description" class="result-description"></p>
+        </div>
+        <div class="result-grid">
+          <article>
+            <p>隠れた持ち味</p>
+            <strong id="result-flavor"></strong>
+          </article>
+          <article>
+            <p>今日のひとこと</p>
+            <strong id="result-quote"></strong>
+          </article>
+        </div>
+        <div class="actions">
+          <button id="share" class="button light" type="button">結果をシェア</button>
+          <button id="retry" class="button ghost" type="button">そんなわけないので再診断</button>
+        </div>
+        <p id="share-status" class="share-status" role="status"></p>
+        <footer>
+          <span>7月24日はテキーラの日</span>
+          <span>お酒は20歳になってから。飲むなら、ゆっくり。</span>
+        </footer>
+      </section>
+    </main>
+    <script src="/apps/2026-07-24/script.js"></script>
+  </body>
+</html>
