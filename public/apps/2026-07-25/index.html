@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#dff6f7">
+  <meta name="description" content="閉店前の氷屋さんで、お客さんの注文どおりのかき氷を作るミニゲーム。">
+  <title>氷屋さん</title>
+  <link rel="stylesheet" href="/apps/2026-07-25/styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="shop-header">
+      <div class="brand">
+        <span class="brand-kana">こおりや</span>
+        <h1>氷屋さん</h1>
+      </div>
+      <div class="noren" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    </header>
+
+    <section id="startScreen" class="overlay is-visible" aria-labelledby="startTitle">
+      <div class="paper-card">
+        <p class="eyebrow">七月二十五日・かき氷の日</p>
+        <h2 id="startTitle">夕暮れ前の<br><em>ひと仕事。</em></h2>
+        <p>注文に合わせて氷を削り、<br>仕上げの蜜をかけましょう。</p>
+        <div class="howto">
+          <span><b>1</b> 長押しで削る</span>
+          <span><b>2</b> 蜜を選ぶ</span>
+          <span><b>3</b> お渡しする</span>
+        </div>
+        <button id="startBtn" class="primary">店をひらく</button>
+      </div>
+    </section>
+
+    <section id="resultScreen" class="overlay" aria-labelledby="resultTitle">
+      <div class="paper-card result-card">
+        <p class="eyebrow">本日の評判</p>
+        <div id="resultStamp" class="result-stamp">涼</div>
+        <h2 id="resultTitle">おつかれさまでした</h2>
+        <p id="resultScore" class="big-score">0点</p>
+        <p id="resultCopy"></p>
+        <div id="resultStats" class="result-stats"></div>
+        <button id="retryBtn" class="primary">もう一度ひらく</button>
+      </div>
+    </section>
+
+    <section class="game" aria-label="かき氷作りゲーム">
+      <div class="topbar">
+        <div class="stat"><small>お客さま</small><strong><span id="customerNo">1</span>/5</strong></div>
+        <div class="stat score-stat"><small>評判</small><strong><span id="score">0</span>点</strong></div>
+        <div class="stat"><small>のこり</small><strong><span id="time">20</span>秒</strong></div>
+      </div>
+
+      <div class="customer-row">
+        <div id="customer" class="customer" aria-hidden="true">
+          <div class="customer-head"><span class="customer-face">⌒‿⌒</span></div>
+          <div class="customer-body"></div>
+        </div>
+        <div class="speech">
+          <span class="speech-label">ご注文</span>
+          <p id="orderText">ふわふわで、いちごをたっぷり。</p>
+          <div class="order-tags">
+            <span id="orderSize">大盛り</span>
+            <span id="orderFlavor">いちご</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="counter">
+        <div class="machine" aria-hidden="true">
+          <div class="machine-top"></div>
+          <div class="machine-body">
+            <div class="wheel">氷</div>
+            <div class="handle"></div>
+          </div>
+          <div class="machine-foot"></div>
+        </div>
+
+        <div class="bowl-zone">
+          <div id="ice" class="ice" aria-label="削った氷">
+            <div class="syrup-layer"></div>
+            <div class="ice-texture"></div>
+          </div>
+          <div class="bowl"><span>氷屋</span></div>
+          <div class="shadow"></div>
+        </div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-label"><span>氷の量</span><strong id="amountText">まだ空っぽ</strong></div>
+        <div class="progress"><div id="amountBar"></div><i id="targetMark"></i></div>
+      </div>
+
+      <div class="controls">
+        <button id="shaveBtn" class="shave-btn" aria-label="押している間、氷を削る">
+          <span class="shave-icon">✦</span>
+          <span><b>押して削る</b><small>長押し</small></span>
+        </button>
+        <div class="flavors" aria-label="蜜を選ぶ">
+          <button class="flavor strawberry" data-flavor="いちご" aria-label="いちご蜜"><i></i>いちご</button>
+          <button class="flavor melon" data-flavor="メロン" aria-label="メロン蜜"><i></i>メロン</button>
+          <button class="flavor lemon" data-flavor="れもん" aria-label="れもん蜜"><i></i>れもん</button>
+        </div>
+        <button id="serveBtn" class="serve-btn" disabled>お渡しする</button>
+      </div>
+      <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+  <script src="/apps/2026-07-25/script.js"></script>
+</body>
+</html>
