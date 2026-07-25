@@ -25,7 +25,7 @@ let amount = 0;
 let selectedFlavor = "";
 let customerIndex = 0;
 let score = 0;
-let time = 20;
+let time = 40;
 let timerId = null;
 let shaveFrame = null;
 let running = false;
@@ -40,7 +40,7 @@ function pickOrder() {
 function startGame() {
   clearInterval(timerId);
   score = 0;
-  time = 20;
+  time = 40;
   customerIndex = 0;
   served = 0;
   perfects = 0;
@@ -202,6 +202,8 @@ shaveBtn.addEventListener("pointerleave", stopShaving);
 $$(".flavor").forEach(button => button.addEventListener("click", () => selectFlavor(button)));
 serveBtn.addEventListener("click", serve);
 window.addEventListener("blur", stopShaving);
+shaveBtn.addEventListener("contextmenu", event => event.preventDefault());
+shaveBtn.addEventListener("selectstart", event => event.preventDefault());
 
 pickOrder();
 targetMark.style.left = `${currentOrder.size}%`;

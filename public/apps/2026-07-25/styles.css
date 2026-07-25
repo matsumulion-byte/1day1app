@@ -5,7 +5,12 @@
   --cream: #fffaf0;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
 
 html, body {
   margin: 0;
@@ -23,7 +28,14 @@ body {
   overflow: hidden;
 }
 
-button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent; }
+button {
+  font: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
 
 .app {
   position: relative;
