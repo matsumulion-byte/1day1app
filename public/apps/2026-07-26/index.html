@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#100e0d">
   <meta name="description" content="部屋の生活音を拾い、あなただけの短い怪談を綴る音の体験。">
   <title>怪談ノイズ</title>
-  <link rel="stylesheet" href="/apps/2026-07-26/styles.css">
+  <link rel="stylesheet" href="/apps/2026-07-26/styles-v2.css">
 </head>
 <body>
   <main class="app">
@@ -50,15 +50,27 @@
     </section>
 
     <section id="result" class="scene">
+      <section class="trace-panel" aria-labelledby="traceTitle">
+        <div class="trace-head">
+          <div>
+            <p>録音から見つけた痕跡</p>
+            <h2 id="traceTitle">音の記録</h2>
+          </div>
+          <button id="playRecordingBtn" class="play-recording">▶ 全体を聴く</button>
+        </div>
+        <div id="recordingWave" class="recording-wave" aria-label="録音の波形"></div>
+        <div id="momentList" class="moment-list"></div>
+        <audio id="recordedAudio" preload="metadata"></audio>
+        <p id="traceNote" class="trace-note">マーカーを押すと、その音の前後を再生します。</p>
+      </section>
       <article class="story-sheet">
-        <p class="story-label">あなたの部屋の怪談</p>
+        <p class="story-label">この音から綴った怪談</p>
         <h2 id="storyTitle">水の間</h2>
         <div id="storyBody" class="story-body"></div>
         <div class="seal" aria-hidden="true">怪</div>
       </article>
       <div class="reading">
-        <button id="replayBtn" class="ink-button">もう一度、聴く</button>
-        <p>※ 最初にはなかった音が<br>混じっていることがあります</p>
+        <p>音声はこのページ内だけに保持され、<br>再読み込みすると消えます。</p>
       </div>
       <button id="retryBtn" class="text-button">別の部屋を聴く</button>
     </section>
@@ -73,6 +85,6 @@
       </div>
     </section>
   </main>
-  <script src="/apps/2026-07-26/script.js"></script>
+  <script src="/apps/2026-07-26/script-v2.js"></script>
 </body>
 </html>
