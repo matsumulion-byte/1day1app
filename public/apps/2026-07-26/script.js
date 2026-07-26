@@ -74,7 +74,8 @@
   function finishListening(silent = false) {
     const avg = samples ? energy / samples : 4;
     const hi = samples ? sharpness / samples : 1;
-    recordedProfile = { avg, hi, peaks: silent ? 0 : peaks };
+    const seconds = silent || !endAt ? 0 : Math.max(1, Math.min(20, Math.round(20 - (endAt - Date.now()) / 1000)));
+    recordedProfile = { avg, hi, peaks: silent ? 0 : peaks, seconds };
     resetAudio();
     $("detectedText").textContent = peaks ? `${toKanji(Math.min(peaks, 5))}つ、音がしました。` : "静けさの底に、音がありました。";
     show("writing");
@@ -84,30 +85,50 @@
   function toKanji(n) { return ["零","一","二","三","四","五"][n]; }
 
   const stories = {
-    quiet: {
-      title: "息をする部屋",
-      lines: ["夜、部屋の音をすべて消してみた。","時計も、冷蔵庫も、私の呼吸も止めた。","それでも枕元から、ゆっくり息を吐く音がする。","私が息を吸うと、それも一緒に吸った。"]
-    },
-    water: {
-      title: "水の間",
-      lines: ["誰もいない台所から、水滴の音がした。","蛇口を固く締めると、音は背後へ移った。","ぽたり。今度は、私の肩から聞こえた。","振り向けないまま、床に水たまりが広がっている。"]
-    },
-    steps: {
-      title: "ひとつ多い",
-      lines: ["廊下を歩くと、足音がひとつ多い。","止まれば止まり、急げばぴたりとついてくる。","部屋に駆け込み、戸を閉めた。","安心した私の後ろで、最後の一歩が鳴った。"]
-    },
-    wall: {
-      title: "壁の返事",
-      lines: ["壁の向こうで、三度、何かが鳴った。","私は冗談で、同じ間隔を叩き返した。","しばらくして、壁ではなく押入れから返事がした。","今度は、私が叩いていない数で。"]
-    }
+    quiet: (p) => ({
+      title: "無音ではない",
+      lines: [
+        `${p.seconds || "二十"}秒間、部屋から音はひとつも見つからなかった。`,
+        "ただ、録音のいちばん最後に、小さな声が残っていた。",
+        "「もう息をしていいよ」",
+        "その声が聞こえた場所は、マイクよりもこちら側だった。"
+      ]
+    }),
+    water: (p) => ({
+      title: "濡れた音",
+      lines: [
+        `録音の中に、${Math.max(2, p.peaks + 1)}回、水滴のような音がある。`,
+        "一滴目は台所。二滴目は廊下。音のたび、マイクに近づいていた。",
+        "最後の一滴だけは、あなたが録音を止めたあとに記録されている。",
+        "いま、端末の裏側を濡らしているものには触れないでください。"
+      ]
+    }),
+    steps: (p) => ({
+      title: "数えなおし",
+      lines: [
+        `この部屋から、${p.peaks}つの物音を拾った。`,
+        "最初の音は遠く、次は近く。その次は、あなたのすぐ後ろ。",
+        `けれど解析結果には、物音が${p.peaks + 1}つある。`,
+        "数えなおさないで。足りなかった一つが、いま鳴るから。"
+      ]
+    }),
+    wall: (p) => ({
+      title: "内側から",
+      lines: [
+        `${p.seconds || 20}秒の録音に、壁を叩くような音が残っている。`,
+        "ゆっくり再生すると、それは三文字ずつ、同じ言葉を繰り返していた。",
+        "「あけて」「あけて」「あけて」",
+        "音の向きを調べると、壁の向こうではない。あなたの端末の内側からだった。"
+      ]
+    })
   };
 
   function selectStory() {
-    const p = recordedProfile || { avg: 3, hi: 1, peaks: 0 };
-    if (p.peaks >= 3) return stories.steps;
-    if (p.hi > 9) return stories.water;
-    if (p.avg > 15 || p.peaks) return stories.wall;
-    return stories.quiet;
+    const p = recordedProfile || { avg: 3, hi: 1, peaks: 0, seconds: 20 };
+    if (p.peaks >= 3) return stories.steps(p);
+    if (p.hi > 9) return stories.water(p);
+    if (p.avg > 15 || p.peaks) return stories.wall(p);
+    return stories.quiet(p);
   }
 
   function makeStory() {
