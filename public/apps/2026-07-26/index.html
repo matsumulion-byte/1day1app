@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#100e0d">
+  <meta name="description" content="部屋の生活音を拾い、あなただけの短い怪談を綴る音の体験。">
+  <title>怪談ノイズ</title>
+  <link rel="stylesheet" href="/apps/2026-07-26/styles.css">
+</head>
+<body>
+  <main class="app">
+    <div class="grain" aria-hidden="true"></div>
+    <header>
+      <p>七月二十六日　幽霊の日</p>
+      <button id="soundToggle" class="sound-toggle" aria-label="音を切り替える">音　入</button>
+    </header>
+
+    <section id="intro" class="scene active">
+      <div class="title-mark" aria-hidden="true">怪</div>
+      <p class="kicker">あなたの部屋には、<br>まだ物語になっていない音がある。</p>
+      <h1>怪談<br><span>ノイズ</span></h1>
+      <p class="lead">二十秒だけ、部屋の音を預けてください。<br>拾った気配から、一篇の怪談を綴ります。</p>
+      <div class="notice">
+        <span>録音は端末内で解析され、保存・送信されません</span>
+      </div>
+      <button id="beginBtn" class="ink-button">部屋を聴く</button>
+      <p class="history">文政八年の今日、『東海道四谷怪談』初演。</p>
+    </section>
+
+    <section id="listen" class="scene" aria-live="polite">
+      <div class="listen-heading">
+        <p>静かにしてください</p>
+        <h2>部屋を<br>聴いています</h2>
+      </div>
+      <div class="ear" aria-hidden="true">
+        <div id="pulse" class="pulse"></div>
+        <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+        <span id="timer">20</span>
+      </div>
+      <div class="wave" id="wave" aria-hidden="true"></div>
+      <p id="listenStatus">遠くの音まで拾っています…</p>
+      <button id="stopBtn" class="text-button">ここまでにする</button>
+    </section>
+
+    <section id="writing" class="scene">
+      <p class="vertical">拾った音を<br>綴っています</p>
+      <div class="brush" aria-hidden="true"><i></i></div>
+      <p id="detectedText">ひとつ、音がしました。</p>
+    </section>
+
+    <section id="result" class="scene">
+      <article class="story-sheet">
+        <p class="story-label">あなたの部屋の怪談</p>
+        <h2 id="storyTitle">水の間</h2>
+        <div id="storyBody" class="story-body"></div>
+        <div class="seal" aria-hidden="true">怪</div>
+      </article>
+      <div class="reading">
+        <button id="replayBtn" class="ink-button">もう一度、聴く</button>
+        <p>※ 最初にはなかった音が<br>混じっていることがあります</p>
+      </div>
+      <button id="retryBtn" class="text-button">別の部屋を聴く</button>
+    </section>
+
+    <section id="permission" class="scene modal-scene">
+      <div class="modal">
+        <p class="modal-icon">◉</p>
+        <h2>マイクを<br>許可してください</h2>
+        <p>部屋の音は保存されません。<br>許可できない場合も、静寂から怪談を綴れます。</p>
+        <button id="permissionRetry" class="ink-button">もう一度ためす</button>
+        <button id="silentBtn" class="text-button">静寂を聴かせる</button>
+      </div>
+    </section>
+  </main>
+  <script src="/apps/2026-07-26/script.js"></script>
+</body>
+</html>
