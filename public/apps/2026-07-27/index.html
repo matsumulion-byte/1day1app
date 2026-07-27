@@ -3,96 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#81d8e9">
-  <meta name="description" content="狙いを定めて、力をためて、スイカを割ろう。7月27日・スイカの日のミニゲーム。">
+  <meta name="theme-color" content="#050606">
+  <meta name="description" content="真っ暗な画面で声だけを頼りにスイカを探す、目隠しスイカ割りゲーム。">
   <title>スイカ割ゲーム</title>
   <link rel="stylesheet" href="/apps/2026-07-27/styles.css">
 </head>
 <body>
   <main class="app">
-    <header class="topbar">
-      <div>
-        <p class="date">7.27 · スイカの日</p>
-        <h1>スイカ割ゲーム</h1>
-      </div>
-      <button class="sound-button" id="soundButton" type="button" aria-label="音を切り替える" aria-pressed="true">♪</button>
-    </header>
-
-    <section class="stage" id="stage" aria-label="スイカ割り会場">
-      <div class="sun" aria-hidden="true"></div>
-      <div class="cloud cloud-one" aria-hidden="true"></div>
-      <div class="cloud cloud-two" aria-hidden="true"></div>
-      <div class="sea" aria-hidden="true">
-        <span></span><span></span><span></span>
-      </div>
-      <div class="sand" aria-hidden="true"></div>
-
-      <div class="hud">
-        <div class="hud-card"><span>合計</span><strong id="score">0</strong></div>
-        <div class="hud-card center"><span>あと</span><strong><b id="turns">3</b> 振り</strong></div>
-        <div class="hud-card"><span>最高</span><strong id="best">0</strong></div>
-      </div>
-
-      <p class="callout" id="callout" role="status">左右で狙いを決めよう！</p>
-
-      <div class="playfield" id="playfield">
-        <div class="aim-line" id="aimLine" aria-hidden="true"></div>
-        <div class="player" id="player" aria-hidden="true">
-          <div class="head"><i class="blindfold"></i></div>
-          <div class="body"></div>
-          <div class="arm"></div>
-          <div class="stick"></div>
-          <div class="legs"></div>
+    <section class="intro active" id="intro">
+      <div class="intro-sun" aria-hidden="true"></div>
+      <div class="intro-card">
+        <p class="eyebrow">7月27日 · スイカの日</p>
+        <h1>スイカ割<br>ゲーム</h1>
+        <p class="intro-copy">目隠しをしたら、もう何も見えない。<br>みんなの声だけを頼りに進もう。</p>
+        <div class="rules">
+          <p><b>1</b> 声を聞く</p>
+          <p><b>2</b> 矢印で一歩進む</p>
+          <p><b>3</b> 「そこ！」で振る</p>
         </div>
-        <div class="watermelon" id="watermelon" aria-hidden="true">
-          <i></i><i></i><i></i>
-        </div>
-        <div class="burst" id="burst" aria-hidden="true"></div>
-      </div>
-
-      <div class="controls" id="controls">
-        <div class="move-controls" aria-label="狙う方向">
-          <button class="move-button" id="leftButton" type="button" aria-label="左へ移動">←</button>
-          <div class="power-wrap">
-            <div class="power-label"><span>パワー</span><b id="powerText">0%</b></div>
-            <div class="power-track"><div class="power-fill" id="powerFill"></div></div>
-          </div>
-          <button class="move-button" id="rightButton" type="button" aria-label="右へ移動">→</button>
-        </div>
-        <button class="swing-button" id="swingButton" type="button">
-          <span class="button-main">長押し</span>
-          <span class="button-sub">はなして振る！</span>
-        </button>
-        <p class="keyboard-help">キーボード：← → で移動 ／ Space 長押し</p>
+        <button class="start-button" id="startButton" type="button">目隠しをする</button>
+        <p class="sound-note">音声ONで遊ぶのがおすすめです</p>
       </div>
     </section>
 
-    <section class="modal active" id="startModal" aria-labelledby="startTitle">
-      <div class="modal-card">
-        <div class="mini-watermelon" aria-hidden="true"><i></i><i></i></div>
-        <p class="modal-kicker">7月27日はスイカの日</p>
-        <h2 id="startTitle">スイカ割ゲーム</h2>
-        <ol class="howto">
-          <li><b>1</b><span>左右ボタンで<br>ねらいを決める</span></li>
-          <li><b>2</b><span>長押しで<br>力をためる</span></li>
-          <li><b>3</b><span>ボタンをはなして<br>振り下ろす！</span></li>
-        </ol>
-        <button class="primary-button" id="startButton" type="button">スイカを割る</button>
+    <section class="blindfold" id="blindfold" aria-label="目隠しスイカ割り">
+      <header class="game-header">
+        <p>ROUND <b id="round">1</b> / 3</p>
+        <button id="soundButton" class="sound-button" type="button" aria-label="音声を切り替える" aria-pressed="true">音声 ON</button>
+      </header>
+
+      <div class="darkness" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i>
       </div>
+
+      <section class="voice-area" aria-live="assertive" aria-atomic="true">
+        <p class="speaker" id="speaker">みんな</p>
+        <div class="voice-lines" id="voiceLines"></div>
+        <p class="voice-main" id="voiceMain">声を聞いて…</p>
+        <p class="voice-sub" id="voiceSub">矢印で一歩ずつ進もう</p>
+      </section>
+
+      <div class="steps"><span>残り</span><b id="steps">12</b><span>歩</span></div>
+
+      <section class="controls" id="controls" aria-label="移動操作">
+        <button class="direction up" data-move="up" type="button" aria-label="前へ一歩">↑<span>前</span></button>
+        <button class="direction left" data-move="left" type="button" aria-label="左へ一歩">←<span>左</span></button>
+        <button class="direction right" data-move="right" type="button" aria-label="右へ一歩">→<span>右</span></button>
+        <button class="direction down" data-move="down" type="button" aria-label="後ろへ一歩">↓<span>後</span></button>
+      </section>
+
+      <button class="swing-button" id="swingButton" type="button">
+        <span>棒を振り下ろす</span>
+        <small>ここだ！と思ったら押す</small>
+      </button>
+
+      <section class="reveal" id="reveal" aria-live="polite">
+        <div class="reveal-flash"></div>
+        <div class="melon" id="melon"><i></i><i></i><i></i></div>
+        <p class="reveal-label" id="revealLabel">命中！</p>
+        <p class="reveal-score" id="revealScore">+800</p>
+      </section>
     </section>
 
-    <section class="modal" id="resultModal" aria-labelledby="resultTitle">
-      <div class="modal-card result-card">
-        <p class="modal-kicker">3振りの結果</p>
-        <h2 id="resultTitle">夏の達人！</h2>
-        <div class="final-score"><strong id="finalScore">0</strong><span>点</span></div>
-        <p class="result-copy" id="resultCopy"></p>
-        <div class="result-list" id="resultList"></div>
-        <button class="primary-button" id="retryButton" type="button">もう一度あそぶ</button>
+    <section class="result" id="result">
+      <div class="result-card">
+        <p class="eyebrow">3 ROUND RESULT</p>
+        <h2 id="resultTitle">夏の名人</h2>
+        <div class="total"><b id="totalScore">0</b><span>点</span></div>
+        <p id="resultCopy"></p>
+        <div class="round-results" id="roundResults"></div>
+        <button class="start-button" id="retryButton" type="button">もう一度目隠しする</button>
       </div>
     </section>
   </main>
-
   <script src="/apps/2026-07-27/script.js"></script>
 </body>
 </html>

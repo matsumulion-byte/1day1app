@@ -1,301 +1,289 @@
 const $ = (selector) => document.querySelector(selector);
-
 const ui = {
-  startModal: $("#startModal"),
-  resultModal: $("#resultModal"),
+  intro: $("#intro"),
+  blindfold: $("#blindfold"),
+  result: $("#result"),
   startButton: $("#startButton"),
   retryButton: $("#retryButton"),
   soundButton: $("#soundButton"),
-  leftButton: $("#leftButton"),
-  rightButton: $("#rightButton"),
+  round: $("#round"),
+  steps: $("#steps"),
+  speaker: $("#speaker"),
+  voiceMain: $("#voiceMain"),
+  voiceSub: $("#voiceSub"),
+  voiceLines: $("#voiceLines"),
+  controls: $("#controls"),
+  directions: [...document.querySelectorAll(".direction")],
   swingButton: $("#swingButton"),
-  player: $("#player"),
-  watermelon: $("#watermelon"),
-  burst: $("#burst"),
-  callout: $("#callout"),
-  score: $("#score"),
-  turns: $("#turns"),
-  best: $("#best"),
-  powerFill: $("#powerFill"),
-  powerText: $("#powerText"),
-  finalScore: $("#finalScore"),
+  reveal: $("#reveal"),
+  melon: $("#melon"),
+  revealLabel: $("#revealLabel"),
+  revealScore: $("#revealScore"),
   resultTitle: $("#resultTitle"),
+  totalScore: $("#totalScore"),
   resultCopy: $("#resultCopy"),
-  resultList: $("#resultList"),
+  roundResults: $("#roundResults"),
 };
 
-let playerX = 50;
-let targetX = 50;
-let score = 0;
-let turns = 3;
+const people = ["左の人", "右の人", "後ろのみんな", "ちびっこ応援団"];
+let round = 1;
+let steps = 12;
+let player = { x: 0, y: 0 };
+let target = { x: 0, y: 0 };
 let results = [];
-let active = false;
 let locked = false;
-let charging = false;
-let charge = 0;
-let chargeDirection = 1;
-let chargeFrame = 0;
-let moveTimer = 0;
 let soundOn = true;
-let audioContext = null;
+let audioContext;
+let touchStart = null;
 
-function safeBest() {
-  try { return Number(localStorage.getItem("suika-wari-best") || 0); }
-  catch { return 0; }
+function randomTarget() {
+  const angle = Math.random() * Math.PI * 2;
+  const distance = 4.5 + Math.random() * 2.5;
+  return {
+    x: Math.round(Math.cos(angle) * distance),
+    y: Math.round(Math.sin(angle) * distance),
+  };
 }
 
-function saveBest(value) {
-  try { localStorage.setItem("suika-wari-best", String(value)); }
-  catch { /* Private browsing can deny storage. */ }
+function distanceToTarget() {
+  return Math.hypot(target.x - player.x, target.y - player.y);
 }
 
-function tone(frequency, duration, type = "sine", volume = 0.08, delay = 0) {
+function speak(text) {
+  if (!soundOn || !("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text.replace(/[！!]/g, "！"));
+  utterance.lang = "ja-JP";
+  utterance.rate = 1.12;
+  utterance.pitch = 1.15;
+  utterance.volume = 1;
+  speechSynthesis.speak(utterance);
+}
+
+function noise(frequency = 180, duration = .12) {
   if (!soundOn) return;
   audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
-  const start = audioContext.currentTime + delay;
   const oscillator = audioContext.createOscillator();
   const gain = audioContext.createGain();
-  oscillator.type = type;
-  oscillator.frequency.setValueAtTime(frequency, start);
-  gain.gain.setValueAtTime(volume, start);
-  gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+  oscillator.type = "triangle";
+  oscillator.frequency.value = frequency;
+  gain.gain.setValueAtTime(.06, audioContext.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.001, audioContext.currentTime + duration);
   oscillator.connect(gain);
   gain.connect(audioContext.destination);
-  oscillator.start(start);
-  oscillator.stop(start + duration);
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + duration);
 }
 
-function playHit(kind) {
-  if (kind === "空振り") {
-    tone(180, .22, "sawtooth", .05);
-    tone(120, .22, "sawtooth", .04, .12);
+function setVoice(main, sub = "", shouldSpeak = true) {
+  ui.voiceMain.textContent = main;
+  ui.voiceSub.textContent = sub;
+  ui.speaker.textContent = people[Math.floor(Math.random() * people.length)];
+  ui.voiceMain.classList.remove("shout");
+  ui.voiceLines.innerHTML = "<i></i><i></i><i></i>";
+  requestAnimationFrame(() => ui.voiceMain.classList.add("shout"));
+  if (shouldSpeak) speak(main);
+}
+
+function guide() {
+  const dx = target.x - player.x;
+  const dy = target.y - player.y;
+  const distance = distanceToTarget();
+
+  ui.swingButton.classList.toggle("ready", distance <= 1.45);
+
+  if (distance <= .7) {
+    setVoice("そこ！ そこだよ！", "今だ、棒を振って！");
+    navigator.vibrate?.([35, 30, 35]);
     return;
   }
-  tone(130, .14, "square", .1);
-  tone(kind === "粉砕！" ? 520 : 360, .28, "triangle", .09, .06);
-  if (kind === "真っ二つ！" || kind === "粉砕！") tone(760, .32, "sine", .06, .15);
-}
 
-function setCallout(text, pop = false) {
-  ui.callout.textContent = text;
-  if (pop) {
-    ui.callout.classList.remove("pop");
-    requestAnimationFrame(() => ui.callout.classList.add("pop"));
-    setTimeout(() => ui.callout.classList.remove("pop"), 350);
+  if (distance <= 1.45) {
+    setVoice("すぐそこ！", "もう動かずに振って！");
+    return;
   }
+
+  const horizontalFirst = Math.abs(dx) >= Math.abs(dy);
+  let main;
+  let amount;
+
+  if (horizontalFirst) {
+    main = dx > 0 ? "右！" : "左！";
+    amount = Math.min(3, Math.max(1, Math.round(Math.abs(dx))));
+  } else {
+    main = dy > 0 ? "前！" : "後ろ！";
+    amount = Math.min(3, Math.max(1, Math.round(Math.abs(dy))));
+  }
+
+  if (distance > 5) main = `${main} もっと！`;
+  else if (distance < 2.5) main = `${main} ちょっと！`;
+  setVoice(main, `あと${amount}歩くらい`);
 }
 
-function updatePosition() {
-  ui.player.style.left = `${playerX}%`;
+function setControls(disabled) {
+  ui.directions.forEach((button) => { button.disabled = disabled; });
+  ui.swingButton.disabled = disabled;
 }
 
-function updatePower() {
-  const rounded = Math.round(charge);
-  ui.powerFill.style.width = `${rounded}%`;
-  ui.powerText.textContent = `${rounded}%`;
-}
-
-function move(direction) {
-  if (!active || locked || charging) return;
-  playerX = Math.max(10, Math.min(90, playerX + direction * 2.2));
-  updatePosition();
-  tone(280 + playerX * 1.2, .035, "sine", .018);
-}
-
-function beginMove(direction) {
-  move(direction);
-  clearInterval(moveTimer);
-  moveTimer = setInterval(() => move(direction), 45);
-}
-
-function stopMove() {
-  clearInterval(moveTimer);
-  moveTimer = 0;
-}
-
-function beginCharge(event) {
-  if (event) event.preventDefault();
-  if (!active || locked || charging) return;
-  stopMove();
-  charging = true;
-  charge = 0;
-  chargeDirection = 1;
-  ui.swingButton.classList.add("charging");
-  ui.swingButton.setPointerCapture?.(event?.pointerId);
-  setCallout("力をためて…");
-
-  const tick = () => {
-    if (!charging) return;
-    charge += 1.75 * chargeDirection;
-    if (charge >= 100) { charge = 100; chargeDirection = -1; }
-    if (charge <= 0) { charge = 0; chargeDirection = 1; }
-    updatePower();
-    chargeFrame = requestAnimationFrame(tick);
-  };
-  chargeFrame = requestAnimationFrame(tick);
-}
-
-function releaseCharge(event) {
-  if (event) event.preventDefault();
-  if (!charging) return;
-  charging = false;
-  cancelAnimationFrame(chargeFrame);
-  ui.swingButton.classList.remove("charging");
-  swing();
-}
-
-function calculateResult(distance, power) {
-  const accuracy = Math.max(0, 1 - distance / 30);
-  const idealPower = Math.max(0, 1 - Math.abs(power - 82) / 55);
-  const points = Math.round(accuracy * 700 + idealPower * 300);
-
-  if (distance > 19) return { label: "空振り", points: Math.round(points * .08), className: "" };
-  if (distance > 11 || power < 38) return { label: "ひび割れ", points: Math.max(120, Math.round(points * .55)), className: "cracked" };
-  if (distance <= 4.5 && power >= 72 && power <= 94) return { label: "真っ二つ！", points: 1000, className: "split" };
-  if (power > 94 && distance <= 8) return { label: "粉砕！", points: Math.min(920, points), className: "smashed" };
-  return { label: "いい一撃！", points: Math.min(880, points), className: "split" };
-}
-
-function swing() {
+function startRound() {
+  player = { x: 0, y: 0 };
+  target = randomTarget();
+  steps = 12;
   locked = true;
-  ui.player.classList.add("swinging");
-  ui.leftButton.disabled = true;
-  ui.rightButton.disabled = true;
-  ui.swingButton.disabled = true;
+  ui.round.textContent = round;
+  ui.steps.textContent = steps;
+  ui.reveal.classList.remove("active");
+  ui.melon.className = "melon";
+  setControls(true);
+  setVoice("目隠し完了。", "声が聞こえるまで待って…", false);
 
-  const distance = Math.abs(playerX - targetX);
-  const result = calculateResult(distance, charge);
-
-  setTimeout(() => {
-    ui.watermelon.classList.add("hit");
-    if (result.className) ui.watermelon.classList.add(result.className);
-    if (result.label !== "空振り") ui.burst.classList.add("show");
-    playHit(result.label);
-    score += result.points;
-    turns -= 1;
-    results.push(result);
-    ui.score.textContent = score;
-    ui.turns.textContent = turns;
-    setCallout(`${result.label}　+${result.points}点`, true);
-    navigator.vibrate?.(result.label === "空振り" ? 25 : [40, 30, 80]);
-  }, 310);
-
-  setTimeout(() => {
-    ui.player.classList.remove("swinging");
-    if (turns <= 0) {
-      finishGame();
+  let count = 3;
+  const countdown = setInterval(() => {
+    if (count > 0) {
+      setVoice(String(count), "", true);
+      count -= 1;
     } else {
-      nextRound();
+      clearInterval(countdown);
+      locked = false;
+      setControls(false);
+      guide();
     }
-  }, 1450);
-}
-
-function nextRound() {
-  targetX = 24 + Math.random() * 52;
-  playerX = Math.max(12, Math.min(88, 50 + (Math.random() - .5) * 12));
-  charge = 0;
-  updatePower();
-  updatePosition();
-  ui.watermelon.className = "watermelon";
-  ui.watermelon.style.left = `${targetX}%`;
-  ui.burst.classList.remove("show");
-  ui.leftButton.disabled = false;
-  ui.rightButton.disabled = false;
-  ui.swingButton.disabled = false;
-  locked = false;
-  setCallout("次のスイカ！ 狙いを定めよう");
+  }, 720);
 }
 
 function startGame() {
-  score = 0;
-  turns = 3;
+  window.speechSynthesis?.cancel();
+  round = 1;
   results = [];
-  active = true;
-  locked = false;
-  charge = 0;
-  ui.score.textContent = "0";
-  ui.turns.textContent = "3";
-  ui.best.textContent = safeBest();
-  ui.startModal.classList.remove("active");
-  ui.resultModal.classList.remove("active");
-  nextRound();
-  tone(440, .12, "sine", .06);
-  tone(660, .2, "sine", .06, .1);
+  ui.intro.classList.remove("active");
+  ui.result.classList.remove("active");
+  ui.blindfold.classList.add("active");
+  startRound();
+}
+
+function move(direction) {
+  if (locked || steps <= 0) return;
+  const vectors = {
+    up: { x: 0, y: 1 },
+    down: { x: 0, y: -1 },
+    left: { x: -1, y: 0 },
+    right: { x: 1, y: 0 },
+  };
+  const vector = vectors[direction];
+  player.x += vector.x;
+  player.y += vector.y;
+  steps -= 1;
+  ui.steps.textContent = steps;
+  noise(125 + steps * 5, .08);
+  navigator.vibrate?.(18);
+
+  if (steps <= 0) {
+    setVoice("もう振るしかない！", "最後のチャンス！");
+    ui.directions.forEach((button) => { button.disabled = true; });
+    ui.swingButton.classList.add("ready");
+    return;
+  }
+  guide();
+}
+
+function evaluateSwing() {
+  const distance = distanceToTarget();
+  if (distance <= .7) return { label: "真っ二つ！", score: 1000, style: "split" };
+  if (distance <= 1.45) return { label: "命中！", score: Math.round(920 - distance * 160), style: "hit" };
+  if (distance <= 2.6) return { label: "かすった！", score: Math.round(560 - distance * 90), style: "hit" };
+  return { label: "空振り…", score: 0, style: "" };
+}
+
+function swing() {
+  if (locked) return;
+  locked = true;
+  setControls(true);
+  window.speechSynthesis?.cancel();
+  setVoice("いけーっ！", "", true);
+  noise(95, .28);
+
+  setTimeout(() => {
+    const outcome = evaluateSwing();
+    results.push(outcome);
+    ui.melon.className = `melon ${outcome.style}`;
+    ui.revealLabel.textContent = outcome.label;
+    ui.revealScore.textContent = `+${outcome.score}点`;
+    ui.reveal.classList.add("active");
+    speak(outcome.label);
+    navigator.vibrate?.(outcome.score ? [70, 35, 110] : 35);
+
+    setTimeout(() => {
+      if (round < 3) {
+        round += 1;
+        startRound();
+      } else {
+        finishGame();
+      }
+    }, 1800);
+  }, 650);
 }
 
 function finishGame() {
-  active = false;
-  locked = true;
-  const previousBest = safeBest();
-  if (score > previousBest) saveBest(score);
-  ui.best.textContent = Math.max(score, previousBest);
-  ui.finalScore.textContent = score;
+  window.speechSynthesis?.cancel();
+  ui.blindfold.classList.remove("active");
+  ui.result.classList.add("active");
+  const total = results.reduce((sum, item) => sum + item.score, 0);
+  ui.totalScore.textContent = total;
 
-  if (score >= 2700) {
-    ui.resultTitle.textContent = score > previousBest ? "新記録！" : "スイカ割り名人！";
-    ui.resultCopy.textContent = "狙いも力加減も完璧。夏があなたを呼んでいます。";
-  } else if (score >= 1900) {
+  if (total >= 2600) {
+    ui.resultTitle.textContent = "スイカ割り名人！";
+    ui.resultCopy.textContent = "目隠しでも迷いなし。声と心が完全に通じています。";
+  } else if (total >= 1600) {
     ui.resultTitle.textContent = "夏の達人！";
-    ui.resultCopy.textContent = "見事な振り下ろし。もう一度なら名人に届きそう！";
-  } else if (score >= 1000) {
-    ui.resultTitle.textContent = "なかなかの一撃！";
-    ui.resultCopy.textContent = "コツは力みすぎないこと。真っ二つを狙おう！";
+    ui.resultCopy.textContent = "いい耳をしています。あと一歩で名人です。";
+  } else if (total > 0) {
+    ui.resultTitle.textContent = "惜しい！";
+    ui.resultCopy.textContent = "声は聞こえていました。次は「そこ！」を信じよう。";
   } else {
-    ui.resultTitle.textContent = "砂浜の人気者";
-    ui.resultCopy.textContent = "スイカは無事でした。次こそ狙いを合わせよう！";
+    ui.resultTitle.textContent = "方向音痴の夏";
+    ui.resultCopy.textContent = "スイカは無事でした。みんなの声をもう一度よく聞こう。";
   }
 
-  ui.resultList.innerHTML = results.map((result, index) => `
-    <div class="result-chip">
-      <b>${index + 1}振り目</b>
-      <span>${result.points}点</span>
-    </div>
+  ui.roundResults.innerHTML = results.map((item, index) => `
+    <div class="result-chip"><b>${index + 1}回目</b><span>${item.score}点</span></div>
   `).join("");
-
-  setTimeout(() => ui.resultModal.classList.add("active"), 280);
 }
 
-function bindHold(button, direction) {
-  button.addEventListener("pointerdown", (event) => {
-    event.preventDefault();
-    button.setPointerCapture?.(event.pointerId);
-    beginMove(direction);
-  });
-  ["pointerup", "pointercancel", "lostpointercapture", "pointerleave"].forEach((name) => {
-    button.addEventListener(name, stopMove);
-  });
-}
-
-bindHold(ui.leftButton, -1);
-bindHold(ui.rightButton, 1);
-
-ui.swingButton.addEventListener("pointerdown", beginCharge);
-ui.swingButton.addEventListener("pointerup", releaseCharge);
-ui.swingButton.addEventListener("pointercancel", releaseCharge);
-ui.swingButton.addEventListener("lostpointercapture", releaseCharge);
 ui.startButton.addEventListener("click", startGame);
 ui.retryButton.addEventListener("click", startGame);
+ui.directions.forEach((button) => button.addEventListener("click", () => move(button.dataset.move)));
+ui.swingButton.addEventListener("click", swing);
+
 ui.soundButton.addEventListener("click", () => {
   soundOn = !soundOn;
   ui.soundButton.setAttribute("aria-pressed", String(soundOn));
-  ui.soundButton.textContent = soundOn ? "♪" : "×";
-  if (soundOn) tone(660, .13, "sine", .06);
+  ui.soundButton.textContent = soundOn ? "音声 ON" : "音声 OFF";
+  if (!soundOn) window.speechSynthesis?.cancel();
+  else guide();
 });
 
 window.addEventListener("keydown", (event) => {
-  if (event.repeat && event.code === "Space") return;
-  if (event.key === "ArrowLeft") { event.preventDefault(); move(-1); }
-  if (event.key === "ArrowRight") { event.preventDefault(); move(1); }
-  if (event.code === "Space") { event.preventDefault(); beginCharge(); }
+  const keys = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" };
+  if (keys[event.key]) {
+    event.preventDefault();
+    move(keys[event.key]);
+  }
+  if ((event.code === "Space" || event.key === "Enter") && !event.repeat) {
+    event.preventDefault();
+    swing();
+  }
 });
 
-window.addEventListener("keyup", (event) => {
-  if (event.code === "Space") { event.preventDefault(); releaseCharge(); }
+ui.blindfold.addEventListener("pointerdown", (event) => {
+  if (event.target.closest("button")) return;
+  touchStart = { x: event.clientX, y: event.clientY };
 });
-
-window.addEventListener("blur", () => {
-  stopMove();
-  if (charging) releaseCharge();
+ui.blindfold.addEventListener("pointerup", (event) => {
+  if (!touchStart || event.target.closest("button")) return;
+  const dx = event.clientX - touchStart.x;
+  const dy = event.clientY - touchStart.y;
+  touchStart = null;
+  if (Math.hypot(dx, dy) < 35) return;
+  if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? "right" : "left");
+  else move(dy > 0 ? "down" : "up");
 });
-
-ui.best.textContent = safeBest();
