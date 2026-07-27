@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#81d8e9">
+  <meta name="description" content="狙いを定めて、力をためて、スイカを割ろう。7月27日・スイカの日のミニゲーム。">
+  <title>スイカ割ゲーム</title>
+  <link rel="stylesheet" href="/apps/2026-07-27/styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="date">7.27 · スイカの日</p>
+        <h1>スイカ割ゲーム</h1>
+      </div>
+      <button class="sound-button" id="soundButton" type="button" aria-label="音を切り替える" aria-pressed="true">♪</button>
+    </header>
+
+    <section class="stage" id="stage" aria-label="スイカ割り会場">
+      <div class="sun" aria-hidden="true"></div>
+      <div class="cloud cloud-one" aria-hidden="true"></div>
+      <div class="cloud cloud-two" aria-hidden="true"></div>
+      <div class="sea" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="sand" aria-hidden="true"></div>
+
+      <div class="hud">
+        <div class="hud-card"><span>合計</span><strong id="score">0</strong></div>
+        <div class="hud-card center"><span>あと</span><strong><b id="turns">3</b> 振り</strong></div>
+        <div class="hud-card"><span>最高</span><strong id="best">0</strong></div>
+      </div>
+
+      <p class="callout" id="callout" role="status">左右で狙いを決めよう！</p>
+
+      <div class="playfield" id="playfield">
+        <div class="aim-line" id="aimLine" aria-hidden="true"></div>
+        <div class="player" id="player" aria-hidden="true">
+          <div class="head"><i class="blindfold"></i></div>
+          <div class="body"></div>
+          <div class="arm"></div>
+          <div class="stick"></div>
+          <div class="legs"></div>
+        </div>
+        <div class="watermelon" id="watermelon" aria-hidden="true">
+          <i></i><i></i><i></i>
+        </div>
+        <div class="burst" id="burst" aria-hidden="true"></div>
+      </div>
+
+      <div class="controls" id="controls">
+        <div class="move-controls" aria-label="狙う方向">
+          <button class="move-button" id="leftButton" type="button" aria-label="左へ移動">←</button>
+          <div class="power-wrap">
+            <div class="power-label"><span>パワー</span><b id="powerText">0%</b></div>
+            <div class="power-track"><div class="power-fill" id="powerFill"></div></div>
+          </div>
+          <button class="move-button" id="rightButton" type="button" aria-label="右へ移動">→</button>
+        </div>
+        <button class="swing-button" id="swingButton" type="button">
+          <span class="button-main">長押し</span>
+          <span class="button-sub">はなして振る！</span>
+        </button>
+        <p class="keyboard-help">キーボード：← → で移動 ／ Space 長押し</p>
+      </div>
+    </section>
+
+    <section class="modal active" id="startModal" aria-labelledby="startTitle">
+      <div class="modal-card">
+        <div class="mini-watermelon" aria-hidden="true"><i></i><i></i></div>
+        <p class="modal-kicker">7月27日はスイカの日</p>
+        <h2 id="startTitle">スイカ割ゲーム</h2>
+        <ol class="howto">
+          <li><b>1</b><span>左右ボタンで<br>ねらいを決める</span></li>
+          <li><b>2</b><span>長押しで<br>力をためる</span></li>
+          <li><b>3</b><span>ボタンをはなして<br>振り下ろす！</span></li>
+        </ol>
+        <button class="primary-button" id="startButton" type="button">スイカを割る</button>
+      </div>
+    </section>
+
+    <section class="modal" id="resultModal" aria-labelledby="resultTitle">
+      <div class="modal-card result-card">
+        <p class="modal-kicker">3振りの結果</p>
+        <h2 id="resultTitle">夏の達人！</h2>
+        <div class="final-score"><strong id="finalScore">0</strong><span>点</span></div>
+        <p class="result-copy" id="resultCopy"></p>
+        <div class="result-list" id="resultList"></div>
+        <button class="primary-button" id="retryButton" type="button">もう一度あそぶ</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="/apps/2026-07-27/script.js"></script>
+</body>
+</html>
