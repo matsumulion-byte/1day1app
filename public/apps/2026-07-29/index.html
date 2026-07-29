@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="theme-color" content="#ffd400">
+  <meta name="description" content="歴代の猛虎スタメンから、何年の打順かを当てる全10問のクイズ。">
+  <title>この猛虎打線、何年？</title>
+  <link rel="stylesheet" href="/apps/2026-07-29/styles.css">
+</head>
+<body>
+  <div class="stripes" aria-hidden="true"></div>
+  <main class="shell">
+    <header>
+      <a class="brand" href="/2026-07-29/" aria-label="最初からやり直す">
+        <span class="brand-mark">猛</span>
+        <span><small>7.29 WORLD TIGER DAY</small><strong>MŌKO LINEUP QUIZ</strong></span>
+      </a>
+      <div class="scoreboard" aria-live="polite">
+        <span>QUESTION <b id="questionCount">00 / 10</b></span>
+        <span>SCORE <b id="scoreCount">0</b></span>
+      </div>
+    </header>
+
+    <section id="startScreen" class="start-screen">
+      <p class="eyebrow">歴代スタメンで記憶をたどれ</p>
+      <h1>この猛虎打線、<br><em>何年？</em></h1>
+      <p class="intro">実在した阪神のスターティングメンバーを見て、シーズンを当てるクイズ。投手を含む9人が、あなたの記憶を呼び起こします。</p>
+      <div class="start-meta"><span><b>30</b> LINEUPS</span><span><b>10</b> QUESTIONS</span><span><b>4</b> CHOICES</span></div>
+      <button id="startButton" class="primary" type="button">プレイボール <span>→</span></button>
+      <p class="note">毎回ランダムに10問を出題</p>
+    </section>
+
+    <section id="quizScreen" class="quiz-screen hidden">
+      <div class="quiz-heading">
+        <div><p class="eyebrow">STARTING LINEUP</p><h2>この打順は、何年？</h2></div>
+        <div class="inning"><small>Q</small><strong id="bigQuestion">01</strong></div>
+      </div>
+
+      <div class="game-grid">
+        <ol id="lineup" class="lineup" aria-label="スターティングメンバー"></ol>
+        <div class="answer-panel">
+          <p>SELECT SEASON</p>
+          <div id="choices" class="choices"></div>
+          <div id="reveal" class="reveal hidden" aria-live="polite">
+            <div id="verdict" class="verdict"></div>
+            <p id="gameInfo"></p>
+            <a id="sourceLink" href="#" target="_blank" rel="noopener">スタメン記録を見る ↗</a>
+            <button id="nextButton" class="next" type="button">次の打順へ <span>→</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="resultScreen" class="result-screen hidden">
+      <p class="eyebrow">FINAL SCORE</p>
+      <div class="result-number"><strong id="finalScore">0</strong><span>/ 10</span></div>
+      <h2 id="resultTitle">試合終了。</h2>
+      <p id="resultMessage"></p>
+      <div id="resultTicks" class="result-ticks" aria-label="全10問の結果"></div>
+      <button id="retryButton" class="primary" type="button">もう一度挑戦 <span>↻</span></button>
+    </section>
+
+    <footer>
+      <span>UNOFFICIAL FAN QUIZ</span>
+      <span>LINEUP DATA: プロ野球ヌルデータ置き場f3</span>
+    </footer>
+  </main>
+  <script src="/apps/2026-07-29/script.js"></script>
+</body>
+</html>

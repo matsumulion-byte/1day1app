@@ -1,0 +1,1352 @@
+[
+  {
+    "year": 2005,
+    "date": "4/1",
+    "opponent": "ヤクルト",
+    "stadium": "大阪ドーム",
+    "lineup": [
+      {
+        "position": "中",
+        "name": "赤星"
+      },
+      {
+        "position": "二",
+        "name": "藤本"
+      },
+      {
+        "position": "一",
+        "name": "シーツ"
+      },
+      {
+        "position": "左",
+        "name": "金本"
+      },
+      {
+        "position": "三",
+        "name": "今岡"
+      },
+      {
+        "position": "右",
+        "name": "スペンサー"
+      },
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "捕",
+        "name": "矢野"
+      },
+      {
+        "position": "投",
+        "name": "井川"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2005"
+  },
+  {
+    "year": 2005,
+    "date": "4/30",
+    "opponent": "ヤクルト",
+    "stadium": "神宮",
+    "lineup": [
+      {
+        "position": "中",
+        "name": "赤星"
+      },
+      {
+        "position": "二",
+        "name": "関本"
+      },
+      {
+        "position": "一",
+        "name": "シーツ"
+      },
+      {
+        "position": "左",
+        "name": "金本"
+      },
+      {
+        "position": "三",
+        "name": "今岡"
+      },
+      {
+        "position": "右",
+        "name": "スペンサー"
+      },
+      {
+        "position": "捕",
+        "name": "矢野"
+      },
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "投",
+        "name": "杉山"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2005"
+  },
+  {
+    "year": 2006,
+    "date": "3/31",
+    "opponent": "ヤクルト",
+    "stadium": "神宮",
+    "lineup": [
+      {
+        "position": "中",
+        "name": "赤星"
+      },
+      {
+        "position": "二",
+        "name": "藤本"
+      },
+      {
+        "position": "一",
+        "name": "シーツ"
+      },
+      {
+        "position": "左",
+        "name": "金本"
+      },
+      {
+        "position": "三",
+        "name": "今岡"
+      },
+      {
+        "position": "右",
+        "name": "桧山"
+      },
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "捕",
+        "name": "矢野"
+      },
+      {
+        "position": "投",
+        "name": "井川"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2006"
+  },
+  {
+    "year": 2007,
+    "date": "3/30",
+    "opponent": "広島",
+    "stadium": "京セラドーム",
+    "lineup": [
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "中",
+        "name": "赤星"
+      },
+      {
+        "position": "一",
+        "name": "シーツ"
+      },
+      {
+        "position": "左",
+        "name": "金本"
+      },
+      {
+        "position": "三",
+        "name": "今岡"
+      },
+      {
+        "position": "右",
+        "name": "濱中"
+      },
+      {
+        "position": "捕",
+        "name": "矢野"
+      },
+      {
+        "position": "二",
+        "name": "関本"
+      },
+      {
+        "position": "投",
+        "name": "下柳"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2007"
+  },
+  {
+    "year": 2007,
+    "date": "4/30",
+    "opponent": "広島",
+    "stadium": "広島",
+    "lineup": [
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "中",
+        "name": "赤星"
+      },
+      {
+        "position": "一",
+        "name": "シーツ"
+      },
+      {
+        "position": "左",
+        "name": "金本"
+      },
+      {
+        "position": "三",
+        "name": "今岡"
+      },
+      {
+        "position": "右",
+        "name": "林"
+      },
+      {
+        "position": "捕",
+        "name": "狩野"
+      },
+      {
+        "position": "二",
+        "name": "藤本"
+      },
+      {
+        "position": "投",
+        "name": "小嶋"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2007"
+  },
+  {
+    "year": 2008,
+    "date": "3/28",
+    "opponent": "横浜",
+    "stadium": "京セラドーム",
+    "lineup": [
+      {
+        "position": "中",
+        "name": "赤星"
+      },
+      {
+        "position": "二",
+        "name": "平野"
+      },
+      {
+        "position": "一",
+        "name": "新井"
+      },
+      {
+        "position": "左",
+        "name": "金本"
+      },
+      {
+        "position": "三",
+        "name": "今岡"
+      },
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "右",
+        "name": "フォード"
+      },
+      {
+        "position": "捕",
+        "name": "矢野"
+      },
+      {
+        "position": "投",
+        "name": "安藤"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2008"
+  },
+  {
+    "year": 2009,
+    "date": "4/3",
+    "opponent": "ヤクルト",
+    "stadium": "京セラドーム",
+    "lineup": [
+      {
+        "position": "中",
+        "name": "赤星"
+      },
+      {
+        "position": "一",
+        "name": "関本"
+      },
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "左",
+        "name": "金本"
+      },
+      {
+        "position": "三",
+        "name": "新井"
+      },
+      {
+        "position": "右",
+        "name": "メンチ"
+      },
+      {
+        "position": "捕",
+        "name": "狩野"
+      },
+      {
+        "position": "二",
+        "name": "平野"
+      },
+      {
+        "position": "投",
+        "name": "安藤"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2009"
+  },
+  {
+    "year": 2009,
+    "date": "4/30",
+    "opponent": "横浜",
+    "stadium": "甲子園",
+    "lineup": [
+      {
+        "position": "中",
+        "name": "平野"
+      },
+      {
+        "position": "一",
+        "name": "関本"
+      },
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "左",
+        "name": "金本"
+      },
+      {
+        "position": "三",
+        "name": "新井"
+      },
+      {
+        "position": "右",
+        "name": "葛城"
+      },
+      {
+        "position": "二",
+        "name": "藤本"
+      },
+      {
+        "position": "捕",
+        "name": "狩野"
+      },
+      {
+        "position": "投",
+        "name": "久保"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2009"
+  },
+  {
+    "year": 2010,
+    "date": "3/26",
+    "opponent": "横浜",
+    "stadium": "京セラD大阪",
+    "lineup": [
+      {
+        "position": "中",
+        "name": "マートン"
+      },
+      {
+        "position": "二",
+        "name": "平野"
+      },
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "左",
+        "name": "金本"
+      },
+      {
+        "position": "三",
+        "name": "新井"
+      },
+      {
+        "position": "捕",
+        "name": "城島"
+      },
+      {
+        "position": "一",
+        "name": "ブラゼル"
+      },
+      {
+        "position": "右",
+        "name": "桜井"
+      },
+      {
+        "position": "投",
+        "name": "安藤"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2010"
+  },
+  {
+    "year": 2011,
+    "date": "4/12",
+    "opponent": "広島",
+    "stadium": "甲子園",
+    "lineup": [
+      {
+        "position": "右",
+        "name": "マートン"
+      },
+      {
+        "position": "二",
+        "name": "平野"
+      },
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "三",
+        "name": "新井貴"
+      },
+      {
+        "position": "一",
+        "name": "ブラゼル"
+      },
+      {
+        "position": "左",
+        "name": "金本"
+      },
+      {
+        "position": "捕",
+        "name": "城島"
+      },
+      {
+        "position": "中",
+        "name": "俊介"
+      },
+      {
+        "position": "投",
+        "name": "能見"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2011"
+  },
+  {
+    "year": 2011,
+    "date": "4/30",
+    "opponent": "ヤクルト",
+    "stadium": "甲子園",
+    "lineup": [
+      {
+        "position": "右",
+        "name": "マートン"
+      },
+      {
+        "position": "二",
+        "name": "平野"
+      },
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "三",
+        "name": "新井貴"
+      },
+      {
+        "position": "一",
+        "name": "ブラゼル"
+      },
+      {
+        "position": "左",
+        "name": "金本"
+      },
+      {
+        "position": "捕",
+        "name": "城島"
+      },
+      {
+        "position": "中",
+        "name": "俊介"
+      },
+      {
+        "position": "投",
+        "name": "メッセンジャー"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2011"
+  },
+  {
+    "year": 2012,
+    "date": "3/30",
+    "opponent": "ＤｅＮＡ",
+    "stadium": "京セラD大阪",
+    "lineup": [
+      {
+        "position": "二",
+        "name": "平野"
+      },
+      {
+        "position": "中",
+        "name": "柴田"
+      },
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "三",
+        "name": "新井貴"
+      },
+      {
+        "position": "一",
+        "name": "ブラゼル"
+      },
+      {
+        "position": "左",
+        "name": "金本"
+      },
+      {
+        "position": "右",
+        "name": "伊藤隼"
+      },
+      {
+        "position": "捕",
+        "name": "藤井彰"
+      },
+      {
+        "position": "投",
+        "name": "能見"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2012"
+  },
+  {
+    "year": 2013,
+    "date": "3/29",
+    "opponent": "ヤクルト",
+    "stadium": "神宮",
+    "lineup": [
+      {
+        "position": "二",
+        "name": "西岡"
+      },
+      {
+        "position": "中",
+        "name": "大和"
+      },
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "一",
+        "name": "新井良"
+      },
+      {
+        "position": "右",
+        "name": "福留"
+      },
+      {
+        "position": "左",
+        "name": "マートン"
+      },
+      {
+        "position": "三",
+        "name": "コンラッド"
+      },
+      {
+        "position": "捕",
+        "name": "藤井彰"
+      },
+      {
+        "position": "投",
+        "name": "メッセンジャー"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2013"
+  },
+  {
+    "year": 2013,
+    "date": "4/30",
+    "opponent": "広島",
+    "stadium": "甲子園",
+    "lineup": [
+      {
+        "position": "二",
+        "name": "西岡"
+      },
+      {
+        "position": "中",
+        "name": "大和"
+      },
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "左",
+        "name": "マートン"
+      },
+      {
+        "position": "右",
+        "name": "福留"
+      },
+      {
+        "position": "一",
+        "name": "新井貴"
+      },
+      {
+        "position": "三",
+        "name": "新井良"
+      },
+      {
+        "position": "捕",
+        "name": "藤井彰"
+      },
+      {
+        "position": "投",
+        "name": "スタンリッジ"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2013"
+  },
+  {
+    "year": 2014,
+    "date": "3/28",
+    "opponent": "巨人",
+    "stadium": "東京ドーム",
+    "lineup": [
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "中",
+        "name": "大和"
+      },
+      {
+        "position": "二",
+        "name": "西岡"
+      },
+      {
+        "position": "一",
+        "name": "ゴメス"
+      },
+      {
+        "position": "左",
+        "name": "マートン"
+      },
+      {
+        "position": "三",
+        "name": "今成"
+      },
+      {
+        "position": "右",
+        "name": "福留"
+      },
+      {
+        "position": "捕",
+        "name": "清水"
+      },
+      {
+        "position": "投",
+        "name": "能見"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2014"
+  },
+  {
+    "year": 2015,
+    "date": "3/27",
+    "opponent": "中日",
+    "stadium": "京セラD大阪",
+    "lineup": [
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "二",
+        "name": "上本"
+      },
+      {
+        "position": "三",
+        "name": "西岡"
+      },
+      {
+        "position": "一",
+        "name": "ゴメス"
+      },
+      {
+        "position": "左",
+        "name": "マートン"
+      },
+      {
+        "position": "右",
+        "name": "福留"
+      },
+      {
+        "position": "捕",
+        "name": "梅野"
+      },
+      {
+        "position": "中",
+        "name": "大和"
+      },
+      {
+        "position": "投",
+        "name": "メッセンジャー"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2015"
+  },
+  {
+    "year": 2015,
+    "date": "4/30",
+    "opponent": "ヤクルト",
+    "stadium": "甲子園",
+    "lineup": [
+      {
+        "position": "二",
+        "name": "上本"
+      },
+      {
+        "position": "三",
+        "name": "西岡"
+      },
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "一",
+        "name": "ゴメス"
+      },
+      {
+        "position": "右",
+        "name": "福留"
+      },
+      {
+        "position": "左",
+        "name": "マートン"
+      },
+      {
+        "position": "中",
+        "name": "伊藤隼"
+      },
+      {
+        "position": "捕",
+        "name": "梅野"
+      },
+      {
+        "position": "投",
+        "name": "岩本"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2015"
+  },
+  {
+    "year": 2016,
+    "date": "3/25",
+    "opponent": "中日",
+    "stadium": "京セラD大阪",
+    "lineup": [
+      {
+        "position": "左",
+        "name": "髙山"
+      },
+      {
+        "position": "中",
+        "name": "横田"
+      },
+      {
+        "position": "三",
+        "name": "ヘイグ"
+      },
+      {
+        "position": "右",
+        "name": "福留"
+      },
+      {
+        "position": "一",
+        "name": "ゴメス"
+      },
+      {
+        "position": "遊",
+        "name": "鳥谷"
+      },
+      {
+        "position": "二",
+        "name": "西岡"
+      },
+      {
+        "position": "捕",
+        "name": "岡﨑"
+      },
+      {
+        "position": "投",
+        "name": "メッセンジャー"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2016"
+  },
+  {
+    "year": 2017,
+    "date": "3/31",
+    "opponent": "広島",
+    "stadium": "マツダスタジアム",
+    "lineup": [
+      {
+        "position": "左",
+        "name": "髙山"
+      },
+      {
+        "position": "二",
+        "name": "上本"
+      },
+      {
+        "position": "中",
+        "name": "糸井"
+      },
+      {
+        "position": "右",
+        "name": "福留"
+      },
+      {
+        "position": "一",
+        "name": "原口"
+      },
+      {
+        "position": "遊",
+        "name": "北條"
+      },
+      {
+        "position": "三",
+        "name": "鳥谷"
+      },
+      {
+        "position": "捕",
+        "name": "梅野"
+      },
+      {
+        "position": "投",
+        "name": "メッセンジャー"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2017"
+  },
+  {
+    "year": 2017,
+    "date": "4/30",
+    "opponent": "中日",
+    "stadium": "甲子園",
+    "lineup": [
+      {
+        "position": "左",
+        "name": "中谷"
+      },
+      {
+        "position": "二",
+        "name": "上本"
+      },
+      {
+        "position": "中",
+        "name": "糸井"
+      },
+      {
+        "position": "右",
+        "name": "福留"
+      },
+      {
+        "position": "一",
+        "name": "原口"
+      },
+      {
+        "position": "三",
+        "name": "キャンベル"
+      },
+      {
+        "position": "遊",
+        "name": "北條"
+      },
+      {
+        "position": "捕",
+        "name": "梅野"
+      },
+      {
+        "position": "投",
+        "name": "能見"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2017"
+  },
+  {
+    "year": 2018,
+    "date": "3/30",
+    "opponent": "巨人",
+    "stadium": "東京ドーム",
+    "lineup": [
+      {
+        "position": "中",
+        "name": "髙山"
+      },
+      {
+        "position": "二",
+        "name": "鳥谷"
+      },
+      {
+        "position": "右",
+        "name": "糸井"
+      },
+      {
+        "position": "一",
+        "name": "ロサリオ"
+      },
+      {
+        "position": "左",
+        "name": "福留"
+      },
+      {
+        "position": "三",
+        "name": "大山"
+      },
+      {
+        "position": "遊",
+        "name": "糸原"
+      },
+      {
+        "position": "捕",
+        "name": "梅野"
+      },
+      {
+        "position": "投",
+        "name": "メッセンジャー"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2018"
+  },
+  {
+    "year": 2019,
+    "date": "3/29",
+    "opponent": "ヤクルト",
+    "stadium": "京セラD大阪",
+    "lineup": [
+      {
+        "position": "遊",
+        "name": "木浪"
+      },
+      {
+        "position": "中",
+        "name": "近本"
+      },
+      {
+        "position": "右",
+        "name": "糸井"
+      },
+      {
+        "position": "三",
+        "name": "大山"
+      },
+      {
+        "position": "左",
+        "name": "福留"
+      },
+      {
+        "position": "一",
+        "name": "ナバーロ"
+      },
+      {
+        "position": "二",
+        "name": "糸原"
+      },
+      {
+        "position": "捕",
+        "name": "梅野"
+      },
+      {
+        "position": "投",
+        "name": "メッセンジャー"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2019"
+  },
+  {
+    "year": 2019,
+    "date": "4/30",
+    "opponent": "広島",
+    "stadium": "甲子園",
+    "lineup": [
+      {
+        "position": "中",
+        "name": "近本"
+      },
+      {
+        "position": "二",
+        "name": "糸原"
+      },
+      {
+        "position": "右",
+        "name": "糸井"
+      },
+      {
+        "position": "三",
+        "name": "大山"
+      },
+      {
+        "position": "左",
+        "name": "福留"
+      },
+      {
+        "position": "一",
+        "name": "マルテ"
+      },
+      {
+        "position": "捕",
+        "name": "梅野"
+      },
+      {
+        "position": "遊",
+        "name": "木浪"
+      },
+      {
+        "position": "投",
+        "name": "秋山"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2019"
+  },
+  {
+    "year": 2020,
+    "date": "6/19",
+    "opponent": "巨人",
+    "stadium": "東京ドーム",
+    "lineup": [
+      {
+        "position": "右",
+        "name": "糸井"
+      },
+      {
+        "position": "中",
+        "name": "近本"
+      },
+      {
+        "position": "三",
+        "name": "マルテ"
+      },
+      {
+        "position": "一",
+        "name": "ボーア"
+      },
+      {
+        "position": "左",
+        "name": "福留"
+      },
+      {
+        "position": "二",
+        "name": "糸原"
+      },
+      {
+        "position": "遊",
+        "name": "木浪"
+      },
+      {
+        "position": "捕",
+        "name": "梅野"
+      },
+      {
+        "position": "投",
+        "name": "西勇"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=6&stvst=all&tm=T&y=2020"
+  },
+  {
+    "year": 2021,
+    "date": "3/26",
+    "opponent": "ヤクルト",
+    "stadium": "神宮",
+    "lineup": [
+      {
+        "position": "中",
+        "name": "近本"
+      },
+      {
+        "position": "二",
+        "name": "糸原"
+      },
+      {
+        "position": "一",
+        "name": "マルテ"
+      },
+      {
+        "position": "三",
+        "name": "大山"
+      },
+      {
+        "position": "左",
+        "name": "サンズ"
+      },
+      {
+        "position": "右",
+        "name": "佐藤輝"
+      },
+      {
+        "position": "捕",
+        "name": "梅野"
+      },
+      {
+        "position": "遊",
+        "name": "木浪"
+      },
+      {
+        "position": "投",
+        "name": "藤浪"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2021"
+  },
+  {
+    "year": 2021,
+    "date": "4/30",
+    "opponent": "広島",
+    "stadium": "甲子園",
+    "lineup": [
+      {
+        "position": "中",
+        "name": "近本"
+      },
+      {
+        "position": "二",
+        "name": "糸原"
+      },
+      {
+        "position": "一",
+        "name": "マルテ"
+      },
+      {
+        "position": "三",
+        "name": "大山"
+      },
+      {
+        "position": "左",
+        "name": "サンズ"
+      },
+      {
+        "position": "右",
+        "name": "佐藤輝"
+      },
+      {
+        "position": "捕",
+        "name": "梅野"
+      },
+      {
+        "position": "遊",
+        "name": "中野"
+      },
+      {
+        "position": "投",
+        "name": "秋山"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2021"
+  },
+  {
+    "year": 2022,
+    "date": "3/25",
+    "opponent": "ヤクルト",
+    "stadium": "京セラD大阪",
+    "lineup": [
+      {
+        "position": "中",
+        "name": "近本"
+      },
+      {
+        "position": "遊",
+        "name": "中野"
+      },
+      {
+        "position": "一",
+        "name": "マルテ"
+      },
+      {
+        "position": "右",
+        "name": "佐藤輝"
+      },
+      {
+        "position": "二",
+        "name": "糸原"
+      },
+      {
+        "position": "左",
+        "name": "糸井"
+      },
+      {
+        "position": "三",
+        "name": "大山"
+      },
+      {
+        "position": "捕",
+        "name": "梅野"
+      },
+      {
+        "position": "投",
+        "name": "藤浪"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2022"
+  },
+  {
+    "year": 2023,
+    "date": "3/31",
+    "opponent": "ＤｅＮＡ",
+    "stadium": "京セラD大阪",
+    "lineup": [
+      {
+        "position": "中",
+        "name": "近本"
+      },
+      {
+        "position": "二",
+        "name": "中野"
+      },
+      {
+        "position": "左",
+        "name": "ノイジー"
+      },
+      {
+        "position": "一",
+        "name": "大山"
+      },
+      {
+        "position": "三",
+        "name": "佐藤輝"
+      },
+      {
+        "position": "右",
+        "name": "森下"
+      },
+      {
+        "position": "捕",
+        "name": "梅野"
+      },
+      {
+        "position": "遊",
+        "name": "小幡"
+      },
+      {
+        "position": "投",
+        "name": "青柳"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2023"
+  },
+  {
+    "year": 2024,
+    "date": "3/29",
+    "opponent": "巨人",
+    "stadium": "東京ドーム",
+    "lineup": [
+      {
+        "position": "中",
+        "name": "近本"
+      },
+      {
+        "position": "二",
+        "name": "中野"
+      },
+      {
+        "position": "右",
+        "name": "森下"
+      },
+      {
+        "position": "一",
+        "name": "大山"
+      },
+      {
+        "position": "三",
+        "name": "佐藤輝"
+      },
+      {
+        "position": "左",
+        "name": "前川"
+      },
+      {
+        "position": "捕",
+        "name": "坂本"
+      },
+      {
+        "position": "遊",
+        "name": "木浪"
+      },
+      {
+        "position": "投",
+        "name": "青柳"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2024"
+  },
+  {
+    "year": 2025,
+    "date": "3/28",
+    "opponent": "広島",
+    "stadium": "マツダスタジアム",
+    "lineup": [
+      {
+        "position": "中",
+        "name": "近本"
+      },
+      {
+        "position": "二",
+        "name": "中野"
+      },
+      {
+        "position": "三",
+        "name": "佐藤輝"
+      },
+      {
+        "position": "右",
+        "name": "森下"
+      },
+      {
+        "position": "一",
+        "name": "大山"
+      },
+      {
+        "position": "左",
+        "name": "前川"
+      },
+      {
+        "position": "捕",
+        "name": "坂本"
+      },
+      {
+        "position": "遊",
+        "name": "木浪"
+      },
+      {
+        "position": "投",
+        "name": "村上"
+      }
+    ],
+    "source": "https://nf3.sakura.ne.jp/php/stat_disp/stat_disp.php?leg=0&mon=4&stvst=all&tm=T&y=2025"
+  }
+]
