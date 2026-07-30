@@ -1,4 +1,4 @@
-const state={face:2,body:2,mask:1,costume:1};
+const state={face:2,body:2,mask:1,gear:1,costume:1};
 const wrestler=document.querySelector("#wrestler");
 const ringName=document.querySelector("#ringName");
 const dialog=document.querySelector("#profileDialog");
@@ -19,13 +19,14 @@ document.querySelectorAll(".choices").forEach(group=>group.addEventListener("cli
 }));
 
 function render(){
-  wrestler.className=`wrestler face-${state.face} body-${state.body} mask-${state.mask} costume-${state.costume}`;
+  wrestler.className=`wrestler face-${state.face} body-${state.body} mask-${state.mask} gear-${state.gear} costume-${state.costume}`;
 }
 
 document.querySelector("#randomBtn").addEventListener("click",()=>{
   state.face=1+Math.floor(Math.random()*3);
   state.body=1+Math.floor(Math.random()*3);
   state.mask=Math.floor(Math.random()*4);
+  state.gear=1+Math.floor(Math.random()*5);
   state.costume=1+Math.floor(Math.random()*4);
   document.querySelectorAll(".choices").forEach(group=>{
     group.querySelectorAll("button").forEach(button=>
@@ -73,7 +74,7 @@ function makeProfile(){
   const icons=["👊","★","ϟ","♠"];
   const avatar=document.querySelector("#profileAvatar");
   avatar.textContent=icons[state.mask];
-  avatar.className=`profile-avatar costume-${state.costume}`;
+  avatar.className=`profile-avatar gear-${state.gear} costume-${state.costume}`;
   dialog.showModal();
 }
 document.querySelector("#debutBtn").addEventListener("click",makeProfile);
