@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#d93128">
+  <title>MASK & MUSCLE MAKER｜プロレスラーをつくろう</title>
+  <link rel="stylesheet" href="/apps/2026-07-30/styles.css">
+</head>
+<body>
+  <header>
+    <a class="logo" href="#" aria-label="トップ"><span>MASK &amp;</span>MUSCLE<br>MAKER</a>
+    <div class="anniv">7.30<br><b>プロレス記念日</b></div>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="レスラーのプレビュー">
+      <div class="burst"></div>
+      <p class="stage-label">WRESTLER PREVIEW <span>LIVE</span></p>
+      <div class="wrestler body-2" id="wrestler" aria-label="作成中のプロレスラー">
+        <div class="head">
+          <div class="hair"></div><div class="ear left"></div><div class="ear right"></div>
+          <div class="mask"><i></i><i></i><b></b></div>
+          <div class="eyes"><i></i><i></i></div><div class="nose"></div><div class="mouth"></div>
+        </div>
+        <div class="neck"></div>
+        <div class="torso"><div class="costume-mark">★</div><div class="belt">CHAMP</div></div>
+        <div class="arm left"><i></i></div><div class="arm right"><i></i></div>
+        <div class="legs"><i></i><i></i></div>
+      </div>
+      <div class="ring"><div class="rope r1"></div><div class="rope r2"></div><div class="rope r3"></div><div class="mat"></div></div>
+      <button class="random" id="randomBtn">↻ おまかせ覆面レスラー</button>
+    </section>
+
+    <section class="editor">
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-panel="face">顔</button>
+        <button class="tab" data-panel="body">体型</button>
+        <button class="tab" data-panel="mask">マスク</button>
+        <button class="tab" data-panel="costume">衣装</button>
+      </div>
+
+      <div class="panels">
+        <div class="panel active" id="face">
+          <h2>FACE <small>顔つき</small></h2>
+          <div class="choices" data-key="face">
+            <button data-value="1"><span class="mini face-1">ಠ‿ಠ</span>ワイルド</button>
+            <button class="selected" data-value="2"><span class="mini face-2">•̀ ᗜ •́</span>熱血</button>
+            <button data-value="3"><span class="mini face-3">─ ᴗ ─</span>クール</button>
+          </div>
+        </div>
+        <div class="panel" id="body">
+          <h2>BUILD <small>体型</small></h2>
+          <div class="choices" data-key="body">
+            <button data-value="1"><span class="sil slim"></span>スピード</button>
+            <button class="selected" data-value="2"><span class="sil power"></span>パワー</button>
+            <button data-value="3"><span class="sil giant"></span>ジャイアント</button>
+          </div>
+        </div>
+        <div class="panel" id="mask">
+          <h2>MASK <small>マスク</small></h2>
+          <div class="choices mask-choices" data-key="mask">
+            <button data-value="0"><span class="mask-chip none">素顔</span>ノーマスク</button>
+            <button class="selected" data-value="1"><span class="mask-chip m1">★</span>スター</button>
+            <button data-value="2"><span class="mask-chip m2">ϟ</span>サンダー</button>
+            <button data-value="3"><span class="mask-chip m3">♠</span>ダーク</button>
+          </div>
+        </div>
+        <div class="panel" id="costume">
+          <h2>GEAR <small>リングコスチューム</small></h2>
+          <div class="choices costume-choices" data-key="costume">
+            <button class="selected" data-value="1"><span style="--c:#e33229"></span>灼熱レッド</button>
+            <button data-value="2"><span style="--c:#1767c9"></span>電撃ブルー</button>
+            <button data-value="3"><span style="--c:#161616"></span>漆黒</button>
+            <button data-value="4"><span style="--c:#f2bd25"></span>王者ゴールド</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="naming">
+        <label for="ringName">RING NAME <small>リングネーム</small></label>
+        <div class="name-row">
+          <input id="ringName" maxlength="18" placeholder="例：マスクド・ボルケーノ">
+          <button id="debutBtn">選手名鑑をつくる <b>▶</b></button>
+        </div>
+        <p>名前の響きから、必殺技とファイトスタイルを決定！</p>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="profileDialog">
+    <button class="close" id="closeBtn" aria-label="閉じる">×</button>
+    <p class="kicker">OFFICIAL WRESTLER FILE</p>
+    <div class="profile-top">
+      <div class="profile-avatar" id="profileAvatar"></div>
+      <div><small>RING NAME</small><h2 id="resultName"></h2><p id="resultCatch"></p></div>
+    </div>
+    <div class="stats">
+      <div><span>POWER</span><b id="powerStat"></b></div>
+      <div><span>SPEED</span><b id="speedStat"></b></div>
+      <div><span>TECHNIQUE</span><b id="techStat"></b></div>
+    </div>
+    <article><small>FINISHING MOVE / 必殺技</small><h3 id="resultMove"></h3><p id="moveDesc"></p></article>
+    <article><small>FIGHT STYLE / 特徴</small><h3 id="resultStyle"></h3><p id="styleDesc"></p></article>
+    <button class="again" id="againBtn">リングに戻る</button>
+  </dialog>
+  <script src="/apps/2026-07-30/script.js"></script>
+</body>
+</html>
