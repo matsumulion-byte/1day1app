@@ -10,6 +10,7 @@
 <body>
   <header>
     <a class="logo" href="#" aria-label="トップ"><span>MASK &amp;</span>MUSCLE<br>MAKER</a>
+    <div class="game-title">WRESTLER EDIT MODE <small>NEW FIGHTER ENTRY</small></div>
     <div class="anniv">7.30<br><b>プロレス記念日</b></div>
   </header>
 
@@ -33,11 +34,12 @@
     </section>
 
     <section class="editor">
+      <div class="edit-status"><span>EDIT WRESTLER</span><b>1P</b><i>SELECT YOUR STYLE</i></div>
       <div class="tabs" role="tablist">
-        <button class="tab active" data-panel="face">顔</button>
-        <button class="tab" data-panel="body">体型</button>
-        <button class="tab" data-panel="mask">マスク</button>
-        <button class="tab" data-panel="costume">衣装</button>
+        <button class="tab active" data-panel="face"><em>01</em> 顔</button>
+        <button class="tab" data-panel="body"><em>02</em> 体型</button>
+        <button class="tab" data-panel="mask"><em>03</em> マスク</button>
+        <button class="tab" data-panel="costume"><em>04</em> 衣装</button>
       </div>
 
       <div class="panels">
@@ -78,7 +80,7 @@
       </div>
 
       <div class="naming">
-        <label for="ringName">RING NAME <small>リングネーム</small></label>
+        <label for="ringName"><span class="cursor">▶</span> RING NAME <small>リングネーム</small></label>
         <div class="name-row">
           <input id="ringName" maxlength="18" placeholder="例：マスクド・ボルケーノ">
           <button id="debutBtn">選手名鑑をつくる <b>▶</b></button>
