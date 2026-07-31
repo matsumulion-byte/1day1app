@@ -9,6 +9,10 @@
   const altEl = document.querySelector("#altitude");
   const varioEl = document.querySelector("#vario");
   const posEl = document.querySelector("#position");
+  const steering = document.querySelector("#steering");
+  const steeringValue = document.querySelector("#steering-value");
+  const steeringDot = document.querySelector("#steering-dot");
+  const raceHint = document.querySelector("#race-hint");
   const progressEls = [...document.querySelectorAll(".progress span")];
   const keys = { left: false, right: false };
 
@@ -24,9 +28,9 @@
   let particles = [];
 
   const thermals = [
-    { x: 490, width: 155, power: 3.8 },
-    { x: 1120, width: 135, power: 4.4 },
-    { x: 1840, width: 170, power: 4.0 }
+    { x: 490, lane: -105, width: 155, power: 3.8 },
+    { x: 1120, lane: 95, width: 145, power: 4.4 },
+    { x: 1840, lane: -80, width: 170, power: 4.0 }
   ];
 
   let pilots = [];
@@ -35,7 +39,7 @@
     return {
       id: i,
       x: -20 - i * 4,
-      altitude: 520 - i * 6,
+      altitude: 465 - i * 6,
       lane: (i - 1.5) * 34,
       targetLane: (i - 1.5) * 34,
       speed: 44 + i * .3,
@@ -79,7 +83,7 @@
     let lift = 0;
     for (const t of thermals) {
       const dx = Math.abs(x - t.x);
-      const lateral = Math.max(0, 1 - Math.abs(lane) / 180);
+      const lateral = Math.max(0, 1 - Math.abs(lane - t.lane) / 135);
       if (dx < t.width) lift += t.power * (1 - dx / t.width) * lateral;
     }
     return lift;
@@ -91,6 +95,8 @@
     intro.hidden = true;
     result.hidden = true;
     state = "countdown";
+    steering.classList.add("visible");
+    raceHint.hidden = false;
     last = performance.now();
   }
 
@@ -117,10 +123,10 @@
 
   function updatePlayer(p, dt) {
     const turn = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
-    p.heading += turn * 1.5 * dt;
-    p.heading *= Math.pow(.16, dt);
-    p.lane += p.heading * 78 * dt;
-    p.lane = Math.max(-190, Math.min(190, p.lane));
+    p.heading += turn * 2.5 * dt;
+    p.heading *= Math.pow(.42, dt);
+    p.lane += p.heading * 128 * dt;
+    p.lane = Math.max(-220, Math.min(220, p.lane));
     const lift = thermalAt(p.x, p.lane);
     const turnSink = Math.abs(turn) * 1.3 + Math.abs(p.heading) * .3;
     p.vario = -1.05 - turnSink + lift;
@@ -133,8 +139,8 @@
     p.aiTimer -= dt;
     if (p.aiTimer <= 0) {
       const nextThermal = thermals.find(t => t.x > p.x && t.x - p.x < 260);
-      p.targetLane = nextThermal && p.altitude < 205
-        ? (p.id - 2) * 16
+      p.targetLane = nextThermal && p.altitude < 330
+        ? nextThermal.lane + (p.id - 2) * 13
         : (p.id - 1.5) * 34;
       p.aiTimer = .7 + Math.random() * 1.2;
     }
@@ -190,6 +196,10 @@
     });
 
     const player = pilots[0];
+    const steeringAmount = Math.max(-1, Math.min(1, player.heading / 1.25));
+    steeringDot.style.left = `${50 + steeringAmount * 45}%`;
+    steeringValue.textContent = steeringAmount < -.12 ? "左旋回" : steeringAmount > .12 ? "右旋回" : "直進";
+    if (raceHint && (keys.left || keys.right || remaining < 55)) raceHint.hidden = true;
     if (soundOn && player.vario > .25 && performance.now() > nextBeep) {
       beep(620 + player.vario * 95, .045, .22);
       nextBeep = performance.now() + Math.max(75, 230 - player.vario * 30);
@@ -232,6 +242,8 @@
   function endRace(reason) {
     if (state === "result") return;
     state = "result";
+    steering.classList.remove("visible");
+    raceHint.hidden = true;
     const player = pilots[0];
     const sorted = [...pilots].sort((a, b) => {
       if (a.finished !== b.finished) return a.finished ? -1 : 1;
@@ -352,7 +364,7 @@
     thermals.forEach((t, ti) => {
       const x = worldToScreen(t.x, cameraX);
       if (x < -100 || x > w + 100) return;
-      const y = altitudeToScreen(220 + Math.sin(performance.now() * .0015 + ti) * 15);
+      const y = altitudeToScreen(220 + Math.sin(performance.now() * .0015 + ti) * 15) + t.lane * .38;
       ctx.strokeStyle = "rgba(21,59,67,.7)";
       ctx.lineWidth = 1.3;
       for (let j = 0; j < 3; j++) {
@@ -369,10 +381,10 @@
 
   function drawPilot(p, cameraX) {
     const x = worldToScreen(p.x, cameraX);
-    const y = altitudeToScreen(p.altitude) + p.lane * .11;
+    const y = altitudeToScreen(p.altitude) + p.lane * .38;
     ctx.save();
     ctx.translate(x, y);
-    const tilt = p.heading * .18;
+    const tilt = p.heading * .52;
     ctx.rotate(tilt);
 
     ctx.strokeStyle = "rgba(20,52,57,.55)";
@@ -404,6 +416,15 @@
     ctx.font = "700 9px 'Barlow Condensed'";
     ctx.textAlign = "center";
     ctx.fillText(NAMES[p.id], x, y - 35);
+
+    if (p.id === 0 && Math.abs(p.heading) > .08) {
+      ctx.strokeStyle = "rgba(255,255,255,.62)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x - 36, y + 5);
+      ctx.quadraticCurveTo(x - 76, y - p.heading * 26, x - 112, y - p.heading * 48);
+      ctx.stroke();
+    }
   }
 
   function drawWind() {
