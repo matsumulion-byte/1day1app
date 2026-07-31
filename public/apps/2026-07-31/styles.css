@@ -1,0 +1,283 @@
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap");
+
+:root {
+  color-scheme: light;
+  font-family: "Noto Sans JP", sans-serif;
+  --ink: #153b43;
+  --paper: #fffdf4;
+  --accent: #ff5f32;
+  --line: rgba(21, 59, 67, 0.23);
+}
+
+* { box-sizing: border-box; }
+
+html, body, main {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  background: #8bd7e4;
+  color: var(--ink);
+  touch-action: none;
+  user-select: none;
+}
+
+canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hud {
+  position: fixed;
+  z-index: 4;
+  inset: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: clamp(18px, 3vw, 42px);
+  pointer-events: none;
+}
+
+.brand .date,
+.eyebrow,
+.race-data span,
+.progress,
+.controls span,
+.sound-control,
+.mobile-controls span {
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 700;
+  letter-spacing: .13em;
+}
+
+.brand .date {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--accent);
+  font-size: 12px;
+}
+
+h1 {
+  margin: 0;
+  font-family: "Barlow Condensed", "Noto Sans JP", sans-serif;
+  font-size: clamp(30px, 4.2vw, 62px);
+  font-weight: 800;
+  line-height: .78;
+  letter-spacing: -.07em;
+}
+
+.race-data {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(76px, 112px));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 253, 244, .76);
+  box-shadow: 0 8px 32px rgba(27, 91, 99, .1);
+  backdrop-filter: blur(12px);
+}
+
+.race-data div {
+  padding: 10px 14px;
+  border-right: 1px solid var(--line);
+}
+.race-data div:last-child { border: 0; }
+.race-data span { display: block; font-size: 9px; opacity: .62; }
+.race-data strong {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: clamp(19px, 2vw, 28px);
+}
+.race-data small { margin-left: 2px; font-size: .48em; }
+
+.progress {
+  position: fixed;
+  z-index: 4;
+  top: clamp(112px, 16vw, 160px);
+  left: 50%;
+  display: flex;
+  width: min(520px, 56vw);
+  align-items: center;
+  transform: translateX(-50%);
+  color: rgba(21, 59, 67, .45);
+  font-size: 10px;
+  pointer-events: none;
+}
+.progress span { white-space: nowrap; }
+.progress span.active { color: var(--accent); }
+.progress i {
+  height: 1px;
+  margin: 0 12px;
+  flex: 1;
+  background: currentColor;
+}
+
+.panel {
+  position: fixed;
+  z-index: 8;
+  top: 50%;
+  left: clamp(20px, 7vw, 110px);
+  width: min(455px, calc(100vw - 40px));
+  padding: clamp(24px, 4vw, 46px);
+  transform: translateY(-45%);
+  border: 1px solid rgba(21, 59, 67, .16);
+  border-radius: 4px;
+  background: rgba(255, 253, 244, .93);
+  box-shadow: 0 26px 70px rgba(16, 72, 81, .2);
+  backdrop-filter: blur(16px);
+}
+
+.eyebrow { margin: 0 0 12px; color: var(--accent); font-size: 11px; }
+.panel h2 {
+  margin: 0;
+  font-size: clamp(29px, 4vw, 49px);
+  line-height: 1.18;
+  letter-spacing: -.05em;
+}
+.lead {
+  margin: 20px 0;
+  color: #365b61;
+  font-size: 13px;
+  line-height: 1.85;
+}
+.controls {
+  display: flex;
+  gap: 20px;
+  padding: 17px 0;
+  border-top: 1px solid var(--line);
+}
+.controls div { display: flex; align-items: center; }
+.controls span { margin-left: 8px; font-size: 9px; }
+kbd {
+  display: inline-grid;
+  width: 27px;
+  height: 27px;
+  margin-right: 3px;
+  place-items: center;
+  border: 1px solid var(--ink);
+  border-radius: 3px;
+  background: transparent;
+  box-shadow: 0 2px 0 var(--ink);
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.panel button {
+  width: 100%;
+  margin-top: 9px;
+  padding: 15px;
+  border: 0;
+  border-radius: 3px;
+  background: var(--accent);
+  color: white;
+  font: 700 15px "Noto Sans JP", sans-serif;
+  cursor: pointer;
+}
+.panel button:hover { filter: brightness(1.06); }
+.panel > small {
+  display: block;
+  margin-top: 11px;
+  text-align: center;
+  opacity: .55;
+  font-size: 9px;
+}
+
+.result { width: min(400px, calc(100vw - 40px)); }
+.rank {
+  margin: -4px 0 -12px;
+  color: var(--accent);
+  font: 800 clamp(74px, 11vw, 130px) "Barlow Condensed", sans-serif;
+  line-height: 1;
+}
+.rank sup { font-size: .28em; vertical-align: super; }
+.result ol {
+  margin: 15px 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+.result li {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+}
+.result li.me { color: var(--accent); font-weight: 700; }
+
+.sound-control {
+  position: fixed;
+  z-index: 6;
+  right: 24px;
+  bottom: 20px;
+}
+.sound-control button {
+  border: 0;
+  border-bottom: 1px solid;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.mobile-controls {
+  position: fixed;
+  z-index: 5;
+  right: 18px;
+  bottom: 42px;
+  left: 18px;
+  display: none;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.mobile-controls button {
+  display: grid;
+  width: 82px;
+  height: 82px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.6);
+  border-radius: 50%;
+  background: rgba(16,57,64,.55);
+  color: white;
+  font-size: 24px;
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+}
+.mobile-controls span { display: block; font-size: 8px; }
+
+[hidden] { display: none !important; }
+
+@media (max-width: 720px), (pointer: coarse) {
+  .hud { padding: 15px; }
+  .brand h1 { font-size: 28px; }
+  .race-data { grid-template-columns: repeat(2, 70px); }
+  .race-data div { padding: 5px 9px; }
+  .race-data div:nth-child(2) { border-right: 0; }
+  .race-data div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .race-data strong { font-size: 18px; }
+  .progress { top: 92px; width: calc(100% - 30px); font-size: 8px; }
+  .progress i { margin: 0 5px; }
+  .panel {
+    top: 51%;
+    left: 20px;
+    padding: 25px;
+    transform: translateY(-50%);
+  }
+  .panel h2 { font-size: 32px; }
+  .lead { margin: 14px 0; font-size: 12px; }
+  .controls { padding: 12px 0; }
+  .mobile-controls { display: flex; }
+  .intro ~ .mobile-controls, .result:not([hidden]) ~ .mobile-controls { opacity: .25; }
+}
+
+@media (max-height: 650px) {
+  .panel { padding: 20px 25px; }
+  .panel h2 { font-size: 28px; }
+  .lead { margin: 10px 0; line-height: 1.5; }
+  .controls { padding: 9px 0; }
+}

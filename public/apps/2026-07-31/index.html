@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#78cfe0" />
+    <meta
+      name="description"
+      content="風と上昇気流を読んで、60秒でゴールを目指すパラグライダーレース。"
+    />
+    <title>パラグライダーレース</title>
+    <link rel="stylesheet" href="/apps/2026-07-31/styles.css" />
+  </head>
+  <body>
+    <main>
+      <canvas id="game" aria-label="パラグライダーレースのゲーム画面"></canvas>
+
+      <header class="hud" aria-live="polite">
+        <div class="brand">
+          <span class="date">7.31 PARAGLIDING DAY</span>
+          <h1>パラグライダー<br />レース</h1>
+        </div>
+        <div class="race-data">
+          <div><span>TIME</span><strong id="time">60.0</strong></div>
+          <div><span>ALT</span><strong id="altitude">320<small>m</small></strong></div>
+          <div><span>VARIO</span><strong id="vario">−1.1<small>m/s</small></strong></div>
+          <div><span>POS</span><strong id="position">1 / 4</strong></div>
+        </div>
+      </header>
+
+      <section class="progress" aria-label="コース進行状況">
+        <span class="active">TAKE OFF</span><i></i>
+        <span>GATE 1</span><i></i>
+        <span>GATE 2</span><i></i>
+        <span>GOAL</span>
+      </section>
+
+      <section class="intro panel">
+        <p class="eyebrow">RACE BRIEFING</p>
+        <h2>風をつかみ、<br />空の最短ルートへ。</h2>
+        <p class="lead">
+          2つのゲートを順番に通過してゴール。旋回は高度を使います。
+          鳥が旋回する場所には、上昇気流があります。
+        </p>
+        <div class="controls">
+          <div><kbd>←</kbd><kbd>→</kbd><span>左右に旋回</span></div>
+          <div><kbd>A</kbd><kbd>D</kbd><span>でも操作</span></div>
+        </div>
+        <button id="start">テイクオフ</button>
+        <small>60秒レース　プレイヤー＋3機</small>
+      </section>
+
+      <section class="result panel" hidden>
+        <p class="eyebrow" id="result-label">RACE RESULT</p>
+        <p class="rank" id="rank">1<sup>st</sup></p>
+        <h2 id="result-title">ゴール！</h2>
+        <p class="lead" id="result-detail"></p>
+        <ol id="standings"></ol>
+        <button id="retry">もう一度飛ぶ</button>
+      </section>
+
+      <div class="mobile-controls" aria-label="タッチ操作">
+        <button id="left" aria-label="左に旋回">↙<span>LEFT</span></button>
+        <button id="right" aria-label="右に旋回">↘<span>RIGHT</span></button>
+      </div>
+
+      <div class="sound-control">
+        <button id="sound" aria-label="音を切り替える">SOUND ON</button>
+      </div>
+    </main>
+    <script src="/apps/2026-07-31/script.js"></script>
+  </body>
+</html>
