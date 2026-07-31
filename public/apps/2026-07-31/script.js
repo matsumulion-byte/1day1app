@@ -302,90 +302,110 @@
     ctx.globalAlpha = 1;
   }
 
-  function drawTerrain(cameraX) {
-    const scale = Math.min(.78, w / 1100);
-    const startX = cameraX - w / scale;
-    const endX = cameraX + w / scale * 1.4;
-    const layers = [
-      { offset: 100, color: "#8fb599", alpha: .5, factor: .55 },
-      { offset: 45, color: "#4f8c74", alpha: .72, factor: .78 },
-      { offset: 0, color: "#235f51", alpha: 1, factor: 1 }
-    ];
-    layers.forEach(layer => {
-      ctx.globalAlpha = layer.alpha;
-      ctx.fillStyle = layer.color;
-      ctx.beginPath();
-      ctx.moveTo(0, h);
-      for (let sx = 0; sx <= w + 20; sx += 14) {
-        const wx = startX + sx / scale;
-        const alt = terrainY(wx * layer.factor) + layer.offset;
-        ctx.lineTo(sx, altitudeToScreen(alt));
-      }
-      ctx.lineTo(w, h);
-      ctx.closePath();
-      ctx.fill();
-    });
-    ctx.globalAlpha = 1;
+  function perspective(worldX, lane, cameraX, altitude = pilots[0].altitude) {
+    const distance = worldX - cameraX;
+    const depth = Math.max(-.12, Math.min(1, distance / 1050));
+    const scale = Math.max(.18, Math.min(1.15, 1 - depth * .78));
+    return {
+      x: w / 2 + lane * Math.min(1.25, w / 720) * scale,
+      y: h * .72 - depth * h * .34 - (altitude - pilots[0].altitude) * .22 * scale,
+      scale,
+      distance
+    };
+  }
 
-    ctx.strokeStyle = "rgba(255,255,255,.25)";
-    ctx.lineWidth = 1;
-    for (let x = 180; x < w; x += 220) {
-      const base = altitudeToScreen(terrainY(startX + x / scale));
+  function drawTerrain(cameraX) {
+    const horizon = h * .38;
+    ctx.fillStyle = "rgba(69,132,112,.45)";
+    ctx.beginPath();
+    ctx.moveTo(0, horizon + 55);
+    for (let x = 0; x <= w; x += 30) {
+      const ridge = horizon + 18 - Math.sin(x * .012 + cameraX * .001) * 42 - Math.sin(x * .027) * 16;
+      ctx.lineTo(x, ridge);
+    }
+    ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
+
+    const bands = 18;
+    for (let i = bands - 1; i >= 0; i--) {
+      const dFar = (i + 1) / bands * 1100;
+      const dNear = i / bands * 1100 - 80;
+      const far = perspective(cameraX + dFar, 0, cameraX);
+      const near = perspective(cameraX + dNear, 0, cameraX);
+      const farWidth = w * (.12 + far.scale * .56);
+      const nearWidth = w * (.12 + near.scale * .56);
+      const shade = i % 2 ? "#3f8069" : "#477f61";
+      ctx.fillStyle = shade;
       ctx.beginPath();
-      ctx.moveTo(x, base);
-      ctx.lineTo(x, base - 14);
+      ctx.moveTo(w / 2 - farWidth, far.y + 48);
+      ctx.lineTo(w / 2 + farWidth, far.y + 48);
+      ctx.lineTo(w / 2 + nearWidth, near.y + 72);
+      ctx.lineTo(w / 2 - nearWidth, near.y + 72);
+      ctx.closePath(); ctx.fill();
+
+      ctx.strokeStyle = "rgba(235,238,180,.16)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(w / 2, far.y + 48);
+      ctx.lineTo(w / 2, near.y + 72);
       ctx.stroke();
     }
+
+    ctx.fillStyle = "rgba(27,79,63,.92)";
+    ctx.beginPath();
+    ctx.moveTo(0, h * .53);
+    ctx.quadraticCurveTo(w * .17, h * .68, w * .29, h);
+    ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(w, h * .51);
+    ctx.quadraticCurveTo(w * .83, h * .66, w * .7, h);
+    ctx.lineTo(w, h); ctx.closePath(); ctx.fill();
   }
 
   function drawGate(gateX, index, cameraX) {
-    const x = worldToScreen(gateX, cameraX);
-    if (x < -80 || x > w + 80) return;
-    const ground = altitudeToScreen(terrainY(gateX));
+    const p = perspective(gateX, 0, cameraX);
+    if (p.distance < -150 || p.distance > 1250) return;
     const passed = pilots[0].gate > index;
-    ctx.strokeStyle = passed ? "rgba(255,255,255,.42)" : "#ff5f32";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([7, 7]);
+    const radius = 72 * p.scale;
+    ctx.strokeStyle = passed ? "rgba(255,255,255,.35)" : "#ff5f32";
+    ctx.lineWidth = Math.max(1, 3 * p.scale);
+    ctx.setLineDash([8 * p.scale, 6 * p.scale]);
     ctx.beginPath();
-    ctx.moveTo(x, ground);
-    ctx.lineTo(x, Math.max(130, ground - 280));
+    ctx.ellipse(p.x, p.y, radius, radius * .72, 0, 0, Math.PI * 2);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = passed ? "rgba(255,255,255,.7)" : "#ff5f32";
-    ctx.font = "700 11px 'Barlow Condensed'";
+    ctx.fillStyle = passed ? "rgba(255,255,255,.65)" : "#ff5f32";
+    ctx.font = `700 ${Math.max(8, 13 * p.scale)}px 'Barlow Condensed'`;
     ctx.textAlign = "center";
-    ctx.fillText(index === 2 ? "GOAL" : `GATE ${index + 1}`, x, Math.max(120, ground - 290));
-    ctx.beginPath();
-    ctx.arc(x, Math.max(140, ground - 230), 34, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.fillText(index === 2 ? "GOAL" : `GATE ${index + 1}`, p.x, p.y - radius * .9);
   }
 
   function drawBirds(cameraX) {
     thermals.forEach((t, ti) => {
-      const x = worldToScreen(t.x, cameraX);
-      if (x < -100 || x > w + 100) return;
-      const y = altitudeToScreen(220 + Math.sin(performance.now() * .0015 + ti) * 15) + t.lane * .38;
-      ctx.strokeStyle = "rgba(21,59,67,.7)";
-      ctx.lineWidth = 1.3;
+      const p = perspective(t.x, t.lane, cameraX, pilots[0].altitude + 35);
+      if (p.distance < -100 || p.distance > 1100) return;
+      ctx.strokeStyle = "rgba(21,59,67,.75)";
+      ctx.lineWidth = Math.max(.7, 1.5 * p.scale);
       for (let j = 0; j < 3; j++) {
-        const a = performance.now() * .0007 + j * 2.1 + ti;
-        const bx = x + Math.cos(a) * (28 + j * 7);
-        const by = y + Math.sin(a) * 13 + j * 8;
+        const a = performance.now() * .001 + j * 2.1 + ti;
+        const bx = p.x + Math.cos(a) * 30 * p.scale;
+        const by = p.y + Math.sin(a) * 18 * p.scale;
         ctx.beginPath();
-        ctx.arc(bx - 3, by, 4, Math.PI * 1.05, Math.PI * 1.85);
-        ctx.arc(bx + 3, by, 4, Math.PI * 1.15, Math.PI * 1.95);
+        ctx.arc(bx - 3 * p.scale, by, 4 * p.scale, Math.PI * 1.05, Math.PI * 1.85);
+        ctx.arc(bx + 3 * p.scale, by, 4 * p.scale, Math.PI * 1.15, Math.PI * 1.95);
         ctx.stroke();
       }
     });
   }
 
   function drawPilot(p, cameraX) {
-    const x = worldToScreen(p.x, cameraX);
-    const y = altitudeToScreen(p.altitude) + p.lane * .38;
+    const view = perspective(p.x, p.lane, cameraX, p.altitude);
+    const size = p.id === 0 ? 1.25 : view.scale;
+    const x = view.x;
+    const y = p.id === 0 ? h * .68 : view.y;
     ctx.save();
     ctx.translate(x, y);
-    const tilt = p.heading * .52;
-    ctx.rotate(tilt);
+    ctx.scale(size, size);
+    ctx.rotate(p.heading * .52);
 
     ctx.strokeStyle = "rgba(20,52,57,.55)";
     ctx.lineWidth = 1;
@@ -393,7 +413,6 @@
     ctx.moveTo(-22, -4); ctx.lineTo(-5, 18);
     ctx.moveTo(22, -4); ctx.lineTo(5, 18);
     ctx.stroke();
-
     ctx.fillStyle = p.color;
     ctx.beginPath();
     ctx.moveTo(-31, -2);
@@ -404,39 +423,36 @@
     ctx.beginPath();
     ctx.moveTo(-15, -11); ctx.quadraticCurveTo(0, -16, 15, -11);
     ctx.stroke();
-
     ctx.fillStyle = "#173b41";
-    ctx.beginPath();
-    ctx.arc(0, 17, 3.2, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(0, 17, 3.2, 0, Math.PI * 2); ctx.fill();
     ctx.fillRect(-2, 20, 4, 9);
     ctx.restore();
 
-    ctx.fillStyle = p.id === 0 ? "#ff5f32" : "rgba(21,59,67,.7)";
-    ctx.font = "700 9px 'Barlow Condensed'";
+    ctx.fillStyle = p.id === 0 ? "#ff5f32" : "rgba(21,59,67,.75)";
+    ctx.font = `700 ${p.id === 0 ? 10 : Math.max(7, 9 * size)}px 'Barlow Condensed'`;
     ctx.textAlign = "center";
-    ctx.fillText(NAMES[p.id], x, y - 35);
+    ctx.fillText(NAMES[p.id], x, y - 39 * size);
 
-    if (p.id === 0 && Math.abs(p.heading) > .08) {
-      ctx.strokeStyle = "rgba(255,255,255,.62)";
+    if (p.id === 0) {
+      ctx.strokeStyle = "rgba(255,255,255,.5)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(x - 36, y + 5);
-      ctx.quadraticCurveTo(x - 76, y - p.heading * 26, x - 112, y - p.heading * 48);
+      ctx.moveTo(x - 28, y + 18); ctx.lineTo(x - 36 - p.heading * 15, y + 74);
+      ctx.moveTo(x + 28, y + 18); ctx.lineTo(x + 36 - p.heading * 15, y + 74);
       ctx.stroke();
     }
   }
 
   function drawWind() {
-    ctx.strokeStyle = "rgba(255,255,255,.36)";
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(255,255,255,.42)";
+    ctx.lineWidth = 1.3;
     particles.forEach(p => {
-      const x = (p.x * .4 - pilots[0].x * .4) % w + w * .5;
-      const y = h * .2 + ((p.lane + 200) / 400) * h * .45;
-      ctx.globalAlpha = Math.min(1, p.life);
+      const view = perspective(p.x, p.lane, pilots[0].x);
+      if (view.distance < 0 || view.distance > 1100) return;
+      ctx.globalAlpha = Math.min(.8, p.life);
       ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + 24, y - 2);
+      ctx.moveTo(view.x, view.y);
+      ctx.lineTo(view.x, view.y + 24 * view.scale);
       ctx.stroke();
     });
     ctx.globalAlpha = 1;
@@ -461,7 +477,7 @@
     drawWind();
     GATES.forEach((x, i) => drawGate(x, i, cameraX));
     drawBirds(cameraX);
-    [...pilots].sort((a, b) => b.lane - a.lane).forEach(p => drawPilot(p, cameraX));
+    [...pilots].sort((a, b) => b.x - a.x).forEach(p => drawPilot(p, cameraX));
     drawCountdown();
   }
 
