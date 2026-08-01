@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#102d25" />
+    <meta name="description" content="どうでもいいのに悩ましい日常から、一枚を切る選択ゲーム。" />
+    <title>日常何切る</title>
+    <link rel="stylesheet" href="/apps/2026-08-01/styles.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <a class="brand" href="/2026-08-01/" aria-label="日常何切るを最初から開く">
+          <span>8.1</span><b>日常何切る</b>
+        </a>
+        <div class="round" id="round">東一局</div>
+      </header>
+
+      <section class="start screen active" id="start-screen">
+        <p class="kicker">8月1日・麻雀の日</p>
+        <h1>今日も、<br /><em>何か</em>を切る。</h1>
+        <p class="intro">全部は抱えられない。<br />どうでもいいのに悩ましい日常から、ひとつ選んでください。</p>
+        <button class="primary" id="start">牌をひらく <span>→</span></button>
+        <p class="note">全5問・正解なし</p>
+      </section>
+
+      <section class="game screen" id="game-screen">
+        <div class="meter" aria-label="進行状況"><i id="meter"></i></div>
+        <p class="scene-label" id="scene-label">SUNDAY · 10:04</p>
+        <h2 id="prompt"></h2>
+        <p class="aside" id="aside"></p>
+        <div class="tiles" id="tiles" aria-label="切る牌を選択"></div>
+        <p class="instruction">一枚、切ってください</p>
+      </section>
+
+      <section class="reveal screen" id="reveal-screen">
+        <p class="kicker">あなたの一打</p>
+        <div class="discarded" id="discarded"></div>
+        <h2 id="consequence"></h2>
+        <p class="comment" id="comment"></p>
+        <div class="vote">
+          <div><span>みんなもこれを切った</span><b id="vote">38%</b></div>
+          <div class="vote-track"><i id="vote-bar"></i></div>
+        </div>
+        <button class="primary" id="next">次の局面へ <span>→</span></button>
+      </section>
+
+      <section class="result screen" id="result-screen">
+        <p class="kicker">本日の打ち筋</p>
+        <div class="seal">診断</div>
+        <h2 id="result-title"></h2>
+        <p class="result-copy" id="result-copy"></p>
+        <div class="stats" id="stats"></div>
+        <button class="primary" id="retry">もう一局 <span>↻</span></button>
+        <button class="share" id="share">結果をシェア</button>
+      </section>
+
+      <footer><span>牌（パイ）＝ 8・1</span><span>NO RIGHT ANSWER</span></footer>
+    </main>
+    <script src="/apps/2026-08-01/script.js"></script>
+  </body>
+</html>
