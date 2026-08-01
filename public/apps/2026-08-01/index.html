@@ -1,63 +1,106 @@
 <!doctype html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#102d25" />
-    <meta name="description" content="どうでもいいのに悩ましい日常から、一枚を切る選択ゲーム。" />
-    <title>日常何切る</title>
-    <link rel="stylesheet" href="/apps/2026-08-01/styles.css" />
-  </head>
-  <body>
-    <main>
-      <header>
-        <a class="brand" href="/2026-08-01/" aria-label="日常何切るを最初から開く">
-          <span>8.1</span><b>日常何切る</b>
-        </a>
-        <div class="round" id="round">東一局</div>
-      </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#e7dec5" />
+  <meta name="description" content="もし1947年、練馬区独立が板橋区民投票に委ねられていたら？民意を動かす架空歴史シミュレーション。" />
+  <title>独立せよ、練馬</title>
+  <link rel="stylesheet" href="/apps/2026-08-01/styles.css" />
+</head>
+<body>
+  <main>
+    <header class="topbar">
+      <div class="mast"><span>昭和22年</span><b>練馬独立通信</b></div>
+      <div class="date" id="top-date">8月1日 独立記念日</div>
+    </header>
 
-      <section class="start screen active" id="start-screen">
-        <p class="kicker">8月1日・麻雀の日</p>
-        <h1>今日も、<br /><em>何か</em>を切る。</h1>
-        <p class="intro">全部は抱えられない。<br />どうでもいいのに悩ましい日常から、ひとつ選んでください。</p>
-        <button class="primary" id="start">牌をひらく <span>→</span></button>
-        <p class="note">全5問・正解なし</p>
-      </section>
+    <section class="screen intro active" id="intro">
+      <div class="stamp">架空<br>歴史</div>
+      <p class="eyebrow">AUGUST 1, 1947</p>
+      <h1>独立せよ、<br><em>練馬。</em></h1>
+      <p class="lead">板橋区民投票まで、あと30日。<br>世論を動かし、23番目の区をつくれ。</p>
+      <button class="big-button" id="begin">独立運動を始める <span>→</span></button>
+      <button class="history-link" id="history-open">史実について</button>
+    </section>
 
-      <section class="game screen" id="game-screen">
-        <div class="meter" aria-label="進行状況"><i id="meter"></i></div>
-        <p class="scene-label" id="scene-label">SUNDAY · 10:04</p>
-        <h2 id="prompt"></h2>
-        <p class="aside" id="aside"></p>
-        <div class="tiles" id="tiles" aria-label="切る牌を選択"></div>
-        <p class="instruction">一枚、切ってください</p>
-      </section>
+    <section class="screen game" id="game">
+      <div class="campaign-head">
+        <div><small>投票日まで</small><strong><span id="days">30</span>日</strong></div>
+        <div class="poll"><small>独立賛成・予測</small><strong id="support">46.8%</strong><i><b id="support-bar"></b></i></div>
+      </div>
 
-      <section class="reveal screen" id="reveal-screen">
-        <p class="kicker">あなたの一打</p>
-        <div class="discarded" id="discarded"></div>
-        <h2 id="consequence"></h2>
-        <p class="comment" id="comment"></p>
-        <div class="vote">
-          <div><span>みんなもこれを切った</span><b id="vote">38%</b></div>
-          <div class="vote-track"><i id="vote-bar"></i></div>
+      <div class="dashboard">
+        <section class="map-panel">
+          <div class="section-title"><span>地域別情勢</span><small>クリックで重点地域に指定</small></div>
+          <div class="map" id="map">
+            <button class="district d-oizumi" data-region="oizumi"><b>大泉</b><span></span></button>
+            <button class="district d-shakuji" data-region="shakuji"><b>石神井</b><span></span></button>
+            <button class="district d-nerima" data-region="nerima"><b>練馬</b><span></span></button>
+            <button class="district d-akatsuka" data-region="akatsuka"><b>赤塚</b><span></span></button>
+            <button class="district d-shimura" data-region="shimura"><b>志村</b><span></span></button>
+            <button class="district d-itabashi" data-region="itabashi"><b>板橋</b><span></span></button>
+            <div class="border-line">独立予定線</div>
+          </div>
+          <p class="region-note" id="region-note"></p>
+        </section>
+
+        <aside class="indicators">
+          <div><span>信頼</span><b id="trust">60</b><i><em id="trust-bar"></em></i></div>
+          <div><span>運動資金</span><b id="fund">80</b><small>万円</small></div>
+          <div><span>公約負債</span><b id="debt">0</b><small>億円</small></div>
+          <div><span>選択済み</span><b><i id="pips">○ ○</i></b></div>
+        </aside>
+      </div>
+
+      <div class="action-area">
+        <div class="section-title"><span>本日の選挙活動</span><small>2つ選択</small></div>
+        <div class="cards" id="cards"></div>
+        <button class="execute" id="execute" disabled>この方針で一日を進める</button>
+      </div>
+    </section>
+
+    <section class="screen newspaper" id="newspaper">
+      <div class="paper">
+        <div class="paper-head"><span>練馬独立通信</span><b id="paper-date"></b><small>一部 五十銭</small></div>
+        <p class="edition">独立投票 特別号</p>
+        <h2 id="headline"></h2>
+        <div class="paper-body">
+          <div class="photo" id="paper-icon">演</div>
+          <p id="article"></p>
         </div>
-        <button class="primary" id="next">次の局面へ <span>→</span></button>
-      </section>
+        <div class="ticker"><span>独立賛成</span><b id="paper-support"></b><i id="delta"></i></div>
+        <p class="rumor" id="rumor"></p>
+        <button class="ink-button" id="continue">次の日へ →</button>
+      </div>
+    </section>
 
-      <section class="result screen" id="result-screen">
-        <p class="kicker">本日の打ち筋</p>
-        <div class="seal">診断</div>
-        <h2 id="result-title"></h2>
-        <p class="result-copy" id="result-copy"></p>
-        <div class="stats" id="stats"></div>
-        <button class="primary" id="retry">もう一局 <span>↻</span></button>
-        <button class="share" id="share">結果をシェア</button>
-      </section>
+    <section class="screen ballot" id="ballot">
+      <p class="eyebrow">1947年8月1日・板橋区民投票</p>
+      <h2>開票</h2>
+      <div class="ballot-total"><span>独立賛成</span><b id="live-total">—</b></div>
+      <div class="counting" id="counting"></div>
+      <button class="big-button hidden" id="to-aftermath">独立から100日後へ <span>→</span></button>
+    </section>
 
-      <footer><span>牌（パイ）＝ 8・1</span><span>NO RIGHT ANSWER</span></footer>
-    </main>
-    <script src="/apps/2026-08-01/script.js"></script>
-  </body>
+    <section class="screen result" id="result">
+      <p class="eyebrow" id="result-label">独立から100日後</p>
+      <div class="result-mark" id="result-mark">練</div>
+      <h2 id="result-title"></h2>
+      <p class="result-text" id="result-text"></p>
+      <div class="ledger" id="ledger"></div>
+      <blockquote id="epilogue"></blockquote>
+      <button class="big-button" id="again">歴史をやり直す <span>↻</span></button>
+    </section>
+
+    <dialog id="history">
+      <button class="dialog-close" id="history-close" aria-label="閉じる">×</button>
+      <p class="eyebrow">HISTORICAL NOTE</p>
+      <h2>史実の練馬独立</h2>
+      <p>実際には住民投票は行われていません。地域の代表者による協議、区民大会、板橋区議会や東京都との調整を経て、1947年8月1日に練馬区は板橋区から分離し、23番目の特別区として誕生しました。</p>
+      <p>このゲームは、その歴史を題材にした架空の選挙シミュレーションです。</p>
+    </dialog>
+  </main>
+  <script src="/apps/2026-08-01/script.js"></script>
+</body>
 </html>
