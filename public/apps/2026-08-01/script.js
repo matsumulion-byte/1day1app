@@ -24,7 +24,8 @@ const headlines={
  rally:["独立派、区民大会に結集","会場満員『練馬のことは練馬で』"],door:["独立派、路地へ入る","一万軒を訪問　反対意見にも耳"],radio:["電波に乗る独立論","練馬代表、全板橋区民に訴え"],poll:["情勢調査、なお接戦","一票の行方に両陣営緊張"],tax:["独立で本当に減税か","財源示さぬ公約に疑問の声"],daikon:["街じゅう大根だらけ","独立派『これは記念品』"],attack:["板橋批判、激しさ増す","独立派の強硬姿勢に反発も"],hospital:["練馬に大病院を","独立派が大型公約を発表"],debate:["公開討論、聴衆沸く","数字飛び交う独立論争"],festival:["独立音頭、頭から離れず","商店街で朝から大合唱"]
 };
 let state,regions,selected=[],focus="nerima",turn=0,known=false,lastDelta=0,lastActions=[];
-function reset(){regions=structuredClone(regionBase);state={trust:60,fund:80,debt:0};selected=[];focus="nerima";turn=0;known=false;lastDelta=0;renderAll();}
+function cloneRegions(){return Object.fromEntries(Object.entries(regionBase).map(([key,value])=>[key,{...value}]))}
+function reset(){regions=cloneRegions();state={trust:60,fund:80,debt:0};selected=[];focus="nerima";turn=0;known=false;lastDelta=0;renderAll();}
 function show(id){$$('.screen').forEach(x=>x.classList.toggle('active',x.id===id));scrollTo(0,0)}
 function forecast(){let yes=0,total=0;Object.values(regions).forEach(r=>{const voters=r.weight*r.turnout/100;yes+=voters*r.support/100;total+=voters});return yes/total*100}
 function noisy(v,k){if(known||k===focus)return v;const n=((k.charCodeAt(0)+turn*7)%7)-3;return Math.max(1,Math.min(99,v+n))}
@@ -54,5 +55,5 @@ function aftermath(){const vote=parseFloat($('#live-total').dataset.result),win=
  else if(vote>60){title='練馬、堂々独立。';text=`賛成${vote.toFixed(1)}%。板橋側も結果を受け入れ、23番目の区が友好的に誕生した。`;ep='初代区長は演説した。「独立とは、離れることではない。自分たちで引き受けることだ」'}
  else{title='51％の新しい区。';text=`わずかな差で独立成立。練馬区は、割れた民意とともに歩き始めた。`;ep='賛成した人も、反対した人も、翌朝から同じ区民になった。最初の仕事は、互いの話を聞くことだった。'}
  $('#result-mark').textContent=win?'練':'板';$('#result-title').textContent=title;$('#result-text').textContent=text;$('#ledger').innerHTML=`<div><small>最終賛成</small><b>${vote.toFixed(1)}%</b></div><div><small>信頼</small><b>${Math.round(state.trust)}</b></div><div><small>公約負債</small><b>${state.debt}億円</b></div>`;$('#epilogue').textContent=ep;show('result')}
-$$('.district').forEach(el=>el.onclick=()=>{focus=el.dataset.region;renderAll()});$('#begin').onclick=()=>{reset();show('game')};$('#execute').onclick=execute;$('#continue').onclick=()=>turn>=6?startVote():(renderAll(),show('game'));$('#to-aftermath').onclick=aftermath;$('#again').onclick=()=>{reset();show('intro')};$('#history-open').onclick=()=>$('#history').showModal();$('#history-close').onclick=()=>$('#history').close();reset();
+$$('.district').forEach(el=>el.onclick=()=>{focus=el.dataset.region;renderAll()});$('#begin').onclick=()=>{reset();show('game')};$('#execute').onclick=execute;$('#continue').onclick=()=>turn>=6?startVote():(renderAll(),show('game'));$('#to-aftermath').onclick=aftermath;$('#again').onclick=()=>{reset();show('intro')};$('#history-open').onclick=()=>{const dialog=$('#history');if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','')};$('#history-close').onclick=()=>{const dialog=$('#history');if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open')};reset();
 })();
