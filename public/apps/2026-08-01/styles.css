@@ -31,3 +31,18 @@ button{font:inherit}main{width:min(100%,1100px);min-height:100svh;margin:auto;ba
 }
 
 @media(max-width:390px){.map{height:auto}.date{max-width:90px;text-align:right}.mast{gap:7px}.mast span{font-size:8px}.intro{padding-inline:20px}.intro h1{font-size:54px}.stamp{top:8%;right:6%}}
+
+.intro,.ballot,.result{flex-direction:column}
+
+@media(max-width:700px){
+  .intro{align-items:flex-start;justify-content:center;padding:38px 22px 32px;background:linear-gradient(90deg,transparent 72%,var(--line) 72.3%,transparent 72.6%)}
+  .intro:after{right:-12px;bottom:8px;font-size:112px;opacity:.65}
+  .intro .eyebrow{margin-bottom:13px;font-size:10px}.intro h1{width:100%;font-size:clamp(56px,18vw,72px);line-height:1.02}
+  .intro .lead{margin:24px 0 27px;font-size:15px;line-height:1.9}.intro .big-button{width:100%;height:auto;padding:18px 19px}
+  .intro .history-link{font-size:12px;margin-top:22px}.intro .stamp{top:28px;right:22px;width:64px;height:64px;font-size:13px;border-width:3px}
+  .result{justify-content:center;padding:28px 20px 34px}.result .eyebrow{margin-bottom:12px}.result-mark{flex:0 0 auto}
+  .result h2{margin:15px 0 8px;line-height:1.25}.result-text{margin:0;line-height:1.75}.result .ledger{margin:18px 0 15px}
+  .result blockquote{font-size:12px;line-height:1.75;margin:0 0 24px;padding:12px 5px}.result .big-button{width:100%}
+}
+
+@media(max-width:390px){.intro{padding-inline:20px}.intro h1{font-size:58px}.intro .stamp{top:24px;right:18px}}
