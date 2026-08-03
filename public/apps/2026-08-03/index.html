@@ -16,7 +16,7 @@
 
   <main>
     <section class="mission">
-      <p class="eyebrow">MISSION 01 / ARCTIC OCEAN</p>
+      <p class="eyebrow" id="missionLabel">MISSION 01 / ARCTIC OCEAN</p>
       <h1>北極点を、<br><em>海の下から通過せよ。</em></h1>
       <p class="rule"><b>ゴール</b> 画面上部の北極点へ到達する<br><b>操作</b> 進みたい場所をタップしてソナーを放つ</p>
     </section>
@@ -35,7 +35,7 @@
         <div class="compass"><span>N</span><i></i></div>
         <p class="objective"><span></span> NORTH POLE <b id="objectiveDistance">1,500 km</b></p>
         <div class="start-panel" id="startPanel">
-          <p class="panel-code">USS NAUTILUS / 90°N</p>
+          <p class="panel-code" id="briefCode">USS NAUTILUS / 90°N</p>
           <h2>氷の下は、<br>ソナーだけが頼りだ。</h2>
           <ul><li>タップした方向へ進みます</li><li>波紋が障害物を一時的に映します</li><li>氷に3回ぶつかると航行不能です</li></ul>
           <button id="startBtn">潜航を開始 <span>→</span></button>
@@ -44,7 +44,7 @@
           <p class="panel-code" id="resultCode">MISSION COMPLETE</p>
           <h2 id="resultTitle">北極点を<br>通過しました。</h2>
           <p id="resultText"></p>
-          <button id="retryBtn">もう一度潜航 <span>↻</span></button>
+          <button id="retryBtn">次の海域へ <span>→</span></button>
         </div>
       </div>
 
