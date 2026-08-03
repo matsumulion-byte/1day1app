@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#171108">
+  <meta name="description" content="六角形の巣房を回し、女王房からすべての巣へ蜜路をつなぐハニカムパズル。">
+  <title>HONEYCOMB｜蜜路をつなぐ巣づくりパズル</title>
+  <link rel="stylesheet" href="/apps/2026-08-03/styles.css">
+</head>
+<body>
+  <div class="noise"></div>
+  <header class="topbar">
+    <a class="brand" href="/apps/2026-08-03/" aria-label="HONEYCOMBのトップへ">
+      <span class="brand-mark">⬡</span>
+      <span><b>HONEYCOMB</b><small>NECTAR NETWORK PUZZLE</small></span>
+    </a>
+    <div class="date"><b>08.03</b><span>はちみつの日</span></div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div>
+        <p class="eyebrow"><span></span> TODAY'S MISSION</p>
+        <h1>蜜路をつないで、<br><em>巣を目覚めさせよう。</em></h1>
+      </div>
+      <p class="lead">六角形の巣房をタップして60°回転。<br>女王房からすべての巣へ、蜜を届けてください。</p>
+    </section>
+
+    <section class="game-shell">
+      <div class="statusbar">
+        <div class="status-item"><small>STAGE</small><b id="stageValue">01</b><span>/ 03</span></div>
+        <div class="status-item"><small>MOVES</small><b id="movesValue">000</b></div>
+        <div class="status-item"><small>TIME</small><b id="timeValue">00:00</b></div>
+        <button id="resetBtn" class="icon-btn" aria-label="このステージをやり直す" title="やり直す">↻</button>
+      </div>
+
+      <div class="board-wrap">
+        <div class="ambient bee-one">✦</div><div class="ambient bee-two">✦</div>
+        <div id="board" class="board" role="grid" aria-label="ハニカムパズル盤"></div>
+        <div class="board-caption"><span class="pulse-dot"></span><b id="connectedValue">1 / 19</b> ROOMS ONLINE</div>
+      </div>
+
+      <div class="hintbar">
+        <p><span class="tap-icon">↻</span><b>巣房をタップ</b><small>時計回りに60°回転します</small></p>
+        <p><span class="queen-mini">♛</span><b>女王房から接続</b><small>蜜が光れば接続成功です</small></p>
+        <button id="hintBtn">HINT <span>ヒントを見る</span></button>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="clearDialog">
+    <div class="clear-glow"></div>
+    <p class="clear-mark">✦</p>
+    <small>HIVE COMPLETE</small>
+    <h2>蜜が、巣全体に<br>行きわたりました。</h2>
+    <div class="clear-stats"><p><small>MOVES</small><b id="clearMoves">0</b></p><i></i><p><small>TIME</small><b id="clearTime">00:00</b></p></div>
+    <p class="fact" id="factText"></p>
+    <button id="nextBtn">次の巣へ <span>→</span></button>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/apps/2026-08-03/script.js"></script>
+</body>
+</html>
