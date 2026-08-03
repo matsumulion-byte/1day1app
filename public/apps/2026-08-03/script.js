@@ -29,6 +29,8 @@ function seeded(seed){
 function buildPuzzle(level){
   const rand=seeded(8032026+level*977);
   cells=makeGrid();
+  const goals=new Set(['2,0','0,2','-2,2','-2,0','0,-2','2,-2']);
+  cells.forEach(c=>{c.goal=goals.has(key(c.q,c.r))});
   const map=new Map(cells.map(c=>[key(c.q,c.r),c]));
   const visited=new Set(['0,0']), frontier=[map.get('0,0')];
   while(frontier.length){
@@ -57,7 +59,7 @@ function renderBoard(){
     el.className='cell';el.style.left=`${pos.x}px`;el.style.top=`${pos.y}px`;el.style.setProperty('--order',index);
     el.setAttribute('role','gridcell');el.setAttribute('aria-label',`巣房 ${index+1}。タップで回転`);
     if(c.q===0&&c.r===0) el.classList.add('queen');
-    if(Math.max(Math.abs(c.q),Math.abs(c.r),Math.abs(c.q+c.r))===2&&index%3===0){const f=document.createElement('span');f.className='flower';f.textContent='✿';el.append(f)}
+    if(c.goal){const f=document.createElement('span');f.className='flower';f.textContent='✿';el.append(f)}
     actualDirs(c).forEach(d=>{const p=document.createElement('i');p.className='path';p.style.setProperty('--angle',`${d*60}deg`);el.append(p)});
     const hub=document.createElement('span');hub.className='hub';el.append(hub);
     el.addEventListener('click',()=>rotateCell(c,index));
@@ -89,15 +91,15 @@ function connectedSet(){
   }
   return seen;
 }
-function hasLeaks(){
-  const map=new Map(cells.map(c=>[key(c.q,c.r),c]));
-  return cells.some(c=>actualDirs(c).some(d=>{const n=map.get(key(c.q+directions[d][0],c.r+directions[d][1]));return !n||!actualDirs(n).includes((d+3)%6)}));
+function isSolved(){
+  const seen=connectedSet();
+  return cells.filter(c=>c.goal).every(c=>seen.has(key(c.q,c.r)));
 }
-function isSolved(){return connectedSet().size===cells.length&&!hasLeaks()}
 function updateFlow(){
   const seen=connectedSet();
   cells.forEach(c=>c.el&&c.el.classList.toggle('connected',seen.has(key(c.q,c.r))));
-  connectedEl.textContent=`${seen.size} / ${cells.length}`;
+  const bloomed=cells.filter(c=>c.goal&&seen.has(key(c.q,c.r))).length;
+  connectedEl.textContent=`${bloomed} / 6`;
 }
 function paintTime(){const m=Math.floor(seconds/60),s=seconds%60;timeEl.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
 
