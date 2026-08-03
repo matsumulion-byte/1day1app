@@ -33,7 +33,7 @@ function buildPuzzle(level){
   const visited=new Set(['0,0']), frontier=[map.get('0,0')];
   while(frontier.length){
     const from=frontier[Math.floor(rand()*frontier.length)];
-    const options=directions.map((d,i)=>({d,i,to:map.get(key(from.q+d[0],from.r+d[1]))})).filter(x=>x.to&&!visited.has(key(x.to.q,x.to.r)));
+    const options=from.dirs.size>=4?[]:directions.map((d,i)=>({d,i,to:map.get(key(from.q+d[0],from.r+d[1]))})).filter(x=>x.to&&!visited.has(key(x.to.q,x.to.r)));
     if(!options.length){frontier.splice(frontier.indexOf(from),1);continue}
     const pick=options[Math.floor(rand()*options.length)];
     from.dirs.add(pick.i);pick.to.dirs.add((pick.i+3)%6);visited.add(key(pick.to.q,pick.to.r));frontier.push(pick.to);
@@ -41,7 +41,7 @@ function buildPuzzle(level){
   const extra=level-1;
   for(let n=0;n<extra;n++){
     const a=cells[Math.floor(rand()*cells.length)], d=Math.floor(rand()*6), b=map.get(key(a.q+directions[d][0],a.r+directions[d][1]));
-    if(b){a.dirs.add(d);b.dirs.add((d+3)%6)}
+    if(b&&a.dirs.size<4&&b.dirs.size<4){a.dirs.add(d);b.dirs.add((d+3)%6)}
   }
   cells.forEach(c=>{c.rot=1+Math.floor(rand()*5)});
   if(isSolved()) cells[0].rot=(cells[0].rot+1)%6;
