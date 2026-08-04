@@ -81,6 +81,13 @@ Also verify the app in a browser at mobile size. For games, confirm the core int
 
 Stage only the intended app files. Do not stage unrelated files such as `.vscode/`.
 
+## Operational Artifact Hierarchy
+
+- For printouts or screens used during a live operation, prioritize the information the user must recognize at a glance over branding and decorative hierarchy.
+- Make the operational primary content (for example, song titles on a stage setlist) materially larger than event titles, metadata, logos, and labels.
+- Validate the densest supported state at the intended paper size or viewport and confirm the primary content remains legible without overflow.
+- When an app exports through browser printing, generate a real PDF from the densest supported state and verify its page count and rendered page before completion; an on-screen A4 ratio alone is not sufficient.
+
 ## Correction Handling
 
 When the user points out a repeated mistake or says the same correction has already been made before, do not only apologize.
