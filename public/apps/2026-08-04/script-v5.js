@@ -80,6 +80,8 @@ function updatePreview() {
   songs.forEach(song => {
     const item = document.createElement("li");
     item.textContent = song.trim() || "UNTITLED";
+    const visualUnits = Array.from(item.textContent).reduce((total, character) => total + (character.charCodeAt(0) > 255 ? 1 : 0.55), 0);
+    item.classList.toggle("long-name", visualUnits > 10.5);
     preview.appendChild(item);
   });
 }
