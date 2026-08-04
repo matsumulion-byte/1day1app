@@ -25,15 +25,16 @@ function render() {
     input.addEventListener("input", () => { songs[index] = input.value; updatePreview(); });
     row.querySelector(".up").disabled = index === 0;
     row.querySelector(".down").disabled = index === songs.length - 1;
-    row.querySelector(".remove").disabled = songs.length <= 5;
+    row.querySelector(".remove").disabled = songs.length <= 1;
     row.querySelector(".choose-song").addEventListener("click", () => openPicker(index));
     row.querySelector(".up").addEventListener("click", () => move(index, -1));
     row.querySelector(".down").addEventListener("click", () => move(index, 1));
-    row.querySelector(".remove").addEventListener("click", () => { if (songs.length > 5) { songs.splice(index, 1); render(); } });
+    row.querySelector(".remove").addEventListener("click", () => { if (songs.length > 1) { songs.splice(index, 1); render(); } });
     editor.appendChild(row);
   });
   addButton.disabled = songs.length >= 7;
-  songCount.textContent = `${songs.length} SONGS`;
+  songCount.textContent = `${songs.length} ${songs.length === 1 ? "SONG" : "SONGS"}`;
+  document.querySelector("#paper").dataset.count = songs.length;
   updatePreview();
 }
 
@@ -75,6 +76,7 @@ function move(index, delta) {
 
 function updatePreview() {
   preview.innerHTML = "";
+  document.querySelector("#paper").classList.toggle("has-long-title", songs.some(song => song.length > 23));
   songs.forEach(song => {
     const item = document.createElement("li");
     item.textContent = song.trim() || "UNTITLED";

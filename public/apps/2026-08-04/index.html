@@ -8,18 +8,19 @@
     <title>ざまみセトリメーカー</title>
     <link rel="stylesheet" href="/apps/2026-08-04/styles.css" />
     <link rel="stylesheet" href="/apps/2026-08-04/song-picker.css" />
+    <link rel="stylesheet" href="/apps/2026-08-04/v4-fixes.css" />
   </head>
   <body>
     <main class="app-shell">
       <section class="editor" aria-label="セットリスト編集">
         <header class="app-header">
-          <p class="kicker">THE MAMMY ROWS / LIVE TOOL</p>
+          <p class="kicker">The mammy rows / LIVE TOOL</p>
           <h1>ざまみ<br /><span>セトリメーカー</span></h1>
           <p class="intro">曲を入れて、順番を決めて。<br />ライブ仕様のA4を、そのままPDFに。</p>
         </header>
 
         <div class="meta-fields">
-          <label><span>LIVE TITLE</span><input id="live-title" maxlength="34" value="THE MAMMY ROWS 10th ANNIVERSARY LIVE" /></label>
+          <label><span>LIVE TITLE</span><input id="live-title" maxlength="34" value="The mammy rows 10th Anniversary Live" /></label>
           <div class="field-row">
             <label><span>DATE</span><input id="live-date" maxlength="20" value="2026.08.04" /></label>
             <label><span>VENUE</span><input id="venue" maxlength="24" value="SHIMOKITAZAWA" /></label>
@@ -45,27 +46,26 @@
           <div class="paper-grain"></div>
           <img class="watermark" src="/apps/2026-08-04/band-logo.png" alt="" />
           <header class="paper-header">
-            <p>THE MAMMY ROWS</p>
-            <h2 id="preview-title">THE MAMMY ROWS 10th ANNIVERSARY LIVE</h2>
+            <p>The mammy rows</p>
+            <h2 id="preview-title">The mammy rows 10th Anniversary Live</h2>
             <div><span id="preview-date">2026.08.04</span><i></i><span id="preview-venue">SHIMOKITAZAWA</span></div>
           </header>
           <section class="paper-setlist">
             <p>SET LIST</p>
             <ol id="preview-tracks"></ol>
           </section>
-          <footer><span>THE MAMMY ROWS</span><b>10<sup>TH</sup> ANNIVERSARY</b><span>EST. 2016</span></footer>
         </article>
       </section>
     </main>
 
     <dialog id="song-picker" class="song-picker">
       <div class="picker-head">
-        <div><span>THE MAMMY ROWS</span><h2>曲を選ぶ</h2></div>
+        <div><span>The mammy rows</span><h2>曲を選ぶ</h2></div>
         <button id="close-picker" aria-label="選曲を閉じる">×</button>
       </div>
       <div id="song-library" class="song-library"></div>
       <p>一覧にない曲は入力欄へ直接入力できます</p>
     </dialog>
-    <script src="/apps/2026-08-04/script-v3.js"></script>
+    <script src="/apps/2026-08-04/script-v5.js"></script>
   </body>
 </html>
