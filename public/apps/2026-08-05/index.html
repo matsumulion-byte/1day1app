@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#281d35">
+  <title>発酵タウン｜8月5日は発酵の日</title>
+  <meta name="description" content="菌を育て、蔵を建て、小さな麹村を発酵都市へ育てる放置ゲーム。">
+  <link rel="stylesheet" href="/apps/2026-08-05/styles.css">
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="date">8.5 / 発酵の日</span>
+        <h1>発酵タウン</h1>
+      </div>
+      <button id="soundBtn" class="icon-button" type="button" aria-label="効果音を切り替える">音 ON</button>
+    </header>
+
+    <section class="stats" aria-label="街の状態">
+      <div class="stat main-stat">
+        <span>発酵力</span>
+        <strong id="power">0</strong>
+        <small id="rate">＋0.0 / 秒</small>
+      </div>
+      <div class="stat"><span>まちレベル</span><strong>Lv.<b id="townLevel">1</b></strong><small id="townName">ひとつぶ麹村</small></div>
+      <div class="stat"><span>住民</span><strong id="citizens">12菌</strong><small>今日も元気</small></div>
+    </section>
+
+    <section class="town-card" aria-label="発酵タウンの街並み">
+      <div class="sky">
+        <div class="moon"></div>
+        <div class="cloud cloud-one"></div>
+        <div class="cloud cloud-two"></div>
+      </div>
+      <div id="town" class="town level-1">
+        <div class="mountain mountain-back"></div><div class="mountain mountain-front"></div>
+        <div class="road"></div>
+        <div class="building koji unlocked" data-building="koji"><i>米</i><span>麹蔵</span><em></em></div>
+        <div class="building miso" data-building="miso"><i>味</i><span>味噌蔵</span><em></em></div>
+        <div class="building amazake" data-building="amazake"><i>甘</i><span>甘酒茶屋</span><em></em></div>
+        <div class="building natto" data-building="natto"><i>納</i><span>納豆研究所</span><em></em></div>
+        <div class="building shoyu" data-building="shoyu"><i>醤</i><span>醤油御殿</span><em></em></div>
+        <div class="citizen c1">●</div><div class="citizen c2">●</div><div class="citizen c3">●</div>
+        <div id="bubbles" class="bubbles"></div>
+      </div>
+      <div class="town-caption"><span id="weatherLabel">発酵にちょうどいい夜</span><strong id="nextLabel">次の発展まで 25</strong></div>
+    </section>
+
+    <button id="fermentBtn" class="ferment-button" type="button">
+      <span class="jar"><i></i></span>
+      <span><strong>仕込む</strong><small>タップで発酵力 ＋<b id="tapPower">1</b></small></span>
+    </button>
+
+    <section class="panel">
+      <div class="panel-head"><div><span class="eyebrow">醸造所</span><h2>まちを育てる</h2></div><span id="unlockCount" class="count">1 / 5</span></div>
+      <div id="shops" class="shops"></div>
+    </section>
+
+    <section class="panel encyclopedia">
+      <div class="panel-head"><div><span class="eyebrow">菌の図鑑</span><h2>この街の住民</h2></div></div>
+      <div id="microbes" class="microbes"></div>
+    </section>
+
+    <p class="footer-note">画面を閉じている間も、発酵はゆっくり進みます。</p>
+  </main>
+
+  <div id="offlineModal" class="modal" hidden>
+    <div class="modal-card">
+      <span class="modal-icon">◌</span>
+      <p class="eyebrow">おかえりなさい</p>
+      <h2>じっくり熟成しました</h2>
+      <strong id="offlineGain">＋0 発酵力</strong>
+      <p id="offlineTime">留守のあいだも菌たちは働いていました。</p>
+      <button id="collectBtn" type="button">できあがりを受け取る</button>
+    </div>
+  </div>
+
+  <div id="levelToast" class="level-toast" aria-live="polite"><small>TOWN LEVEL UP</small><strong id="levelToastText">ひとつぶ麹村</strong></div>
+  <script src="/apps/2026-08-05/script.js"></script>
+</body>
+</html>
