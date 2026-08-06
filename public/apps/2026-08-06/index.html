@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4a5a5">
+  <title>ハム切り名人｜8月6日はハムの日</title>
+  <meta name="description" content="ねらった厚さにハムを切る、気持ちいいタイミングゲーム。">
+  <link rel="stylesheet" href="/apps/2026-08-06/styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div><span class="date">8.6 / ハムの日</span><h1>ハム切り名人</h1></div>
+      <button id="soundBtn" class="sound" type="button" aria-label="効果音を切り替える">音 ON</button>
+    </header>
+
+    <section class="order-card" aria-label="お客さまの注文">
+      <div class="customer" aria-hidden="true"><span>•ᴗ•</span></div>
+      <div><span class="label">TODAY'S ORDER</span><p id="orderText">ぴったり <strong id="targetText">5.0</strong> mmで！</p></div>
+      <div class="round"><small>ROUND</small><strong><b id="roundNow">1</b>/5</strong></div>
+    </section>
+
+    <section id="board" class="board" aria-label="ハムを切るゲーム画面">
+      <div class="board-mark">HAM<br>DELI</div>
+      <div class="ruler" aria-hidden="true"><span>0</span><span>5</span><span>10</span><span>15mm</span></div>
+      <div id="ham" class="ham"><div class="ham-shine"></div><i></i><i></i><i></i><i></i></div>
+      <div id="slice" class="slice" aria-hidden="true"></div>
+      <div id="knife" class="knife" aria-hidden="true"><div class="blade"></div><div class="handle"></div></div>
+      <div id="guide" class="guide"><span>ここをねらう</span></div>
+      <div id="crumbs" class="crumbs" aria-hidden="true"></div>
+    </section>
+
+    <section class="meter" aria-label="現在の厚さ">
+      <div class="meter-head"><span>いまの厚さ</span><strong><b id="currentText">0.0</b> mm</strong></div>
+      <div class="track"><div id="targetZone" class="target-zone"></div><div id="needle" class="needle"></div></div>
+      <div class="scale"><span>0</span><span>うすい</span><span>あつい</span><span>15mm</span></div>
+    </section>
+
+    <button id="cutBtn" class="cut-button" type="button"><span class="cut-icon">刃</span><span><strong>ここで切る！</strong><small>タップでスパッ</small></span></button>
+    <p class="hint">包丁が左右に動きます。注文の厚さで止めよう。</p>
+
+    <section class="results" aria-label="これまでの成績">
+      <div class="results-head"><span>本日の盛り合わせ</span><strong id="scoreText">0点</strong></div>
+      <div id="plate" class="plate"><p>切ったハムが<br>ここに並びます</p></div>
+    </section>
+  </main>
+
+  <div id="resultModal" class="modal" hidden>
+    <div class="modal-card">
+      <span id="stamp" class="stamp">職人技！</span>
+      <div id="resultSlice" class="result-slice"></div>
+      <span class="label">CUT RESULT</span>
+      <h2><b id="actualText">5.0</b> mm</h2>
+      <p id="diffText">誤差 0.0 mm</p>
+      <strong id="pointText">100点</strong>
+      <button id="nextBtn" type="button">次の注文へ</button>
+    </div>
+  </div>
+
+  <div id="finalModal" class="modal" hidden>
+    <div class="modal-card final-card">
+      <span class="label">TODAY'S WORK</span>
+      <div class="medal">HAM<br><b id="rankText">S</b></div>
+      <h2 id="finalTitle">伝説のハム職人</h2>
+      <p>5枚の合計</p><strong id="finalScore">500点</strong>
+      <button id="retryBtn" type="button">もう一度切る</button>
+    </div>
+  </div>
+  <script src="/apps/2026-08-06/script.js"></script>
+</body>
+</html>
