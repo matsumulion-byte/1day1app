@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#080808">
+  <meta name="description" content="ざ・まぁ・みろを揃えろ。the mammy rows レコ発ライブ告知スロット。">
+  <title>ざまぁみろスロット｜the mammy rows</title>
+  <link rel="stylesheet" href="/apps/2026-08-08/styles.css">
+</head>
+<body>
+  <main id="app">
+    <div class="noise" aria-hidden="true"></div>
+    <header>
+      <p>THE MAMMY ROWS PRESENTS</p>
+      <h1>ざまぁみろ<br><span>SLOT</span></h1>
+      <b>08.08 / RYOGOKU</b>
+    </header>
+
+    <section class="machine" aria-label="ざまぁみろスロット">
+      <div class="slots" id="slots" aria-live="off">
+        <div class="reel"><div class="reel-track" id="reel0"><span>ざ</span></div></div>
+        <div class="reel"><div class="reel-track" id="reel1"><span>まぁ</span></div></div>
+        <div class="reel"><div class="reel-track" id="reel2"><span>みろ</span></div></div>
+      </div>
+      <div class="result" id="result" aria-live="polite">
+        <strong id="word">ざまぁみろ</strong>
+        <span id="reaction">揃えたら告知。以上。</span>
+      </div>
+      <button class="spin" id="spin" type="button"><span>ざまぁみろする</span></button>
+      <button class="share" id="share" type="button" hidden>結果をシェア ↗</button>
+    </section>
+
+    <footer><span>NO SKILL</span><i></i><span>JUST TAP</span></footer>
+
+    <section class="jackpot" id="jackpot" aria-hidden="true">
+      <img src="/apps/2026-08-08/zamamiro.png" alt="" aria-hidden="true">
+      <div class="jackpot-noise" aria-hidden="true"></div>
+      <div class="hit" id="hit" data-text="ざまぁみろ">ざまぁみろ</div>
+      <article class="flyer" id="flyer">
+        <p>THE MAMMY ROWS</p>
+        <small>レコ発</small>
+        <h2>「ざまぁみろ」</h2>
+        <time datetime="2026-08-08">2026.08.08</time>
+        <h3>両国SUNRIZE</h3>
+        <b>TODAY</b>
+        <button id="again" type="button">もう一回ざまぁみろする</button>
+        <button class="share share-win" id="shareWin" type="button">大当たりをシェア ↗</button>
+      </article>
+    </section>
+    <div class="flash" id="flash" aria-hidden="true"></div>
+  </main>
+  <script src="/apps/2026-08-08/script.js"></script>
+</body>
+</html>
