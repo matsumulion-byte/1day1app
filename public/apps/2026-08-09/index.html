@@ -27,15 +27,17 @@
 
   <section id="result" class="result" aria-hidden="true">
     <div class="ticket">
-      <div class="ticket-top"><span>PARKING RECEIPT</span><span id="receiptStage">STAGE 01</span></div>
+      <div class="ticket-top"><span id="receiptTitle">PARKING RECEIPT</span><span id="receiptStage">STAGE 01</span></div>
       <div class="out-sign">PARK OUT!</div>
-      <div class="result-moves"><span>MOVES</span><strong id="resultMoves">0</strong></div>
+      <div id="finalBadge" class="final-badge">10 PARKS CLEARED</div>
+      <div class="result-moves"><span id="movesLabel">MOVES</span><strong id="resultMoves">0</strong></div>
       <div class="fee"><span>PARKING FEE</span><strong id="resultFee">¥300</strong></div>
+      <div id="scoreRow" class="score-row"><span>TOTAL SCORE</span><strong id="resultScore">10,000</strong></div>
       <div id="resultComment" class="comment">PERFECT PARKING!</div>
       <div class="barcode" aria-hidden="true"></div>
     </div>
     <div class="result-actions">
-      <button id="nextButton" type="button">NEXT PARK <span>→</span></button>
+      <button id="nextButton" type="button"><span id="nextLabel">NEXT PARK</span> <span>→</span></button>
       <button id="retryButton" type="button">RETRY</button>
     </div>
   </section>

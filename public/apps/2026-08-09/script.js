@@ -12,14 +12,14 @@
     { optimalMoves: 4, cars: [C("X",1,2,2,"h"),C("A",3,1,3,"v",1),C("B",4,0,2,"h",2),C("C",4,1,2,"v",3),C("D",0,4,3,"h",4),C("E",1,5,2,"h",5),C("F",5,2,3,"v",6)] },
     { optimalMoves: 5, cars: [C("X",1,2,2,"h",0),C("A",3,0,3,"v",1),C("B",4,2,2,"v",2),C("C",0,0,3,"h",3),C("D",1,1,2,"h",4),C("E",0,3,2,"v",5),C("F",2,4,3,"h",6),C("G",5,3,3,"v",7),C("H",0,5,3,"h",0)] },
     { optimalMoves: 6, cars: [C("X",1,2,2,"h"),C("A",3,0,3,"v",1),C("B",4,0,2,"v",2),C("C",0,0,3,"h",3),C("D",1,1,2,"h",4),C("E",0,3,2,"v",5),C("F",1,4,3,"h",6),C("G",5,1,3,"v",7),C("H",3,5,3,"h",0)] },
-    { optimalMoves: 7, cars: [C("X",1,2,2,"h",0),C("A",3,1,3,"v",1),C("B",4,1,2,"v",2),C("C",0,0,3,"h",3),C("D",1,1,2,"h",4),C("E",0,3,2,"v",5),C("F",1,4,3,"h",6),C("G",5,1,3,"v",7),C("H",3,5,3,"h",0)] },
-    { optimalMoves: 7, cars: [C("X",1,2,2,"h",0),C("A",3,0,3,"v",1),C("B",4,1,2,"v",2),C("C",0,0,3,"h",3),C("D",1,1,2,"h",4),C("E",0,3,2,"v",5),C("F",1,4,3,"h",6),C("G",5,1,3,"v",7),C("H",3,5,3,"h",0)] },
-    { optimalMoves: 8, cars: [C("X",0,2,2,"h",0),C("A",3,1,3,"v",1),C("B",4,1,2,"v",2),C("C",1,0,3,"h",3),C("D",1,1,2,"h",4),C("E",0,3,2,"v",5),C("F",3,4,3,"h",6),C("G",5,0,3,"v",7),C("H",2,5,3,"h",0)] },
-    { optimalMoves: 8, cars: [C("X",0,2,2,"h",0),C("A",3,1,3,"v",1),C("B",4,2,2,"v",2),C("C",1,0,3,"h",3),C("D",1,1,2,"h",4),C("E",0,3,2,"v",5),C("F",3,4,3,"h",6),C("G",5,0,3,"v",7),C("H",2,5,3,"h",0)] }
+    { optimalMoves: 6, cars: [C("X",1,2,2,"h",0),C("A",0,4,3,"h",1),C("B",4,3,2,"h",2),C("C",1,0,2,"v",3),C("D",3,2,2,"v",4),C("E",4,4,2,"h",5),C("F",2,1,2,"h",6),C("G",3,0,3,"h",7),C("H",4,1,2,"v",0),C("I",0,2,2,"v",1),C("J",4,5,2,"h",2)] },
+    { optimalMoves: 7, cars: [C("X",0,2,2,"h",0),C("A",3,5,3,"h",1),C("B",1,3,2,"v",2),C("C",4,3,2,"h",3),C("D",5,0,3,"v",4),C("E",2,4,3,"h",5),C("F",1,5,2,"h",6),C("G",1,0,2,"h",7),C("H",3,0,2,"h",0),C("I",3,1,2,"v",1)] },
+    { optimalMoves: 8, cars: [C("X",0,2,2,"h",0),C("A",5,0,3,"v",1),C("B",3,1,2,"h",2),C("C",0,3,2,"v",3),C("D",4,2,2,"v",4),C("E",1,0,2,"h",5),C("F",2,4,2,"v",6),C("G",4,4,2,"h",7),C("H",2,1,2,"v",0)] },
+    { optimalMoves: 11, cars: [C("X",1,2,2,"h",0),C("A",4,0,2,"h",1),C("B",0,1,2,"h",2),C("C",5,1,2,"v",3),C("D",2,4,3,"h",4),C("E",3,1,3,"v",5),C("F",0,4,2,"v",6),C("G",1,5,3,"h",7),C("H",0,3,3,"h",0),C("I",5,4,2,"v",1)] }
   ];
 
   const els = { board: document.querySelector("#board"), cars: document.querySelector("#cars"), stage: document.querySelector("#stageNumber"), moves: document.querySelector("#moveCount"), restart: document.querySelector("#restartButton"), result: document.querySelector("#result"), resultMoves: document.querySelector("#resultMoves"), resultFee: document.querySelector("#resultFee"), resultComment: document.querySelector("#resultComment"), receiptStage: document.querySelector("#receiptStage"), next: document.querySelector("#nextButton"), retry: document.querySelector("#retryButton") };
-  let stageIndex = 0, cars = [], moves = 0, drag = null, cleared = false, audioCtx = null;
+  let stageIndex = 0, cars = [], moves = 0, drag = null, cleared = false, audioCtx = null, runResults = Array(stages.length).fill(null);
 
   function cellSize() { return els.board.clientWidth / SIZE; }
   function cellsFor(car, position = car[car.orientation === "h" ? "x" : "y"]) {
@@ -68,12 +68,19 @@
   }
   function bump(car){car.el.classList.remove("bump");void car.el.offsetWidth;car.el.classList.add("bump");if(navigator.vibrate)navigator.vibrate(18);tone(70,.045,.018);}
   function tone(freq,duration,volume=.04,type="sine") { try { audioCtx ||= new (window.AudioContext||window.webkitAudioContext)(); const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(volume,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+duration);o.connect(g).connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+duration);}catch(_){} }
-  function loadStage(index) { stageIndex=(index+stages.length)%stages.length;cars=stages[stageIndex].cars.map(c=>({...c}));moves=0;cleared=false;els.stage.textContent=String(stageIndex+1).padStart(2,"0");els.moves.textContent="0";els.result.classList.remove("show");els.result.setAttribute("aria-hidden","true");render(); }
+  function loadStage(index) { stageIndex=(index+stages.length)%stages.length;cars=stages[stageIndex].cars.map(c=>({...c}));moves=0;cleared=false;els.stage.textContent=String(stageIndex+1).padStart(2,"0");els.moves.textContent="0";els.result.classList.remove("show");els.result.setAttribute("aria-hidden","true");document.querySelector(".ticket").classList.remove("final");els.retry.classList.remove("hidden");document.querySelector("#nextLabel").textContent="NEXT PARK";render(); }
   function feeFor(n){return n<=10?300:n<=15?500:n<=20?800:n<=30?1500:n<=40?3000:5000;}
   function commentFor(n,opt){const d=n-opt;return d<=0?"PERFECT PARKING!":d<=3?"NICE PARKING!":d<=8?"TOOK A WHILE...":"PARKING HELL";}
-  function win(){cleared=true;const player=cars.find(c=>c.id==="X");player.el.style.transition="transform 650ms cubic-bezier(.3,.7,.3,1)";player.el.style.transform=`translate3d(${els.board.clientWidth+cellSize()*1.4}px,${player.y*cellSize()}px,0)`;setTimeout(()=>{tone(880,.12,.06,"square");setTimeout(()=>tone(1320,.16,.045,"square"),110);els.resultMoves.textContent=moves;els.resultFee.textContent=`¥${feeFor(moves).toLocaleString("ja-JP")}`;els.resultComment.textContent=commentFor(moves,stages[stageIndex].optimalMoves);els.receiptStage.textContent=`STAGE ${String(stageIndex+1).padStart(2,"0")}`;els.result.classList.add("show");els.result.setAttribute("aria-hidden","false");},620);}
+  function finalRank(extra){return extra<=3?"S RANK!":extra<=12?"A RANK!":extra<=25?"B RANK":"C RANK";}
+  function showReceipt(){
+    runResults[stageIndex]=moves; const final=stageIndex===stages.length-1;
+    if(final){const totalMoves=runResults.reduce((a,n)=>a+(n||0),0),totalFee=runResults.reduce((a,n)=>a+feeFor(n||0),0),optimal=stages.reduce((a,s)=>a+s.optimalMoves,0),extra=totalMoves-optimal,score=Math.max(0,10000-Math.max(0,extra)*400);document.querySelector(".ticket").classList.add("final");document.querySelector("#receiptTitle").textContent="FINAL RECEIPT";els.receiptStage.textContent="ALL 10 PARKS";document.querySelector("#movesLabel").textContent="TOTAL MOVES";els.resultMoves.textContent=totalMoves;els.resultFee.textContent=`¥${totalFee.toLocaleString("ja-JP")}`;document.querySelector("#resultScore").textContent=score.toLocaleString("ja-JP");els.resultComment.textContent=finalRank(extra);document.querySelector("#nextLabel").textContent="PARK AGAIN";els.retry.classList.add("hidden");}
+    else{document.querySelector("#receiptTitle").textContent="PARKING RECEIPT";document.querySelector("#movesLabel").textContent="MOVES";els.resultMoves.textContent=moves;els.resultFee.textContent=`¥${feeFor(moves).toLocaleString("ja-JP")}`;els.resultComment.textContent=commentFor(moves,stages[stageIndex].optimalMoves);els.receiptStage.textContent=`STAGE ${String(stageIndex+1).padStart(2,"0")}`;}
+    els.result.classList.add("show");els.result.setAttribute("aria-hidden","false");
+  }
+  function win(){cleared=true;const player=cars.find(c=>c.id==="X");player.el.style.transition="transform 650ms cubic-bezier(.3,.7,.3,1)";player.el.style.transform=`translate3d(${els.board.clientWidth+cellSize()*1.4}px,${player.y*cellSize()}px,0)`;setTimeout(()=>{tone(880,.12,.06,"square");setTimeout(()=>tone(1320,.16,.045,"square"),110);showReceipt();},620);}
 
-  els.restart.addEventListener("click",()=>loadStage(stageIndex)); els.retry.addEventListener("click",()=>loadStage(stageIndex)); els.next.addEventListener("click",()=>loadStage(stageIndex+1));
+  els.restart.addEventListener("click",()=>loadStage(stageIndex)); els.retry.addEventListener("click",()=>loadStage(stageIndex)); els.next.addEventListener("click",()=>{if(stageIndex===stages.length-1){runResults=Array(stages.length).fill(null);loadStage(0);}else loadStage(stageIndex+1);});
   window.addEventListener("resize",()=>cars.forEach(c=>place(c))); document.addEventListener("dblclick",e=>e.preventDefault(),{passive:false}); document.addEventListener("gesturestart",e=>e.preventDefault(),{passive:false}); document.addEventListener("contextmenu",e=>e.preventDefault());
 
   // Breadth-first solver used by automated checks; a move is any distance by one car.
