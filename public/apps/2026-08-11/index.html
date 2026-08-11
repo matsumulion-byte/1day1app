@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="theme-color" content="#171814" />
+    <meta name="description" content="意味不明な実技試験で、あなたの馬鹿度を行動から測定します。" />
+    <title>馬鹿判定機</title>
+    <link rel="stylesheet" href="/apps/2026-08-11/styles.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <main class="machine-shell">
+      <header class="machine-head">
+        <div class="maker"><span class="lamp active"></span> BAKA ENGINE™ <small>BE-811</small></div>
+        <div class="status-row"><span>SYSTEM: ONLINE</span><span id="signal">IDIOT SIGNAL: —</span></div>
+      </header>
+
+      <section class="display" id="app" aria-live="polite">
+        <div class="screen intro-screen active" data-screen="intro">
+          <div class="calibration"><i></i><span>BEHAVIORAL ANALYSIS UNIT</span><i></i></div>
+          <p class="kicker">国立行動解析研究所 非公認</p>
+          <h1>馬鹿判定機</h1>
+          <p class="subtitle">あなたの馬鹿度を、行動から測定します。</p>
+          <div class="specimen-box">
+            <span>被験者</span><strong>UNKNOWN</strong><span>測定方式</span><strong>ACTION</strong>
+          </div>
+          <button class="industrial primary" id="start-btn">測定を開始する</button>
+          <p class="fineprint">※ 本測定は極めて精密そうな独自方式を採用しています</p>
+        </div>
+
+        <div class="screen stage-screen" data-screen="stage">
+          <div class="stage-meta"><span id="stage-number">STAGE 1 / 6</span><span id="stage-code">PERSISTENCE TEST</span></div>
+          <div class="progress-rail"><i id="progress-bar"></i></div>
+          <div id="stage-content"></div>
+        </div>
+
+        <div class="screen analysis-screen" data-screen="analysis">
+          <div class="radar-sweep"></div>
+          <p class="english">THINKING...</p>
+          <h2 id="analysis-text">解析中…</h2>
+          <div class="analysis-bars"><i></i><i></i><i></i><i></i><i></i></div>
+          <small id="analysis-sub">行動ログを照合しています</small>
+        </div>
+
+        <div class="screen result-screen" data-screen="result">
+          <div class="result-stamp">MEASUREMENT COMPLETE</div>
+          <p class="result-label">総合判定値</p>
+          <div class="score"><span>馬鹿度</span><strong id="final-score">—</strong><em>%</em></div>
+          <h2 id="rank-name">測定中</h2>
+          <p class="festival" id="festival" hidden>馬鹿フェス出場資格あり</p>
+          <div class="meters" id="meters"></div>
+          <div class="diagnosis"><span>BAKA ENGINE™ 所見</span><p id="comment"></p></div>
+          <div class="result-actions">
+            <button class="industrial primary" id="share-btn">結果をXでシェア</button>
+            <button class="industrial secondary" id="retry-btn">再測定する</button>
+          </div>
+          <p class="share-note">SCREENSHOT RECOMMENDED / 記録保存推奨</p>
+        </div>
+      </section>
+
+      <footer class="console">
+        <div><span class="lamp active"></span><small>POWER</small></div>
+        <div><span class="lamp warn" id="thinking-lamp"></span><small>THINKING</small></div>
+        <div class="serial">PROPERTY OF B.A.K.A. LAB<br />SERIAL NO. 0811-BAKA</div>
+        <button id="sound-btn" class="sound" aria-label="効果音を切り替える">SOUND: ON</button>
+      </footer>
+    </main>
+    <script src="/apps/2026-08-11/script.js"></script>
+  </body>
+</html>
