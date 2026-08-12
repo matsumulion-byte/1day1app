@@ -1,0 +1,52 @@
+:root { --ink:#173f45; --cream:#fff9e8; --red:#ec5848; --yellow:#ffd45b; }
+* { box-sizing:border-box; }
+html, body { width:100%; height:100%; margin:0; overflow:hidden; background:#183d43; }
+body { touch-action:manipulation; overscroll-behavior:none; -webkit-text-size-adjust:100%; -webkit-user-select:none; user-select:none; font-family:"Hiragino Maru Gothic ProN","Yu Gothic",sans-serif; color:var(--ink); }
+button { font:inherit; border:0; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; }
+[hidden] { display:none !important; }
+#game { position:relative; width:100%; height:100%; overflow:hidden; touch-action:none; background:#79cef2; }
+#canvas { position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; }
+.hud { position:absolute; z-index:5; top:max(14px,env(safe-area-inset-top)); left:16px; right:16px; display:flex; justify-content:space-between; pointer-events:none; color:white; text-shadow:0 2px 4px #285a6d55; }
+.hud div { display:flex; flex-direction:column; }
+.hud .best { text-align:right; }
+.hud small { font-size:10px; letter-spacing:.18em; opacity:.8; }
+.hud strong { font-size:clamp(22px,7vw,34px); line-height:1; font-style:italic; }
+.sound { position:absolute; z-index:20; top:max(15px,env(safe-area-inset-top)); right:15px; border:1.5px solid #ffffffb8; border-radius:99px; padding:7px 11px; color:white; background:#17475355; backdrop-filter:blur(6px); font-size:11px; letter-spacing:.08em; }
+.hud:not([hidden]) ~ .sound { top:max(75px,calc(env(safe-area-inset-top) + 72px)); }
+.panel { position:absolute; z-index:10; left:50%; transform:translateX(-50%); width:min(92%,430px); text-align:center; }
+.start-panel { top:8%; animation:rise .7s cubic-bezier(.2,.9,.2,1) both; }
+.date-hook { display:inline-block; margin:0 0 8px; padding:6px 13px; border-radius:99px; background:#ffffffc7; color:#2c6d67; font-size:11px; letter-spacing:.15em; }
+h1 { margin:0; color:white; font-size:clamp(48px,15vw,78px); line-height:.95; letter-spacing:-.07em; text-shadow:0 5px 0 #28605f, 0 9px 18px #24565a55; }
+h1 em { display:inline; color:var(--yellow); font-style:normal; }
+.tagline { margin:14px 0 18px; color:white; font-family:"Hiragino Mincho ProN","Yu Mincho",serif; font-size:clamp(16px,5vw,21px); text-shadow:0 2px 4px #285a6d88; }
+.howto { width:min(94%,340px); margin:0 auto 18px; padding:12px 17px; display:flex; flex-direction:column; gap:6px; align-items:flex-start; border-radius:14px; color:#214e50; background:#fffbe9d9; box-shadow:0 8px 24px #1c5a6230; font-size:12px; }
+.howto b { display:inline-grid; width:21px; height:21px; margin-right:7px; place-items:center; border-radius:50%; background:#68b65f; color:white; }
+.primary { min-width:210px; padding:15px 25px; border-radius:999px; color:white; background:var(--red); box-shadow:0 6px 0 #a63832, 0 10px 22px #442d2b3d; font-size:20px; font-weight:900; letter-spacing:.08em; transition:transform .1s,box-shadow .1s; }
+.primary:active { transform:translateY(4px); box-shadow:0 2px 0 #a63832; }
+.primary span { margin-left:12px; }
+.swing-ui { position:absolute; z-index:7; inset:0; pointer-events:none; }
+.angle-gauge { position:absolute; top:max(82px,calc(env(safe-area-inset-top) + 80px)); left:50%; transform:translateX(-50%); padding:6px 14px; border-radius:99px; color:white; background:#17475366; backdrop-filter:blur(5px); font-size:10px; letter-spacing:.12em; }
+.angle-gauge b { margin-left:6px; font-size:18px; }
+.pump-hint { position:absolute; bottom:130px; width:100%; margin:0; color:white; text-align:center; font-size:13px; text-shadow:0 2px 5px #173f45; animation:pulse 1.1s infinite; }
+.jump { position:absolute; pointer-events:auto; left:50%; bottom:max(25px,env(safe-area-inset-bottom)); transform:translateX(-50%); width:132px; height:82px; border-radius:50%; color:#71341f; background:var(--yellow); border:5px solid #fff9d5; box-shadow:0 7px 0 #d89536,0 11px 24px #402d194f; font-size:30px; font-weight:900; }
+.jump:active { transform:translate(-50%,5px); box-shadow:0 2px 0 #d89536; }
+.shout { position:absolute; z-index:15; left:50%; top:34%; transform:translate(-50%,-50%) rotate(-7deg) scale(0); color:white; font-size:clamp(40px,15vw,76px); font-weight:900; white-space:nowrap; text-shadow:4px 5px 0 #173f45; pointer-events:none; }
+.shout.pop { animation:shout .85s ease-out both; }
+.result-panel { top:50%; transform:translate(-50%,-50%); padding:24px 18px 27px; border:3px solid white; border-radius:27px; background:#fff9e8ed; box-shadow:0 16px 60px #173f4566; animation:resultIn .6s cubic-bezier(.2,.9,.2,1) both; }
+.record { margin:-44px auto 12px; width:max-content; padding:8px 18px; color:white; background:var(--red); transform:rotate(-3deg); font-size:20px; letter-spacing:.08em; box-shadow:3px 4px 0 #a63832; }
+.record.no-record { visibility:hidden; }
+.result-label { margin:0; color:#438277; font-size:10px; letter-spacing:.2em; }
+.result-distance { display:block; color:#174753; font-size:clamp(65px,22vw,98px); line-height:1.05; letter-spacing:-.07em; font-style:italic; }
+.result-distance small { margin-left:4px; font-size:.35em; }
+.stats { display:flex; justify-content:center; align-items:center; gap:14px; font-size:11px; }
+.stats span { display:flex; flex-direction:column; }
+.stats b { font-size:16px; }
+.stats i { width:1px; height:34px; background:#8ab0a7; }
+.comment { margin:17px -4px 20px; padding:10px; border-top:1px dashed #8ab0a7; border-bottom:1px dashed #8ab0a7; color:#2d6f66; font-family:"Hiragino Mincho ProN","Yu Mincho",serif; font-size:17px; }
+.result-panel .primary { min-width:230px; font-size:17px; }
+@keyframes rise { from{opacity:0;transform:translate(-50%,20px)} }
+@keyframes pulse { 50%{opacity:.45;transform:scale(.97)} }
+@keyframes shout { 0%{transform:translate(-50%,-50%) rotate(-7deg) scale(0)} 22%{transform:translate(-50%,-50%) rotate(-7deg) scale(1.18)} 70%{opacity:1} 100%{opacity:0;transform:translate(-50%,-75%) rotate(-4deg) scale(.9)} }
+@keyframes resultIn { from{opacity:0;transform:translate(-50%,-42%) scale(.88)} }
+@media (min-width:700px) { #game { max-width:760px; margin:auto; box-shadow:0 0 70px #091d20; } .start-panel{top:7%} }
+@media (max-height:650px) { .start-panel{top:3%}.howto{margin-bottom:12px;padding:8px 15px}.tagline{margin:9px 0 11px}.result-panel{padding-top:18px;padding-bottom:18px}.comment{margin:10px -4px 13px} }

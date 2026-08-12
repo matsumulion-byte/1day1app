@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#79cdf2">
+  <title>ハイジ、飛ぶ。</title>
+  <meta name="description" content="超巨大ブランコを漕いで、アルプスの彼方へ飛ぶタイミングゲーム。">
+  <link rel="stylesheet" href="/apps/2026-08-12/styles.css">
+</head>
+<body>
+  <main id="game" aria-label="ハイジ、飛ぶ。ゲーム">
+    <canvas id="canvas" aria-label="アルプスの巨大ブランコゲーム画面"></canvas>
+
+    <header class="hud" id="hud" hidden>
+      <div class="distance"><small>DISTANCE</small><strong id="distance">0.0m</strong></div>
+      <div class="best"><small>BEST</small><strong id="best">0.0m</strong></div>
+    </header>
+
+    <button id="sound" class="sound" type="button" aria-label="効果音を切り替える">♪ ON</button>
+
+    <section id="startScreen" class="panel start-panel">
+      <p class="date-hook">8.12 ─ ハイジの日</p>
+      <h1>ハイジ、<em>飛ぶ。</em></h1>
+      <p class="tagline">あのブランコ、どこまで飛べる？</p>
+      <div class="howto">
+        <span><b>①</b> 画面を長押しして漕ぐ</span>
+        <span><b>②</b> 前へ振れた瞬間に飛ぶ！</span>
+      </div>
+      <button id="start" class="primary" type="button">START <span>→</span></button>
+    </section>
+
+    <section id="swingUi" class="swing-ui" hidden>
+      <div id="angleGauge" class="angle-gauge">ANGLE <b>0°</b></div>
+      <p id="pumpHint" class="pump-hint">画面を長押しで漕ぐ！</p>
+      <button id="jump" class="jump" type="button">飛ぶ！</button>
+    </section>
+
+    <div id="shout" class="shout" aria-live="polite"></div>
+
+    <section id="result" class="panel result-panel" hidden>
+      <p id="record" class="record">NEW RECORD!</p>
+      <p class="result-label">FLIGHT DISTANCE</p>
+      <strong id="resultDistance" class="result-distance">428.6<small>m</small></strong>
+      <div class="stats">
+        <span>最高高度 <b id="resultHeight">93.2m</b></span>
+        <i></i>
+        <span>滞空時間 <b id="resultTime">9.4秒</b></span>
+      </div>
+      <p id="comment" class="comment">もうブランコではありません</p>
+      <button id="retry" class="primary" type="button">もう一回飛ぶ <span>↻</span></button>
+    </section>
+  </main>
+  <script src="/apps/2026-08-12/script.js"></script>
+</body>
+</html>
