@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#070707">
+  <meta name="description" content="四つの偶然を抽選して、静かで妙な短い怪談を生成するWebアプリ。">
+  <title>怪談ジェネレーター｜四つの偶然から、ひとつの恐怖。</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/apps/2026-08-13/styles.css">
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="flash" id="flash" aria-hidden="true"></div>
+  <main class="app" id="app">
+    <section class="intro" id="intro">
+      <p class="date-mark">八月十三日　怪談の日</p>
+      <div class="title-wrap">
+        <span class="hairline" aria-hidden="true"></span>
+        <h1>怪談<br><em>ジェネレーター</em></h1>
+        <span class="seal" aria-hidden="true">怪</span>
+      </div>
+      <p class="tagline">四つの偶然から、ひとつの恐怖。</p>
+      <button class="primary-btn" id="startButton" type="button"><span>怪談を生成する</span><i aria-hidden="true">›</i></button>
+      <p class="warning">音は出ません。たぶん。</p>
+    </section>
+
+    <section class="generator" id="generator" aria-live="polite" hidden>
+      <header class="compact-header">
+        <span>怪談ジェネレーター</span><small>KAIDAN / 0813</small>
+      </header>
+      <div class="draw-list" id="drawList">
+        <div class="draw-row" data-key="when"><span class="number">壱</span><div><small>いつ</small><strong>──</strong></div></div>
+        <div class="draw-row" data-key="where"><span class="number">弐</span><div><small>どこで</small><strong>──</strong></div></div>
+        <div class="draw-row" data-key="who"><span class="number">参</span><div><small>なにがいた</small><strong>──</strong></div></div>
+        <div class="draw-row" data-key="line"><span class="number">肆</span><div><small>最後の一言</small><strong>──</strong></div></div>
+      </div>
+      <div class="composing" id="composing" hidden><span></span><p>……怪談を生成しています</p></div>
+    </section>
+
+    <section class="result" id="result" hidden>
+      <article class="result-card" id="resultCard">
+        <header class="result-head"><span>怪談ジェネレーター</span><small id="storyNumber">第〇〇話</small></header>
+        <div class="combination" id="combination"></div>
+        <div class="ornament" aria-hidden="true">◇</div>
+        <p class="story" id="story"></p>
+        <div class="scores">
+          <div><span>恐怖度</span><strong id="fearScore">0</strong><small>/ 100</small><i><b id="fearBar"></b></i></div>
+          <div><span>意味不明度</span><strong id="weirdScore">0</strong><small>/ 100</small><i><b id="weirdBar"></b></i></div>
+          <div><span>実話っぽさ</span><strong id="realScore">0</strong><small>/ 100</small><i><b id="realBar"></b></i></div>
+        </div>
+        <footer>八月十三日　怪談の日 <span>#怪談ジェネレーター</span></footer>
+      </article>
+      <div class="actions">
+        <button class="primary-btn" id="againButton" type="button"><span>もう一話聞く</span><i aria-hidden="true">›</i></button>
+        <button class="share-btn" id="shareButton" type="button">Xで怪談を共有</button>
+      </div>
+    </section>
+  </main>
+  <script src="/apps/2026-08-13/script.js"></script>
+</body>
+</html>
