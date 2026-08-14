@@ -7,7 +7,6 @@ const SWIMMER_IMAGES = [
   "/apps/2026-08-14/assets/matsumura_streamline.png",
   "/apps/2026-08-14/assets/matsumura_kickboard.png",
   "/apps/2026-08-14/assets/matsumura_wave.png",
-  "/apps/2026-08-14/assets/matsumura_treading.png",
 ];
 const DROWNING_IMAGE = "/apps/2026-08-14/assets/matsumura_drowning.png";
 const GAME_SECONDS = 30;
