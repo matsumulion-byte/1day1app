@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#16b8dc">
+  <meta name="description" content="大量の松村から、本当に溺れている松村だけを救助する30秒ゲーム">
+  <title>プール監視員｜松村を探せ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section id="startScreen" class="screen start-screen" aria-labelledby="gameTitle">
+      <div class="sun" aria-hidden="true"></div>
+      <div class="start-card">
+        <p class="eyebrow">SUMMER RESCUE CHALLENGE</p>
+        <h1 id="gameTitle"><span>プール</span>監視員</h1>
+        <p class="subtitle">プールに紛れた松村の中から、<br><strong>溺れている松村だけ</strong>を救え！</p>
+        <div class="hero-scene" aria-hidden="true">
+          <span class="speech">たすけて〜！</span>
+          <img src="assets/matsumura_drowning.png" alt="">
+          <span class="ring">●</span>
+        </div>
+        <button id="startButton" class="primary-button" type="button"><span>🚨</span> ゲームスタート</button>
+        <div class="how-to">
+          <h2>遊び方</h2>
+          <div class="rules">
+            <p><span class="rule-icon good">✓</span><b>苦しそうな松村</b><small>クリックで +100点</small></p>
+            <p><span class="rule-icon bad">×</span><b>元気な松村</b><small>クリックで −50点</small></p>
+            <p><span class="rule-icon time">30</span><b>制限時間</b><small>30秒で救いまくれ</small></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen game-screen hidden" aria-label="ゲーム画面">
+      <header class="hud">
+        <div class="hud-title"><span>🛟</span><b>プール監視員</b></div>
+        <div class="stats">
+          <div class="stat timer-stat"><small>のこり</small><strong id="timeValue">30</strong><em>秒</em></div>
+          <div class="stat"><small>スコア</small><strong id="scoreValue">0</strong></div>
+          <div class="stat"><small>コンボ</small><strong id="comboValue">0</strong></div>
+          <div class="stat"><small>ミス</small><strong id="missValue">0</strong></div>
+        </div>
+      </header>
+      <div id="pool" class="pool" role="application" aria-label="松村が泳いでいるプール。溺れている松村を選んでください">
+        <div class="pool-sign">本日のプール：松村多め</div>
+        <div class="lane-line lane-one" aria-hidden="true"></div>
+        <div class="lane-line lane-two" aria-hidden="true"></div>
+        <div id="swimmerLayer" class="swimmer-layer"></div>
+        <div id="toast" class="toast" aria-live="assertive"></div>
+        <div id="comboPop" class="combo-pop" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <section id="resultScreen" class="screen result-screen hidden" aria-labelledby="resultTitle">
+      <div class="result-card">
+        <p class="eyebrow">TIME UP!</p>
+        <h2 id="resultTitle">監視終了！</h2>
+        <div class="medal" aria-hidden="true">🛟</div>
+        <p class="final-label">最終スコア</p>
+        <p id="finalScore" class="final-score">0</p>
+        <p id="rank" class="rank">見てただけ監視員</p>
+        <div class="result-details">
+          <p><span>救助した松村</span><b id="rescuedValue">0人</b></p>
+          <p><span>最大コンボ</span><b id="maxComboValue">0</b></p>
+          <p><span>誤クリック</span><b id="finalMissValue">0回</b></p>
+        </div>
+        <p id="shareText" class="share-text"></p>
+        <div class="result-actions">
+          <button id="retryButton" class="primary-button" type="button">もう一回遊ぶ</button>
+          <button id="shareButton" class="secondary-button" type="button">結果をシェア</button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
