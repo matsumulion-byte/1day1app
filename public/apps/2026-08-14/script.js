@@ -1,15 +1,15 @@
 // 画像はこの配列だけを編集すれば追加・差し替えできます。
 const SWIMMER_IMAGES = [
-  "assets/matsumura_idle.png",
-  "assets/matsumura_crawl.png",
-  "assets/matsumura_butterfly.png",
-  "assets/matsumura_backstroke.png",
-  "assets/matsumura_streamline.png",
-  "assets/matsumura_kickboard.png",
-  "assets/matsumura_wave.png",
-  "assets/matsumura_treading.png",
+  "/apps/2026-08-14/assets/matsumura_idle.png",
+  "/apps/2026-08-14/assets/matsumura_crawl.png",
+  "/apps/2026-08-14/assets/matsumura_butterfly.png",
+  "/apps/2026-08-14/assets/matsumura_backstroke.png",
+  "/apps/2026-08-14/assets/matsumura_streamline.png",
+  "/apps/2026-08-14/assets/matsumura_kickboard.png",
+  "/apps/2026-08-14/assets/matsumura_wave.png",
+  "/apps/2026-08-14/assets/matsumura_treading.png",
 ];
-const DROWNING_IMAGE = "assets/matsumura_drowning.png";
+const DROWNING_IMAGE = "/apps/2026-08-14/assets/matsumura_drowning.png";
 const GAME_SECONDS = 30;
 
 const screens = {
