@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#172845">
+  <meta name="description" content="キュウリやナスに割り箸の脚を付けて走らせる、お盆の精霊馬レースゲーム">
+  <title>精霊馬グランプリ</title>
+  <link rel="stylesheet" href="/apps/2026-08-15/styles.css">
+</head>
+<body>
+  <main class="app" id="app">
+    <button id="soundButton" class="sound-button" type="button" aria-label="音をオフにする" aria-pressed="true">音 ON</button>
+
+    <section class="screen title-screen active" id="titleScreen" aria-labelledby="gameTitle">
+      <div class="sunset" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="lantern lantern-left" aria-hidden="true">盆</div><div class="lantern lantern-right" aria-hidden="true">盆</div>
+      <div class="title-content">
+        <p class="date-ribbon">八月十五日・盆の大一番</p>
+        <h1 id="gameTitle"><small>しょうりょううま</small>精霊馬<br><em>グランプリ</em></h1>
+        <p class="tagline">ご先祖さまを、最速で送り迎えせよ。</p>
+        <div class="hero-horses" aria-hidden="true">
+          <div class="horse cucumber preview-horse"><span class="body"><b></b></span><i></i><i></i><i></i><i></i></div>
+          <div class="versus">VS</div>
+          <div class="horse eggplant preview-horse"><span class="body"><b></b></span><i></i><i></i><i></i><i></i></div>
+        </div>
+        <button class="primary-button" id="startButton" type="button" aria-label="出走馬をつくる">出走馬をつくる <span>›</span></button>
+        <p class="one-play">一走 約40秒　｜　全四頭立て</p>
+      </div>
+      <div class="veranda" aria-hidden="true"><span class="tatami"></span><span class="incense">〰</span></div>
+    </section>
+
+    <section class="screen select-screen" id="selectScreen" aria-labelledby="selectTitle">
+      <header class="paper-header"><p>出走登録</p><h2 id="selectTitle">一、野菜を選ぶ</h2><span>1 / 2</span></header>
+      <div class="selection-copy"><b>本日の主役を選択</b><small>選択後も脚の調整前なら変更できます</small></div>
+      <div class="vegetable-grid" role="radiogroup" aria-label="野菜を選択">
+        <button class="vegetable-card selected" data-veg="cucumber" role="radio" aria-checked="true" type="button">
+          <span class="card-badge">本命</span>
+          <span class="showcase"><span class="veg cucumber-veg"><i></i></span></span>
+          <strong>キュウリ号</strong><small>俊足・じゃじゃ馬</small>
+          <span class="mini-bars"><i><b style="--v:88%"></b><em>速さ</em></i><i><b style="--v:38%"></b><em>安定</em></i></span>
+          <span class="card-copy">軽さは正義。脚を誤ると盛大に跳ねる。</span>
+        </button>
+        <button class="vegetable-card" data-veg="eggplant" role="radio" aria-checked="false" type="button">
+          <span class="card-badge">対抗</span>
+          <span class="showcase"><span class="veg eggplant-veg"><i></i></span></span>
+          <strong>ナス号</strong><small>重厚・いぶし銀</small>
+          <span class="mini-bars"><i><b style="--v:48%"></b><em>速さ</em></i><i><b style="--v:86%"></b><em>安定</em></i></span>
+          <span class="card-copy">遅いが動じない。坂も落雁もどんと来い。</span>
+        </button>
+      </div>
+      <button class="primary-button bottom-action" id="toTuneButton" type="button">脚を取り付ける <span>›</span></button>
+    </section>
+
+    <section class="screen tune-screen" id="tuneScreen" aria-labelledby="tuneTitle">
+      <header class="paper-header"><button id="backSelect" type="button" aria-label="野菜選択へ戻る">‹</button><h2 id="tuneTitle">二、脚を整える</h2><span>2 / 2</span></header>
+      <div class="workbench">
+        <p class="work-label">割り箸工房 <small>極端な設計も出走可</small></p>
+        <div class="build-stage" id="buildStage" aria-label="調整中の精霊馬プレビュー">
+          <div class="horse cucumber build-horse" id="buildHorse"><span class="body"><b></b></span><i class="leg l1"></i><i class="leg l2"></i><i class="leg l3"></i><i class="leg l4"></i></div>
+          <span class="floor-line"></span>
+        </div>
+        <div class="live-stats">
+          <div><span>速さ</span><b><i id="speedBar"></i></b><strong id="speedValue">72</strong></div>
+          <div><span>安定性</span><b><i id="stabilityBar"></i></b><strong id="stabilityValue">65</strong></div>
+          <div><span>跳躍力</span><b><i id="jumpBar"></i></b><strong id="jumpValue">58</strong></div>
+        </div>
+      </div>
+      <div class="controls">
+        <label><span>脚の長さ <output id="lengthOut">ふつう</output></span><input id="legLength" type="range" min="0" max="100" value="50" aria-label="脚の長さ"></label>
+        <label><span>脚の角度 <output id="angleOut">まっすぐ</output></span><input id="legAngle" type="range" min="0" max="100" value="50" aria-label="脚の角度"></label>
+        <label><span>前後の間隔 <output id="spacingOut">ふつう</output></span><input id="legSpacing" type="range" min="0" max="100" value="55" aria-label="前後の脚の間隔"></label>
+        <button id="randomLegs" class="random-button" type="button" aria-label="脚をおまかせで調整">🎲 おまかせ脚</button>
+      </div>
+      <button class="primary-button bottom-action race-entry" id="raceButton" type="button">この脚で出走する <span>🏁</span></button>
+    </section>
+
+    <section class="screen race-screen" id="raceScreen" aria-labelledby="raceTitle">
+      <header class="race-header"><div><small>第15回 盆記念</small><h2 id="raceTitle">精霊馬グランプリ</h2></div><div class="lap">直線 <b>800</b>畳</div></header>
+      <div class="commentary" aria-live="polite"><span>実況</span><p id="commentaryText">各馬、枠入り完了です！</p></div>
+      <div class="race-hud"><b id="raceClock">0.0</b><span>秒</span><ol id="rankBoard"></ol></div>
+      <div class="track" id="track">
+        <div class="track-world" id="trackWorld">
+          <div class="finish-gate"><b>盆</b><span>GOAL</span></div>
+          <div id="obstacleLayer"></div><div id="racersLayer"></div>
+          <div class="speed-lines" id="speedLines"></div>
+        </div>
+      </div>
+      <div class="race-controls">
+        <div class="guts-count">踏ん張り札 <b id="gutsCount">● ● ●</b></div>
+        <button id="gutsButton" class="guts-button" type="button" aria-label="踏ん張る。残り3回"><span>踏ん張る！</span><small>転倒回避・障害突破</small></button>
+      </div>
+    </section>
+
+    <section class="screen result-screen" id="resultScreen" aria-labelledby="resultTitle">
+      <div class="confetti" id="confetti" aria-hidden="true"></div>
+      <header class="result-header"><small>確定</small><h2 id="resultTitle">レース結果</h2></header>
+      <div class="result-card">
+        <div class="placement"><span id="resultRank">1</span><sup>着</sup><small id="resultTime">12.4 秒</small></div>
+        <div class="result-horse-wrap"><div class="horse cucumber result-horse" id="resultHorse"><span class="body"><b></b></span><i class="leg l1"></i><i class="leg l2"></i><i class="leg l3"></i><i class="leg l4"></i></div></div>
+        <p class="title-label">今回の称号</p><h3 id="awardTitle">お盆最速伝説</h3><p id="resultComment">見事な脚さばき。ご先祖さまも驚く速さです。</p>
+        <dl class="result-data"><div><dt>速さ</dt><dd id="finalSpeed">88</dd></div><div><dt>安定性</dt><dd id="finalStability">72</dd></div><div><dt>脚の完成度</dt><dd><b id="legScore">84</b>点</dd></div></dl>
+      </div>
+      <button class="primary-button" id="retryButton" type="button">もう一度出走する</button>
+      <button class="share-button" id="shareButton" type="button" aria-label="結果をシェア">結果をシェア</button>
+      <p class="share-status" id="shareStatus" aria-live="polite"></p>
+    </section>
+  </main>
+  <script src="/apps/2026-08-15/script.js"></script>
+</body>
+</html>
