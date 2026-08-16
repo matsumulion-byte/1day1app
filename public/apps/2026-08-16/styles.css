@@ -153,6 +153,10 @@ button:disabled { cursor: default; filter: grayscale(.35); opacity: .65; }
 
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
 
+@media (max-width: 679px) {
+  .scene-frame { aspect-ratio: 1.25 / 1; }
+}
+
 @media (min-width: 680px) {
   .app-shell { padding-top: 34px; }
   .scene-frame { border-radius: 25px; }
@@ -164,7 +168,7 @@ button:disabled { cursor: default; filter: grayscale(.35); opacity: .65; }
   .date-label { margin-bottom: 3px; }
   h1 { font-size: 27px; }
   .hero-copy > p:last-child { margin: 5px 0 10px; }
-  .scene-frame { aspect-ratio: 1.55 / 1; }
+  .scene-frame { aspect-ratio: 1.4 / 1; }
   .controls { margin-top: 10px; }
   input, .primary-button { min-height: 48px; }
   .footnote { display: none; }

@@ -84,14 +84,14 @@
   function drawMountain(c) {
     c.fillStyle = "#10191b";
     c.beginPath();
-    c.moveTo(-30, 558); c.lineTo(105, 480); c.lineTo(185, 508); c.lineTo(328, 397);
-    c.lineTo(420, 442); c.lineTo(538, 326); c.lineTo(615, 381); c.lineTo(693, 360);
-    c.lineTo(790, 450); c.lineTo(850, 430); c.lineTo(1035, 540); c.lineTo(1035, 720); c.lineTo(-30, 720); c.closePath(); c.fill();
-    const slope = c.createLinearGradient(400, 380, 620, 680);
+    c.moveTo(-30, 518); c.lineTo(90, 426); c.lineTo(185, 448); c.lineTo(315, 332);
+    c.lineTo(410, 368); c.lineTo(535, 232); c.lineTo(622, 298); c.lineTo(710, 278);
+    c.lineTo(805, 374); c.lineTo(865, 356); c.lineTo(1035, 476); c.lineTo(1035, 720); c.lineTo(-30, 720); c.closePath(); c.fill();
+    const slope = c.createLinearGradient(400, 285, 620, 680);
     slope.addColorStop(0, "rgba(38,52,48,.48)"); slope.addColorStop(1, "rgba(5,9,9,.9)");
     c.fillStyle = slope; c.fill();
     c.fillStyle = "rgba(70,83,76,.12)";
-    c.beginPath(); c.moveTo(538,326); c.lineTo(615,381); c.lineTo(492,615); c.lineTo(260,640); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(535,232); c.lineTo(622,298); c.lineTo(492,615); c.lineTo(260,640); c.closePath(); c.fill();
     c.fillStyle = "rgba(145,155,153,.055)";
     c.fillRect(0, 556, WORLD_W, 72);
   }
