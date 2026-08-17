@@ -16,7 +16,8 @@
     <section class="hud" aria-label="ゲーム情報">
       <div><span>STAGE</span><strong id="levelName">LEVEL 1</strong></div>
       <div><span>TIME</span><strong id="timer">00:00</strong></div>
-      <div><span>CABLE</span><strong id="cableReadout">—</strong></div>
+      <div><span>LIGHTS</span><strong id="towerReadout">0 / 2</strong></div>
+      <div><span>CABLE</span><strong id="cableReadout">READY</strong></div>
       <button id="resetBtn">↻ やり直す</button>
     </section>
     <section id="gameShell" class="game-shell">
@@ -24,17 +25,17 @@
       <div id="toast" class="toast" role="status"></div>
       <div id="spark" class="spark">バチッ</div>
       <div id="startBanner" class="start-banner">NIGHT GAME<br><b>START!</b></div>
-      <div id="tutorial" class="tutorial"><b>発電設備</b>から照明塔へ<br>指でケーブルを引こう</div>
+      <div id="tutorial" class="tutorial"><b>指を離さず一筆書き！</b><br>⚡から全照明を通って IN へ</div>
     </section>
     <nav id="levelNav" class="level-nav" aria-label="ステージ選択"></nav>
-    <p class="hint">接続済みのケーブルをタップすると取り外せます</p>
+    <p id="stageSubtitle" class="hint">まずは一本、つないでみよう</p>
   </main>
   <dialog id="resultDialog">
     <div class="result-card">
       <p class="result-kicker">全照明、点灯完了</p>
       <h2>NIGHT GAME START!</h2>
       <div id="rankBadge" class="rank-badge">球場照明マスター</div>
-      <dl><div><dt>使用ケーブル</dt><dd id="resultLength">0m</dd></div><div><dt>引き直し</dt><dd id="resultRetries">0回</dd></div><div><dt>クリアタイム</dt><dd id="resultTime">00:00</dd></div></dl>
+      <dl><div><dt>通過区間</dt><dd id="resultLength">0区間</dd></div><div><dt>引き直し</dt><dd id="resultRetries">0回</dd></div><div><dt>クリアタイム</dt><dd id="resultTime">00:00</dd></div></dl>
       <button id="nextBtn" class="primary">次の球場へ</button>
       <button id="replayBtn" class="secondary">もう一度</button>
     </div>
