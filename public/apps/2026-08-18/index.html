@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#101b2d">
+  <title>高校野球部ジェネレーター｜8月18日 高校野球記念日</title>
+  <link rel="stylesheet" href="/apps/2026-08-18/styles.css">
+</head>
+<body>
+  <header class="masthead">
+    <div class="mast-inner">
+      <div class="brand" aria-label="1DAY 1APP"><span>1DAY</span><b>1APP</b></div>
+      <div class="date"><small>高校野球記念日</small><strong>8.18</strong></div>
+    </div>
+  </header>
+
+  <main>
+    <section id="intro" class="intro">
+      <p class="eyebrow">架空高校野球名鑑 2026</p>
+      <h1>高校野球部<br><span>ジェネレーター</span></h1>
+      <p class="lead">全国のどこかにありそうで、たぶんない。<br>まだ見ぬ一校の歴史とユニフォームを抽選します。</p>
+      <div class="ball-seam" aria-hidden="true"></div>
+      <button id="generateTop" class="generate primary" type="button"><span>高校を生成する</span><small>DRAW A SCHOOL</small></button>
+      <p class="note">※ 登場する学校・人物・戦績はすべて架空です</p>
+    </section>
+
+    <section id="draw" class="draw" hidden aria-live="polite">
+      <div class="draw-machine">
+        <p>組み合わせ抽選中</p>
+        <div class="number-drums"><i>東</i><i>西</i><i>南</i></div>
+        <span>新たな一校の記録を照合しています…</span>
+      </div>
+    </section>
+
+    <article id="result" class="result" hidden aria-live="polite">
+      <div class="paper-head">
+        <div><span class="issue">第108回 全国高校野球選手権大会・架空校名鑑</span><span id="rankLabel" class="rank-label"></span></div>
+        <p id="nickname" class="nickname"></p>
+        <h2 id="headline"></h2>
+        <div class="school-line">
+          <div id="crest" class="crest" aria-label="生成された校章"></div>
+          <div><p id="schoolType" class="school-type"></p><h3 id="schoolName"></h3><p id="location" class="location"></p></div>
+        </div>
+      </div>
+
+      <div class="profile-grid">
+        <section class="uniform-panel">
+          <div class="section-title"><span>UNIFORM</span><h4>ユニフォーム</h4></div>
+          <div id="uniform" class="uniform" aria-label="生成されたユニフォーム"></div>
+          <div class="color-caption"><span id="colorSwatch"></span><p><small>TEAM COLOR</small><b id="teamColor"></b></p></div>
+        </section>
+
+        <section class="record-panel">
+          <div class="section-title"><span>TEAM DATA</span><h4>野球部プロフィール</h4></div>
+          <dl class="basic-data">
+            <div><dt>創部</dt><dd id="founded"></dd></div><div><dt>部員</dt><dd id="members"></dd></div><div><dt>監督</dt><dd id="coach"></dd></div>
+          </dl>
+          <div class="koshien"><div><small>春の甲子園</small><strong id="spring"></strong></div><div><small>夏の甲子園</small><strong id="summer"></strong></div></div>
+          <dl class="records">
+            <div><dt>最高成績</dt><dd id="best"></dd></div><div><dt>昨年</dt><dd id="lastYear"></dd></div><div><dt>今年</dt><dd id="thisYear"></dd></div>
+          </dl>
+        </section>
+      </div>
+
+      <div class="story-grid">
+        <section class="feature"><div class="section-title"><span>SCOUTING REPORT</span><h4>チームスタイル</h4></div><p id="styleName" class="style-name"></p><p id="styleText"></p></section>
+        <section class="player"><div class="section-title"><span>KEY PLAYER</span><h4>注目選手</h4></div><p id="playerRole" class="player-role"></p><h5 id="playerName"></h5><p id="playerBio"></p></section>
+      </div>
+      <p id="profileNote" class="profile-note"></p>
+      <div class="regenerate"><button id="generateAgain" class="generate" type="button"><span>もう一校生成する</span><small>DRAW AGAIN</small></button></div>
+      <footer><span>ALL SCHOOLS &amp; PLAYERS ARE FICTIONAL</span><b>高校野球部ジェネレーター</b><span>2026.08.18</span></footer>
+    </article>
+  </main>
+  <script src="/apps/2026-08-18/script.js"></script>
+</body>
+</html>
