@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;600;700;900&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap');
+
+:root { --paper:#f4f0e7; --paper-deep:#e9e2d5; --ink:#181713; --muted:#777164; --red:#a52e28; --line:#cfc7b8; --shadow:rgba(41,35,24,.12); }
+* { box-sizing:border-box; }
+html { background:var(--paper); }
+body { margin:0; min-width:320px; color:var(--ink); background:var(--paper); font-family:"Zen Kaku Gothic New",sans-serif; }
+body::before { content:""; position:fixed; inset:0; pointer-events:none; opacity:.26; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.08'/%3E%3C/svg%3E"); mix-blend-mode:multiply; }
+button { font:inherit; color:inherit; }
+.app { width:min(100%, 760px); margin:auto; padding:44px 20px 38px; }
+.masthead { display:grid; grid-template-columns:58px 1fr; gap:21px; align-items:start; width:min(100%, 580px); margin:0 auto 36px; }
+.date-mark { width:52px; padding:7px 3px; display:grid; place-items:center; border:2px solid var(--red); color:var(--red); font:700 15px/1.05 "Noto Serif JP",serif; transform:rotate(-2deg); }
+.date-mark span { display:block; }
+.eyebrow { margin:0 0 7px; color:var(--red); font-size:12px; font-weight:700; letter-spacing:.18em; }
+h1 { margin:0; font:900 clamp(40px,10vw,68px)/.98 "Noto Serif JP",serif; letter-spacing:-.07em; }
+h1 span { margin-left:.14em; font-size:.54em; letter-spacing:.02em; }
+.intro { margin:17px 0 0; color:#555046; font:500 14px/1.8 "Noto Serif JP",serif; letter-spacing:.06em; }
+.machine { position:relative; padding:10px 9px 17px; border:1px solid #b8b0a2; border-radius:4px; background:#d7d0c2; box-shadow:0 18px 45px var(--shadow),inset 0 1px #fff9; }
+.machine-top { height:30px; display:flex; align-items:center; padding:0 9px; color:#6c665c; font:700 9px/1 monospace; letter-spacing:.19em; }
+.machine-top span { margin-right:auto; }
+.machine-top i { width:6px; height:6px; margin-left:7px; border-radius:50%; background:#b8afa0; box-shadow:inset 0 1px 2px #716b61; }
+.machine-top i:first-of-type { background:var(--red); }
+.reels { overflow:hidden; border:1px solid #968f83; border-radius:2px; background:var(--ink); }
+.reel { width:100%; min-height:101px; display:grid; grid-template-columns:52px 1fr 38px; align-items:center; gap:7px; border:0; border-bottom:1px solid #d4cdbf; padding:10px 9px; background:linear-gradient(180deg,#fffdf8,#f5f0e7 50%,#eee8dd); cursor:pointer; -webkit-tap-highlight-color:transparent; transition:background .2s, transform .18s; }
+.reel:last-child { border-bottom:0; }
+.reel:hover { background:#fffdf7; }
+.reel:focus-visible { outline:3px solid var(--red); outline-offset:-4px; position:relative; z-index:2; }
+.reel-caption { color:#8b8478; font-size:10px; letter-spacing:.1em; writing-mode:vertical-rl; justify-self:center; }
+.phrase { display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font:700 clamp(26px,7.3vw,45px)/1.2 "Noto Serif JP",serif; letter-spacing:.035em; text-align:center; }
+.mora { width:30px; height:30px; display:grid; place-items:center; justify-self:center; border:1px solid var(--red); color:var(--red); font:700 14px/1 "Noto Serif JP",serif; transform:rotate(2deg); }
+.reel.spinning .phrase { filter:blur(1.2px); opacity:.6; transform:translateY(-3px); }
+.reel.settled { animation:settle .42s cubic-bezier(.18,.89,.32,1.35); }
+@keyframes settle { 0%{transform:translateY(-11px) scaleY(.95)} 55%{transform:translateY(4px) scaleY(1.03)} 100%{transform:none} }
+.tap-hint { margin:14px 0 0; color:#686259; text-align:center; font-size:11px; letter-spacing:.08em; }
+.tap-hint span { display:inline-block; margin-right:5px; color:var(--red); }
+.spin-button { width:min(100%,340px); min-height:68px; margin:28px auto 0; padding:0 23px; display:flex; justify-content:space-between; align-items:center; border:0; border-radius:2px; color:#fffaf1; background:var(--red); box-shadow:0 8px 0 #72201c,0 15px 25px rgba(105,28,24,.18); cursor:pointer; transition:transform .12s,box-shadow .12s; }
+.spin-button:hover { background:#b3352f; }
+.spin-button:active { transform:translateY(5px); box-shadow:0 3px 0 #72201c,0 8px 16px rgba(105,28,24,.15); }
+.spin-button:disabled { cursor:wait; opacity:.72; }
+.spin-button span { font:700 22px/1 "Noto Serif JP",serif; letter-spacing:.13em; }
+.spin-button small { font:700 9px/1 monospace; letter-spacing:.18em; opacity:.65; }
+.critique { width:min(100%,520px); min-height:76px; margin:44px auto 0; padding:16px 18px; display:flex; align-items:center; gap:15px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.seal { flex:0 0 auto; width:37px; height:37px; display:grid; place-items:center; border:2px solid var(--red); color:var(--red); font:700 18px/1 "Noto Serif JP",serif; transform:rotate(-4deg); }
+.critique p { margin:0; }
+.critique-label { color:var(--muted); font-size:9px; letter-spacing:.18em; }
+#critiqueText { margin-top:4px; font:600 14px/1.55 "Noto Serif JP",serif; }
+.share-actions { display:flex; justify-content:center; gap:10px; margin-top:24px; }
+.share-actions button { min-height:44px; border:1px solid var(--ink); border-radius:2px; padding:0 18px; background:transparent; font-size:12px; font-weight:700; letter-spacing:.04em; cursor:pointer; }
+.share-actions button:hover { color:var(--paper); background:var(--ink); }
+.share-actions button:first-child { min-width:190px; }
+.toast { height:22px; margin:11px 0 0; color:var(--red); text-align:center; font-size:11px; opacity:0; transition:opacity .2s; }
+.toast.show { opacity:1; }
+footer { margin-top:52px; padding-top:20px; border-top:1px solid var(--line); display:flex; justify-content:space-between; color:#888175; font:500 9px/1.6 "Noto Serif JP",serif; letter-spacing:.05em; }
+footer p { margin:0; }
+footer span { color:var(--red); }
+@media (min-width:620px) { .app{padding-top:70px}.machine{padding:13px 13px 19px}.reel{min-height:118px;grid-template-columns:62px 1fr 48px}.mora{width:34px;height:34px}.masthead{margin-bottom:45px} }
+@media (max-width:390px) { .app{padding-inline:13px}.masthead{grid-template-columns:47px 1fr;gap:12px}.date-mark{width:43px}.reel{grid-template-columns:38px 1fr 32px;padding-inline:5px}.mora{width:27px;height:27px}.phrase{font-size:25px}.share-actions button{padding-inline:13px} }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important} }
