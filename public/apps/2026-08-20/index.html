@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#05070c">
+  <meta name="description" content="真夜中、耳元の蚊を探す。8月20日・蚊の日の音で遊ぶミニゲーム。">
+  <title>ブーン｜8月20日 蚊の日</title>
+  <link rel="stylesheet" href="/apps/2026-08-20/styles.css">
+</head>
+<body>
+  <main id="app" class="app intro" aria-label="ブーン">
+    <section id="opening" class="opening">
+      <p class="opening-time">AM 2:37</p>
+      <button id="sleepButton" class="text-button" type="button">寝る</button>
+      <p class="headphone-note">音を使います<br>イヤホン推奨</p>
+    </section>
+
+    <section id="game" class="game" aria-hidden="true">
+      <header class="hud">
+        <div class="clock" id="clock">AM 2:37</div>
+        <div class="sleep-meter"><span>睡眠</span><div class="meter-track"><i id="sleepFill"></i></div></div>
+      </header>
+
+      <div id="room" class="room" aria-label="寝室。明るい時はタップして蚊を探せます">
+        <div class="ceiling"></div>
+        <div class="aircon"><i></i></div>
+        <div class="window"><div class="night"></div><div class="curtain left"></div><div class="curtain right"></div></div>
+        <div class="bed"><div class="headboard"></div><div class="mattress"><div class="pillow"></div><div class="blanket"></div></div></div>
+        <div class="table"><div class="lamp"><i></i></div><div class="glass"></div></div>
+        <div class="floor"></div>
+        <div id="mosquito" class="mosquito" role="button" aria-label="蚊" tabindex="-1"><i></i><b></b><span></span></div>
+        <div id="flyby" class="flyby" aria-hidden="true">⌁</div>
+        <div id="hand" class="hand" aria-hidden="true"></div>
+        <p id="message" class="message" aria-live="assertive"></p>
+      </div>
+
+      <div class="controls">
+        <p id="status" class="status" aria-live="polite">静かだ。</p>
+        <button id="lightButton" class="light-button" type="button">電気をつける</button>
+      </div>
+    </section>
+
+    <section id="ending" class="ending" aria-hidden="true">
+      <p>AM 3:14</p>
+      <span>おやすみなさい</span>
+      <button id="againButton" class="again-button" type="button">もう一度</button>
+    </section>
+  </main>
+  <script src="/apps/2026-08-20/script.js"></script>
+</body>
+</html>
