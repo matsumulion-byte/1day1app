@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#073154">
+  <title>噴水プロデューサー</title>
+  <meta name="description" content="水と光で、街の名物をつくろう。8月21日・噴水の日のカジュアル噴水ショーシミュレーター。">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <section id="titleScreen" class="title-screen">
+    <div class="title-sparkles" aria-hidden="true"></div>
+    <div class="title-content">
+      <div class="date-chip">8.21　噴水の日</div>
+      <div class="title-fountain" aria-hidden="true"><i></i><i></i><i></i><i></i><span></span></div>
+      <p class="eyebrow">FOUNTAIN PRODUCER</p>
+      <h1>噴水<br><em>プロデューサー</em></h1>
+      <p class="tagline">水と光で、街の名物をつくろう。</p>
+      <button id="startBtn" class="primary big">噴水をつくる <span>→</span></button>
+      <p class="title-note">設計知識ゼロ、水道代への覚悟だけ必要です。</p>
+    </div>
+  </section>
+
+  <main id="app" class="app hidden">
+    <header class="topbar">
+      <div class="brand"><div class="brand-drop">💧</div><div><b>噴水プロデューサー</b><small>FOUNTAIN PRODUCER</small></div></div>
+      <div class="top-actions">
+        <button id="undoBtn" class="icon-btn" title="ひとつ戻る">↶ <span>戻る</span></button>
+        <button id="clearBtn" class="icon-btn danger" title="全削除">⌫ <span>全削除</span></button>
+        <button id="dayBtn" class="icon-btn" title="昼・夜を切り替え">☀ <span>昼</span></button>
+        <button id="soundBtn" class="icon-btn" title="音声を切り替え">♪ <span>音 ON</span></button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="parts-panel panel">
+        <div class="panel-heading"><span>1</span><div><b>パーツを選ぶ</b><small>SELECT PART</small></div></div>
+        <div id="parts" class="parts-grid"></div>
+        <button id="randomBtn" class="random-btn">✦ おまかせ配置</button>
+        <div class="tip">パーツを選び、広場をタップ。<br>置いたパーツはドラッグできます。</div>
+      </aside>
+
+      <section class="stage-column">
+        <div class="stage-info"><span id="modeLabel">☀ DAY MODE</span><span id="partCount">0 / 24 PARTS</span></div>
+        <div id="stageWrap" class="stage-wrap">
+          <canvas id="fountainCanvas"></canvas>
+          <div class="stage-label"><span>WATER PLAZA</span><b>噴水広場</b></div>
+          <div id="emptyHint" class="empty-hint"><div>＋</div><b>ここにパーツを置こう</b><span>左のパーツを選んでタップ</span></div>
+          <div class="north">N</div>
+        </div>
+        <div class="transport">
+          <button id="playBtn" class="play-btn"><span class="play-icon">▶</span><span><b>噴水ショーを再生</b><small>SHOW TIME!</small></span></button>
+          <button id="judgeBtn" class="judge-btn"><span>🏆</span><span><b>完成して審査を受ける</b><small>設計を5項目で採点</small></span></button>
+        </div>
+      </section>
+
+      <aside id="editPanel" class="edit-panel panel disabled">
+        <div class="panel-heading"><span>2</span><div><b>細かく調整</b><small>EDIT SETTINGS</small></div></div>
+        <div id="noSelection" class="no-selection"><div>◎</div><b>パーツを選択してください</b><span>広場に置いた噴水をタップ</span></div>
+        <div id="controls" class="controls hidden">
+          <div class="selected-title"><span id="selectedIcon"></span><div><b id="selectedName"></b><small>選択中</small></div></div>
+          <label>向き <output id="angleOut">0°</output><input id="angleInput" type="range" min="0" max="359" value="0"></label>
+          <label>水圧・高さ <output id="powerOut">60%</output><input id="powerInput" type="range" min="10" max="100" value="60"></label>
+          <label>噴射範囲 <output id="rangeOut">50%</output><input id="rangeInput" type="range" min="10" max="100" value="50"></label>
+          <label>噴射タイミング <output id="timingOut">0.0秒</output><input id="timingInput" type="range" min="0" max="4" step="0.1" value="0"></label>
+          <label>噴射パターン<select id="patternInput"><option value="always">常時噴射</option><option value="slow">ゆっくり点滅</option><option value="fast">素早く点滅</option><option value="wave">波のように噴射</option><option value="sequence">順番に噴射</option><option value="random">ランダム噴射</option></select></label>
+          <div class="color-row"><span>水／ライトの色</span><div id="colorPicker"></div></div>
+          <div class="position-row"><span>位置</span><input id="xInput" type="number" min="0" max="100"><span>%</span><input id="yInput" type="number" min="0" max="100"><span>%</span></div>
+          <button id="deleteBtn" class="delete-btn">🗑 このパーツを削除</button>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <div id="tutorial" class="modal hidden"><div class="tutorial-card">
+    <button class="close-modal" data-close="tutorial">×</button><p class="eyebrow">HOW TO PRODUCE</p><h2>名物づくりは、かんたん3ステップ。</h2>
+    <div class="steps"><div><i>1</i><strong>パーツを置く</strong><span>好きな噴水を選んで広場をタップ</span></div><b>→</b><div><i>2</i><strong>調整する</strong><span>水圧・色・リズムを好きなだけ</span></div><b>→</b><div><i>3</i><strong>ショーを再生</strong><span>夜空を照らす名演出を鑑賞</span></div></div>
+    <button id="tutorialStart" class="primary">さっそく置いてみる</button>
+  </div></div>
+
+  <div id="resultModal" class="modal result-modal hidden"><div class="result-card">
+    <button class="close-modal" data-close="resultModal">×</button>
+    <div class="result-head"><p class="eyebrow">FOUNTAIN GRAND PRIX</p><h2>審査結果</h2></div>
+    <div class="result-layout"><div class="result-preview"><canvas id="resultCanvas"></canvas><div id="resultRank" class="rank-badge"></div></div>
+      <div class="result-data"><p class="result-kicker">あなたの噴水は…</p><h3 id="resultRankTitle"></h3><div id="scores" class="scores"></div><div class="comment-box"><span>審査員長の講評</span><p id="resultComment"></p></div></div>
+    </div>
+    <div class="result-actions"><button id="editAgainBtn">← もう一度編集</button><button id="saveBtn">▣ 結果を画像保存</button><button id="shareBtn" class="share-btn">𝕏 でシェア</button><button id="restartBtn">↻ 最初から</button></div>
+  </div></div>
+  <div id="toast" class="toast"></div>
+  <script src="script.js"></script>
+</body>
+</html>
