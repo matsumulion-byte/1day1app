@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#183b34" />
+    <meta name="description" content="8月22日 チンチン電車の日。写真を見て答える全5問のひらがな穴埋めクイズ。" />
+    <title>ちんちん電車の日｜ことば当てクイズ</title>
+    <link rel="stylesheet" href="/apps/2026-08-22/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="masthead" aria-label="タイトル">
+        <span class="date-badge">8月22日</span>
+        <h1>ちんちん電車の日</h1>
+        <span class="route-mark" aria-hidden="true">電</span>
+      </header>
+
+      <section id="quiz" class="quiz-card" aria-live="polite">
+        <div class="question-topline">
+          <p id="progress" class="progress">第1問 / 5</p>
+          <span class="mini-label">ことば当て</span>
+        </div>
+
+        <p id="mask" class="mask" aria-label="伏せ字">◯ん◯ん◯ん◯◯</p>
+
+        <figure class="photo-frame">
+          <img id="question-image" src="/apps/2026-08-22/images/q1-one-man.png" alt="昔ながらの路面電車" />
+          <span class="photo-corner" aria-hidden="true"></span>
+        </figure>
+
+        <form id="answer-form" class="answer-form" autocomplete="off">
+          <label for="answer">こたえをひらがなで</label>
+          <div class="input-row">
+            <input id="answer" name="answer" type="text" inputmode="text" enterkeyhint="done" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="20" placeholder="こたえを入力" aria-describedby="feedback" />
+            <button id="submit-button" class="primary-button" type="submit">こたえる</button>
+          </div>
+        </form>
+
+        <div id="feedback-area" class="feedback-area" aria-live="assertive">
+          <p id="feedback" class="feedback"></p>
+          <p id="correct-answer" class="correct-answer"></p>
+          <button id="next-button" class="next-button" type="button" hidden>次の問題へ <span aria-hidden="true">→</span></button>
+        </div>
+      </section>
+
+      <section id="result" class="result-card" hidden aria-live="polite">
+        <div class="result-icon" aria-hidden="true"><span>電</span></div>
+        <p class="result-eyebrow">全5問 クリア</p>
+        <h2>あなたが<br /><q>ちんちんでんしゃ</q>と<br />答えた回数</h2>
+        <p id="tram-count" class="tram-count"><strong>0</strong><span>回</span></p>
+        <button id="restart-button" class="primary-button restart-button" type="button">もう一度遊ぶ</button>
+      </section>
+    </main>
+    <script src="/apps/2026-08-22/script.js"></script>
+  </body>
+</html>
