@@ -1,0 +1,67 @@
+/* タイトル画面の火山。各パーツを独立させ、疑似要素の罫線競合を防ぐ。 */
+.hero-volcano {
+  width: 245px;
+  height: 155px;
+  position: relative;
+  margin: 28px 0 0;
+}
+
+.hero-volcano::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: 8px;
+  bottom: 4px;
+  width: 229px;
+  height: 136px;
+  border: 0;
+  background: linear-gradient(118deg, #82624e 0 47%, #684b3f 48% 100%);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  filter: drop-shadow(0 10px 0 #423631);
+}
+
+.hero-volcano::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  left: 91px;
+  top: 10px;
+  width: 63px;
+  height: 19px;
+  border: 0;
+  border-radius: 50%;
+  background: #2e2423;
+  box-shadow: inset 0 6px 0 #ff7040, 0 0 12px #ff8738;
+  filter: none;
+}
+
+.hero-volcano i {
+  position: absolute;
+  z-index: 2;
+  left: 110px;
+  top: 23px;
+  width: 25px;
+  height: 116px;
+  border-radius: 0 0 48% 52%;
+  background: linear-gradient(90deg, #ff4836, #ffd34a 45%, #ff5737);
+  transform: none;
+  box-shadow: 0 0 14px #ff7138;
+}
+
+.hero-volcano span {
+  position: absolute;
+  z-index: 4;
+  left: 101px;
+  top: -24px;
+  width: 43px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.88);
+  box-shadow: -25px 13px 0 -3px rgba(255,255,255,.66), 25px 9px 0 -2px rgba(255,255,255,.72);
+  font-size: 0;
+  filter: none;
+}
+
+@media (max-height: 700px) {
+  .hero-volcano { transform: scale(.72); margin: -3px 0 -20px; }
+}

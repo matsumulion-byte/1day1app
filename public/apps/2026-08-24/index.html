@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/apps/2026-08-24/styles.css">
+  <link rel="stylesheet" href="/apps/2026-08-24/volcano-fix.css">
 </head>
 <body>
   <main class="app">
@@ -49,8 +50,9 @@
       <h2 id="resultTitle">海まで到達！</h2>
       <p id="resultComment" class="result-comment">防災のプロ</p>
       <div class="score-card">
-        <div class="score-main"><span>総合スコア</span><strong id="totalScore">1,000</strong><small>pts</small></div>
+        <div class="score-main"><span id="scoreLabel">ステージスコア</span><strong id="totalScore">1,000</strong><small>pts</small></div>
         <dl>
+          <div id="stageScoreRow" hidden><dt>ステージ3スコア</dt><dd id="stageScore">0 pts</dd></div>
           <div><dt>海への到達</dt><dd id="seaResult">到達</dd></div>
           <div><dt>被害額</dt><dd id="resultDamage">¥0</dd></div>
           <div><dt>焼失した家</dt><dd id="burnedHomes">0 / 3軒</dd></div>
