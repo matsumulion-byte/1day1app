@@ -1,5 +1,5 @@
 // 調整しやすいゲーム定数
-const CONFIG={cols:24,rows:32,eruptionDelay:2.5,gameSeconds:28,digPower:105,digCost:1.25,digDepth:.42,flowStep:.3,lavaRate:3.2};
+const CONFIG={cols:24,rows:32,eruptionDelay:2.5,gameSeconds:36,flowInterval:.16,digPower:105,digCost:1.25,digDepth:.42,flowStep:.3,lavaRate:3.2};
 const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
 
 const STAGES=[
@@ -59,7 +59,7 @@ function checkCollisions(){
 function burst(x,y,type){const [cw,ch]=cellSize();for(let i=0;i<22;i++)particles.push({x:(x+.5)*cw,y:(y+.5)*ch,vx:(Math.random()-.5)*100,vy:-30-Math.random()*100,life:.7+Math.random()*.6,type})}
 function toast(msg){$('toast').textContent=msg;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),1500)}
 
-function loop(now){if(state!=='game')return;const dt=Math.min((now-lastTime)/1000,.05);lastTime=now;if(now>=eruptionAt&&!ended){accum+=dt;while(accum>.07){flow();accum-=.07}}
+function loop(now){if(state!=='game')return;const dt=Math.min((now-lastTime)/1000,.05);lastTime=now;if(now>=eruptionAt&&!ended){accum+=dt;while(accum>CONFIG.flowInterval){flow();accum-=CONFIG.flowInterval}}
  updateParticles(dt);draw(now);updateTimer(now);if(!ended&&now-startAt>(CONFIG.eruptionDelay+CONFIG.gameSeconds)*1000)finish();raf=requestAnimationFrame(loop)}
 function updateParticles(dt){for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=80*dt;p.life-=dt}particles=particles.filter(p=>p.life>0)}
 function updateTimer(now){const left=Math.max(0,(eruptionAt-now)/1000);$('timer').textContent=left?left.toFixed(1):'噴火中';if(left>0&&left<3.2){$('countdown').textContent=Math.ceil(left);$('countdown').classList.add('show')}else $('countdown').classList.remove('show')}
