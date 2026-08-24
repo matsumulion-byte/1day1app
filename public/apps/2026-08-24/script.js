@@ -1,5 +1,5 @@
 // 調整しやすいゲーム定数
-const CONFIG={cols:24,rows:32,eruptionDelay:6,gameSeconds:42,digPower:105,digCost:1.25,digDepth:.42,flowStep:.32,lavaRate:3};
+const CONFIG={cols:24,rows:32,eruptionDelay:6,gameSeconds:48,digPower:105,digCost:1.25,digDepth:.42,flowStep:.32,lavaRate:3};
 const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
 
 const STAGES=[
@@ -41,8 +41,10 @@ canvas.addEventListener('pointerdown',e=>{dragging=true;canvas.setPointerCapture
 function flow(){
  const next=new Float32Array(lava);const dirs=[[0,1],[-1,0],[1,0],[0,-1],[-1,1],[1,1]];
  for(let y=3;y<CONFIG.rows;y++)for(let x=0;x<CONFIG.cols;x++){const i=idx(x,y),amount=lava[i];if(amount<.018)continue;let opts=[];
-  // 重力方向を少し強め、火口付近で横に広がるだけになるのを防ぐ。
-  for(const [dx,dy] of dirs){const nx=x+dx,ny=y+dy;if(!inGrid(nx,ny))continue;const ni=idx(nx,ny),drop=(terrain[i]+Math.min(amount,.85))-terrain[ni]+dy*.22;if(drop>.015)opts.push([ni,drop])}
+  // 地形高＋溶岩の水位で判定する。溜まった量を水位へ反映することで、
+  // 小さなくぼみや尾根でも満杯になれば自然にあふれて先へ進む。
+  const lavaHead=Math.min(amount*.8,2.6);
+  for(const [dx,dy] of dirs){const nx=x+dx,ny=y+dy;if(!inGrid(nx,ny))continue;const ni=idx(nx,ny),drop=(terrain[i]+lavaHead)-terrain[ni]+dy*.22;if(drop>.015)opts.push([ni,drop])}
   opts.sort((a,b)=>b[1]-a[1]);opts=opts.slice(0,2);if(!opts.length)continue;let move=Math.min(amount*.48,CONFIG.flowStep),weights=opts.reduce((n,o)=>n+o[1],0);for(const [ni,w] of opts){const q=move*w/weights;next[i]-=q;next[ni]+=q}
  }
  lava=next;lava[idx(...source)]+=CONFIG.lavaRate*.06;checkCollisions()
