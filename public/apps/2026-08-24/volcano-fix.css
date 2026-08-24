@@ -1,4 +1,6 @@
 /* タイトル画面の火山。各パーツを独立させ、疑似要素の罫線競合を防ぐ。 */
+[hidden] { display: none !important; }
+
 .hero-volcano {
   width: 245px;
   height: 155px;
