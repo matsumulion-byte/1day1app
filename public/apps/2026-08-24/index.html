@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#171b2e">
+  <meta name="description" content="地面を掘って、流れ出す溶岩を街から海へ導く防災パズルゲーム。">
+  <title>溶岩ルート</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/apps/2026-08-24/styles.css">
+</head>
+<body>
+  <main class="app">
+    <section id="titleScreen" class="screen title-screen active">
+      <div class="date-chip">8.24　噴火防災の日</div>
+      <div class="hero-volcano" aria-hidden="true"><i></i><span>🔥</span></div>
+      <p class="eyebrow">DIG. GUIDE. SAVE.</p>
+      <h1>溶岩<br><em>ルート</em></h1>
+      <p class="lead">指で地面を削り、溶岩を海へ。<br>街を守るルートを掘りぬこう！</p>
+      <button id="startButton" class="main-button">作戦スタート <b>→</b></button>
+      <div class="howto"><span>☝️ なぞって掘る</span><span>🌋 低い方へ流れる</span><span>🌊 海まで導く</span></div>
+    </section>
+
+    <section id="gameScreen" class="screen game-screen">
+      <header class="game-header">
+        <button id="backButton" class="icon-button" aria-label="タイトルへ">‹</button>
+        <div><small id="stageNumber">STAGE 1</small><strong id="stageName">海への一本道</strong></div>
+        <button id="restartButton" class="icon-button" aria-label="リスタート">↻</button>
+      </header>
+      <div class="status-panel">
+        <div><small>噴火まで</small><strong id="timer">8.0</strong><span>秒</span></div>
+        <div class="dig-stat"><small>掘削パワー</small><div class="meter"><i id="digMeter"></i></div></div>
+        <div><small>街の被害</small><strong id="damage">¥0</strong></div>
+      </div>
+      <div id="canvasWrap" class="canvas-wrap">
+        <canvas id="gameCanvas" width="720" height="960" aria-label="溶岩ルートのゲームマップ"></canvas>
+        <div id="countdown" class="countdown"></div>
+        <div id="toast" class="toast"></div>
+        <div class="map-label sea-label">GOAL　海</div>
+      </div>
+      <p class="game-hint"><span>☝️</span><b>噴火前に地面をなぞって溝を作ろう</b></p>
+    </section>
+
+    <section id="resultScreen" class="screen result-screen">
+      <div id="resultIcon" class="result-icon">🌊</div>
+      <p class="eyebrow">MISSION RESULT</p>
+      <h2 id="resultTitle">海まで到達！</h2>
+      <p id="resultComment" class="result-comment">防災のプロ</p>
+      <div class="score-card">
+        <div class="score-main"><span>総合スコア</span><strong id="totalScore">1,000</strong><small>pts</small></div>
+        <dl>
+          <div><dt>海への到達</dt><dd id="seaResult">到達</dd></div>
+          <div><dt>被害額</dt><dd id="resultDamage">¥0</dd></div>
+          <div><dt>焼失した家</dt><dd id="burnedHomes">0 / 3軒</dd></div>
+          <div><dt>燃えた木</dt><dd id="burnedTrees">0本</dd></div>
+          <div><dt>温泉化</dt><dd id="hotSprings">0カ所</dd></div>
+        </dl>
+      </div>
+      <button id="nextButton" class="main-button">次のステージへ <b>→</b></button>
+      <button id="retryButton" class="sub-button">同じステージをもう一度</button>
+    </section>
+  </main>
+  <script src="/apps/2026-08-24/script.js"></script>
+</body>
+</html>
