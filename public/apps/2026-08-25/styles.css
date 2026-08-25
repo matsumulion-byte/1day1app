@@ -1,0 +1,222 @@
+:root {
+  --paper: #f5f1e7;
+  --paper-deep: #e7dfce;
+  --ink: #282924;
+  --ink-soft: #6e6c62;
+  --vermilion: #b44838;
+}
+
+* { box-sizing: border-box; }
+
+html, body { min-height: 100%; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 18% 15%, #fff9 0 1px, transparent 2px),
+    radial-gradient(circle at 78% 73%, #aa9d7d26 0 1px, transparent 2px),
+    repeating-linear-gradient(93deg, transparent 0 13px, #9c8f7010 14px, transparent 15px 31px),
+    var(--paper);
+  background-size: 31px 29px, 37px 41px, auto;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 120px #867c641c;
+}
+
+.app {
+  width: min(100%, 520px);
+  min-height: 100svh;
+  margin: 0 auto;
+  padding: max(34px, env(safe-area-inset-top)) 24px max(28px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.title-block { text-align: center; }
+
+.date {
+  margin: 0 0 12px;
+  color: var(--vermilion);
+  font-size: 11px;
+  letter-spacing: .18em;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(30px, 8vw, 42px);
+  font-weight: 600;
+  letter-spacing: .19em;
+  text-indent: .19em;
+}
+
+.lead {
+  margin: 10px 0 25px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  letter-spacing: .11em;
+}
+
+.senryu-card {
+  position: relative;
+  width: min(100%, 390px);
+  min-height: 310px;
+  display: grid;
+  place-items: center;
+  padding: 42px 38px;
+  border: 1px solid #a69b8138;
+  background:
+    linear-gradient(90deg, transparent, #fff9 48%, transparent),
+    #fffdf8b8;
+  box-shadow: 0 20px 55px #665e4d17, 0 2px 8px #665e4d0f;
+  isolation: isolate;
+}
+
+.senryu-card::before,
+.senryu-card::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 9px;
+  top: -1px;
+  bottom: -1px;
+  opacity: .22;
+  background: repeating-linear-gradient(0deg, #8b7e65 0 1px, transparent 1px 4px);
+}
+.senryu-card::before { left: -4px; }
+.senryu-card::after { right: -4px; }
+
+.thread {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1px;
+  height: 22px;
+  background: #a99d83;
+  transform: translate(-50%, -100%);
+}
+.thread::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -9px;
+  width: 7px;
+  height: 7px;
+  border: 1px solid #a99d83;
+  border-radius: 50%;
+  transform: translateX(-50%);
+}
+
+.senryu { width: 100%; }
+
+.line {
+  min-height: 1.5em;
+  margin: 0;
+  text-align: center;
+  font-size: clamp(26px, 7.4vw, 37px);
+  line-height: 1.8;
+  letter-spacing: .13em;
+  text-indent: .13em;
+  white-space: nowrap;
+  transition: color .15s, opacity .15s, transform .15s;
+}
+
+.line.matsumura {
+  color: var(--vermilion);
+  font-weight: 600;
+  transform: scale(1.035);
+}
+
+.senryu.spinning .line {
+  color: var(--ink-soft);
+  opacity: .62;
+  transform: translateY(2px);
+  filter: blur(.25px);
+}
+
+.senryu.settled .line { animation: settle .38s cubic-bezier(.2, .8, .25, 1) both; }
+.senryu.settled .line:nth-child(2) { animation-delay: .035s; }
+.senryu.settled .line:nth-child(3) { animation-delay: .07s; }
+
+.seal {
+  position: absolute;
+  right: 20px;
+  bottom: 18px;
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--vermilion);
+  color: var(--vermilion);
+  font-family: serif;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: .78;
+  transform: rotate(-4deg);
+}
+
+.generate {
+  min-width: 180px;
+  margin-top: 27px;
+  padding: 14px 24px 13px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  color: var(--paper);
+  background: var(--ink);
+  box-shadow: 0 7px 18px #38372f20;
+  font-family: inherit;
+  font-size: 16px;
+  letter-spacing: .16em;
+  cursor: pointer;
+  transition: transform .12s, background .15s, box-shadow .12s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.generate i { font-family: sans-serif; font-size: 18px; font-style: normal; }
+.generate:hover { background: #3c3d36; }
+.generate:active { transform: translateY(2px); box-shadow: 0 3px 8px #38372f20; }
+.generate:disabled { cursor: wait; opacity: .76; }
+.generate:focus-visible { outline: 3px solid #b4483855; outline-offset: 4px; }
+
+.hint {
+  margin: 13px 0 0;
+  color: #827f74;
+  font-size: 10px;
+  letter-spacing: .1em;
+}
+
+@keyframes settle {
+  from { opacity: .1; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-height: 680px) {
+  .app { justify-content: flex-start; padding-top: max(24px, env(safe-area-inset-top)); }
+  .lead { margin-bottom: 18px; }
+  .senryu-card { min-height: 268px; padding-block: 30px; }
+  .generate { margin-top: 20px; }
+}
+
+@media (max-width: 370px) {
+  .app { padding-inline: 18px; }
+  .senryu-card { min-height: 285px; padding-inline: 24px; }
+  .line { font-size: 25px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+}
