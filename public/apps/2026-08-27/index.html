@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#8f241d">
+  <meta name="description" content="質問に答えて、あなたが思い浮かべた『男はつらいよ』のマドンナを当てるレトロ映画館風ゲーム。">
+  <title>寅さんのマドンナ、誰でしょう？</title>
+  <link rel="stylesheet" href="/apps/2026-08-27/styles.css">
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <main class="app-shell">
+    <header class="theater-header">
+      <p class="date-sign">8月27日　男はつらいよの日</p>
+      <div class="lamp-row" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </header>
+
+    <section id="top-screen" class="screen active" aria-labelledby="app-title">
+      <div class="poster-frame">
+        <p class="eyebrow">一日限りの推理興行</p>
+        <h1 id="app-title"><span>寅さんのマドンナ、</span>誰でしょう？</h1>
+        <div class="ornament" aria-hidden="true">◆</div>
+        <p class="lead">頭の中にひとり、マドンナを<br>思い浮かべてください。<br><small>いくつか質問すると、こちらで当ててみます。</small></p>
+        <div class="silhouette" aria-hidden="true"><span>?</span></div>
+        <button id="start-button" class="primary-button">はじめる <span aria-hidden="true">›</span></button>
+        <p class="notice">主要マドンナ27名から推理します</p>
+      </div>
+    </section>
+
+    <section id="question-screen" class="screen" aria-live="polite">
+      <div class="progress-area">
+        <p id="progress-text">第1問 / 最大12問</p>
+        <div class="progress-track"><span id="progress-bar"></span></div>
+      </div>
+      <article id="question-card" class="question-card">
+        <p class="card-label">おたずねします</p>
+        <h2 id="question-text"></h2>
+        <p id="hint-text" class="question-hint"></p>
+      </article>
+      <div class="answer-grid" aria-label="回答を選んでください">
+        <button class="answer-button yes" data-answer="yes"><span>はい</span><small>そうです</small></button>
+        <button class="answer-button no" data-answer="no"><span>いいえ</span><small>違います</small></button>
+        <button class="answer-button unknown" data-answer="unknown"><span>わからない</span><small>覚えていない</small></button>
+      </div>
+    </section>
+
+    <section id="thinking-screen" class="screen thinking-screen" aria-live="assertive">
+      <div class="film-reel" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      <p id="thinking-text">うーん……</p>
+    </section>
+
+    <section id="result-screen" class="screen" aria-live="polite">
+      <div class="result-card">
+        <p class="result-kicker">あなたが思い浮かべている<br>マドンナは……</p>
+        <div class="name-plate">
+          <h2 id="result-name"></h2>
+          <p id="result-actress"></p>
+        </div>
+        <dl class="facts">
+          <div><dt>初登場</dt><dd id="result-first"></dd></div>
+          <div><dt>登場回数</dt><dd id="result-count"></dd></div>
+          <div><dt>役どころ</dt><dd id="result-role"></dd></div>
+        </dl>
+        <div class="game-ratings">
+          <p>場内独自採点 <span>※ゲーム上の演出であり、公式設定ではありません</span></p>
+          <div id="ratings"></div>
+        </div>
+        <p class="verdict-question">さて、当たっていますか？</p>
+        <div class="verdict-buttons">
+          <button id="correct-button" class="primary-button compact">当たってる！</button>
+          <button id="wrong-button" class="secondary-button">違う！</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="correct-screen" class="screen end-screen">
+      <p class="stamp">大当たり</p>
+      <h2>やりました！</h2>
+      <p>あなたの心のマドンナ、<br>見事にお見通しです。</p>
+      <button class="primary-button restart-button">もう一度遊ぶ</button>
+    </section>
+
+    <section id="wrong-screen" class="screen">
+      <div class="selection-card">
+        <p class="eyebrow">参りました</p>
+        <h2>あなたが思い浮かべていたのは誰？</h2>
+        <p>登録済みのマドンナから教えてください。</p>
+        <label for="madonna-select">マドンナを選ぶ</label>
+        <select id="madonna-select"><option value="">選んでください</option></select>
+        <button id="reveal-actual" class="primary-button compact" disabled>これで決まり</button>
+      </div>
+    </section>
+
+    <section id="actual-screen" class="screen end-screen">
+      <p class="stamp modest">なるほど</p>
+      <h2 id="actual-name"></h2>
+      <p>でしたか。<br>次こそは、きっと当ててみせます。</p>
+      <button class="primary-button restart-button">もう一度遊ぶ</button>
+    </section>
+  </main>
+  <footer>本作は非公式のファンゲームです。画像・ロゴ等の公式素材は使用していません。</footer>
+  <script src="/apps/2026-08-27/data.js"></script>
+  <script src="/apps/2026-08-27/script.js"></script>
+</body>
+</html>
