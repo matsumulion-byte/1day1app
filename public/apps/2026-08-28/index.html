@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0c68b8">
+  <meta name="description" content="現在地の3時間後の天気を予想する、気象予報士の日のミニゲーム">
+  <title>気象予報士チャレンジ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="weather-clear">
+  <div class="sky" aria-hidden="true"><div class="sun"></div><div class="cloud cloud-a"></div><div class="cloud cloud-b"></div><div class="rain"></div></div>
+  <main class="app-shell">
+    <header class="broadcast-header">
+      <span class="live-dot" aria-hidden="true"></span>
+      <span>WEATHER STUDIO</span>
+      <time id="headerClock">--:--</time>
+    </header>
+
+    <section id="startScreen" class="screen active" aria-labelledby="appTitle">
+      <div class="hero-icon" aria-hidden="true">☀️</div>
+      <p class="eyebrow">8.28 SPECIAL PROGRAM</p>
+      <h1 id="appTitle">気象予報士<br><span>チャレンジ</span></h1>
+      <p class="subtitle">現在地の3時間後を予報せよ</p>
+      <button id="startButton" class="primary-button">現在地から挑戦する <span aria-hidden="true">›</span></button>
+      <div id="startError" class="error-box" role="alert" hidden>
+        <strong>現在地を取得できませんでした</strong>
+        <p id="startErrorMessage"></p>
+        <div class="error-actions">
+          <button id="retryButton" class="secondary-button">もう一度取得する</button>
+          <button id="tokyoButton" class="secondary-button">東京都心の天気で遊ぶ</button>
+        </div>
+      </div>
+      <aside class="anniversary-card">
+        <span class="date-badge">8月28日</span>
+        <div><strong>気象予報士の日</strong><p>1994年のこの日、第1回気象予報士試験が行われました。空を読む力、試してみませんか？</p></div>
+      </aside>
+      <p class="privacy-note">📍 位置情報は天気予報の取得にのみ使用し、保存しません。<br>GPSはHTTPSまたはlocalhostで動作します。</p>
+    </section>
+
+    <section id="loadingScreen" class="screen loading-screen" aria-live="polite" aria-label="読み込み中">
+      <div class="radar" aria-hidden="true"><i></i></div>
+      <h2>現在地の空を観測中…</h2>
+      <p>気象衛星と通信しています</p>
+    </section>
+
+    <section id="forecastScreen" class="screen" aria-labelledby="forecastTitle">
+      <div class="location-line"><span aria-hidden="true">📍</span><span id="locationName">現在地</span></div>
+      <h2 id="forecastTitle">現在の空模様</h2>
+      <article class="current-card">
+        <div><p id="currentTime" class="current-time">--月--日 --:--</p><div id="currentWeatherIcon" class="big-weather-icon" aria-hidden="true">☀️</div><strong id="currentWeather">--</strong></div>
+        <div class="current-temp"><span id="currentTemp">--</span><small>℃</small></div>
+        <dl><div><dt>湿度</dt><dd id="currentHumidity">--%</dd></div><div><dt>風速</dt><dd id="currentWind">-- m/s</dd></div></dl>
+      </article>
+      <div class="challenge-heading"><span>MISSION</span><h3>3時間後を予想しよう</h3><p id="targetTimeLabel">--:-- の予報</p></div>
+
+      <fieldset class="prediction-card weather-picker">
+        <legend><span>1</span> 天気</legend>
+        <div class="weather-options" role="radiogroup" aria-label="3時間後の天気予想">
+          <button type="button" role="radio" aria-checked="false" data-weather="clear"><b aria-hidden="true">☀️</b>晴れ</button>
+          <button type="button" role="radio" aria-checked="false" data-weather="cloudy"><b aria-hidden="true">☁️</b>曇り</button>
+          <button type="button" role="radio" aria-checked="false" data-weather="rain"><b aria-hidden="true">🌧️</b>雨</button>
+          <button type="button" role="radio" aria-checked="false" data-weather="snow"><b aria-hidden="true">❄️</b>雪</button>
+          <button type="button" role="radio" aria-checked="false" data-weather="thunder"><b aria-hidden="true">⛈️</b>雷</button>
+        </div>
+      </fieldset>
+
+      <fieldset class="prediction-card slider-card">
+        <legend><span>2</span> 気温</legend>
+        <output id="tempOutput" for="tempSlider">--℃</output>
+        <input id="tempSlider" type="range" step="0.5" aria-label="予想気温">
+        <div class="range-labels"><span id="tempMin">--℃</span><span id="tempMax">--℃</span></div>
+      </fieldset>
+
+      <fieldset class="prediction-card slider-card">
+        <legend><span>3</span> 降水確率</legend>
+        <output id="rainOutput" for="rainSlider">50%</output>
+        <input id="rainSlider" type="range" min="0" max="100" step="10" value="50" aria-label="予想降水確率">
+        <div class="range-labels"><span>0%</span><span>100%</span></div>
+      </fieldset>
+      <button id="submitButton" class="primary-button" disabled>この予報で勝負！ <span aria-hidden="true">⚡</span></button>
+    </section>
+
+    <section id="revealScreen" class="screen reveal-screen" aria-live="assertive">
+      <div class="tv-frame"><div class="tv-scan"></div><p>WEATHER NEWS</p><h2>3時間後の予報は<span class="dots">……</span></h2><div class="reveal-symbol" aria-hidden="true">?</div></div>
+    </section>
+
+    <section id="resultScreen" class="screen" aria-labelledby="resultTitle">
+      <p class="eyebrow">FORECAST RESULT</p>
+      <h2 id="resultTitle">予報結果</h2>
+      <div class="score-ring"><span id="scoreValue">0</span><small>点</small></div>
+      <div class="title-card"><span id="rankIcon" aria-hidden="true">🏆</span><div><small>あなたの称号</small><h3 id="rankTitle">---</h3></div></div>
+      <p id="rankComment" class="rank-comment"></p>
+      <div class="comparison" role="table" aria-label="予想とAPI予報の比較">
+        <div class="comparison-head" role="row"><span role="columnheader">項目</span><span role="columnheader">あなた</span><span role="columnheader">API予報</span><span role="columnheader">得点</span></div>
+        <div class="comparison-row" role="row"><strong role="rowheader">天気</strong><span id="userWeather"></span><span id="apiWeather"></span><b id="weatherPoints"></b></div>
+        <div class="comparison-row" role="row"><strong role="rowheader">気温</strong><span id="userTemp"></span><span id="apiTemp"></span><b id="tempPoints"></b></div>
+        <div class="comparison-row" role="row"><strong role="rowheader">降水</strong><span id="userRain"></span><span id="apiRain"></span><b id="rainPoints"></b></div>
+      </div>
+      <p class="api-note">※これは実際の観測結果ではなく、Open-MeteoのAPI予報との比較です。</p>
+      <div class="result-actions"><button id="againButton" class="primary-button">もう一度予報する</button><button id="shareButton" class="secondary-button">結果をシェア <span aria-hidden="true">↗</span></button></div>
+    </section>
+  </main>
+  <footer><a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Weather data by Open-Meteo</a></footer>
+  <div id="effects" aria-hidden="true"></div>
+  <script src="script.js"></script>
+</body>
+</html>
