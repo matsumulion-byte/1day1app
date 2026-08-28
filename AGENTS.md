@@ -19,6 +19,25 @@ Create daily apps under:
 
 Do not implement daily apps under `/Users/matsumurahironori/Documents/1day1app`.
 
+## Daily App Asset Paths
+
+Files under `public/apps/YYYY-MM-DD/` are published with `public` as the document root. References inside each daily app must therefore use the public URL, never a filesystem-shaped URL and never a bare relative asset path.
+
+Required examples:
+
+```html
+<link rel="stylesheet" href="/apps/YYYY-MM-DD/style.css" />
+<script src="/apps/YYYY-MM-DD/script.js"></script>
+```
+
+Rules:
+
+- Do not use `href="style.css"`, `src="script.js"`, or `href="./style.css"` for daily app entry assets.
+- Do not include `/public` in browser URLs. `/public/apps/...` is a filesystem path, not the deployed URL.
+- Before reporting completion, serve `/Users/matsumurahironori/1day1app/public` as the document root and open `/apps/YYYY-MM-DD/`.
+- Verify the HTML page and every referenced local CSS/JavaScript asset return HTTP 200 at their `/apps/YYYY-MM-DD/...` URLs.
+- Compare asset references with an existing daily app before the first browser test.
+
 ## Mobile Interaction Baseline
 
 Every touch-oriented daily app must prevent accidental browser gestures before it is shown or shipped.
