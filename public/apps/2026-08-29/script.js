@@ -13,6 +13,10 @@
   const $ = (selector) => document.querySelector(selector);
   const grill = $("#grill");
   const effects = $("#effects");
+  const bgm = new Audio("/apps/2026-08-29/assets/bgm.mp3");
+  bgm.loop = true;
+  bgm.preload = "auto";
+  bgm.volume = 0.45;
   let state;
 
   function resetState() {
@@ -30,6 +34,9 @@
     $("#startPanel").classList.remove("open");
     $("#resultPanel").classList.remove("open");
     $("#resultPanel").setAttribute("aria-hidden", "true");
+    bgm.pause();
+    bgm.currentTime = 0;
+    bgm.play().catch(() => setMessage("端末の音声設定をご確認ください"));
     state.running = true;
     state.lastFrame = performance.now();
     spawnMeat();
@@ -170,6 +177,8 @@
 
   function endGame() {
     state.running = false;
+    bgm.pause();
+    bgm.currentTime = 0;
     const accuracy = state.served ? state.perfect / state.served : 0;
     const power = Math.min(100, Math.round(state.score / 38 + accuracy * 28 - state.char * 3));
     const title = power < 25 ? "見習い店員" : power < 45 ? "トング係" : power < 65 ? "焼き担当" : power < 85 ? "焼肉奉行" : "他人の肉まで勝手に管理する真の奉行";
