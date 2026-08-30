@@ -1,6 +1,6 @@
 /* Facts use true / false / "unknown". Entertainment ratings live in fun, separately. */
 const U="unknown";
-const F=(id,title,year,role,lead,attrs,fun={})=>({id,title,year,role,lead,attributes:{...attrs},fun:{statham:fun.statham||72,regret:fun.regret||3,explosions:fun.explosions||2,cars:fun.cars||2,bald:fun.bald||5,note:fun.note||"英国製の無表情と確かな圧。ステイサム成分を検出しました。"}});
+const F=(id,title,year,role,lead,attrs,fun={})=>({id,title,year,role,lead,attributes:{...attrs,formerStateOrg:attrs.formerStateOrg??Boolean(attrs.formerSpecialForces===true||attrs.formerMilitary===true||attrs.formerPolice===true||attrs.formerAgent===true||attrs.specialForces===true)},fun:{statham:fun.statham||72,regret:fun.regret||3,explosions:fun.explosions||2,cars:fun.cars||2,bald:fun.bald||5,note:fun.note||"英国製の無表情と確かな圧。ステイサム成分を検出しました。"}});
 const FILMS=[
 F("lockstock","ロック、ストック＆トゥー・スモーキング・バレルズ",1998,"ベーコン",false,{crime:true,heist:true,ensemble:true,hair:false,comic:true}, {statham:55,regret:2,note:"路上の胡散臭さから始まった、記念すべき映画デビュー。"}),
 F("snatch","スナッチ",2000,"ターキッシュ",true,{crime:true,heist:true,ensemble:true,hair:false,comic:true,boxing:true},{statham:62,regret:2}),
@@ -8,11 +8,11 @@ F("turnitup","ターン・イット・アップ",2000,"Mr. B",false,{crime:true,
 F("mars","ゴースト・オブ・マーズ",2001,"ジェリコ・バトラー",false,{future:true,space:true,policeSide:true,ensemble:true,hair:false},{statham:59,regret:3,explosions:4}),
 F("theone","ザ・ワン",2001,"エヴァン・ファンシュ",false,{policeSide:true,future:true,ensemble:true,martialArts:true,hair:false},{statham:57,regret:3}),
 F("meanmachine","ミーン・マシーン",2001,"モンク",false,{prison:true,sports:true,ensemble:true,hair:false,comic:true},{statham:52,regret:3}),
-F("transporter","トランスポーター",2002,"フランク・マーティン",true,{driver:true,cars:true,protects:true,protectsWoman:true,criminal:true,suits:true,martialArts:true,france:true,series:true,hair:false},{statham:94,regret:5,cars:5}),
+F("transporter","トランスポーター",2002,"フランク・マーティン",true,{formerStateOrg:true,driver:true,cars:true,protects:true,protectsWoman:true,criminal:true,suits:true,martialArts:true,france:true,series:true,hair:false},{statham:94,regret:5,cars:5}),
 F("italianjob","ミニミニ大作戦",2003,"ハンサム・ロブ",false,{driver:true,cars:true,heist:true,criminal:true,ensemble:true,comic:true,hair:false},{statham:76,regret:3,cars:5}),
 F("collateral","コラテラル",2004,"空港の男",false,{assassin:U,shortRole:true,cameo:true,suits:true,hair:false},{statham:23,regret:1}),
 F("cellular","セルラー",2004,"イーサン",false,{villain:true,policeSide:true,protects:false,shortRole:false,hair:false},{statham:61,regret:4}),
-F("transporter2","トランスポーター2",2005,"フランク・マーティン",true,{driver:true,cars:true,protects:true,protectsChild:true,suits:true,martialArts:true,miami:true,series:true,sequel:2,hair:false},{statham:97,regret:5,cars:5,explosions:4}),
+F("transporter2","トランスポーター2",2005,"フランク・マーティン",true,{formerStateOrg:true,driver:true,cars:true,protects:true,protectsChild:true,suits:true,martialArts:true,miami:true,series:true,sequel:2,hair:false},{statham:97,regret:5,cars:5,explosions:4}),
 F("revolver","リボルバー",2005,"ジェイク・グリーン",true,{crime:true,revenge:true,prison:true,heist:true,suits:true,hair:false},{statham:72,regret:4}),
 F("london","London",2005,"ベイトマン",false,{crime:true,romance:true,ensemble:true,hair:false},{statham:42,regret:2}),
 F("chaos","カオス",2005,"クエンティン・コナーズ",true,{policeSide:true,heist:true,twist:true,partner:true,hair:false},{statham:74,regret:4}),
@@ -21,7 +21,7 @@ F("crank","アドレナリン",2006,"シェヴ・チェリオス",true,{assassin
 F("war","ローグ アサシン",2007,"ジャック・クロフォード",true,{policeSide:true,revenge:true,assassin:true,martialArts:true,twist:true,jetLi:true,hair:false},{statham:84,regret:5}),
 F("bankjob","バンク・ジョブ",2008,"テリー・レザー",true,{crime:true,heist:true,ensemble:true,basedTrue:true,london:true,hair:false},{statham:78,regret:3}),
 F("deathrace","デス・レース",2008,"ジェンセン・エイムズ",true,{prison:true,cars:true,driver:true,future:true,protects:true,revenge:true,hair:false},{statham:91,regret:5,cars:5,explosions:5}),
-F("transporter3","トランスポーター3 アンリミテッド",2008,"フランク・マーティン",true,{driver:true,cars:true,protects:true,protectsWoman:true,suits:true,france:true,series:true,sequel:3,hair:false},{statham:94,regret:5,cars:5}),
+F("transporter3","トランスポーター3 アンリミテッド",2008,"フランク・マーティン",true,{formerStateOrg:true,driver:true,cars:true,protects:true,protectsWoman:true,suits:true,france:true,series:true,sequel:3,hair:false},{statham:94,regret:5,cars:5}),
 F("crank2","アドレナリン：ハイ・ボルテージ",2009,"シェヴ・チェリオス",true,{assassin:true,criminal:true,revenge:true,heart:true,losAngeles:true,comic:true,series:true,sequel:2,hair:false},{statham:100,regret:5,explosions:5}),
 F("13","ロシアン・ルーレット",2010,"ジャスパー",false,{crime:true,ensemble:true,gambling:true,shortRole:true,hair:false},{statham:52,regret:3}),
 F("expendables","エクスペンダブルズ",2010,"リー・クリスマス",false,{specialForces:true,mercenary:true,ensemble:true,actionStars:true,protects:true,series:true,hair:false},{statham:88,regret:5,explosions:5}),
@@ -34,7 +34,7 @@ F("exp2","エクスペンダブルズ2",2012,"リー・クリスマス",false,{s
 F("parker","PARKER／パーカー",2013,"パーカー",true,{criminal:true,heist:true,revenge:true,suits:true,florida:true,hair:false},{statham:89,regret:5}),
 F("redemption","ハミングバード",2013,"ジョゼフ・スミス",true,{formerSpecialForces:true,quietLife:true,crime:true,revenge:true,london:true,hair:false},{statham:87,regret:5}),
 F("homefront","バトルフロント",2013,"フィル・ブローカー",true,{formerSpecialForces:U,formerAgent:true,formerPolice:true,quietLife:true,protects:true,protectsGirl:true,drugCrime:true,rural:true,hair:false},{statham:98,regret:5,explosions:4,note:"元DEA潜入捜査官。娘との静かな暮らしを壊した敵が、タイトルどおりの戦線を目撃します。"}),
-F("fast6","ワイルド・スピード EURO MISSION",2013,"デッカード・ショウ",false,{cameo:true,shortRole:true,villain:true,cars:true,series:true,sequel:6,hair:false},{statham:31,regret:3,cars:3}),
+F("fast6","ワイルド・スピード EURO MISSION",2013,"デッカード・ショウ",false,{formerStateOrg:true,cameo:true,shortRole:true,villain:true,cars:true,series:true,sequel:6,hair:false},{statham:31,regret:3,cars:3}),
 F("exp3","エクスペンダブルズ3 ワールドミッション",2014,"リー・クリスマス",false,{specialForces:true,mercenary:true,ensemble:true,actionStars:true,series:true,sequel:3,hair:false},{statham:88,regret:5,explosions:5}),
 F("wildcard","ワイルドカード",2015,"ニック・ワイルド",true,{formerMilitary:true,bodyguard:true,gambling:true,lasVegas:true,protects:true,hair:false},{statham:85,regret:5}),
 F("spy","SPY／スパイ",2015,"リック・フォード",false,{agent:true,comic:true,ensemble:true,actionStars:false,hair:false},{statham:70,regret:3,note:"本人は大真面目。それゆえ最強におかしい自己申告型ステイサム。"}),
@@ -44,10 +44,10 @@ F("fate","ワイルド・スピード ICE BREAK",2017,"デッカード・ショ�
 F("meg","MEG ザ・モンスター",2018,"ジョナス・テイラー",true,{formerMilitary:false,rescueDiver:true,giantCreature:true,shark:true,protects:true,protectsGirl:true,sea:true,series:true,hair:false},{statham:94,regret:5,explosions:3,note:"ついに人類では足りず、巨大ザメが後悔する番になりました。"}),
 F("hobbs","ワイルド・スピード／スーパーコンボ",2019,"デッカード・ショウ",true,{formerSpecialForces:true,agent:true,cars:true,partner:true,actionStars:true,protects:true,series:true,hair:false},{statham:93,regret:5,cars:5,explosions:5}),
 F("wrath","キャッシュトラック",2021,"パトリック・ヒル",true,{heist:true,revenge:true,crime:true,quietMan:true,twist:true,losAngeles:true,hair:false},{statham:97,regret:5,explosions:4}),
-F("f9","ワイルド・スピード／ジェットブレイク",2021,"デッカード・ショウ",false,{cameo:true,shortRole:true,cars:true,series:true,sequel:9,hair:false},{statham:27,regret:2,cars:2}),
+F("f9","ワイルド・スピード／ジェットブレイク",2021,"デッカード・ショウ",false,{formerStateOrg:true,cameo:true,shortRole:true,cars:true,series:true,sequel:9,hair:false},{statham:27,regret:2,cars:2}),
 F("fortune","オペレーション・フォーチュン",2023,"オーソン・フォーチュン",true,{agent:true,suits:true,comic:true,ensemble:true,international:true,hair:false},{statham:88,regret:4}),
 F("meg2","MEG ザ・モンスターズ2",2023,"ジョナス・テイラー",true,{rescueDiver:true,giantCreature:true,shark:true,protects:true,protectsGirl:true,sea:true,series:true,sequel:2,hair:false},{statham:96,regret:5,explosions:5}),
-F("fastx","ワイルド・スピード／ファイヤーブースト",2023,"デッカード・ショウ",false,{shortRole:true,cars:true,ensemble:true,series:true,sequel:10,hair:false},{statham:42,regret:3,cars:3}),
+F("fastx","ワイルド・スピード／ファイヤーブースト",2023,"デッカード・ショウ",false,{formerStateOrg:true,shortRole:true,cars:true,ensemble:true,series:true,sequel:10,hair:false},{statham:42,regret:3,cars:3}),
 F("exp4","エクスペンダブルズ ニューブラッド",2023,"リー・クリスマス",true,{specialForces:true,mercenary:true,ensemble:true,actionStars:true,revenge:true,series:true,sequel:4,hair:false},{statham:94,regret:5,explosions:5}),
 F("beekeeper","ビーキーパー",2024,"アダム・クレイ",true,{formerAgent:true,quietLife:true,revenge:true,beekeeper:true,protects:true,rural:true,hair:false},{statham:100,regret:5,explosions:4,note:"養蜂と国家機密を同じ強度で扱う、純正ステイサムの結晶。"}),
 F("workingman","ワーキングマン",2025,"レヴォン・ケイド",true,{formerSpecialForces:true,quietLife:true,protects:true,protectsGirl:true,rescue:true,construction:true,hair:false},{statham:99,regret:5,explosions:4,note:"建設現場の現場監督は、元特殊部隊。敵の安全管理だけが完全に手遅れです。"}),
@@ -55,6 +55,6 @@ F("shelter","シェルター",2026,"メイソン",true,{formerSpecialForces:true
 ];
 
 const QUESTIONS=[
-{id:"formerSpecialForces",text:"ステイサムは元特殊工作員ですか？",fixed:true,fun:10},
+{id:"formerStateOrg",text:"ステイサムは元・国家組織の人間ですか？",fixed:true,fun:10},
 {id:"protects",text:"ステイサムは誰かを守りますか？",fun:9},{id:"protectsGirl",text:"守る相手は少女ですか？",fun:10},{id:"assassin",text:"ステイサムは殺し屋ですか？",fun:9},{id:"revenge",text:"復讐が主目的ですか？",fun:9},{id:"quietLife",text:"静かに暮らそうとしていたのに事件に巻き込まれますか？",fun:10},{id:"cars",text:"車の運転がかなり重要ですか？",fun:9},{id:"suits",text:"ステイサムはスーツをよく着ていますか？",fun:8},{id:"giantCreature",text:"人類ではなく巨大生物を殴る映画ですか？",fun:10},{id:"shark",text:"サメが出てきますか？",fun:10},{id:"prison",text:"刑務所が重要な舞台ですか？",fun:8},{id:"heist",text:"強盗計画が物語の中心ですか？",fun:8},{id:"criminal",text:"ステイサムは犯罪者側ですか？",fun:8},{id:"policeSide",text:"ステイサムは警察側ですか？",fun:7},{id:"ensemble",text:"ハゲ以外にも主役級の強い人が何人も出ますか？",fun:10},{id:"actionStars",text:"ステイサム以外にも有名アクション俳優が複数出ますか？",fun:9},{id:"beekeeper",text:"養蜂要素がありますか？",fun:10},{id:"heart",text:"心臓を止めると死にますか？（いつも以上に）",fun:10},{id:"lead",text:"ステイサムが主役ですか？",field:"lead",fun:7},{id:"shortRole",text:"ステイサムの出演時間はかなり短いですか？",fun:8},{id:"cameo",text:"ほぼカメオ出演ですか？",fun:7},{id:"comic",text:"かなり笑える映画ですか？",fun:6},{id:"voice",text:"ステイサムは声だけの出演ですか？",fun:8},{id:"villain",text:"ステイサムは敵役として登場しますか？",fun:8},{id:"series",text:"シリーズ作品の一作ですか？",fun:5},{id:"sequel",text:"シリーズの第2作ですか？",value:2,fun:4},{id:"sea",text:"海が重要な舞台ですか？",fun:7},{id:"island",text:"孤島で静かに暮らしていますか？",fun:10},{id:"agent",text:"スパイまたは諜報員として働きますか？",fun:7},{id:"mercenary",text:"傭兵チームの一員ですか？",fun:8},{id:"future",text:"SF的な未来世界が舞台ですか？",fun:6},{id:"space",text:"舞台は地球を離れた火星ですか？",fun:8},{id:"boxing",text:"ボクシングが話の中心にありますか？",fun:5},{id:"gambling",text:"危険な賭けが重要ですか？",fun:6},{id:"construction",text:"ステイサムは建設現場で働いていますか？",fun:9},{id:"scotland",text:"舞台はスコットランドですか？",fun:8},{id:"driver",text:"運び屋またはプロのドライバーですか？",fun:9},{id:"rescueDiver",text:"ステイサムは海洋レスキューの専門家ですか？",fun:8},{id:"hair",text:"ステイサムに髪がありますか？",fun:10}
 ];
