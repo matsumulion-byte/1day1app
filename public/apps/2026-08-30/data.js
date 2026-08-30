@@ -33,7 +33,7 @@ F("safe","SAFE／セイフ",2012,"ルーク・ライト",true,{formerSpecialForc
 F("exp2","エクスペンダブルズ2",2012,"リー・クリスマス",false,{specialForces:true,mercenary:true,ensemble:true,actionStars:true,revenge:true,series:true,sequel:2,hair:false},{statham:90,regret:5,explosions:5}),
 F("parker","PARKER／パーカー",2013,"パーカー",true,{criminal:true,heist:true,revenge:true,suits:true,florida:true,hair:false},{statham:89,regret:5}),
 F("redemption","ハミングバード",2013,"ジョゼフ・スミス",true,{formerSpecialForces:true,quietLife:true,crime:true,revenge:true,london:true,hair:false},{statham:87,regret:5}),
-F("homefront","バトルフロント",2013,"フィル・ブローカー",true,{formerAgent:true,formerPolice:true,quietLife:true,protects:true,protectsGirl:true,drugCrime:true,rural:true,hair:false},{statham:98,regret:5,explosions:4}),
+F("homefront","バトルフロント",2013,"フィル・ブローカー",true,{formerSpecialForces:U,formerAgent:true,formerPolice:true,quietLife:true,protects:true,protectsGirl:true,drugCrime:true,rural:true,hair:false},{statham:98,regret:5,explosions:4,note:"元DEA潜入捜査官。娘との静かな暮らしを壊した敵が、タイトルどおりの戦線を目撃します。"}),
 F("fast6","ワイルド・スピード EURO MISSION",2013,"デッカード・ショウ",false,{cameo:true,shortRole:true,villain:true,cars:true,series:true,sequel:6,hair:false},{statham:31,regret:3,cars:3}),
 F("exp3","エクスペンダブルズ3 ワールドミッション",2014,"リー・クリスマス",false,{specialForces:true,mercenary:true,ensemble:true,actionStars:true,series:true,sequel:3,hair:false},{statham:88,regret:5,explosions:5}),
 F("wildcard","ワイルドカード",2015,"ニック・ワイルド",true,{formerMilitary:true,bodyguard:true,gambling:true,lasVegas:true,protects:true,hair:false},{statham:85,regret:5}),
