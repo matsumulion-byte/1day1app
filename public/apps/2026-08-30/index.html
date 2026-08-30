@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#090b0c">
+  <meta name="description" content="質問に答えるだけで、思い浮かべたジェイソン・ステイサム出演映画を当てます。">
+  <title>ステイサム映画アキネーター</title>
+  <link rel="stylesheet" href="/apps/2026-08-30/styles.css">
+</head>
+<body>
+  <main id="app" class="app" aria-live="polite">
+    <section id="start" class="screen active">
+      <div class="release-tag"><span>NEW</span> 『シェルター』公開記念</div>
+      <div class="hero-mark" aria-hidden="true"><i></i><b>JS</b><i></i></div>
+      <p class="eyebrow">THE BALD TRUTH DETECTOR</p>
+      <h1>ステイサム映画<br><em>アキネーター</em></h1>
+      <p class="lead">あなたが思い浮かべた<br>ステイサム映画、当てます。</p>
+      <button id="start-btn" class="btn primary">ステイサム映画を思い浮かべた<span>→</span></button>
+      <p class="hint">出演作から1本、頭に思い浮かべてください</p>
+    </section>
+
+    <section id="question" class="screen">
+      <header><span id="q-count">QUESTION 01</span><button id="quit-btn" class="icon-btn" aria-label="最初に戻る">×</button></header>
+      <div class="question-wrap">
+        <div class="crosshair" aria-hidden="true"></div>
+        <h2 id="q-text"></h2>
+      </div>
+      <div class="answers">
+        <button class="btn answer yes" data-answer="true">はい</button>
+        <button class="btn answer no" data-answer="false">いいえ</button>
+        <button class="btn answer unknown" data-answer="unknown">わからない</button>
+      </div>
+    </section>
+
+    <section id="guess" class="screen">
+      <p class="eyebrow">TARGET LOCKED</p>
+      <p class="reveal-copy">あなたが思い浮かべているのは……</p>
+      <div class="guess-card">
+        <span id="guess-year"></span>
+        <h2 id="guess-title"></h2>
+        <p id="guess-role"></p>
+      </div>
+      <strong class="desune">ですね？</strong>
+      <div class="guess-actions">
+        <button id="correct-btn" class="btn primary">当たり！</button>
+        <button id="wrong-btn" class="btn secondary">違う</button>
+      </div>
+    </section>
+
+    <section id="pick" class="screen">
+      <p class="eyebrow">FINAL SUSPECTS</p>
+      <h2>この中にありますか？</h2>
+      <p class="pick-copy">最後の候補を選んでください。</p>
+      <div id="pick-list" class="pick-list"></div>
+      <button id="none-btn" class="btn secondary">この中にない</button>
+    </section>
+
+    <section id="result" class="screen">
+      <p class="eyebrow">CASE CLOSED</p>
+      <div id="result-release" class="release-tag hidden"><span>NEW</span> 公開記念ターゲット</div>
+      <p class="result-label">あなたのステイサム映画</p>
+      <h2 id="result-title"></h2>
+      <p id="result-meta"></p>
+      <div class="meter-block">
+        <div class="meter-head"><span>ステイサム度</span><strong id="statham-score"></strong></div>
+        <div class="meter"><i id="statham-bar"></i></div>
+      </div>
+      <div class="ingredients"><h3>STATHAM INGREDIENTS <span>ステイサム成分</span></h3><div id="ingredient-list"></div></div>
+      <p id="result-note" class="result-note"></p>
+      <button id="restart-btn" class="btn primary">もう一度ステイサムを思い浮かべる</button>
+    </section>
+  </main>
+  <script src="/apps/2026-08-30/data.js"></script>
+  <script src="/apps/2026-08-30/script.js"></script>
+</body>
+</html>
