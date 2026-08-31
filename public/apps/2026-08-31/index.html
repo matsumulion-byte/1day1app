@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#18344a">
+  <meta name="description" content="8月31日の夜、真っ白な夏休みの絵日記を12日分でっちあげるミニゲーム。">
+  <title>夏休みの絵日記捏造メーカー</title>
+  <link rel="stylesheet" href="/apps/2026-08-31/styles.css">
+</head>
+<body>
+  <main id="app" class="app">
+    <section id="opening" class="screen opening" aria-labelledby="title">
+      <div class="clock" aria-label="午後11時42分"><span>8/31</span><strong>11:42</strong></div>
+      <p class="opening-line">8月31日。</p>
+      <h1 id="title">夏休みの絵日記が、<br><em>真っ白だ。</em></h1>
+      <p class="decision" id="decision">……捏造するしかない。</p>
+      <button id="startButton" class="primary opening-button" type="button">絵日記を捏造する <span>✎</span></button>
+      <div class="stationery" aria-hidden="true"><i class="pencil"></i><i class="eraser"></i></div>
+      <p class="sound-note">音は出ません　心臓の音だけです</p>
+    </section>
+
+    <section id="diaryScreen" class="screen diary-screen" hidden>
+      <header class="game-header">
+        <div><span class="mini-label">夏休みの宿題</span><h2>絵日記捏造中</h2></div>
+        <div class="progress"><span>捏造済み</span><strong id="progressValue">0 / 12日</strong></div>
+      </header>
+      <div class="progress-track" aria-hidden="true"><i id="progressBar"></i></div>
+
+      <article id="diary" class="diary" aria-live="polite">
+        <div class="binding" aria-hidden="true"></div>
+        <section class="picture-area">
+          <div class="picture-label">え</div>
+          <canvas id="drawing" width="680" height="430" aria-label="日記の出来事を描いた絵"></canvas>
+          <p id="emptyPicture" class="empty-message">ここに えを かきましょう</p>
+        </section>
+        <section class="writing-area">
+          <div class="meta-row">
+            <p><span id="date">8月　日</span><small>（　）</small></p>
+            <p class="weather-box">てんき　<span id="weather">　</span></p>
+          </div>
+          <p id="diaryText" class="diary-text">きょうのできごとを<br>かきましょう。</p>
+          <span class="teacher-stamp" id="teacherStamp" aria-hidden="true">見た</span>
+        </section>
+      </article>
+
+      <div class="action-area">
+        <p id="pencilStatus" class="pencil-status">まずは1日分、思い出すことにする。</p>
+        <button id="forgeButton" class="primary forge-button" type="button">この日を捏造する <span>✎</span></button>
+        <button id="submitButton" class="primary submit-button" type="button" hidden>先生に提出する <span>→</span></button>
+        <button id="pagesButton" class="text-button" type="button" hidden>捏造したページを見る</button>
+      </div>
+    </section>
+
+    <section id="resultScreen" class="screen result-screen" hidden>
+      <div id="grading" class="grading">
+        <p class="red-pencil">先生が赤ペンを持ちました。</p>
+        <div class="teacher-face" aria-hidden="true"><i></i><i></i><b></b></div>
+        <p id="gradingDots" class="grading-dots">…………。</p>
+      </div>
+      <div id="resultCard" class="result-card" hidden>
+        <p class="report-title">夏休みの絵日記　採点結果</p>
+        <div id="resultStamp" class="result-stamp">要確認</div>
+        <p id="resultLabel" class="result-label">先生は気づいている</p>
+        <p id="teacherComment" class="teacher-comment">「あとで少しお話しましょう。」</p>
+        <div class="score"><span>捏造度</span><strong id="scoreValue">0<small>%</small></strong></div>
+        <div class="evidence"><span>先生が見つけた怪しい点</span><p id="evidenceText"></p></div>
+        <p class="completed">12日分の宿題を、8月31日に完成させました。</p>
+        <button id="shareButton" class="primary share-button" type="button">結果を共有する</button>
+        <button id="retryButton" class="text-button" type="button">もう一度、夏休みを捏造する</button>
+      </div>
+    </section>
+
+    <dialog id="pagesDialog" class="pages-dialog">
+      <div class="dialog-head"><strong>捏造の記録</strong><button id="closePages" type="button" aria-label="閉じる">×</button></div>
+      <ol id="pagesList"></ol>
+    </dialog>
+  </main>
+  <script src="/apps/2026-08-31/script.js"></script>
+</body>
+</html>
