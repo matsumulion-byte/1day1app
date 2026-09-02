@@ -11,6 +11,8 @@ git -C /Users/matsumurahironori/1day1app remote get-url origin
 
 Proceed only when the path is `/Users/matsumurahironori/1day1app` and the remote is `git@github.com:matsumulion-byte/1day1app.git`.
 
+Immediately after this preflight, read this canonical repository's `AGENTS.md` in full before creating or editing files. Instructions inherited from another working directory are not a substitute for reading the canonical repository instructions. In particular, do not begin daily-app implementation until the asset-path and completion-check sections below have been reviewed for the current task.
+
 Create daily apps under:
 
 ```text
