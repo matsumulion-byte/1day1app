@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#bd0711">
+  <meta name="description" content="100万円ずつ年末ジャンボを買い続ける、9月2日・宝くじの日の確率シミュレーター。">
+  <title>宝くじシミュレーター</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="festival-lights" aria-hidden="true"></div>
+  <main class="app-shell">
+    <header class="hero">
+      <div class="date-ribbon"><span>9.2</span> 宝くじの日</div>
+      <p class="eyebrow">夢はでっかく、赤字はもっとでっかく。</p>
+      <h1>宝くじ<br><span>シミュレーター</span></h1>
+      <p class="subtitle">年末ジャンボに100万円ずつ突っ込み続けてみよう</p>
+      <div class="legal-note">※実際の宝くじ購入ではない確率シミュレーションです</div>
+    </header>
+
+    <section class="control-card" aria-labelledby="method-title">
+      <div class="control-heading">
+        <span id="method-title">買い方を選ぶ</span>
+        <button class="info-button" id="infoButton" aria-label="抽選仕様を見る">?</button>
+      </div>
+      <div class="segments" role="radiogroup" aria-label="購入方法">
+        <button class="segment active" data-method="sequence" role="radio" aria-checked="true">
+          <b>連番</b><small>10億円の夢</small>
+        </button>
+        <button class="segment" data-method="random" role="radio" aria-checked="false">
+          <b>バラ</b><small>番号を分散</small>
+        </button>
+      </div>
+    </section>
+
+    <section class="balance-card" aria-label="累計結果">
+      <div class="balance-label">累計収支</div>
+      <div class="balance-value negative" id="totalBalance">±0円</div>
+      <div class="balance-meter"><span id="recoveryBar"></span></div>
+      <div class="stat-grid">
+        <div><span>累計投入額</span><strong id="totalInvested">0円</strong></div>
+        <div><span>累計当選額</span><strong id="totalWon">0円</strong></div>
+        <div><span>回収率</span><strong id="recoveryRate">0.00%</strong></div>
+        <div><span>購入枚数</span><strong id="totalTickets">0枚</strong></div>
+      </div>
+      <div class="micro-stats">
+        <span>投入 <b id="playCount">0</b>回</span>
+        <span>残金 <b id="cashBalance">0円</b></span>
+      </div>
+    </section>
+
+    <section class="action-zone">
+      <div class="stamp" aria-hidden="true">一攫<br>千金</div>
+      <button class="invest-button" id="investButton">
+        <span class="button-kicker">年末ジャンボを</span>
+        <strong>100万円<br class="mobile-break">突っ込む</strong>
+        <span class="button-shine"></span>
+      </button>
+      <p class="button-note">1枚300円・残金は次回へ繰り越し</p>
+    </section>
+
+    <section class="result-card hidden" id="latestResult" aria-live="polite">
+      <div class="section-title"><span>今回の結果</span><em id="latestMethod">連番</em></div>
+      <div class="latest-main">
+        <div><span>当選金額</span><strong id="latestWon">0円</strong></div>
+        <div><span>今回の収支</span><strong id="latestBalance">0円</strong></div>
+      </div>
+      <div class="purchase-summary">
+        <span>購入枚数 <b id="latestTickets">0枚</b></span>
+        <span>購入金額 <b id="latestSpent">0円</b></span>
+      </div>
+      <div class="breakdown" id="breakdown"></div>
+    </section>
+
+    <section class="records-card">
+      <div class="section-title"><span>記録</span><em>RECORDS</em></div>
+      <div class="record-grid">
+        <div><span>最高当選額</span><strong id="recordWin">0円</strong></div>
+        <div><span>最大プラス回</span><strong id="recordPlus">0円</strong></div>
+        <div><span>最大マイナス回</span><strong id="recordMinus">0円</strong></div>
+        <div><span>累計最高プラス</span><strong id="recordTotalPlus">0円</strong></div>
+        <div><span>累計最大赤字</span><strong id="recordTotalMinus">0円</strong></div>
+      </div>
+    </section>
+
+    <section class="history-section">
+      <div class="section-title"><span>直近の投入</span><em>LAST 10</em></div>
+      <div id="history" class="history-list"><p class="empty">まだ100万円は溶けていません。</p></div>
+    </section>
+
+    <footer>
+      <button id="resetButton" class="reset-button">最初からやり直す</button>
+      <p>2025年 年末ジャンボ（第1082回）の発売総数・当選本数をモデルにしています。</p>
+    </footer>
+  </main>
+
+  <div class="modal hidden" id="infoModal" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+    <div class="modal-panel">
+      <button class="modal-close" data-close-modal aria-label="閉じる">×</button>
+      <p class="eyebrow">SIMULATION RULES</p>
+      <h2 id="infoTitle">これは「夢」の現実。</h2>
+      <p>2025年の年末ジャンボ、全4億6,000万枚の当選本数から各賞の確率を計算しています。理論期待値は1枚約150円、回収率は約50%です。</p>
+      <div class="odds-list">
+        <span>1等 7億円 <b>23本</b></span><span>前後賞 各1.5億円 <b>46本</b></span>
+        <span>2等 1億円 <b>23本</b></span><span>3等 1,000万円 <b>92本</b></span>
+        <span>4等 100万円 <b>920本</b></span><span>5〜7等 <b>計5,981万本</b></span>
+      </div>
+      <p class="tiny">連番は10枚の連続番号を再現し、1等の位置によって前後賞が0〜2本つきます。バラは末尾0〜9を揃えつつ番号を分散します。</p>
+    </div>
+  </div>
+
+  <div class="jackpot hidden" id="jackpot" role="dialog" aria-modal="true" aria-live="assertive">
+    <canvas id="confetti"></canvas>
+    <div class="rays"></div>
+    <div class="jackpot-content">
+      <p id="jackpotRank">4等</p><strong id="jackpotAmount">100万円！</strong>
+      <span>タップでスキップ</span>
+    </div>
+  </div>
+  <script src="./script.js"></script>
+</body>
+</html>
