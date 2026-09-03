@@ -26,6 +26,14 @@
   const gameOverScreen = document.getElementById('gameOverScreen');
   const bgm = document.getElementById('bgm');
   bgm.src = '/assets/audio/bgm.mp3';
+  const voiceClips = Array.from({ length: 5 }, (_, index) => {
+    const chain = index + 1;
+    const clip = new Audio(`/assets/audio/chain_${chain}.m4a`);
+    clip.preload = 'auto';
+    clip.volume = 0.9;
+    clip.load();
+    return clip;
+  });
 
   const state = {
     board: [], piece: null, queue: [], particles: [], ripples: [],
@@ -263,11 +271,9 @@
   function playVoice(chain) {
     if (!state.voiceOn) return;
     if (state.voice) { state.voice.pause(); state.voice.currentTime = 0; }
-    const voicePath = chain <= 5
-      ? `/assets/audio/chain_${chain}.m4a`
-      : '/assets/audio/chain_6.mp3';
-    state.voice = new Audio(voicePath);
+    state.voice = chain <= 5 ? voiceClips[chain - 1] : new Audio('/assets/audio/chain_6.mp3');
     state.voice.volume = 0.9;
+    state.voice.currentTime = 0;
     state.voice.play().catch(() => {});
   }
 
