@@ -132,7 +132,10 @@
     });
     state.piece = null;
     if (overflow) { endGame(); return; }
-    await wait(260);
+    // Once the pair locks, each gummy becomes independent. This lets one half
+    // of a horizontal pair drop into a gap instead of floating beside its mate.
+    const dropped = applyGravity();
+    await wait(dropped ? 380 : 260);
     await resolveBoard();
     if (state.phase === 'gameover') return;
     state.phase = 'falling';
@@ -173,7 +176,7 @@
       const cells = groups.flat();
       const started = performance.now();
       cells.forEach(({ x, y }) => state.board[y][x].clearingAt = started);
-      showChain(chain);
+      if (chain >= 2) showChain(chain);
       playVoice(chain);
       state.score += cells.length * 100 * chain * chain + Math.max(0, groups.length - 1) * 500 * chain;
       state.maxChain = Math.max(state.maxChain, chain);
@@ -196,19 +199,25 @@
 
   function applyGravity() {
     const now = performance.now();
+    let moved = false;
     for (let x = 0; x < COLS; x++) {
       let target = ROWS - 1;
       for (let y = ROWS - 1; y >= 0; y--) {
         if (!state.board[y][x]) continue;
         const gum = state.board[y][x];
         if (target !== y) {
+          moved = true;
           state.board[target][x] = gum;
           state.board[y][x] = null;
-          gum.landedAt = now + (target - y) * 24;
+          gum.fallFrom = y;
+          gum.fallStarted = now;
+          gum.fallDuration = Math.min(300, 80 + (target - y) * 45);
+          gum.landedAt = now + gum.fallDuration;
         }
         target--;
       }
     }
+    return moved;
   }
 
   function showChain(chain) {
@@ -254,7 +263,10 @@
   function playVoice(chain) {
     if (!state.voiceOn) return;
     if (state.voice) { state.voice.pause(); state.voice.currentTime = 0; }
-    state.voice = new Audio(`/assets/audio/chain_${Math.min(chain, 6)}.mp3`);
+    const voicePath = chain <= 5
+      ? `/assets/audio/chain_${chain}.m4a`
+      : '/assets/audio/chain_6.mp3';
+    state.voice = new Audio(voicePath);
     state.voice.volume = 0.9;
     state.voice.play().catch(() => {});
   }
@@ -318,6 +330,34 @@
     context.restore();
   }
 
+  function drawConnection(context, x1, y1, x2, y2, size, colorIndex, alpha = 1) {
+    const color = COLORS[colorIndex];
+    const horizontal = y1 === y2;
+    const width = horizontal ? Math.abs(x2 - x1) + size * .14 : size * .48;
+    const height = horizontal ? size * .48 : Math.abs(y2 - y1) + size * .14;
+    const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+    const gradient = context.createLinearGradient(cx - width / 2, cy - height / 2, cx + width / 2, cy + height / 2);
+    gradient.addColorStop(0, color.main);
+    gradient.addColorStop(1, color.dark);
+    context.save();
+    context.globalAlpha = .72 * alpha;
+    context.fillStyle = gradient;
+    context.beginPath();
+    const left = cx - width / 2, top = cy - height / 2, radius = Math.min(size * .2, width / 2, height / 2);
+    context.moveTo(left + radius, top);
+    context.lineTo(left + width - radius, top);
+    context.quadraticCurveTo(left + width, top, left + width, top + radius);
+    context.lineTo(left + width, top + height - radius);
+    context.quadraticCurveTo(left + width, top + height, left + width - radius, top + height);
+    context.lineTo(left + radius, top + height);
+    context.quadraticCurveTo(left, top + height, left, top + height - radius);
+    context.lineTo(left, top + radius);
+    context.quadraticCurveTo(left, top, left + radius, top);
+    context.closePath();
+    context.fill();
+    context.restore();
+  }
+
   function drawBoard(time) {
     const w = canvas.width, h = canvas.height, cell = w / COLS;
     ctx.clearRect(0, 0, w, h);
@@ -328,10 +368,30 @@
     for (let x = 1; x < COLS; x++) { ctx.beginPath(); ctx.moveTo(x * cell, 0); ctx.lineTo(x * cell, h); ctx.stroke(); }
     for (let y = 1; y < ROWS; y++) { ctx.beginPath(); ctx.moveTo(0, y * cell); ctx.lineTo(w, y * cell); ctx.stroke(); }
 
+    // Render same-color neighbors as one soft cluster. Bridges sit underneath
+    // the individual highlights, preserving the gummy volume at every cell.
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      const gum = state.board[y]?.[x];
+      if (!gum) continue;
+      if (gum.landedAt > time) continue;
+      const alpha = gum.clearingAt ? Math.max(0, 1 - Math.max(0, (time - gum.clearingAt - 480) / 140)) : 1;
+      if (x + 1 < COLS && state.board[y][x + 1]?.color === gum.color) {
+        drawConnection(ctx, (x + .5) * cell, (y + .5) * cell, (x + 1.5) * cell, (y + .5) * cell, cell, gum.color, alpha);
+      }
+      if (y + 1 < ROWS && state.board[y + 1][x]?.color === gum.color) {
+        drawConnection(ctx, (x + .5) * cell, (y + .5) * cell, (x + .5) * cell, (y + 1.5) * cell, cell, gum.color, alpha);
+      }
+    }
+
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
       const gum = state.board[y]?.[x];
       if (!gum) continue;
       let sx = 1, sy = 1, alpha = 1, rot = 0;
+      let displayY = y;
+      if (gum.fallStarted && time < gum.landedAt) {
+        const fallT = Math.max(0, Math.min(1, (time - gum.fallStarted) / gum.fallDuration));
+        displayY = gum.fallFrom + (y - gum.fallFrom) * fallT * fallT;
+      }
       const landAge = time - gum.landedAt;
       if (landAge >= 0 && landAge < 300) {
         const t = landAge / 300;
@@ -345,11 +405,15 @@
         rot = Math.sin(t * 55 + x) * .09 * Math.min(1, t * 4);
         if (t > .78) alpha = 1 - (t - .78) / .22;
       }
-      drawGummy(ctx, (x + .5) * cell, (y + .5) * cell, cell * .94, gum.color, sx, sy, alpha, rot);
+      drawGummy(ctx, (x + .5) * cell, (displayY + .5) * cell, cell * .94, gum.color, sx, sy, alpha, rot);
     }
 
     if (state.piece) {
-      pieceCells().forEach(cellData => {
+      const activeCells = pieceCells();
+      if (activeCells[0].color === activeCells[1].color && activeCells.every(cellData => cellData.y >= 0)) {
+        drawConnection(ctx, (activeCells[0].x + .5) * cell, (activeCells[0].y + .5) * cell, (activeCells[1].x + .5) * cell, (activeCells[1].y + .5) * cell, cell, activeCells[0].color);
+      }
+      activeCells.forEach(cellData => {
         if (cellData.y < 0) return;
         const bumpAge = time - state.piece.bumps[cellData.index];
         const pulse = bumpAge >= 0 && bumpAge < 160 ? Math.sin(bumpAge / 160 * Math.PI) * .09 : 0;
