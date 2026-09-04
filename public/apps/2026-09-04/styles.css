@@ -31,6 +31,7 @@ h1 { margin:0; font-family:"Shippori Mincho",serif; font-size:clamp(48px,13vw,82
 .tracking-badge { position:absolute; z-index:5; left:50%; top:74px; transform:translateX(-50%); white-space:nowrap; padding:7px 12px; color:#dedee7; background:#070813aa; border:1px solid #ffffff28; border-radius:20px; font:600 11px sans-serif; }.tracking-badge span { display:inline-block; width:7px; height:7px; margin-right:5px; border-radius:50%; background:#e1b95a; }.tracking-badge.found span { background:#70d89c; }
 .ready-panel { position:absolute; z-index:6; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center; background:rgba(4,5,15,.38); }
 .ready-panel p { max-width:440px; margin:0; padding:14px 20px; border:1px solid rgba(215,183,101,.45); background:rgba(7,8,23,.82); border-radius:4px; font-weight:700; font-size:clamp(16px,4vw,22px); }
+.performance-button { min-width:220px; margin-top:18px; }
 .countdown { height:150px; margin-top:18px; color:#ffe38f; font:900 clamp(82px,26vw,148px)/1 Georgia,serif; text-shadow:0 0 34px rgba(255,210,90,.6); }
 .game-hud { position:absolute; z-index:6; top:max(100px,13vh); left:50%; width:min(92%,620px); transform:translateX(-50%); display:flex; align-items:flex-start; justify-content:center; gap:12px; pointer-events:none; }
 .bpm-card,.time-card { border:1px solid rgba(215,183,101,.5); background:rgba(6,7,20,.75); box-shadow:0 14px 40px #0008; backdrop-filter:blur(8px); }

@@ -24,7 +24,7 @@ const $ = id => document.getElementById(id);
 const elements = {
   app: $('app'), start: $('startScreen'), stage: $('stageScreen'), result: $('resultScreen'), startButton: $('startButton'), restartButton: $('restartButton'),
   error: $('startError'), video: $('camera'), canvas: $('poseCanvas'), frame: $('cameraFrame'), badge: $('trackingBadge'), readyPanel: $('readyPanel'), readyText: $('readyText'),
-  countdown: $('countdown'), hud: $('gameHud'), bpm: $('bpmValue'), time: $('timeValue'), hint: $('conductHint'), flash: $('tempoFlash'), tempoLabel: $('tempoLabel')
+  countdown: $('countdown'), performanceButton: $('performanceButton'), hud: $('gameHud'), bpm: $('bpmValue'), time: $('timeValue'), hint: $('conductHint'), flash: $('tempoFlash'), tempoLabel: $('tempoLabel')
 };
 const ctx = elements.canvas.getContext('2d');
 let poseLandmarker = null, stream = null, audioContext = null, audioBuffer = null, audioBufferPromise = null, bufferSource = null, masterGain = null, rafId = 0, lastVideoTime = -1;
@@ -86,6 +86,7 @@ async function beginExperience() {
     elements.stage.classList.remove('hidden');
     elements.readyPanel.classList.remove('hidden');
     elements.readyText.textContent = '右腕を大きく上下に振ってください';
+    elements.performanceButton.classList.add('hidden');
     elements.countdown.textContent = '';
     elements.hud.classList.add('hidden');
     elements.hint.classList.add('hidden');
@@ -138,7 +139,10 @@ function processPose(landmarks,now,size) {
   state.lastTrackedAt=now;
   drawArm(shoulder,elbow,wrist,size);
   if (!state.detectedSince) state.detectedSince=now;
-  if (state.phase === 'ready' && now-state.detectedSince >= CONFIG.readyHoldMs) startCountdown();
+  if (state.phase === 'ready' && now-state.detectedSince >= CONFIG.readyHoldMs) {
+    elements.readyText.textContent='準備OK！ ボタンをタップしてください';
+    elements.performanceButton.classList.remove('hidden');
+  }
   detectBeat(wrist.y,now);
 }
 
@@ -154,7 +158,7 @@ function handleTrackingLost(now) {
   state.detectedSince=0;
   elements.badge.classList.remove('found');
   elements.badge.innerHTML='<span></span> 腕を探しています';
-  if (state.phase==='ready') elements.readyText.textContent='右腕を大きく上下に振ってください';
+  if (state.phase==='ready') { elements.readyText.textContent='右腕を大きく上下に振ってください'; elements.performanceButton.classList.add('hidden'); }
   if (state.phase==='playing' && now-state.lastBeatAt>CONFIG.noBeatWarningMs) elements.hint.classList.remove('hidden');
 }
 
@@ -190,21 +194,37 @@ function registerBeat(now) {
   state.lastBeatAt=now; state.beatTimes.push(now); state.beatCount++; elements.hint.classList.add('hidden');
 }
 
-async function startCountdown() {
+function startCountdown() {
   if (state.phase!=='ready') return;
-  state.phase='countdown'; elements.readyText.textContent='準備OK！';
+  audioContext.resume().catch(error=>console.warn('Audio start failed',error));
+  resetDetection();
+  state.phase='countdown'; elements.readyText.textContent='準備OK！'; elements.performanceButton.classList.add('hidden');
+  scheduleAudioAfterCountdown();
+  runCountdownVisuals();
+}
+
+async function runCountdownVisuals() {
   for (const number of [3,2,1]) { elements.countdown.textContent=number; await sleep(800); }
   elements.countdown.textContent=''; elements.readyPanel.classList.add('hidden'); startGame();
 }
 
-async function startGame() {
-  await audioContext.resume();
+function startGame() {
   const startedAt=performance.now();
-  resetDetection(); state.phase='playing'; state.gameStartedAt=startedAt; state.lastBeatAt=startedAt; state.lastTrackedAt=startedAt;
+  state.phase='playing'; state.gameStartedAt=startedAt; state.lastBeatAt=startedAt; state.lastTrackedAt=startedAt; state.audioPlaying=true; state.audioClock=startedAt;
   elements.hud.classList.remove('hidden');
+}
+
+function scheduleAudioAfterCountdown() {
+  stopAudioSource();
+  state.audioOffset=0; state.audioRate=1; state.audioPlaying=false;
   masterGain.gain.cancelScheduledValues(audioContext.currentTime);
   masterGain.gain.setValueAtTime(1,audioContext.currentTime);
-  startAudioSource(startedAt);
+  bufferSource=audioContext.createBufferSource();
+  bufferSource.buffer=audioBuffer;
+  bufferSource.playbackRate.setValueAtTime(1,audioContext.currentTime);
+  bufferSource.connect(masterGain);
+  bufferSource.onended=()=>{if(state.audioPlaying&&state.phase==='playing'&&!state.measurementPaused){state.audioOffset=audioBuffer.duration;state.audioPlaying=false;bufferSource=null;finishGame();}};
+  bufferSource.start(audioContext.currentTime+2.4,0);
 }
 
 function updateGame(now) {
@@ -318,10 +338,11 @@ function getTitle(average,stability) {
   if (average<80) return '眠れるマエストロ'; if (average<110) return '慎重派マエストロ'; if (average<140) return '正統派マエストロ'; if (average<165) return 'せっかちなマエストロ'; return '暴走するマエストロ';
 }
 
-function restart() { unlockAudioFromTap(); stopAudioSource(); resetDetection(); state.phase='ready'; elements.result.classList.add('hidden');elements.stage.classList.remove('hidden');elements.readyPanel.classList.remove('hidden');elements.readyText.textContent='右腕を大きく上下に振ってください';elements.hud.classList.add('hidden'); }
+function restart() { unlockAudioFromTap(); stopAudioSource(); resetDetection(); state.phase='ready'; elements.result.classList.add('hidden');elements.stage.classList.remove('hidden');elements.readyPanel.classList.remove('hidden');elements.readyText.textContent='右腕を大きく上下に振ってください';elements.performanceButton.classList.add('hidden');elements.hud.classList.add('hidden'); }
 
 elements.startButton.addEventListener('click',beginExperience);
 elements.restartButton.addEventListener('click',restart);
+elements.performanceButton.addEventListener('click',startCountdown);
 document.addEventListener('dblclick',event=>event.preventDefault(),{passive:false});
 document.addEventListener('gesturestart',event=>event.preventDefault(),{passive:false});
 document.addEventListener('contextmenu',event=>event.preventDefault());
