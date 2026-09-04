@@ -14,7 +14,7 @@ const CONFIG = {
   intervalSampleCount: 5,
   noBeatWarningMs: 2000,
   returnToBaseAfterMs: 2300,
-  gameDuration: 60,
+  fallbackTrackDuration: 87,
   minVisibility: 0.48,
   readyHoldMs: 700
 };
@@ -190,7 +190,8 @@ async function startGame() {
 }
 
 function updateGame(now) {
-  const elapsed=(now-state.gameStartedAt)/1000, remaining=Math.max(0,CONFIG.gameDuration-elapsed);
+  const duration=Number.isFinite(elements.bgm.duration)?elements.bgm.duration:CONFIG.fallbackTrackDuration;
+  const remaining=Math.max(0,duration-elements.bgm.currentTime);
   const remainingSeconds=Math.ceil(remaining);
   elements.time.textContent=`${String(Math.floor(remainingSeconds/60)).padStart(2,'0')}:${String(remainingSeconds%60).padStart(2,'0')}`;
   if (now-state.lastBeatAt>CONFIG.returnToBaseAfterMs) state.targetBpm += (CONFIG.baseBpm-state.targetBpm)*.015;
@@ -203,6 +204,7 @@ function updateGame(now) {
   setTempoMood(shown);
   const stopped=now-state.lastBeatAt>CONFIG.noBeatWarningMs;
   elements.hint.classList.toggle('hidden',!stopped);
+  if (remaining<.8) elements.bgm.volume=clamp(remaining/.8,0,1);
   if (remaining<=0 && !state.finalizing) finishGame();
 }
 
@@ -215,8 +217,10 @@ function setTempoMood(bpm) {
 
 async function finishGame() {
   state.finalizing=true; state.phase='finished'; elements.app.classList.remove('fast'); elements.hint.classList.add('hidden');
-  const startVolume=elements.bgm.volume;
-  for(let step=12;step>=0;step--){elements.bgm.volume=startVolume*(step/12);await sleep(55);}
+  if (!elements.bgm.ended) {
+    const startVolume=elements.bgm.volume;
+    for(let step=8;step>=0;step--){elements.bgm.volume=startVolume*(step/8);await sleep(45);}
+  }
   elements.bgm.pause(); elements.bgm.volume=1; showResults();
 }
 
@@ -239,6 +243,7 @@ function restart() { ensureAudio(); resetDetection(); state.phase='ready'; eleme
 
 elements.startButton.addEventListener('click',beginExperience);
 elements.restartButton.addEventListener('click',restart);
+elements.bgm.addEventListener('ended',()=>{ if(state.phase==='playing'&&!state.finalizing) finishGame(); });
 document.addEventListener('dblclick',event=>event.preventDefault(),{passive:false});
 document.addEventListener('gesturestart',event=>event.preventDefault(),{passive:false});
 document.addEventListener('contextmenu',event=>event.preventDefault());
