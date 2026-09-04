@@ -13,6 +13,7 @@ const CONFIG = {
   playbackSmoothing: 0.08,
   intervalSampleCount: 5,
   noBeatWarningMs: 2000,
+  trackingLostGraceMs: 500,
   returnToBaseAfterMs: 2300,
   fallbackTrackDuration: 87,
   minVisibility: 0.48,
@@ -32,7 +33,7 @@ let poseLandmarker = null, stream = null, audioContext = null, rafId = 0, lastVi
 
 const state = {
   phase:'start', wristY:null, previousY:null, direction:0, strokeTop:null, lastBeatAt:0, beatTimes:[], intervals:[], bpmSamples:[],
-  currentBpm:CONFIG.baseBpm, targetBpm:CONFIG.baseBpm, beatCount:0, detectedSince:0, gameStartedAt:0, finalizing:false, lastFrameAt:0
+  currentBpm:CONFIG.baseBpm, targetBpm:CONFIG.baseBpm, beatCount:0, detectedSince:0, lastTrackedAt:0, gameStartedAt:0, finalizing:false, measurementPaused:false, lastFrameAt:0
 };
 
 const clamp = (value,min,max) => Math.min(max,Math.max(min,value));
@@ -45,6 +46,12 @@ async function ensureAudio() {
   elements.bgm.webkitPreservesPitch = false;
 }
 
+function primeAudioFromTap() {
+  // Calling play synchronously inside the tap handler unlocks HTML audio on iOS.
+  elements.bgm.volume=0;
+  elements.bgm.play().catch(error=>console.warn('Audio unlock failed',error));
+}
+
 async function createPoseLandmarker() {
   const vision = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22-rc.20250304/wasm');
   return PoseLandmarker.createFromOptions(vision, {
@@ -54,6 +61,7 @@ async function createPoseLandmarker() {
 }
 
 async function beginExperience() {
+  primeAudioFromTap();
   elements.startButton.disabled = true;
   elements.startButton.firstChild.textContent = '準備しています… ';
   elements.error.textContent = '';
@@ -81,6 +89,9 @@ async function beginExperience() {
     rafId = requestAnimationFrame(renderLoop);
   } catch (error) {
     console.error(error);
+    elements.bgm.pause();
+    elements.bgm.currentTime=0;
+    elements.bgm.volume=1;
     elements.error.textContent = 'カメラを使用できませんでした。ブラウザの設定をご確認ください。';
   } finally {
     elements.startButton.disabled = false;
@@ -89,7 +100,7 @@ async function beginExperience() {
 }
 
 function resetDetection() {
-  Object.assign(state,{ wristY:null,previousY:null,direction:0,strokeTop:null,lastBeatAt:0,beatTimes:[],intervals:[],bpmSamples:[],currentBpm:CONFIG.baseBpm,targetBpm:CONFIG.baseBpm,beatCount:0,detectedSince:0,gameStartedAt:0,finalizing:false,lastFrameAt:performance.now() });
+  Object.assign(state,{ wristY:null,previousY:null,direction:0,strokeTop:null,lastBeatAt:0,beatTimes:[],intervals:[],bpmSamples:[],currentBpm:CONFIG.baseBpm,targetBpm:CONFIG.baseBpm,beatCount:0,detectedSince:0,lastTrackedAt:0,gameStartedAt:0,finalizing:false,measurementPaused:false,lastFrameAt:performance.now() });
 }
 
 function resizeCanvas() {
@@ -122,6 +133,7 @@ function processPose(landmarks,now,size) {
   if (!visible) { handleTrackingLost(now); return; }
   elements.badge.classList.add('found');
   elements.badge.innerHTML='<span></span> 右腕を検出中';
+  state.lastTrackedAt=now;
   drawArm(shoulder,elbow,wrist,size);
   if (!state.detectedSince) state.detectedSince=now;
   if (state.phase === 'ready' && now-state.detectedSince >= CONFIG.readyHoldMs) startCountdown();
@@ -194,6 +206,13 @@ function updateGame(now) {
   const remaining=Math.max(0,duration-elements.bgm.currentTime);
   const remainingSeconds=Math.ceil(remaining);
   elements.time.textContent=`${String(Math.floor(remainingSeconds/60)).padStart(2,'0')}:${String(remainingSeconds%60).padStart(2,'0')}`;
+  const trackingLost=now-state.lastTrackedAt>CONFIG.trackingLostGraceMs;
+  const beatLost=now-state.lastBeatAt>CONFIG.noBeatWarningMs;
+  if (trackingLost || beatLost) {
+    pauseForMissingConducting(trackingLost);
+    return;
+  }
+  resumeAfterConductingReturns();
   if (now-state.lastBeatAt>CONFIG.returnToBaseAfterMs) state.targetBpm += (CONFIG.baseBpm-state.targetBpm)*.015;
   state.currentBpm += (state.targetBpm-state.currentBpm)*CONFIG.bpmSmoothing;
   const targetRate=clamp(state.currentBpm/CONFIG.baseBpm,.5,1.5);
@@ -206,6 +225,24 @@ function updateGame(now) {
   elements.hint.classList.toggle('hidden',!stopped);
   if (remaining<.8) elements.bgm.volume=clamp(remaining/.8,0,1);
   if (remaining<=0 && !state.finalizing) finishGame();
+}
+
+function pauseForMissingConducting(trackingLost) {
+  if (!state.measurementPaused) elements.bgm.pause();
+  state.measurementPaused=true;
+  elements.bpm.textContent='0';
+  elements.tempoLabel.textContent='計測停止中';
+  elements.app.classList.remove('fast');
+  elements.hint.textContent=trackingLost?'右腕をカメラに映して！':'もっと振って！';
+  elements.hint.classList.remove('hidden');
+}
+
+function resumeAfterConductingReturns() {
+  if (!state.measurementPaused) return;
+  state.measurementPaused=false;
+  elements.hint.textContent='右腕を大きく上下に！';
+  elements.hint.classList.add('hidden');
+  elements.bgm.play().catch(error=>console.warn('Audio resume failed',error));
 }
 
 function setTempoMood(bpm) {
@@ -247,5 +284,5 @@ elements.bgm.addEventListener('ended',()=>{ if(state.phase==='playing'&&!state.f
 document.addEventListener('dblclick',event=>event.preventDefault(),{passive:false});
 document.addEventListener('gesturestart',event=>event.preventDefault(),{passive:false});
 document.addEventListener('contextmenu',event=>event.preventDefault());
-document.addEventListener('visibilitychange',()=>{ if(document.hidden && state.phase==='playing') elements.bgm.pause(); else if(!document.hidden && state.phase==='playing') elements.bgm.play().catch(()=>{}); });
+document.addEventListener('visibilitychange',()=>{ if(document.hidden && state.phase==='playing') elements.bgm.pause(); else if(!document.hidden && state.phase==='playing'&&!state.measurementPaused) elements.bgm.play().catch(()=>{}); });
 window.addEventListener('beforeunload',()=>stream?.getTracks().forEach(track=>track.stop()));
