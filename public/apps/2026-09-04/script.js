@@ -29,7 +29,7 @@ const elements = {
 const ctx = elements.canvas.getContext('2d');
 // Safari-compatible AAC version of the supplied original recording.
 elements.bgm.src = '/assets/conductor.m4a';
-let poseLandmarker = null, stream = null, audioContext = null, rafId = 0, lastVideoTime = -1;
+let poseLandmarker = null, stream = null, audioContext = null, mediaSource = null, masterGain = null, rafId = 0, lastVideoTime = -1;
 
 const state = {
   phase:'start', wristY:null, previousY:null, direction:0, strokeTop:null, lastBeatAt:0, beatTimes:[], intervals:[], bpmSamples:[],
@@ -41,14 +41,26 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve,ms));
 
 async function ensureAudio() {
   audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+  if (!mediaSource) {
+    mediaSource=audioContext.createMediaElementSource(elements.bgm);
+    masterGain=audioContext.createGain();
+    mediaSource.connect(masterGain).connect(audioContext.destination);
+  }
   if (audioContext.state === 'suspended') await audioContext.resume();
   elements.bgm.preservesPitch = false;
   elements.bgm.webkitPreservesPitch = false;
 }
 
 function primeAudioFromTap() {
+  audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+  if (!mediaSource) {
+    mediaSource=audioContext.createMediaElementSource(elements.bgm);
+    masterGain=audioContext.createGain();
+    mediaSource.connect(masterGain).connect(audioContext.destination);
+  }
+  masterGain.gain.setValueAtTime(0,audioContext.currentTime);
+  audioContext.resume().catch(error=>console.warn('Audio context unlock failed',error));
   // Calling play synchronously inside the tap handler unlocks HTML audio on iOS.
-  elements.bgm.volume=0;
   elements.bgm.play().catch(error=>console.warn('Audio unlock failed',error));
 }
 
@@ -91,7 +103,7 @@ async function beginExperience() {
     console.error(error);
     elements.bgm.pause();
     elements.bgm.currentTime=0;
-    elements.bgm.volume=1;
+    if (masterGain) masterGain.gain.setValueAtTime(1,audioContext.currentTime);
     elements.error.textContent = 'カメラを使用できませんでした。ブラウザの設定をご確認ください。';
   } finally {
     elements.startButton.disabled = false;
@@ -196,8 +208,12 @@ async function startCountdown() {
 }
 
 async function startGame() {
-  await ensureAudio(); resetDetection(); state.phase='playing'; state.gameStartedAt=performance.now(); state.lastBeatAt=state.gameStartedAt;
-  elements.hud.classList.remove('hidden'); elements.bgm.currentTime=0; elements.bgm.volume=1; elements.bgm.playbackRate=1;
+  await ensureAudio();
+  const startedAt=performance.now();
+  resetDetection(); state.phase='playing'; state.gameStartedAt=startedAt; state.lastBeatAt=startedAt; state.lastTrackedAt=startedAt;
+  elements.hud.classList.remove('hidden'); elements.bgm.currentTime=0; elements.bgm.playbackRate=1;
+  masterGain.gain.cancelScheduledValues(audioContext.currentTime);
+  masterGain.gain.setValueAtTime(1,audioContext.currentTime);
   elements.bgm.play().catch(()=>{});
 }
 
@@ -223,7 +239,7 @@ function updateGame(now) {
   setTempoMood(shown);
   const stopped=now-state.lastBeatAt>CONFIG.noBeatWarningMs;
   elements.hint.classList.toggle('hidden',!stopped);
-  if (remaining<.8) elements.bgm.volume=clamp(remaining/.8,0,1);
+  if (remaining<.8 && masterGain) masterGain.gain.setValueAtTime(clamp(remaining/.8,0,1),audioContext.currentTime);
   if (remaining<=0 && !state.finalizing) finishGame();
 }
 
@@ -255,10 +271,12 @@ function setTempoMood(bpm) {
 async function finishGame() {
   state.finalizing=true; state.phase='finished'; elements.app.classList.remove('fast'); elements.hint.classList.add('hidden');
   if (!elements.bgm.ended) {
-    const startVolume=elements.bgm.volume;
-    for(let step=8;step>=0;step--){elements.bgm.volume=startVolume*(step/8);await sleep(45);}
+    const startGain=masterGain?.gain.value ?? 1;
+    for(let step=8;step>=0;step--){if(masterGain)masterGain.gain.setValueAtTime(startGain*(step/8),audioContext.currentTime);await sleep(45);}
   }
-  elements.bgm.pause(); elements.bgm.volume=1; showResults();
+  elements.bgm.pause();
+  if (masterGain) masterGain.gain.setValueAtTime(1,audioContext.currentTime);
+  showResults();
 }
 
 function showResults() {

@@ -89,6 +89,12 @@ document.addEventListener("gesturestart", (event) => event.preventDefault(), { p
 
 If a daily app uses cache-busted runtime files such as `game-vN.js`, keep the required `script.js` and the referenced runtime file synchronized.
 
+## Mobile Audio State
+
+- Do not use `HTMLMediaElement.volume = 0` to silently unlock audio on iPhone Safari; programmatic media volume is not reliable there. Route the media element through a Web Audio `GainNode`, set the gain to zero during the user-gesture unlock, and raise it only when playback should become audible.
+- When gameplay resets tracking state immediately before playback, seed the last-seen tracking timestamp from the currently confirmed pose. Never initialize it to an already-expired value that can trigger an immediate false tracking-loss pause.
+- Verify the full audible sequence on a real or emulated mobile flow: no sound before countdown, sound begins after countdown, and tracking-loss pause only occurs after the configured grace period.
+
 ## Completion Checks
 
 Before saying a daily app is done, run:
