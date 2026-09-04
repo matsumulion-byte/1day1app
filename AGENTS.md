@@ -91,9 +91,9 @@ If a daily app uses cache-busted runtime files such as `game-vN.js`, keep the re
 
 ## Mobile Audio State
 
-- Do not use `HTMLMediaElement.volume = 0` to silently unlock audio on iPhone Safari; programmatic media volume is not reliable there. Route the media element through a Web Audio `GainNode`, set the gain to zero during the user-gesture unlock, and raise it only when playback should become audible.
+- Do not start an `HTMLMediaElement` before the intended audible start merely to unlock it; even with a Web Audio `GainNode`, routing and mute timing can vary by mobile browser. For delayed automatic starts, resume an `AudioContext` on the user gesture, decode the file without playing it, and create an `AudioBufferSourceNode` only after the countdown completes.
 - When gameplay resets tracking state immediately before playback, seed the last-seen tracking timestamp from the currently confirmed pose. Never initialize it to an already-expired value that can trigger an immediate false tracking-loss pause.
-- Verify the full audible sequence on a real or emulated mobile flow: no sound before countdown, sound begins after countdown, and tracking-loss pause only occurs after the configured grace period.
+- Verify the full audible sequence on a real mobile device whenever audio timing is corrected: the source node must not exist before countdown completion, sound begins after countdown, and tracking-loss pause only occurs after the configured grace period.
 
 ## Completion Checks
 

@@ -24,44 +24,36 @@ const $ = id => document.getElementById(id);
 const elements = {
   app: $('app'), start: $('startScreen'), stage: $('stageScreen'), result: $('resultScreen'), startButton: $('startButton'), restartButton: $('restartButton'),
   error: $('startError'), video: $('camera'), canvas: $('poseCanvas'), frame: $('cameraFrame'), badge: $('trackingBadge'), readyPanel: $('readyPanel'), readyText: $('readyText'),
-  countdown: $('countdown'), hud: $('gameHud'), bpm: $('bpmValue'), time: $('timeValue'), hint: $('conductHint'), flash: $('tempoFlash'), tempoLabel: $('tempoLabel'), bgm: $('bgm')
+  countdown: $('countdown'), hud: $('gameHud'), bpm: $('bpmValue'), time: $('timeValue'), hint: $('conductHint'), flash: $('tempoFlash'), tempoLabel: $('tempoLabel')
 };
 const ctx = elements.canvas.getContext('2d');
-// Safari-compatible AAC version of the supplied original recording.
-elements.bgm.src = '/assets/conductor.m4a';
-let poseLandmarker = null, stream = null, audioContext = null, mediaSource = null, masterGain = null, rafId = 0, lastVideoTime = -1;
+let poseLandmarker = null, stream = null, audioContext = null, audioBuffer = null, audioBufferPromise = null, bufferSource = null, masterGain = null, rafId = 0, lastVideoTime = -1;
 
 const state = {
   phase:'start', wristY:null, previousY:null, direction:0, strokeTop:null, lastBeatAt:0, beatTimes:[], intervals:[], bpmSamples:[],
-  currentBpm:CONFIG.baseBpm, targetBpm:CONFIG.baseBpm, beatCount:0, detectedSince:0, lastTrackedAt:0, gameStartedAt:0, finalizing:false, measurementPaused:false, lastFrameAt:0
+  currentBpm:CONFIG.baseBpm, targetBpm:CONFIG.baseBpm, beatCount:0, detectedSince:0, lastTrackedAt:0, gameStartedAt:0, finalizing:false, measurementPaused:false,
+  audioOffset:0, audioRate:1, audioClock:0, audioPlaying:false, pagePaused:false, lastFrameAt:0
 };
 
 const clamp = (value,min,max) => Math.min(max,Math.max(min,value));
 const sleep = ms => new Promise(resolve => setTimeout(resolve,ms));
 
-async function ensureAudio() {
+function unlockAudioFromTap() {
   audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
-  if (!mediaSource) {
-    mediaSource=audioContext.createMediaElementSource(elements.bgm);
+  if (!masterGain) {
     masterGain=audioContext.createGain();
-    mediaSource.connect(masterGain).connect(audioContext.destination);
+    masterGain.connect(audioContext.destination);
   }
-  if (audioContext.state === 'suspended') await audioContext.resume();
-  elements.bgm.preservesPitch = false;
-  elements.bgm.webkitPreservesPitch = false;
+  return audioContext.resume();
 }
 
-function primeAudioFromTap() {
-  audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
-  if (!mediaSource) {
-    mediaSource=audioContext.createMediaElementSource(elements.bgm);
-    masterGain=audioContext.createGain();
-    mediaSource.connect(masterGain).connect(audioContext.destination);
-  }
-  masterGain.gain.setValueAtTime(0,audioContext.currentTime);
-  audioContext.resume().catch(error=>console.warn('Audio context unlock failed',error));
-  // Calling play synchronously inside the tap handler unlocks HTML audio on iOS.
-  elements.bgm.play().catch(error=>console.warn('Audio unlock failed',error));
+async function loadAudioBuffer() {
+  if (audioBuffer) return audioBuffer;
+  audioBufferPromise ||= fetch('/assets/conductor.m4a')
+    .then(response=>{if(!response.ok)throw new Error(`Audio HTTP ${response.status}`);return response.arrayBuffer();})
+    .then(data=>audioContext.decodeAudioData(data));
+  audioBuffer=await audioBufferPromise;
+  return audioBuffer;
 }
 
 async function createPoseLandmarker() {
@@ -73,17 +65,18 @@ async function createPoseLandmarker() {
 }
 
 async function beginExperience() {
-  primeAudioFromTap();
+  const audioUnlocked=unlockAudioFromTap();
   elements.startButton.disabled = true;
   elements.startButton.firstChild.textContent = '準備しています… ';
   elements.error.textContent = '';
   try {
-    await ensureAudio();
+    await audioUnlocked;
     const tasks = [
       poseLandmarker ? Promise.resolve(poseLandmarker) : createPoseLandmarker(),
-      navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode:'user', width:{ideal:960}, height:{ideal:1280} } })
+      navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode:'user', width:{ideal:960}, height:{ideal:1280} } }),
+      loadAudioBuffer()
     ];
-    [poseLandmarker, stream] = await Promise.all(tasks);
+    [poseLandmarker, stream, audioBuffer] = await Promise.all(tasks);
     elements.video.srcObject = stream;
     await elements.video.play();
     resetDetection();
@@ -101,10 +94,7 @@ async function beginExperience() {
     rafId = requestAnimationFrame(renderLoop);
   } catch (error) {
     console.error(error);
-    elements.bgm.pause();
-    elements.bgm.currentTime=0;
-    if (masterGain) masterGain.gain.setValueAtTime(1,audioContext.currentTime);
-    elements.error.textContent = 'カメラを使用できませんでした。ブラウザの設定をご確認ください。';
+    elements.error.textContent = 'カメラまたは音源を準備できませんでした。ブラウザの設定をご確認ください。';
   } finally {
     elements.startButton.disabled = false;
     elements.startButton.firstChild.textContent = '指揮をはじめる ';
@@ -112,7 +102,7 @@ async function beginExperience() {
 }
 
 function resetDetection() {
-  Object.assign(state,{ wristY:null,previousY:null,direction:0,strokeTop:null,lastBeatAt:0,beatTimes:[],intervals:[],bpmSamples:[],currentBpm:CONFIG.baseBpm,targetBpm:CONFIG.baseBpm,beatCount:0,detectedSince:0,lastTrackedAt:0,gameStartedAt:0,finalizing:false,measurementPaused:false,lastFrameAt:performance.now() });
+  Object.assign(state,{ wristY:null,previousY:null,direction:0,strokeTop:null,lastBeatAt:0,beatTimes:[],intervals:[],bpmSamples:[],currentBpm:CONFIG.baseBpm,targetBpm:CONFIG.baseBpm,beatCount:0,detectedSince:0,lastTrackedAt:0,gameStartedAt:0,finalizing:false,measurementPaused:false,audioOffset:0,audioRate:1,audioClock:0,audioPlaying:false,pagePaused:false,lastFrameAt:performance.now() });
 }
 
 function resizeCanvas() {
@@ -208,18 +198,19 @@ async function startCountdown() {
 }
 
 async function startGame() {
-  await ensureAudio();
+  await audioContext.resume();
   const startedAt=performance.now();
   resetDetection(); state.phase='playing'; state.gameStartedAt=startedAt; state.lastBeatAt=startedAt; state.lastTrackedAt=startedAt;
-  elements.hud.classList.remove('hidden'); elements.bgm.currentTime=0; elements.bgm.playbackRate=1;
+  elements.hud.classList.remove('hidden');
   masterGain.gain.cancelScheduledValues(audioContext.currentTime);
   masterGain.gain.setValueAtTime(1,audioContext.currentTime);
-  elements.bgm.play().catch(()=>{});
+  startAudioSource(startedAt);
 }
 
 function updateGame(now) {
-  const duration=Number.isFinite(elements.bgm.duration)?elements.bgm.duration:CONFIG.fallbackTrackDuration;
-  const remaining=Math.max(0,duration-elements.bgm.currentTime);
+  advanceAudioClock(now);
+  const duration=audioBuffer?.duration||CONFIG.fallbackTrackDuration;
+  const remaining=Math.max(0,duration-state.audioOffset);
   const remainingSeconds=Math.ceil(remaining);
   elements.time.textContent=`${String(Math.floor(remainingSeconds/60)).padStart(2,'0')}:${String(remainingSeconds%60).padStart(2,'0')}`;
   const trackingLost=now-state.lastTrackedAt>CONFIG.trackingLostGraceMs;
@@ -232,7 +223,8 @@ function updateGame(now) {
   if (now-state.lastBeatAt>CONFIG.returnToBaseAfterMs) state.targetBpm += (CONFIG.baseBpm-state.targetBpm)*.015;
   state.currentBpm += (state.targetBpm-state.currentBpm)*CONFIG.bpmSmoothing;
   const targetRate=clamp(state.currentBpm/CONFIG.baseBpm,.5,1.5);
-  elements.bgm.playbackRate += (targetRate-elements.bgm.playbackRate)*CONFIG.playbackSmoothing;
+  state.audioRate += (targetRate-state.audioRate)*CONFIG.playbackSmoothing;
+  if (bufferSource) bufferSource.playbackRate.setValueAtTime(state.audioRate,audioContext.currentTime);
   const shown=Math.round(state.currentBpm); elements.bpm.textContent=shown;
   if (state.intervals.length) state.bpmSamples.push(state.currentBpm);
   if (state.bpmSamples.length>3600) state.bpmSamples.shift();
@@ -243,8 +235,40 @@ function updateGame(now) {
   if (remaining<=0 && !state.finalizing) finishGame();
 }
 
+function advanceAudioClock(now) {
+  if (!state.audioPlaying) return;
+  if (state.audioClock) state.audioOffset+=Math.max(0,now-state.audioClock)/1000*state.audioRate;
+  state.audioClock=now;
+}
+
+function startAudioSource(now=performance.now()) {
+  if (!audioBuffer || state.audioOffset>=audioBuffer.duration) return;
+  bufferSource=audioContext.createBufferSource();
+  bufferSource.buffer=audioBuffer;
+  bufferSource.playbackRate.setValueAtTime(state.audioRate,audioContext.currentTime);
+  bufferSource.connect(masterGain);
+  bufferSource.onended=()=>{
+    if (state.audioPlaying&&state.phase==='playing'&&!state.measurementPaused) {
+      state.audioOffset=audioBuffer.duration;
+      state.audioPlaying=false;
+      bufferSource=null;
+      finishGame();
+    }
+  };
+  state.audioPlaying=true;
+  state.audioClock=now;
+  bufferSource.start(0,state.audioOffset);
+}
+
+function stopAudioSource(now=performance.now()) {
+  if (!state.audioPlaying) return;
+  advanceAudioClock(now);
+  state.audioPlaying=false;
+  if (bufferSource) { bufferSource.onended=null; try{bufferSource.stop();}catch{} bufferSource.disconnect(); bufferSource=null; }
+}
+
 function pauseForMissingConducting(trackingLost) {
-  if (!state.measurementPaused) elements.bgm.pause();
+  if (!state.measurementPaused) stopAudioSource();
   state.measurementPaused=true;
   elements.bpm.textContent='0';
   elements.tempoLabel.textContent='計測停止中';
@@ -258,7 +282,7 @@ function resumeAfterConductingReturns() {
   state.measurementPaused=false;
   elements.hint.textContent='右腕を大きく上下に！';
   elements.hint.classList.add('hidden');
-  elements.bgm.play().catch(error=>console.warn('Audio resume failed',error));
+  if (!state.pagePaused) startAudioSource();
 }
 
 function setTempoMood(bpm) {
@@ -270,11 +294,11 @@ function setTempoMood(bpm) {
 
 async function finishGame() {
   state.finalizing=true; state.phase='finished'; elements.app.classList.remove('fast'); elements.hint.classList.add('hidden');
-  if (!elements.bgm.ended) {
+  if (state.audioPlaying) {
     const startGain=masterGain?.gain.value ?? 1;
     for(let step=8;step>=0;step--){if(masterGain)masterGain.gain.setValueAtTime(startGain*(step/8),audioContext.currentTime);await sleep(45);}
   }
-  elements.bgm.pause();
+  stopAudioSource();
   if (masterGain) masterGain.gain.setValueAtTime(1,audioContext.currentTime);
   showResults();
 }
@@ -294,13 +318,12 @@ function getTitle(average,stability) {
   if (average<80) return '眠れるマエストロ'; if (average<110) return '慎重派マエストロ'; if (average<140) return '正統派マエストロ'; if (average<165) return 'せっかちなマエストロ'; return '暴走するマエストロ';
 }
 
-function restart() { ensureAudio(); resetDetection(); state.phase='ready'; elements.result.classList.add('hidden');elements.stage.classList.remove('hidden');elements.readyPanel.classList.remove('hidden');elements.readyText.textContent='右腕を大きく上下に振ってください';elements.hud.classList.add('hidden'); }
+function restart() { unlockAudioFromTap(); stopAudioSource(); resetDetection(); state.phase='ready'; elements.result.classList.add('hidden');elements.stage.classList.remove('hidden');elements.readyPanel.classList.remove('hidden');elements.readyText.textContent='右腕を大きく上下に振ってください';elements.hud.classList.add('hidden'); }
 
 elements.startButton.addEventListener('click',beginExperience);
 elements.restartButton.addEventListener('click',restart);
-elements.bgm.addEventListener('ended',()=>{ if(state.phase==='playing'&&!state.finalizing) finishGame(); });
 document.addEventListener('dblclick',event=>event.preventDefault(),{passive:false});
 document.addEventListener('gesturestart',event=>event.preventDefault(),{passive:false});
 document.addEventListener('contextmenu',event=>event.preventDefault());
-document.addEventListener('visibilitychange',()=>{ if(document.hidden && state.phase==='playing') elements.bgm.pause(); else if(!document.hidden && state.phase==='playing'&&!state.measurementPaused) elements.bgm.play().catch(()=>{}); });
+document.addEventListener('visibilitychange',()=>{ if(state.phase!=='playing')return; if(document.hidden){state.pagePaused=true;stopAudioSource();}else{state.pagePaused=false;if(!state.measurementPaused)startAudioSource();} });
 window.addEventListener('beforeunload',()=>stream?.getTracks().forEach(track=>track.stop()));
