@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#070817">
+  <meta name="description" content="9月4日・クラシック音楽の日。腕を振る速さで演奏が変わる、1分間の指揮者体験。">
+  <title>1分指揮者｜9月4日 クラシック音楽の日</title>
+  <link rel="stylesheet" href="/apps/2026-09-04/styles.css">
+</head>
+<body>
+  <main id="app" class="app">
+    <section id="startScreen" class="screen start-screen">
+      <div class="curtain curtain-left" aria-hidden="true"></div><div class="curtain curtain-right" aria-hidden="true"></div>
+      <div class="start-content">
+        <p class="date-label">9.4 CLASSICAL MUSIC DAY</p>
+        <div class="crest" aria-hidden="true">♬</div>
+        <h1>1分指揮者</h1>
+        <p class="lead">あなたの指揮で、演奏が変わる。</p>
+        <button id="startButton" class="primary-button" type="button">指揮をはじめる <span>→</span></button>
+        <p class="camera-note">カメラを使用します<br><small>映像は保存・送信されません</small></p>
+        <p id="startError" class="error-message" role="alert"></p>
+      </div>
+    </section>
+
+    <section id="stageScreen" class="screen stage-screen hidden" aria-label="指揮ステージ">
+      <div class="stage-top">
+        <p class="mini-brand">1分指揮者</p>
+        <p class="privacy-badge"><i></i> 端末内で処理中</p>
+      </div>
+      <div id="cameraFrame" class="camera-frame">
+        <video id="camera" autoplay muted playsinline></video>
+        <canvas id="poseCanvas"></canvas>
+        <div class="camera-vignette" aria-hidden="true"></div>
+        <div id="trackingBadge" class="tracking-badge"><span></span> 腕を探しています</div>
+        <div id="tempoFlash" class="tempo-flash" aria-live="polite"></div>
+      </div>
+
+      <div id="readyPanel" class="ready-panel">
+        <p id="readyText">カメラを準備しています…</p>
+        <div id="countdown" class="countdown" aria-live="assertive"></div>
+      </div>
+
+      <div id="gameHud" class="game-hud hidden">
+        <div class="bpm-card"><span>YOUR TEMPO</span><strong><i>♩</i> = <b id="bpmValue">120</b></strong><small id="tempoLabel">ANDANTE</small></div>
+        <div class="time-card"><span>TIME</span><strong id="timeValue">01:00</strong></div>
+      </div>
+      <p id="conductHint" class="conduct-hint hidden">右腕を大きく上下に！</p>
+    </section>
+
+    <section id="resultScreen" class="screen result-screen hidden">
+      <div class="result-card">
+        <p class="date-label">BRAVO, MAESTRO!</p>
+        <h2>あなたの指揮結果</h2>
+        <div class="title-medal" aria-hidden="true">♩</div>
+        <p id="maestroTitle" class="maestro-title">正統派マエストロ</p>
+        <div class="result-grid">
+          <div class="main-result"><span>平均BPM</span><strong id="averageBpm">120</strong></div>
+          <div><span>最高BPM</span><strong id="maxBpm">120</strong></div>
+          <div><span>最低BPM</span><strong id="minBpm">120</strong></div>
+          <div><span>指揮した拍数</span><strong id="beatCount">0</strong></div>
+          <div><span>テンポ安定度</span><strong id="stability">0%</strong></div>
+        </div>
+        <button id="restartButton" class="primary-button" type="button">もう一度指揮する <span>↻</span></button>
+      </div>
+    </section>
+  </main>
+  <audio id="bgm" preload="auto" loop></audio>
+  <script type="module" src="/apps/2026-09-04/script.js"></script>
+</body>
+</html>
