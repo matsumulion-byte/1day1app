@@ -1,0 +1,68 @@
+.preview-area {
+  align-content: start;
+  gap: 48px;
+}
+
+.paper-page-2 .paper-setlist ol {
+  counter-reset: songs 8;
+}
+
+.paper[data-count="8"] .paper-setlist li {
+  font-size: clamp(19px, 2.55vw, 31px);
+  padding: 7px 0;
+}
+
+@media (max-width: 850px) {
+  .preview-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .paper[data-count="8"] .paper-setlist li {
+    font-size: clamp(22px, 6.7vw, 31px);
+  }
+}
+
+@media print {
+  html,
+  body {
+    width: 210mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .app-shell,
+  .preview-area {
+    position: static !important;
+    display: block !important;
+    width: 210mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .paper {
+    position: relative !important;
+    inset: auto !important;
+    width: 210mm !important;
+    height: 296mm !important;
+    min-height: 296mm !important;
+    max-height: 296mm !important;
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .paper-page-2 {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .paper[data-count="8"] .paper-setlist li {
+    font-size: 27pt;
+    padding: 2.8mm 0;
+  }
+}

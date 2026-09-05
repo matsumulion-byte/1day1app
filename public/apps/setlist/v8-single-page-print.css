@@ -1,0 +1,9 @@
+@media print{
+  @page{size:A4 portrait;margin:0}
+  html,body{width:210mm!important;height:296mm!important;min-height:0!important;max-height:296mm!important;margin:0!important;padding:0!important;overflow:hidden!important;background:#fff!important}
+  body>*:not(.app-shell){display:none!important}
+  .app-shell{position:fixed!important;inset:0!important;display:block!important;width:210mm!important;height:296mm!important;min-height:0!important;max-height:296mm!important;margin:0!important;padding:0!important;overflow:hidden!important}
+  .preview-area{position:absolute!important;inset:0!important;display:block!important;width:210mm!important;height:296mm!important;min-height:0!important;max-height:296mm!important;margin:0!important;padding:0!important;overflow:hidden!important;background:#fff!important}
+  .paper{position:absolute!important;inset:0!important;width:210mm!important;height:296mm!important;min-height:0!important;max-height:296mm!important;margin:0!important;overflow:hidden!important;box-shadow:none!important}
+  .song-picker{display:none!important}
+}
