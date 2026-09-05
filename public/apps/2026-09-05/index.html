@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#ff6b35">
+  <meta name="description" content="オリジナルバーガーを開発して、値付けして、1日売ってみる経営シミュレーションゲーム。">
+  <title>バーガー社長｜9月5日の1日1アプリ</title>
+  <link rel="stylesheet" href="/apps/2026-09-05/styles.css">
+</head>
+<body>
+  <main class="game" id="game">
+    <header class="topbar">
+      <div class="date-badge"><b>9/5</b><span>1日1アプリ</span></div>
+      <div class="brand"><span>ハンバーガー開発室</span><h1>バーガー社長</h1></div>
+      <button id="soundButton" class="sound-btn" aria-label="サウンド切替" aria-pressed="true">♪</button>
+    </header>
+
+    <section id="buildScreen" class="screen active" aria-labelledby="buildTitle">
+      <div class="stepbar"><span class="on">1 開発</span><i></i><span>2 値付け</span><i></i><span>3 営業</span></div>
+      <div class="shop-sign"><small>本日の新商品</small><strong id="burgerName">はじめてバーガー</strong></div>
+      <div class="burger-stage">
+        <div class="burst" aria-hidden="true"></div>
+        <div class="burger" id="buildBurger" aria-label="作成中のバーガー"></div>
+        <div class="cost-chip">現在の原価 <b id="currentCost">¥110</b></div>
+      </div>
+      <div class="tray-head"><div><b>具材をえらぶ</b><small>タップで積み上げ！</small></div><span id="layerCount">0 / 8</span></div>
+      <div class="ingredients" id="ingredientList"></div>
+      <div class="added-row"><span>追加済み</span><div id="addedChips" class="chips"><small>まだ具材がありません</small></div></div>
+      <button id="toPricing" class="primary" disabled>このバーガーで値付けへ <span>›</span></button>
+    </section>
+
+    <section id="priceScreen" class="screen" aria-labelledby="priceTitle">
+      <div class="stepbar"><span>1 開発</span><i></i><span class="on">2 値付け</span><i></i><span>3 営業</span></div>
+      <div class="shop-sign"><small>新商品、完成！</small><strong id="priceBurgerName"></strong></div>
+      <div class="burger-stage compact"><div class="burger" id="priceBurger"></div></div>
+      <div class="pricing-card">
+        <div class="cost-line"><span>原価</span><b id="priceCost">¥0</b></div>
+        <p>販売価格を決めよう</p>
+        <div class="price-control">
+          <button id="priceDown" aria-label="100円値下げ">−</button>
+          <strong id="salePrice">¥800</strong>
+          <button id="priceUp" aria-label="100円値上げ">＋</button>
+        </div>
+        <div class="margin-grid"><span>1個の粗利<b id="grossProfit">¥0</b></span><span>粗利率<b id="marginRate">0%</b></span></div>
+        <div class="price-advice" id="priceAdvice">売れ行きはどうなる…？</div>
+      </div>
+      <button id="startSale" class="primary sell">販売開始！ <span>▶</span></button>
+      <button id="backBuild" class="text-btn">‹ 具材を見直す</button>
+    </section>
+
+    <section id="saleScreen" class="screen sale-screen" aria-labelledby="saleTitle">
+      <div class="open-board"><span>本日営業中</span><strong id="clock">11:00</strong><em id="weather">☀ 晴れ</em></div>
+      <div class="store-scene">
+        <div class="awning"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="store-name">BURGER<br><b>BOSS</b></div>
+        <div class="counter"><div class="mini-burger" id="counterBurger"></div><span id="counterPrice">¥0</span></div>
+        <div class="customer" id="customer"><div class="bubble" id="bubble">うまそう！</div><div class="face"><i></i><i></i><b></b></div><div class="body"></div></div>
+      </div>
+      <div class="live-panel">
+        <div><span>来店</span><strong id="liveVisitors">0<small>人</small></strong></div>
+        <div><span>販売</span><strong id="liveSold">0<small>個</small></strong></div>
+        <div class="sales"><span>売上</span><strong id="liveSales">¥0</strong></div>
+      </div>
+      <div class="day-progress"><i id="dayProgress"></i></div>
+      <p class="now-selling"><span></span><b id="sellingName"></b> を販売中</p>
+    </section>
+
+    <section id="resultScreen" class="screen result-screen" aria-labelledby="resultTitle">
+      <div class="result-ribbon">本日の営業結果</div>
+      <p class="result-label">本日の売上</p>
+      <h2 id="resultSales">¥0</h2>
+      <div class="result-burger-wrap"><div class="burger result-burger" id="resultBurger"></div><strong id="resultName"></strong></div>
+      <div class="report-card">
+        <div><span>販売数</span><b id="resultSold">0個</b></div>
+        <div><span>売上</span><b id="reportSales">¥0</b></div>
+        <div><span>原価</span><b id="resultCost">¥0</b></div>
+        <div class="profit"><span>利益</span><b id="resultProfit">¥0</b></div>
+        <div><span>利益率</span><b id="resultMargin">0%</b></div>
+      </div>
+      <div class="manager-comment"><div class="manager">社<br>長</div><p id="resultComment"></p></div>
+      <button id="replay" class="primary">もう一度作る <span>↻</span></button>
+    </section>
+  </main>
+  <audio id="bgm" src="/apps/2026-09-05/assets/bgm.m4a" preload="auto" loop playsinline></audio>
+  <script src="/apps/2026-09-05/script.js"></script>
+</body>
+</html>
