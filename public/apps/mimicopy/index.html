@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#171a17">
+  <meta name="description" content="管楽器ソロを、聴きながら採譜するローカル完結型ワークベンチ。">
+  <title>Solo Scribe — 管楽器の耳コピ工房</title>
+  <link rel="stylesheet" href="/apps/mimicopy/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Solo Scribe ホーム">
+      <span class="brand-mark">S</span>
+      <span><b>Solo Scribe</b><small>TRANSCRIPTION WORKBENCH</small></span>
+    </a>
+    <div class="privacy"><i></i> 音源は端末の外に出ません</div>
+  </header>
+
+  <main>
+    <section id="welcome" class="welcome">
+      <div class="welcome-copy">
+        <p class="eyebrow">FOR HORN PLAYERS</p>
+        <h1>憧れのソロを、<br><em>自分の言葉</em>にする。</h1>
+        <p class="lead">レコードを置く。フレーズを切り取る。音符にする。<br>耳と指が覚えるまで、何度でも。</p>
+        <label class="file-button" for="audioFile">音源を選ぶ <span>↗</span></label>
+        <input id="audioFile" type="file" accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg" hidden>
+        <p class="formats">MP3 · WAV · M4A　/　アップロード不要</p>
+      </div>
+      <div class="record-art" aria-hidden="true">
+        <div class="record"><div class="record-label"><span>SOLO</span><b>01</b></div></div>
+        <div class="needle"></div>
+        <p>LISTEN<br>DEEPER</p>
+      </div>
+    </section>
+
+    <section id="workspace" class="workspace hidden" aria-label="採譜ワークスペース">
+      <div class="track-head">
+        <div>
+          <p class="eyebrow">NOW TRANSCRIBING</p>
+          <h2 id="trackName">Untitled recording</h2>
+        </div>
+        <div class="track-actions">
+          <label class="small-button" for="audioFile">音源を変更</label>
+          <button id="exportMidi" class="small-button" type="button" disabled>MIDI保存</button>
+        </div>
+      </div>
+
+      <section class="transport-card">
+        <div class="transport">
+          <button id="skipBack" class="icon-button" type="button" aria-label="5秒戻る">−5</button>
+          <button id="playButton" class="play-button" type="button" aria-label="再生">▶</button>
+          <button id="skipForward" class="icon-button" type="button" aria-label="5秒進む">+5</button>
+          <span id="currentTime" class="time">0:00.0</span><span class="time-divider">/</span><span id="duration" class="time muted">0:00.0</span>
+          <button id="loopButton" class="pill active" type="button">↻ LOOP</button>
+          <label class="speed-control">SPEED
+            <select id="speedSelect">
+              <option value="0.5">50%</option><option value="0.75">75%</option><option value="0.9">90%</option><option value="1" selected>100%</option>
+            </select>
+          </label>
+        </div>
+        <div class="wave-wrap">
+          <canvas id="waveform" height="164" aria-label="音源波形。ドラッグで採譜区間を選択"></canvas>
+          <div id="selectionLabel" class="selection-label">波形をドラッグしてソロ区間を選択</div>
+        </div>
+        <div class="range-row"><span>IN <b id="inTime">0:00.0</b></span><span>選択 <b id="rangeDuration">全体</b></span><span>OUT <b id="outTime">0:00.0</b></span></div>
+      </section>
+
+      <section class="controls-card">
+        <div class="control-group"><label for="instrument">譜面の楽器</label><select id="instrument"><option value="0">C（実音）</option><option value="9">アルト / バリトン Sax（E♭）</option><option value="2">テナー / ソプラノ Sax（B♭）</option></select></div>
+        <div class="control-group"><label for="bpm">テンポ</label><div class="number-field"><span>♩ =</span><input id="bpm" type="number" value="120" min="30" max="300"></div></div>
+        <div class="control-group"><label for="subdivision">細かさ</label><select id="subdivision"><option value="4">16分音符</option><option value="2">8分音符</option><option value="3">3連符</option></select></div>
+        <button id="analyzeButton" class="analyze-button" type="button"><span>✦</span> 選択区間を採譜</button>
+      </section>
+
+      <section class="score-card">
+        <div class="score-head"><div><p class="eyebrow">DRAFT SCORE</p><h3>採譜メモ</h3></div><div class="legend"><span><i class="certain"></i>確信度 高</span><span><i class="uncertain"></i>要確認</span></div></div>
+        <div id="emptyScore" class="empty-score"><span>𝄞</span><p>区間を選び、「選択区間を採譜」を押してください</p></div>
+        <div id="analysisProgress" class="analysis-progress hidden"><div><span id="progressBar"></span></div><p id="progressText">音程を聴き取っています…</p></div>
+        <div id="scoreArea" class="score-area hidden"><canvas id="scoreCanvas" height="260"></canvas><p class="score-help">音符をクリックして選択。↑↓で半音移動、Deleteで削除、Spaceで原音を再生。</p></div>
+      </section>
+      <p id="status" class="status" role="status"></p>
+    </section>
+  </main>
+  <footer><span>SOLO SCRIBE / PROTOTYPE 01</span><span>Made for the notes between the notes.</span></footer>
+  <audio id="audio" preload="metadata"></audio>
+  <script src="/apps/mimicopy/script.js"></script>
+</body>
+</html>
