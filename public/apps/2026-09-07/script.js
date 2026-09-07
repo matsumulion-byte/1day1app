@@ -38,7 +38,8 @@
   }
   function updateStatus(){
     $("money").textContent=yen(state.money); $("daySales").textContent=yen(state.sales);
-    const ranks=["E","D","C","B","A","S"]; $("rank").textContent=ranks[Math.min(5,Math.floor(state.reputation/25))];
+    const ranks=["E","D","C","B","A","S"],rankLines=[0,8,18,30,42,54];
+    let rankIndex=rankLines.findLastIndex(line=>state.reputation>=line); $("rank").textContent=ranks[rankIndex];
   }
   function sample(arr,n){return [...arr].sort(()=>Math.random()-.5).slice(0,n)}
   function newDay(){
@@ -71,7 +72,7 @@
     let p=0; const timer=setInterval(()=>{p+=4;$("cleanProgress").style.width=`${p}%`;const dirt=[...document.querySelectorAll(".dirt:not(.gone)")];if(dirt.length&&p%8===0)dirt[Math.floor(Math.random()*dirt.length)].classList.add("gone");if(p===40){$("cleaningNote").textContent="机の下に突入中…";beep(170,.05)}if(p===72)$("cleaningNote").textContent="仕上げのひと吸い！";if(p>=100){clearInterval(timer);setTimeout(()=>finishJob(score,worst),400)}},85);
   }
   function finishJob(score,worst){
-    const j=state.selectedJob; let ratio=score>=85?1:score>=65?.78:.38,earned=Math.round(j.reward*ratio/10)*10,rep=score>=85?8:score>=65?3:-4;
+    const j=state.selectedJob; let ratio=score>=85?1:score>=65?.82:.5,earned=Math.round(j.reward*ratio/10)*10,rep=score>=85?12:score>=65?7:-1;
     state.money+=earned;state.sales+=earned;state.reputation=Math.max(0,state.reputation+rep);state.done++;
     const stamp=score>=85?"大成功":score>=65?"まずまず":"清掃失敗"; $("resultStamp").textContent=stamp;$("resultStamp").className=`result-stamp ${score<85?(score>=65?"ok":"fail"):""}`;
     $("resultReward").textContent=`+ ${yen(earned)}`;$("resultScore").textContent=`${score}点`;$("resultRep").textContent=`${rep>=0?"+":""}${rep}`;
