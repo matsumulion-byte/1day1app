@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#e34b3f">
+  <meta name="description" content="掃除機と依頼の相性を見極めて売上を伸ばす、レトロな掃除会社経営ミニゲーム。">
+  <title>クリーナークリーナー｜9月7日の1日1アプリ</title>
+  <link rel="stylesheet" href="/apps/2026-09-07/styles.css">
+</head>
+<body>
+  <main class="game" id="game">
+    <header class="game-header">
+      <div class="logo-mark" aria-hidden="true">C²</div>
+      <div class="title-wrap"><small>おそうじ会社 経営ゲーム</small><h1>クリーナー<br>クリーナー</h1></div>
+      <button class="sound" id="soundButton" aria-label="効果音切り替え" aria-pressed="true">♪<small>ON</small></button>
+    </header>
+
+    <section class="statusbar" aria-label="会社の状況">
+      <div><span>所持金</span><strong id="money">¥1,000</strong></div>
+      <div><span>会社ランク</span><strong id="rank">E</strong></div>
+      <div><span>本日の売上</span><strong id="daySales">¥0</strong></div>
+    </section>
+
+    <section class="screen active" id="jobsScreen">
+      <div class="day-head"><div><b id="dayLabel">DAY 1</b><span>本日の清掃依頼</span></div><em id="jobProgress">0 / 3件</em></div>
+      <p class="instruction">依頼書をタップして現場を選ぼう！</p>
+      <div class="job-list" id="jobList"></div>
+      <div class="owner-tip"><span class="owner-face">社</span><p id="ownerTip">汚れと広さを見て、掃除機を選ぶのじゃ！</p></div>
+    </section>
+
+    <section class="screen" id="selectScreen">
+      <button class="back-btn" id="backToJobs">‹ 依頼を選び直す</button>
+      <div class="selected-job" id="selectedJob"></div>
+      <div class="section-title"><b>出動する掃除機</b><span>1台選択</span></div>
+      <div class="vacuum-list" id="vacuumList"></div>
+      <button class="primary" id="startCleaning" disabled>清掃開始！ <span>▶</span></button>
+    </section>
+
+    <section class="screen cleaning-screen" id="cleaningScreen">
+      <div class="clean-top"><span id="cleanRoomName">現場</span><strong id="cleanTimer">清掃中…</strong></div>
+      <div class="room-scene" id="roomScene" aria-label="掃除中の部屋">
+        <div class="window"><i></i><i></i></div>
+        <div class="furniture"><i></i><b></b></div>
+        <div class="floor" id="floor"></div>
+        <div class="vacuum-sprite" id="vacuumSprite"><i></i><b></b></div>
+        <div class="clean-bubble" id="cleanBubble">ズゴゴゴ…</div>
+      </div>
+      <div class="clean-meter"><span>おそうじ進行度</span><div><i id="cleanProgress"></i></div></div>
+      <p class="cleaning-note" id="cleaningNote">ゴミを吸い込んでいます…</p>
+    </section>
+
+    <section class="screen result-screen" id="resultScreen">
+      <div class="result-stamp" id="resultStamp">大成功</div>
+      <p class="result-kicker">今回の売上</p>
+      <h2 id="resultReward">+ ¥800</h2>
+      <div class="score-card">
+        <div><span>仕上がり</span><b id="resultScore">92点</b></div>
+        <div><span>評判</span><b id="resultRep">+8</b></div>
+      </div>
+      <div class="result-comment"><span class="customer-face">客</span><p id="resultComment">見違えるほどきれい！</p></div>
+      <p class="reason" id="resultReason">吸引力と小回りが現場にピッタリ！</p>
+      <button class="primary" id="nextJob">次の依頼へ <span>›</span></button>
+    </section>
+
+    <section class="screen shop-screen" id="shopScreen">
+      <div class="shop-header"><span>1日3件 おつかれさま！</span><h2>クリーナー商店</h2><p>本日の品ぞろえ</p></div>
+      <div class="shop-list" id="shopList"></div>
+      <div class="day-total"><span>本日の売上</span><b id="shopSales">¥0</b></div>
+      <button class="primary next-day" id="nextDay">次の日へ <span>☀</span></button>
+    </section>
+  </main>
+  <script src="/apps/2026-09-07/script.js"></script>
+</body>
+</html>
