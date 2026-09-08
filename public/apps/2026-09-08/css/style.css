@@ -1,0 +1,359 @@
+@font-face {
+  font-family: "Electroharmonix";
+  src: url("/apps/2026-09-08/assets/fonts/Electroharmonix.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+}
+
+:root {
+  color-scheme: light;
+  --paper: #f7f7f4;
+  --ink: #11110f;
+  --quiet: #74746e;
+  --line: #c9c9c2;
+  --red: #d42d20;
+  font-family: Arial, "Helvetica Neue", sans-serif;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--paper);
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--ink);
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button,
+input {
+  border-radius: 0;
+  color: inherit;
+  font: inherit;
+}
+
+button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+.app {
+  width: min(100%, 760px);
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: max(22px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
+    max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.masthead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-top: 2px solid var(--ink);
+  padding-top: 8px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  line-height: 1.15;
+}
+
+.masthead p {
+  margin: 0;
+}
+
+.date-mark {
+  font-size: 1rem;
+  letter-spacing: -0.04em;
+}
+
+.screen {
+  min-height: 0;
+}
+
+.screen--start,
+.screen--result {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(42px, 9dvh, 90px) 0 4px;
+}
+
+.eyebrow,
+.micro-label {
+  margin: 0;
+  color: var(--quiet);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+h1,
+h2 {
+  margin: 14px 0 0;
+  font-size: clamp(3.1rem, 16vw, 7.2rem);
+  font-weight: 400;
+  letter-spacing: -0.085em;
+  line-height: 0.92;
+}
+
+.intro {
+  margin-top: clamp(30px, 6dvh, 60px);
+  border-left: 1px solid var(--ink);
+  padding-left: 13px;
+  font-size: 0.88rem;
+  line-height: 1.8;
+}
+
+.intro p {
+  margin: 0;
+}
+
+.text-button {
+  width: 100%;
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  border-top: 1px solid var(--ink);
+  background: transparent;
+  padding: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.text-button:disabled {
+  color: var(--quiet);
+  cursor: wait;
+}
+
+.font-error {
+  margin: 12px 0 0;
+  color: var(--red);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.screen--game {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(160px, 1fr) auto auto;
+  padding-top: clamp(24px, 5dvh, 50px);
+}
+
+.progress-block {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.progress {
+  margin: 0;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.progress span:last-child {
+  color: var(--quiet);
+}
+
+.question-stage {
+  min-width: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+
+.question-word {
+  max-width: 100%;
+  margin: 0;
+  font-family: "Electroharmonix";
+  font-size: clamp(2.5rem, 13.6vw, 6.7rem);
+  font-weight: 400;
+  letter-spacing: 0.015em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.question-word.is-revealed {
+  font-family: Arial, "Helvetica Neue", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+}
+
+.feedback {
+  min-height: 1.25em;
+  margin: 18px 0 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.feedback.is-wrong {
+  color: var(--red);
+}
+
+.answer-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  border-bottom: 1px solid var(--ink);
+}
+
+.answer-form input {
+  width: 100%;
+  min-width: 0;
+  min-height: 58px;
+  border: 0;
+  background: transparent;
+  outline: 0;
+  padding: 0 12px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.answer-form input::placeholder {
+  color: #a2a29c;
+  opacity: 1;
+}
+
+.answer-form input:focus {
+  background: linear-gradient(to top, rgba(17, 17, 15, 0.05), transparent 50%);
+}
+
+.answer-form button {
+  min-width: 100px;
+  min-height: 58px;
+  border: 0;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0 18px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.answer-form button:disabled,
+.answer-form input:disabled {
+  opacity: 0.45;
+}
+
+.timer {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 12px;
+  color: var(--quiet);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.timer output {
+  min-width: 3.4ch;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-align: right;
+}
+
+.result-time {
+  display: grid;
+  gap: 8px;
+  margin-top: clamp(34px, 7dvh, 70px);
+  font-size: 0.7rem;
+}
+
+.result-time strong {
+  font-size: clamp(3rem, 15vw, 6rem);
+  font-weight: 400;
+  letter-spacing: -0.07em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.result-time small {
+  margin-left: 7px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.result-comment {
+  margin: 18px 0 0;
+  border-top: 1px solid var(--line);
+  padding-top: 13px;
+  font-size: 0.84rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+@media (min-width: 600px) {
+  .app {
+    padding-right: 38px;
+    padding-left: 38px;
+  }
+}
+
+@media (max-height: 620px) {
+  .screen--start,
+  .screen--result {
+    padding-top: 24px;
+  }
+
+  .intro,
+  .result-time {
+    margin-top: 22px;
+  }
+
+  .question-word {
+    font-size: clamp(2.3rem, 12vw, 4.6rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}

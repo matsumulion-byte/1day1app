@@ -1,0 +1,2 @@
+/* Compatibility entrypoint. The app stylesheet lives in css/style.css. */
+@import url("/apps/2026-09-08/css/style.css");
