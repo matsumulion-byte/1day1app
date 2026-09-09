@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#080e1e" />
+    <meta
+      name="description"
+      content="9月10日・屋外広告の日。自分の顔と言葉で3Dの街をジャック。写真は端末内だけで処理します。"
+    />
+    <title>松村ジャック｜この街、全部、俺。</title>
+    <link rel="stylesheet" href="/apps/2026-09-10/styles.css" />
+  </head>
+  <body>
+    <div id="world" aria-label="広告が光る3Dの繁華街"></div>
+    <div class="vignette"></div>
+    <header>
+      <span class="brand">MJ<span>松村ジャック</span></span
+      ><span class="date">09.10 <i></i> 屋外広告の日</span>
+    </header>
+    <div id="loading" role="status">街を準備しています<span></span></div>
+    <main id="editor" hidden>
+      <p class="eyebrow">YOUR FACE. EVERYWHERE.</p>
+      <h1>この街、<br />全部、俺。</h1>
+      <p class="lead">顔と言葉を、街のすべての広告へ。</p>
+      <div class="form">
+        <div class="photo-row">
+          <canvas
+            id="preview"
+            width="240"
+            height="240"
+            aria-label="写真の位置調整。ドラッグで移動"
+          ></canvas>
+          <div>
+            <label class="upload" for="photo"
+              >＋ 顔写真を選ぶ<input id="photo" type="file" accept="image/*"
+            /></label>
+            <p>写真なしでも遊べます</p>
+            <button id="remove" class="text" hidden>写真を外す</button>
+          </div>
+        </div>
+        <div id="crop" hidden>
+          <label
+            >拡大率<input
+              id="zoom"
+              type="range"
+              min="1"
+              max="3"
+              step="0.01"
+              value="1" /></label
+          ><small>プレビューをドラッグして位置を調整</small>
+        </div>
+        <label class="message-label" for="message"
+          >街に流すメッセージ <span id="count">4 / 40</span></label
+        ><input
+          id="message"
+          type="text"
+          maxlength="40"
+          value="松村です"
+          autocomplete="off"
+        /><button id="start" class="primary">
+          街をジャックする <span>↗</span>
+        </button>
+        <p class="privacy">写真は端末内で処理。外部へ送信しません。</p>
+        <p id="error" role="alert"></p>
+      </div>
+    </main>
+    <div id="cinema" hidden>
+      <span id="phase">SIGNAL TAKEOVER</span
+      ><button id="skip">スキップ ↗</button>
+      <div class="progress"><i id="progress"></i></div>
+    </div>
+    <footer id="idle">
+      <span>架空都市・松村中央</span><span>24秒で、街の主役になる。</span>
+    </footer>
+    <section id="completed" hidden>
+      <div class="finish">
+        <span class="live">● LIVE</span><b>この街、全部、あなた。</b
+        ><span id="total"></span>
+      </div>
+      <div class="toolbar">
+        <button id="auto" class="selected">自動遊覧</button
+        ><button id="free">自由散策</button><button id="again">もう一度</button
+        ><button id="edit">広告を変更する</button>
+      </div>
+      <p id="help">ゆっくり、街を巡っています</p>
+    </section>
+    <div id="stick" hidden><i></i></div>
+    <div id="lookHint" hidden>右側をドラッグして見回す</div>
+    <script type="module" src="/apps/2026-09-10/script.js"></script>
+  </body>
+</html>
