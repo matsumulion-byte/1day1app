@@ -40,9 +40,17 @@
       <div class="progress"><i id="progressBar"></i></div>
     </section>
 
+    <section class="screen ritual" id="ritualScreen" aria-live="polite" aria-label="おすすめされた占術で占い中">
+      <div class="ritual-stage" id="ritualStage" aria-hidden="true"></div>
+      <p class="casting-kicker" id="ritualEnglish">DIVINATION IN PROGRESS</p>
+      <h2 id="ritualName">タロットで占っています</h2>
+      <p class="casting-copy">次に導かれる占いを読み解いています<span class="dots">……</span></p>
+      <div class="ritual-progress"><i></i></div>
+    </section>
+
     <section class="screen result" id="resultScreen" aria-labelledby="resultName">
       <div class="result-head">
-        <p>あなたに合っているのは</p>
+        <p id="resultLead">あなたに合っているのは</p>
         <h2 id="resultName">タロット占い</h2>
         <p class="catchcopy" id="catchcopy"></p>
       </div>
@@ -57,7 +65,7 @@
         <section><span>04</span><div><h3 id="peopleLabel">関連する人物・体系</h3><ul id="famousPeople"></ul></div></section>
       </article>
       <div class="actions">
-        <button class="primary" id="retryButton"><span>もう一度占う</span><i>↻</i></button>
+        <button class="primary" id="divineButton"><span id="divineButtonLabel">タロットで占う</span><i>→</i></button>
         <button class="secondary" id="shareButton"><span>結果をシェア</span><i>↗</i></button>
       </div>
       <p class="disclaimer">※ 娯楽としてお楽しみください。相性度に科学的な根拠はありません。</p>

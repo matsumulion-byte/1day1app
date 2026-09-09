@@ -23,9 +23,9 @@ const motifs = [
   {label:"手相",type:"palm"},{label:"水晶玉",type:"crystal"},{label:"八卦",type:"hex"},{label:"陰陽",type:"yin"},
   {label:"数字",type:"numbers"},{label:"ルーン文字",type:"rune"},{label:"方位盤",type:"compass"},{label:"五行",type:"elements"}
 ];
-const screens = {intro:document.querySelector("#introScreen"),casting:document.querySelector("#castingScreen"),result:document.querySelector("#resultScreen")};
+const screens = {intro:document.querySelector("#introScreen"),casting:document.querySelector("#castingScreen"),ritual:document.querySelector("#ritualScreen"),result:document.querySelector("#resultScreen")};
 const motif = document.querySelector("#motif");
-let lastIndex = -1, running = false, timers = [];
+let lastIndex = -1, running = false, timers = [], currentFortune = null;
 
 function motifMarkup(type) {
   const map = {
@@ -51,15 +51,46 @@ function beginCasting() {
     else timers.push(setTimeout(()=>reveal(winner),520));
   }; spin();
 }
-function reveal(data) {
+function reveal(data, source = null) {
   const score=70+Math.floor(Math.random()*30);
+  currentFortune=data;
+  document.querySelector("#resultLead").textContent=source ? `${source.name.replace(/占い$/, "")}が示した、あなたに合っている占いは` : "あなたに合っているのは";
   document.querySelector("#resultName").textContent=data.name; document.querySelector("#catchcopy").textContent=`「${data.catchcopy}」`;
   document.querySelector("#score").textContent=score; document.querySelector("#description").textContent=data.description;
   document.querySelector("#features").textContent=data.features; document.querySelector("#history").textContent=data.history;
   document.querySelector("#famousPeople").innerHTML=data.famousPeople.map(p=>`<li>${p}</li>`).join("");
+  document.querySelector("#divineButtonLabel").textContent=`${data.name.replace(/占い$/, "")}で占う`;
   const meter=document.querySelector("#meter"); meter.style.transition="none";meter.style.strokeDashoffset="333";
   screens.result.dataset.name=data.name;screens.result.dataset.score=score; showScreen("result");
   requestAnimationFrame(()=>{meter.style.transition="";meter.style.strokeDashoffset=String(333*(1-score/100));}); running=false;
+}
+
+function ritualMarkup(type) {
+  const palmSvg='<div class="ritual-visual palm-ritual"><svg viewBox="0 0 160 230"><path d="M45 205C25 176 18 145 22 112l5-45c1-10 16-9 17 1l1 38 5-77c1-11 17-10 18 1l1 72 6-83c1-11 17-9 17 2l-1 82 9-67c2-10 17-7 16 4l-6 73 12-44c3-10 17-5 14 6l-13 62c-5 25-21 57-38 68z"/><path class="palm-line" d="M40 117c27-5 53 2 72 26M46 147c22 13 45 14 65 3M70 107c-7 39 4 65 19 84"/></svg></div>';
+  const map={
+    tarot:'<div class="ritual-visual tarot-ritual"><i class="ritual-card">✦</i><i class="ritual-card">☾</i><i class="ritual-card">☉</i></div>',
+    astro:'<div class="ritual-visual astro-ritual"><div class="sun"></div><i class="planet-orbit o1"></i><i class="planet-orbit o2"></i><b class="star-dot" style="left:18px;top:48px">✦</b><b class="star-dot" style="right:22px;bottom:38px">✧</b></div>',
+    zodiac:'<div class="ritual-visual zodiac-ritual"><div class="element-ring"><span style="--n:0">♈</span><span style="--n:1">♊</span><span style="--n:2">♌</span><span style="--n:3">♏</span><span style="--n:4">♓</span></div><strong>✦</strong></div>',
+    palm:palmSvg,
+    crystal:'<div class="ritual-visual crystal-ritual"><div class="ball"></div><div class="base"></div></div>',
+    hex:'<div class="ritual-visual hex-ritual"><i class="hex-line"></i><i class="hex-line broken"></i><i class="hex-line"></i><i class="hex-line broken"></i><i class="hex-line broken"></i><i class="hex-line"></i></div>',
+    numbers:'<div class="ritual-visual numbers-ritual"><div class="number-stream">1 7 4 9<br>6 3 8 2<br>5 9 1 7<br>3 4 8 6<br>2 7 5 9</div><strong>9</strong></div>',
+    rune:'<div class="ritual-visual rune-ritual"><div class="rune-ring"><span style="--n:0">ᚠ</span><span style="--n:1">ᚢ</span><span style="--n:2">ᚦ</span><span style="--n:3">ᚨ</span><span style="--n:4">ᚱ</span><span style="--n:5">ᚲ</span><span style="--n:6">ᚷ</span><span style="--n:7">ᚹ</span></div><strong>ᛉ</strong></div>',
+    compass:'<div class="ritual-visual compass-ritual"><div class="board"><span>四</span><span>九</span><span>二</span><span>三</span><span>五</span><span>七</span><span>八</span><span>一</span><span>六</span></div></div>',
+    elements:'<div class="ritual-visual elements-ritual"><div class="element-ring"><span style="--n:0">木</span><span style="--n:1">火</span><span style="--n:2">土</span><span style="--n:3">金</span><span style="--n:4">水</span></div><strong>☯</strong></div>',
+    moon:'<div class="ritual-visual moon-ritual"><div class="element-ring"><span style="--n:0">●</span><span style="--n:1">◐</span><span style="--n:2">○</span><span style="--n:3">◑</span><span style="--n:4">●</span></div><strong>☽</strong></div>'
+  };
+  return map[type] || map.elements;
+}
+
+function beginRitual() {
+  if(running || !currentFortune) return;
+  running=true; timers.forEach(clearTimeout); timers=[];
+  const source=currentFortune, winner=pickFortune(), stage=document.querySelector("#ritualStage");
+  stage.className=`ritual-stage ${source.visualType}-stage`; stage.innerHTML=ritualMarkup(source.visualType);
+  document.querySelector("#ritualName").textContent=`${source.name.replace(/占い$/, "")}で占っています`;
+  showScreen("ritual");
+  timers.push(setTimeout(()=>reveal(winner,source),3200));
 }
 async function shareResult(){
   const name=screens.result.dataset.name,score=screens.result.dataset.score,text=`占い占いで占った結果、私に合っているのは『${name}』でした。相性度${score}%。`;
@@ -67,7 +98,7 @@ async function shareResult(){
 }
 function toast(){const el=document.querySelector("#toast");el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1800)}
 document.querySelector("#startButton").addEventListener("click",beginCasting);
-document.querySelector("#retryButton").addEventListener("click",beginCasting);
+document.querySelector("#divineButton").addEventListener("click",beginRitual);
 document.querySelector("#shareButton").addEventListener("click",shareResult);
 document.addEventListener("dblclick",e=>e.preventDefault(),{passive:false});
 document.addEventListener("gesturestart",e=>e.preventDefault(),{passive:false});
