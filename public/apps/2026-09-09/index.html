@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#090b25">
+  <meta name="description" content="あなたに合う占い方法そのものを、妙に本格的な演出で占うメタ占いアプリ。">
+  <title>占い占い｜9月9日の1日1アプリ</title>
+  <link rel="stylesheet" href="/apps/2026-09-09/styles.css">
+</head>
+<body>
+  <div class="cosmos" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <main class="app" id="app">
+    <header class="topbar">
+      <span class="date"><b>9.9</b> 世界占いの日</span>
+      <span class="meta">FORTUNE FOR FORTUNE</span>
+    </header>
+
+    <section class="screen intro active" id="introScreen" aria-labelledby="title">
+      <div class="seal" aria-hidden="true">
+        <span class="orbit orbit-a"></span><span class="orbit orbit-b"></span>
+        <span class="moon"></span><span class="spark s1">✦</span><span class="spark s2">✧</span>
+      </div>
+      <p class="eyebrow">DIVINATION SELECTOR</p>
+      <h1 id="title">占い<span>占い</span></h1>
+      <p class="subtitle">あなたに合う占いを、占います。</p>
+      <button class="primary" id="startButton"><span>占い占いで占う</span><i>→</i></button>
+      <p class="note">未来ではなく、占い方法を占います</p>
+    </section>
+
+    <section class="screen casting" id="castingScreen" aria-live="polite" aria-label="占い中">
+      <div class="stage" id="stage">
+        <div class="stage-rings" aria-hidden="true"></div>
+        <div class="motif" id="motif" aria-hidden="true"></div>
+        <span class="scanline" aria-hidden="true"></span>
+      </div>
+      <p class="casting-kicker">ANALYZING YOUR AFFINITY</p>
+      <h2 id="castingName">タロット</h2>
+      <p class="casting-copy">あなたに合う占いを占っています<span class="dots">……</span></p>
+      <div class="progress"><i id="progressBar"></i></div>
+    </section>
+
+    <section class="screen result" id="resultScreen" aria-labelledby="resultName">
+      <div class="result-head">
+        <p>あなたに合っているのは</p>
+        <h2 id="resultName">タロット占い</h2>
+        <p class="catchcopy" id="catchcopy"></p>
+      </div>
+      <div class="affinity" aria-label="相性度">
+        <div><span>相性度</span><strong><b id="score">96</b><small>%</small></strong></div>
+        <svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="53"></circle><circle class="meter" id="meter" cx="60" cy="60" r="53"></circle></svg>
+      </div>
+      <article class="result-card">
+        <section><span>01</span><div><h3>どんな占い？</h3><p id="description"></p></div></section>
+        <section><span>02</span><div><h3>特徴</h3><p id="features"></p></div></section>
+        <section><span>03</span><div><h3>歴史</h3><p id="history"></p></div></section>
+        <section><span>04</span><div><h3 id="peopleLabel">関連する人物・体系</h3><ul id="famousPeople"></ul></div></section>
+      </article>
+      <div class="actions">
+        <button class="primary" id="retryButton"><span>もう一度占う</span><i>↻</i></button>
+        <button class="secondary" id="shareButton"><span>結果をシェア</span><i>↗</i></button>
+      </div>
+      <p class="disclaimer">※ 娯楽としてお楽しみください。相性度に科学的な根拠はありません。</p>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status">結果をコピーしました</div>
+  <script src="/apps/2026-09-09/script.js"></script>
+</body>
+</html>
