@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ドッキングしてください</title>
+<link rel="stylesheet" href="/apps/2026-09-12/styles.css">
+</head>
+<body>
+<header><div><div class="eyebrow">ORBITAL MANEUVER / 01</div><h1>ドッキングしてください</h1></div><div class="date">SEPTEMBER 12 · SPACE DAY</div></header>
+<div class="hud"><div><div class="label">SPEED</div><div class="value"><b id="speed">0.00</b> <span class="unit">m/s</span></div></div><div><div class="label">ANGLE</div><div class="value"><b id="angle">0.0</b><span class="unit"> °</span></div></div><div><div class="label">FUEL</div><div class="value"><b id="fuel">100</b><span class="unit"> %</span></div><div class="meter"><i id="bar"></i></div></div></div>
+<div id="status">● APPROACH</div><div id="hint">緑のガイドに沿って、静かに接近。<br>速度 ≤ 0.65 m/s · 角度 ≤ 8°<br><span id="distance"></span></div>
+<div class="bottom">噴射を止めても、船は進む。<br>早めの逆噴射で減速。<br><span class="keyboard">W / ↑ 前進　S / ↓ 逆噴射<br>A D / ← → 回転</span><br><button id="retry">RETRY <span>R キー</span></button></div>
+<div class="controls" aria-label="宇宙船の操作"><button class="up" data-key="forward" aria-label="前進噴射">↑<span>前進</span></button><button class="left" data-key="left" aria-label="左回転">↶<span>左回転</span></button><button data-key="reverse" aria-label="逆噴射">↓<span>逆噴射</span></button><button data-key="right" aria-label="右回転">↷<span>右回転</span></button></div>
+<div id="result" role="dialog" aria-modal="true" aria-labelledby="resultTitle"><div class="card"><div class="eyebrow">MISSION REPORT</div><h2 id="resultTitle"></h2><p id="message"></p><button id="again">もう一度 / R</button></div></div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="/apps/2026-09-12/script.js"></script>
+</body>
+</html>
