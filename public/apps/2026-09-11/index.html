@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#e7dcc7">
+<meta name="description" content="石を8回削って石器をつくる、旧石器人サバイバルミニゲーム。">
+<title>石器、つくる。</title>
+<link rel="stylesheet" href="/apps/2026-09-11/styles.css">
+</head>
+<body>
+<main>
+<header><p class="eyebrow">旧石器人サバイバル</p><h1>石器、つくる。</h1><p class="subtitle">必要なのは、石と、だいたいの気合い。</p></header>
+<div id="stage"><canvas id="canvas" role="button" tabindex="0" aria-label="石を削る。Enterキーまたはスペースキーでも操作できます" aria-disabled="true"></canvas><span id="sound" aria-hidden="true"></span></div>
+<p id="hint" role="status">石をタップして削ろう</p>
+<div class="progress-wrap"><div id="count" aria-live="polite">削り回数: 0 / 8</div><progress id="progress" max="8" value="0" aria-label="石を削った回数"></progress></div>
+<section id="result" aria-live="polite" aria-atomic="true" hidden><p class="result-label">できた！ たぶん文明の一歩。</p><h2 id="result-name"></h2><dl><dt>用途</dt><dd id="use"></dd><dt>完成度</dt><dd id="quality"></dd><dt>旧石器人評価</dt><dd id="evaluation"></dd></dl><p id="rating" aria-hidden="true"></p></section>
+<button id="reset" type="button" disabled>もう一度削る</button>
+<footer>全5種類。腕前より、運かもしれない。</footer>
+<noscript>遊ぶにはJavaScriptを有効にしてください。</noscript>
+</main>
+<script type="module" src="/apps/2026-09-11/script.js"></script>
+</body>
+</html>
