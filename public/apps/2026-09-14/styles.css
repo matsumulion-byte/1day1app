@@ -2,3 +2,7 @@
 
 .success .translation{animation:translation-arrives 1.8s both}@keyframes translation-arrives{0%,45%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.success .translation{animation:none}}
+
+/* Reading assistance stays beside the inscription, so discoveries are immediately useful. */
+.glyph-reading{font-size:15px;line-height:20px;color:#776b50;margin-top:4px}.glyph-reading.known{font-weight:700;color:#302d23}.glyph-tile{height:78px}.field-note{border-left:2px solid var(--gold);padding:9px 12px;background:#c4a5670c;font-size:12px;line-height:1.9;margin:19px 0 8px;color:#dfd4bc}.reading-help{font-size:10px;line-height:1.8;color:var(--muted);margin:0 0 12px}form{margin-top:18px}.hint-button{flex-wrap:wrap;gap:7px}
+@media(max-width:700px){.glyph-tile{height:62px}.glyph-reading{font-size:13px;line-height:17px}.monument .glyph-tile{height:60px}.field-note{font-size:11px}.hint-button{font-size:11px}}

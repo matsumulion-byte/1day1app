@@ -1,11 +1,11 @@
 'use strict';
 // Add/edit inscriptions here. Keep answers in kana; aliases accept common modern spellings.
 const QUESTIONS = [
- { title:'はじまりの石板', description:'文明の入口に、たった四文字が残されていた。', answer:'まつむら', translation:'松村', aliases:['松村','matsumura'], clues:['これは、この文明を築いた人物の名前らしい。','文字は左から右へ読む。1つの記号が、かな1文字に対応する。'], aside:'どうやら、表札だった。' },
- { title:'名乗りの石板', description:'見覚えのある四文字。その先に、新しい記号が続く。', answer:'まつむらです', translation:'松村です', aliases:['松村です'], clues:['最初の四文字は、さっきの石板と同じだ。','名乗るときの、少し丁寧な言い方らしい。'], aside:'文明は、まず自己紹介から始まった。' },
- { title:'供物の記録', description:'王に捧げた供物か。あるいは、何かの備忘録か。', answer:'ぷりんあります', translation:'プリンあります', aliases:['プリン有ります'], clues:['ぷるぷるした甘い食べ物が登場するらしい。','後半は、何かが存在することを伝えている。'], aside:'供物というより、おやつだった。' },
- { title:'黄昏の予言', description:'太陽が沈む頃の営みが、ここに記されている。', answer:'きょうはかれーです', translation:'今日はカレーです', aliases:['今日はカレーです','きょうはかれえです','今日はカレー'], clues:['一日の終わりに食べるものについての記録らしい。','「ー」や小さい「ょ」にも、それぞれ専用の記号がある。'], aside:'予言ではなく、献立だった。' },
- { title:'古代松村文明 最大の謎', description:'すべての石板は、この碑文へとつながっていた。', answer:'れいぞうこにぷりんあります', translation:'冷蔵庫にプリンあります', aliases:['冷蔵庫にプリンあります','冷蔵庫にぷりんあります','れいぞうこにプリン有ります'], clues:['後半には、第三の石板と同じ記録が刻まれている。','前半は、食べ物を冷やしておく場所についての記述らしい。'], aside:'数千年、守り継がれた伝言。それは、おやつの所在だった。' }
+ { title:'はじまりの石板', description:'文明の入口に、たった四文字が残されていた。', answer:'まつむら', starter:'まら', translation:'松村', aliases:['松村','matsumura'], clues:['これは、この文明を築いた人物の名前らしい。','文字は左から右へ読む。1つの記号が、かな1文字に対応する。'], aside:'どうやら、表札だった。' },
+ { title:'名乗りの石板', description:'見覚えのある四文字。その先に、新しい記号が続く。', answer:'まつむらです', starter:'', translation:'松村です', aliases:['松村です'], clues:['最初の四文字は、さっきの石板と同じだ。','名乗るときの、少し丁寧な言い方らしい。'], aside:'文明は、まず自己紹介から始まった。' },
+ { title:'供物の記録', description:'王に捧げた供物か。あるいは、何かの備忘録か。', answer:'ぷりんあります', starter:'ぷ', translation:'プリンあります', aliases:['プリン有ります'], clues:['ぷるぷるした甘い食べ物が登場するらしい。','後半は、何かが存在することを伝えている。'], aside:'供物というより、おやつだった。' },
+ { title:'黄昏の予言', description:'太陽が沈む頃の営みが、ここに記されている。', answer:'きょうはかれーです', starter:'きょ', translation:'今日はカレーです', aliases:['今日はカレーです','きょうはかれえです','今日はカレー'], clues:['一日の終わりに食べるものについての記録らしい。','「ー」や小さい「ょ」にも、それぞれ専用の記号がある。'], aside:'予言ではなく、献立だった。' },
+ { title:'古代松村文明 最大の謎', description:'すべての石板は、この碑文へとつながっていた。', answer:'れいぞうこにぷりんあります', starter:'に', translation:'冷蔵庫にプリンあります', aliases:['冷蔵庫にプリンあります','冷蔵庫にぷりんあります','れいぞうこにプリン有ります'], clues:['後半には、第三の石板と同じ記録が刻まれている。','前半は、食べ物を冷やしておく場所についての記述らしい。'], aside:'数千年、守り継がれた伝言。それは、おやつの所在だった。' }
 ];
 const KANA = [...'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽぁぃぅぇぉゃゅょっゎゔー0123456789%!?'];
 // Original vector symbols: pine, eye, person, bowl, saxophone, bird, sun, gate.
@@ -30,32 +30,45 @@ function normalize(value) {return value.normalize('NFKC').toLowerCase().replace(
 const $=id=>document.getElementById(id);
 let round=0,known=new Set(),solved=[],hintStep=0,totalHints=0,mistakes=0,locked=false;
 function showScreen(id){for(const screen of ['intro','game','ending']) $(screen).hidden=screen!==id;window.scrollTo({top:0,behavior:'instant'});}
+function renderReading(){
+ const q=QUESTIONS[round];
+ $('glyphs').innerHTML=[...q.answer].map((c,i)=>`<span class="glyph-tile" role="img" aria-label="${known.has(c)?c:'未解読の記号 '+(KANA.indexOf(c)+1)}">${glyph(c)}<span class="glyph-reading ${known.has(c)?'known':''}">${known.has(c)?c:'？'}</span></span>`).join('');
+ const remaining=[...new Set(q.answer)].filter(c=>!known.has(c)).length;
+ $('hintCount').textContent=remaining?`あと${remaining}種類`:'全文字が判明';
+ $('hint').disabled=remaining===0;
+ $('readingHelp').textContent=remaining?'記号の下の「？」を推理しよう。同じ記号の読みは一緒に判明します。':'すべての文字が判明！ 石板の下の読みをつなげて入力しよう。';
+}
+function revealLetters(count){
+ const letters=[...new Set(QUESTIONS[round].answer)].filter(c=>!known.has(c)).slice(0,count);
+ letters.forEach(c=>known.add(c));renderReading();renderNotebook();return letters;
+}
+function addClue(content){const p=document.createElement('p');p.className='clue';p.innerHTML=content;$('clues').prepend(p);}
 function renderNotebook(){
  $('knownCount').textContent=`${known.size}文字を記録 ${$('notebook').open?'−':'＋'}`;
  $('dictionary').innerHTML=known.size?[...known].map(c=>`<button type="button" data-char="${c}" aria-label="${c}を入力">${glyph(c)}${c}</button>`).join(''):'<p class="empty-note">まだ記録はありません。手がかりから、最初の一文字を。</p>';
  $('records').innerHTML=solved.map((q,i)=>`<p>0${i+1} 解読済み：${q.answer}<br>現代語訳「${q.translation}」</p>`).join('');
 }
 function renderQuestion(){
- const q=QUESTIONS[round];hintStep=0;locked=false;
+ const q=QUESTIONS[round];hintStep=0;locked=false;[...(q.starter||'')].forEach(c=>known.add(c));
  $('count').textContent=`${String(round+1).padStart(2,'0')} / ${String(QUESTIONS.length).padStart(2,'0')}`;
  $('progress').innerHTML=QUESTIONS.map((_,i)=>`<i class="${i<round?'done':i===round?'current':''}"></i>`).join('');
  $('chapter').textContent=round===QUESTIONS.length-1?'FINAL INSCRIPTION · 最終碑文':`INSCRIPTION 0${round+1} · 第${round+1}の石板`;
  $('tabletTitle').textContent=q.title;$('tabletDescription').textContent=q.description;
  $('tabletId').textContent=`収蔵番号 M-${String(round+1).padStart(3,'0')}`;
  $('tablet').className='tablet'+(round===QUESTIONS.length-1?' monument':'');
- $('glyphs').innerHTML=[...q.answer].map((c,i)=>`<span class="glyph-tile" role="img" aria-label="未知の記号 ${KANA.indexOf(c)+1}">${glyph(c)}<span class="glyph-number">${String(i+1).padStart(2,'0')}</span></span>`).join('');
  $('letterCount').textContent=`${[...q.answer].length}文字の碑文`;
  $('answerArea').hidden=false;$('success').hidden=true;$('answer').value='';$('answer').removeAttribute('aria-invalid');$('feedback').textContent='';$('clues').innerHTML='';$('hintCount').textContent='';$('hint').disabled=false;
- renderNotebook();showScreen('game');$('tabletTitle').focus({preventScroll:true});
+ $('fieldNote').textContent='調査員のメモ：'+q.clues[0];renderReading();renderNotebook();showScreen('game');$('tabletTitle').focus({preventScroll:true});
 }
 function start(){round=0;known=new Set();solved=[];totalHints=0;mistakes=0;renderQuestion();}
 $('start').addEventListener('click',start);$('restart').addEventListener('click',start);
 $('home').addEventListener('click',e=>{e.preventDefault();showScreen('intro');$('start').focus({preventScroll:true});});
 $('hint').addEventListener('click',()=>{
- if(locked)return;const q=QUESTIONS[round];let content;
- if(hintStep<q.clues.length){content=q.clues[hintStep];}
- else {const unknown=[...q.answer].find(c=>!known.has(c));if(unknown){known.add(unknown);content=`${glyph(unknown)}<span>この記号は「${unknown}」を表しているらしい。</span>`;}else{content='すべての文字が手帳にそろった。石板と照らし合わせて、左から読んでみよう。';$('hint').disabled=true;}}
- hintStep++;totalHints++;const p=document.createElement('p');p.className='clue';p.innerHTML=content;$('clues').append(p);$('hintCount').textContent=`${hintStep}件 発見`;renderNotebook();
+ if(locked)return;
+ const letters=revealLetters(2);if(!letters.length)return;
+ hintStep++;totalHints++;
+ const note=hintStep===1?(QUESTIONS[round].clues[1]||''):'';
+ addClue(`<span>${note}${note?'<br>':''}新たに「${letters.join('」「')}」が判明。石板の読みと手帳に書き込みました。</span>`);
 });
 $('dictionary').addEventListener('click',e=>{const b=e.target.closest('button[data-char]');if(!b||locked)return;const input=$('answer');const from=input.selectionStart??input.value.length;const to=input.selectionEnd??from;input.setRangeText(b.dataset.char,from,to,'end');input.focus({preventScroll:true});});
 $('notebook').addEventListener('toggle',()=>{$('knownCount').textContent=`${known.size}文字を記録 ${$('notebook').open?'−':'＋'}`;});
@@ -63,10 +76,10 @@ $('answerForm').addEventListener('submit',e=>{
  e.preventDefault();if(locked||e.isComposing)return;
  const q=QUESTIONS[round],value=normalize($('answer').value);
  if(!value){$('feedback').textContent='まずは解読結果を入力しよう。';return;}
- if(![q.answer,...(q.aliases||[])].some(a=>normalize(a)===value)){mistakes++;$('feedback').textContent='解読失敗 — 考古学界に激震は走らなかった。手がかりを頼りに、もう一度。';$('answer').setAttribute('aria-invalid','true');return;}
+ if(![q.answer,...(q.aliases||[])].some(a=>normalize(a)===value)){mistakes++;const letters=revealLetters(1);$('feedback').textContent='解読失敗 — 考古学界に激震は走らなかった。'+(letters.length?'調査員が「'+letters[0]+'」を解読してくれました。もう一度！':'石板の下の読みを、左から順につなげてみよう。');$('answer').setAttribute('aria-invalid','true');return;}
  locked=true;$('answer').removeAttribute('aria-invalid');solved.push(q);[...q.answer].forEach(c=>known.add(c));$('answerArea').hidden=true;$('success').hidden=false;$('tablet').classList.add('illuminated');
  $('successPrelude').textContent=round===QUESTIONS.length-1?'人類はついに、失われた松村文明の真実に辿り着いた。':'永き沈黙を破り、古代の言葉がいま蘇る。';
- $('translation').textContent=q.translation;$('successAside').textContent=q.aside;$('next').textContent=round===QUESTIONS.length-1?'調査報告書を受け取る →':'次の石板へ進む →';renderNotebook();$('next').focus({preventScroll:true});$('success').scrollIntoView({behavior:'smooth',block:'nearest'});
+ $('translation').textContent=q.translation;$('successAside').textContent=q.aside;$('next').textContent=round===QUESTIONS.length-1?'調査報告書を受け取る →':'次の石板へ進む →';renderReading();renderNotebook();$('next').focus({preventScroll:true});$('success').scrollIntoView({behavior:'smooth',block:'nearest'});
 });
 $('answer').addEventListener('input',()=>{$('answer').removeAttribute('aria-invalid');});
 $('answer').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.isComposing||e.keyCode===229))e.preventDefault();});
