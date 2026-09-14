@@ -82,7 +82,10 @@ async function main() {
     }
   }
 
-  const requiredFiles = ["index.html", "styles.css", "script.js"];
+  // Accept both established and explicitly requested build-free entry names.
+  const requiredFiles = ["index.html",
+    exists(path.join(appDir, "style.css")) ? "style.css" : "styles.css",
+    exists(path.join(appDir, "main.js")) ? "main.js" : "script.js"];
   for (const file of requiredFiles) {
     const filePath = path.join(appDir, file);
     if (!exists(filePath)) {
