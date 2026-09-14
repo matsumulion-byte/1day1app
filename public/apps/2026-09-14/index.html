@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ja">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#171b19"><meta name="description" content="失われた松村文明の記録を解読せよ。架空の象形文字を読み解く、壮大でどうでもいい考古学ミニゲーム。"><title>マツムグリフ解読機 | 松村文明調査団</title><link rel="stylesheet" href="/apps/2026-09-14/styles.css"></head>
+<body>
+<div class="ambient" aria-hidden="true"></div>
+<main>
+<header><a href="#" id="home" aria-label="タイトルに戻る"><span class="brand-mark">𓂀</span><span>松村文明調査団<small>MATSUMURA ARCHAEOLOGICAL SOCIETY</small></span></a><span class="edition">EXHIBIT<br><b>No. 001</b></span></header>
+<section id="intro">
+<div class="intro-grid"><div class="intro-copy"><p class="eyebrow"><span></span> 未解読資料、公開。</p><h1>マツムグリフ<br><em>解読機</em><span class="title-dot">。</span></h1><p class="subtitle">失われた松村文明の記録を解読せよ</p><p class="description">砂の下に眠っていた、謎の石板。<br>刻まれた文字は、まだ誰にも読めない。<br>その一文字が、人類の歴史を変える——かもしれない。</p><button id="start" class="primary">解読を開始する <span>↗</span></button><div class="intro-meta"><span>全5碑の解読調査</span><i></i><span>所要時間 約5〜10分</span></div></div>
+<div class="exhibit"><div class="orbit" aria-hidden="true"></div><div class="artifact" aria-hidden="true"><div class="artifact-top">◈</div><div id="heroGlyphs"></div><div class="artifact-bottom">╱╲ &nbsp; ◇ &nbsp; ╱╲</div></div><div class="artifact-label"><span>収蔵資料 001 — はじまりの石板</span><small>材質：砂岩らしきもの / 年代：諸説あり</small></div><span class="coordinate">35° M · 139° M</span></div></div>
+<div class="guide"><div><b>01</b><p>文字を観察する<small>同じ記号には、同じ読み。</small></p></div><div><b>02</b><p>手がかりを集める<small>判明した文字は手帳に記録。</small></p></div><div><b>03</b><p>文明の真実に迫る<small>5つの石板を読み解こう。</small></p></div></div>
+</section>
+<section id="game" hidden>
+<div class="progress-heading"><span class="eyebrow">発掘調査記録</span><span id="count"></span></div><div id="progress" class="progress" aria-label="調査の進捗"></div>
+<div class="game-heading"><p id="chapter" class="eyebrow"></p><h2 id="tabletTitle" tabindex="-1"></h2><p id="tabletDescription"></p></div>
+<div id="tablet" class="tablet"><div class="tablet-meta"><span id="tabletId"></span><span>松村文明 / 未解読文字</span></div><div id="glyphs" class="glyphs" aria-label="解読対象のマツムグリフ"></div><div class="tablet-foot">◇ <span id="letterCount"></span> ◇</div></div>
+<div id="answerArea"><form id="answerForm"><label for="answer">この石板には何と記されている？</label><div class="input-row"><input id="answer" type="text" placeholder="ひらがなで解読結果を入力" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="100" required><button class="primary" type="submit">解読する <span>→</span></button></div><p class="input-note">カタカナ・空白・句読点の違いも受け付けます。</p></form><p id="feedback" role="status" aria-live="polite"></p><button id="hint" class="hint-button" type="button"><span>✧</span> 手がかりを見る <small id="hintCount"></small><span>＋</span></button><div id="clues" class="clues" aria-live="polite"></div></div>
+<section id="success" class="success" hidden aria-live="polite"><p class="eyebrow">DECIPHERMENT COMPLETE</p><h2>解読成功</h2><p id="successPrelude"></p><div class="translation"><span>現代語訳</span><strong id="translation"></strong></div><p id="successAside"></p><button id="next" class="primary"></button></section>
+<details id="notebook" class="notebook" open><summary><span>▤ &nbsp; 解読手帳</span><span id="knownCount"></span></summary><p class="notebook-note">判明した文字は、次の石板でも同じ読み。タップで入力できます。</p><div id="dictionary" class="dictionary"></div><div id="records" class="records"></div></details>
+</section>
+<section id="ending" hidden><p class="eyebrow">EXPEDITION COMPLETE</p><div class="seal" aria-hidden="true">松</div><h2>文明は消えた。<br>伝言は、残った。</h2><p>人類はついに、失われた松村文明の真実に辿り着いた。</p><div class="final-translation">冷蔵庫に<br><em>プリンあります</em></div><p class="ending-aside">数千年の時を超えて届いた、冷蔵庫の在庫情報。</p><div id="stats" class="stats"></div><button id="restart" class="primary">もう一度、発掘する <span>↗</span></button></section>
+<footer><span>松村文明資料室</span><span>※この文明はフィクションです。</span><span>EST. 時代不詳</span></footer>
+</main><script src="/apps/2026-09-14/script.js"></script>
+</body></html>
