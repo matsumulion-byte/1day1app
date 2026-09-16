@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f5eddf" />
+    <meta
+      name="description"
+      content="木のテーブルでじっくり楽しむ、12問のマッチ棒パズル。数式と図形を、ひとつずつ。"
+    />
+    <title>マッチ棒パズル</title>
+    <link rel="stylesheet" href="/apps/2026-09-16/style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="masthead">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true">╱</span>
+          <h1>マッチ棒パズル</h1>
+        </div>
+        <button id="choose" class="text-button">
+          問題を選ぶ <span aria-hidden="true">☷</span>
+        </button>
+      </header>
+      <section class="paper" aria-labelledby="question">
+        <div class="problem-meta">
+          <span id="number"></span><span id="type"></span>
+        </div>
+        <div id="progress" aria-hidden="true"></div>
+        <h2 id="question"></h2>
+        <p id="rule" class="rule"></p>
+        <div id="shape-rules" hidden>
+          <span>大小すべて数える</span><span>余った棒 OK</span>
+        </div>
+        <button id="digit-guide" class="text-button">数字の形を見る</button>
+        <div class="move-row">
+          <span class="pill" id="move-count"></span
+          ><span id="fixed-note">＝ は固定</span>
+        </div>
+        <div class="board-wrap">
+          <svg
+            id="board"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-label="パズル盤面"
+          ></svg>
+          <p id="interaction-note">
+            棒をドラッグ、または 棒 → 置き場所をタップ
+          </p>
+        </div>
+        <p id="message" class="message" role="status" aria-live="polite">
+          あわてず、ひとつずつ。
+        </p>
+        <section id="inspection" hidden aria-label="判定の内訳">
+          <div id="checklist"></div>
+          <p>ボタンを押すと、数えた図形を1つずつ表示します。</p>
+          <div id="shape-list"></div>
+        </section>
+        <div class="actions">
+          <button id="undo"><span aria-hidden="true">↶</span>1手戻す</button
+          ><button id="reset"><span aria-hidden="true">⟲</span>やり直す</button
+          ><button id="hint"><span aria-hidden="true">✧</span>ヒント</button
+          ><button id="check" class="primary">
+            <span aria-hidden="true">✓</span>判定
+          </button>
+        </div>
+        <section id="success" hidden>
+          <span class="success-mark" aria-hidden="true">✓</span>
+          <div>
+            <strong>ぴったり、できました。</strong>
+            <p id="success-text"></p>
+          </div>
+          <button id="next" class="primary">次の問題へ →</button>
+        </section>
+        <section id="hint-panel" hidden aria-label="ヒント">
+          <div class="hint-heading">
+            <strong id="hint-label"></strong
+            ><button
+              id="close-hint"
+              class="text-button"
+              aria-label="ヒントを閉じる"
+            >
+              ×
+            </button>
+          </div>
+          <p id="hint-text"></p>
+          <div id="hint-example"></div>
+          <button id="more-hint" class="text-button">次のヒントを見る →</button>
+        </section>
+      </section>
+      <footer class="footer">
+        <span>ひと息ついて、頭の体操。</span
+        ><button id="help" class="text-button">遊び方</button>
+      </footer>
+      <p id="update-note" hidden>
+        図形6問を作り直しました。解放済みの問題は引き続き選べます。
+      </p>
+      <p id="storage-note" hidden>この環境では進み具合を保存できません。</p>
+    </main>
+    <dialog id="picker">
+      <div class="dialog-heading">
+        <h2>問題を選ぶ</h2>
+        <button class="text-button" data-close aria-label="閉じる">×</button>
+      </div>
+      <p>クリアすると、次の問題が開きます。</p>
+      <div id="problem-list"></div>
+      <p class="small">進み具合はこのブラウザに自動保存されます。</p>
+    </dialog>
+    <dialog id="help-dialog">
+      <div class="dialog-heading">
+        <h2>遊び方</h2>
+        <button class="text-button" data-close aria-label="閉じる">×</button>
+      </div>
+      <p>
+        棒をドラッグして、薄い置き場所へ。棒をタップしてから、置き場所をタップしても動かせます。向きは自動で変わります。
+      </p>
+      <p>
+        動かす本数は<strong>最初の配置との差</strong>です。置き直した回数は増えず、元の配置に戻せば0本になります。
+      </p>
+      <p>
+        指定本数ちょうどで、お題を満たせば正解。図形は大きなものや、辺を共有するものも数えます。余った棒があっても正解になります。
+      </p>
+      <p>
+        ヒントは「着眼点 → 動かす場所 →
+        正解例」の3段階。違う答えでも、条件を満たせば正解です。
+      </p>
+      <p class="small">
+        キーボード：Tabで棒・置き場所を選び、EnterまたはSpaceで操作。Escapeで選択解除。ページの拡大は盤面の外で使えます。
+      </p>
+    </dialog>
+    <dialog id="digits-dialog">
+      <div class="dialog-heading">
+        <h2>使える数字の形</h2>
+        <button class="text-button" data-close aria-label="閉じる">×</button>
+      </div>
+      <p>
+        0〜9は、次の形を使います。<strong>9には一番下の横棒も必要</strong>です。
+      </p>
+      <div id="digit-examples"></div>
+    </dialog>
+    <script type="module" src="/apps/2026-09-16/script.js"></script>
+  </body>
+</html>
