@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#151f22">
+<meta name="description" content="少し古い未来都市を走る、3駅だけのモノレール運転ゲーム。加速、ブレーキ、ぴったり停車。">
+<title>MONORAIL 917 — DRIVE THE FUTURE CITY</title>
+<link rel="icon" href="/apps/2026-09-17/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/apps/2026-09-17/style.css">
+</head>
+<body>
+<main id="app">
+<div id="world" aria-label="昭和未来都市のモノレール運転席"></div>
+<div class="glass" aria-hidden="true"></div>
+<header class="topbar"><a class="identity" href="/apps/2026-09-17/" aria-label="タイトルに戻る"><span class="emblem">M</span><span>都市交通公団<small>METROPOLITAN MONORAIL</small></span></a><div class="service"><i></i> <span id="service-state">EVENING SERVICE</span><span class="service-no">917</span></div></header>
+<div class="view-caption"><span>未来都市環状線</span><span>FUTURE CITY LINE / SOUTHBOUND</span></div>
+<section id="title-screen" class="overlay title-screen">
+<div class="title-kicker">夕暮れの、その先へ。</div>
+<h1>MONORAIL <span>917</span></h1><p class="tagline">DRIVE THE FUTURE CITY</p>
+<p class="intro">少し古い未来を、走ろう。<br>3つの駅に、できるだけぴったり止まる。</p>
+<button id="start" class="primary" disabled>LOADING</button>
+<div class="title-controls"><span><kbd>↑</kbd> / <kbd>W</kbd> 加速</span><span><kbd>↓</kbd> / <kbd>S</kbd> ブレーキ</span><span><kbd>SPACE</kbd> 非常停止</span></div>
+</section>
+<div id="guidance" class="guidance" hidden><span id="signal" class="signal"></span><span id="guidance-text"></span></div>
+<section id="result" class="result" aria-live="polite" hidden><div id="result-station" class="eyebrow"></div><h2 id="rating"></h2><p id="stop-error"></p><div id="points"></div><small id="departure"></small></section>
+<section id="complete" class="overlay complete" hidden><div class="eyebrow">MONORAIL 917</div><h2>SERVICE COMPLETE</h2><p class="completion-copy">本日の運転、おつかれさまでした。</p><div class="total-label">TOTAL SCORE</div><div class="total"><span id="total-score">0</span><small> / 3000</small></div><div id="score-list" class="score-list"></div><button id="retry" class="primary">RETRY <span>↗</span></button></section>
+<div id="paused" class="pause" hidden>PAUSED <small>画面に戻ると運転を再開します</small></div>
+<footer class="console">
+<div class="console-top"><span><i class="power-light"></i> SERIES 917 <b>運転台</b></span><div class="route"><span class="route-stop active">中央未来</span><i></i><span class="route-stop">ニュータウン北</span><i></i><span class="route-stop">第七码頭</span></div><span class="clock-label">夕景運行 / 3 STOPS</span></div>
+<div class="instruments"><section class="speed-cell"><label>SPEED <span>速度</span></label><div class="speed-reading"><strong id="speed">00</strong><span>km/h</span></div><div class="speed-track"><i id="speed-bar"></i></div></section><section class="station-cell"><label>NEXT STATION <span>次駅</span></label><strong id="next-station">中央未来</strong><div><span id="station-en">CHUO MIRAI</span><span id="station-count">01 / 03</span></div></section><section class="distance-cell"><label>DISTANCE <span>停止位置まで</span></label><div class="distance-reading"><strong id="distance">400</strong><span>m</span></div><small id="distance-note">停止目標に合わせて停車</small></section><section class="brake-cell"><label>BRAKE <span>制動</span></label><div class="brake-bars" id="brake-bars"><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="drive-mode">STANDBY</div></section></div>
+<div class="console-bottom"><span>↑ W <b>加速</b> <em>·</em> ↓ S <b>ブレーキ</b> <em>·</em> SPACE <b>非常停止</b></span><span id="operation-hint">停車精度を競う、短い未来旅行。</span></div>
+<div class="touch-controls"><button data-control="accelerate">↑ 加速</button><button data-control="brake">↓ ブレーキ</button><button data-control="emergency">非常停止</button></div>
+</footer>
+<div id="load-error" role="alert" hidden>3D画面を起動できませんでした。WebGLが有効なブラウザで再読み込みしてください。</div>
+</main>
+<script type="module" src="/apps/2026-09-17/script.js"></script>
+</body>
+</html>
