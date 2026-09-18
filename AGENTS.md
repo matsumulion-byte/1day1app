@@ -128,3 +128,9 @@ Required response:
 - If the correction is about daily app idea quality, include the specific prohibited pattern and the replacement standard.
 
 For daily app date ideas, the prohibited pattern is shallow date-digit matching such as `7/6 -> 76 seconds`. Use real anniversaries, seasonal context, user-relevant situations, or genuinely useful daily workflows instead. If the date hook is weak, say so and propose a non-date-dependent idea.
+
+## Poster Terminology Checks
+
+- For the 2026-09-18 Matsumura poster app, label the guest 対戦者 / OPPONENT and the fixed side 松村 / MATSUMURA. Do not reintroduce 挑戦者 or CHALLENGER in app-authored labels.
+- When correcting terminology, inspect Japanese and equivalent English across HTML, JavaScript canvas drawing, initial/fallback text, accessibility labels, and exported images. Search the entire app and reload the browser before claiming completion.
+- When a user reports stale UI, inventory browser tabs and inspect the actual user-visible tab before diagnosing caching or claiming completion. A matching URL in an agent-created test tab is insufficient. Refresh the user-visible tab when appropriate, preserving unsaved input, and verify the reported area there.

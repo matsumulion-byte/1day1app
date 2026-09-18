@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#121210"><meta name="description" content="名前と写真で、今夜の対戦相手になれ。マツムラ会 vol.3 対戦ポスターメーカー。">
+<title>マツムラ会 vol.3 対戦ポスターメーカー</title>
+<link rel="stylesheet" href="/apps/2026-09-18/style.css">
+</head>
+<body>
+<header class="topbar"><a href="/apps/2026-09-18/" class="brand"><span class="brand-mark">M<span>Ⅲ</span></span> MATSUMURA KAI <b>VOL.3</b></a><span class="edition">SPECIAL MATCH POSTER / 2026</span></header>
+<main>
+<section class="editor">
+<p class="eyebrow"><span></span> TONIGHT, MATSUMURA VS YOU.</p>
+<h1><span class="title-logo"><img src="/apps/2026-09-18/matsumura_logo.png" alt="マツムラ会"></span><span class="title-volume">vol.3</span><br><em>対戦ポスター</em><br>メーカー</h1>
+<p class="intro">名前と一枚の写真で、因縁の相手に。<br>音楽で殴り合え。MCは、ほどほどに。</p>
+<form id="poster-form">
+<div class="field-heading"><label for="name"><span>01</span> 対戦者の名前</label><small id="name-count">0 / 16</small></div>
+<input id="name" type="text" maxlength="16" placeholder="あなたのリングネーム" autocomplete="off">
+<div class="field-heading"><label for="photo"><span>02</span> 対戦者の写真</label><small>1枚で参戦</small></div>
+<label class="upload" id="upload-area" for="photo"><span class="upload-icon" aria-hidden="true">↑</span><strong id="photo-label">写真を選択する</strong><span>JPG・PNG・WebP ／ 20MBまで</span><input id="photo" type="file" accept="image/jpeg,image/png,image/webp"></label>
+<div class="photo-options" hidden id="photo-options"><label for="position">写真の上下位置</label><input id="position" type="range" min="0" max="100" value="50"><button type="button" id="remove">取り消す</button></div>
+<p class="privacy">写真はこの端末内だけで処理されます。</p>
+<button class="generate" id="generate" type="submit">ポスター生成 <span>↗</span></button>
+<p class="hint">生成するたびに、肩書きと煽り文が変わります。</p>
+</form>
+<p id="status" role="status" aria-live="polite">松村が挑む。次の対戦者は、あなた。</p>
+</section>
+<section class="preview" aria-label="ポスタープレビュー">
+<div class="preview-heading"><span><i></i> MATCH PREVIEW</span><span>1080 × 1350 PX</span></div>
+<div class="poster-frame"><canvas id="poster" width="1080" height="1350" role="img" aria-label="松村 VS 対戦者の対戦ポスター"></canvas></div>
+<div class="save-row"><div><strong>この一戦を、持ち帰れ。</strong><span>高画質PNG / 縦型 4:5</span></div><button id="save" type="button">↓ 画像を保存</button></div>
+<p class="dummy-note">※エンタメ用の架空の対戦ポスターです。会場情報はダミーです。</p>
+<div id="download-fallback" hidden><p>保存できない場合は、画像を長押しして保存してください。</p><img id="saved-image" alt="保存用の対戦ポスター"></div>
+</section>
+</main>
+<footer><span>NO FIGHT. JUST MUSIC.</span><span>マツムラ会 vol.3 — 勝敗より、乾杯。</span></footer>
+<script src="/apps/2026-09-18/script.js"></script>
+</body></html>
