@@ -31,7 +31,7 @@ function draw(){
  ctx.save();ctx.translate(540,721);ctx.rotate(-.13);ctx.shadowColor='#000';ctx.shadowBlur=18;text('VS',0,0,147,red,260,'Impact, sans-serif');ctx.shadowBlur=0;ctx.restore();
  text('松村',286,875,96,paper,418);text(match.name,794,875,88,paper,418);
  text('主催 / アルトサックス / MC長め',286,990,23,gold,465);text(match.title,794,990,28,gold,465);
- rect(57,1030,966,2,gold);text('2026.9.18',540,1100,88,paper,950,'Impact, sans-serif');text('LIVE HOUSE ???',540,1170,35,gold);
+ rect(57,1030,966,2,gold);text('xx年xx月',540,1100,88,paper,950);text('LIVE HOUSE ???',540,1170,35,gold);
  rect(57,1220,966,62,red);text(match.record+'  /  勝敗より、乾杯。',540,1253,30,paper,920);
  text('NO FIGHT. JUST MUSIC.   •   FICTIONAL MATCH POSTER',540,1302,15,gold);
  // Reproducible ink flecks keep every download identical to its preview.
