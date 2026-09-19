@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#f8f7f3">
+  <meta name="description" content="この苗字、読めますか？全10問の入力式・難読苗字クイズ。">
+  <title>難読苗字クイズ</title>
+  <link rel="stylesheet" href="/apps/2026-09-19/style.css">
+  <script type="module" src="/apps/2026-09-19/script.js"></script>
+</head>
+<body>
+  <main>
+    <section id="start" class="screen intro" aria-labelledby="title">
+      <h1 id="title">難読苗字<span>クイズ</span></h1>
+      <p class="tagline">この苗字、読めますか？</p>
+      <p class="total">全10問</p>
+      <button id="begin" type="button">挑戦する</button>
+    </section>
+    <section id="quiz" class="screen" hidden aria-label="クイズ">
+      <header class="progress"><p id="count" aria-live="polite">1 / 10</p><div class="track" aria-hidden="true"><span id="bar"></span></div></header>
+      <div id="question-area">
+        <h2 id="surname" tabindex="-1"></h2>
+        <form id="answer-form" novalidate>
+          <label for="answer">この苗字、なんて読む？</label>
+          <input id="answer" name="reading" type="text" lang="ja" inputmode="text" enterkeyhint="done" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="80" placeholder="ひらがなで入力" aria-describedby="input-error">
+          <p id="input-error" class="input-error" role="status"></p>
+          <button id="submit" type="submit">回答する</button>
+        </form>
+        <div id="feedback" hidden>
+          <div id="feedback-text" role="status" aria-live="polite" aria-atomic="true">
+            <p id="verdict"></p><p id="reading"></p><p id="description"></p>
+          </div>
+          <button id="next" type="button">次の問題</button>
+          <a id="source" class="source" target="_blank" rel="noopener noreferrer">参考資料：名字由来net</a>
+        </div>
+      </div>
+    </section>
+    <section id="result" class="screen result" hidden aria-labelledby="result-title">
+      <h2 id="result-title" tabindex="-1">結果</h2>
+      <p id="score" class="score"></p>
+      <button id="retry" type="button">もう一度</button>
+    </section>
+    <noscript>このクイズで遊ぶには、JavaScriptを有効にしてください。</noscript>
+  </main>
+</body>
+</html>
