@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#eef4f7">
+  <meta name="description" content="写真をアップすると、その人の顔が空に現れます。青空、夕焼け、夜空に浮かぶ、少し神々しい一枚を。">
+  <title>空にいる</title>
+  <link rel="stylesheet" href="/apps/2026-09-20/style.css">
+  <script defer src="/apps/2026-09-20/script.js"></script>
+</head>
+<body>
+  <main>
+    <header class="intro">
+      <p class="eyebrow"><span></span> ふと見上げたら、あなた。</p>
+      <h1>空にいる<span>。</span></h1>
+      <p class="description">写真をアップすると、その人の顔が空に現れます。</p>
+    </header>
+    <div class="workspace">
+      <section class="view" aria-label="空のプレビュー">
+        <div class="preview-wrap">
+          <canvas id="preview" width="1080" height="1350" role="img" aria-label="選択した空の背景プレビュー"></canvas>
+          <div id="empty-caption" class="empty-caption"><span>この空に、誰を浮かべる？</span><small>一枚の写真から、ちょっと不思議な景色へ。</small></div>
+          <div class="preview-tag"><span id="sky-caption">青空</span><span>1080 × 1350</span></div>
+          <div id="loading" class="loading" hidden><span class="spinner"></span><p id="loading-text">写真を読み込んでいます…</p><small>そのまま、少しだけお待ちください。</small></div>
+        </div>
+        <p class="preview-note" id="preview-note">空はいつでも、あなた待ち。</p>
+      </section>
+      <section class="controls" aria-label="画像の作成と調整">
+        <div id="upload-area">
+          <div class="section-heading"><span class="step">01</span><h2>写真をえらぶ</h2></div>
+          <input type="file" id="photo" accept="image/*" class="visually-hidden">
+          <button id="upload" class="upload-button" type="button"><span class="upload-icon" aria-hidden="true">＋</span><span id="upload-label">写真をアップロード</span><small>JPEG・PNG・WebP など / 20MBまで</small></button>
+          <div id="photo-info" class="photo-info" hidden><img id="thumbnail" alt="選んだ写真"><div><strong id="filename"></strong><small id="face-info">顔を確認しています</small></div></div>
+        </div>
+        <fieldset id="sky-options">
+          <legend><span class="step">02</span> 空をえらぶ</legend>
+          <div class="sky-options">
+            <label class="sky-choice"><input type="radio" name="sky" value="day" checked><span><i class="sky-swatch day"></i>青空</span></label>
+            <label class="sky-choice"><input type="radio" name="sky" value="sunset"><span><i class="sky-swatch sunset"></i>夕焼け</span></label>
+            <label class="sky-choice"><input type="radio" name="sky" value="night"><span><i class="sky-swatch night"></i>夜空</span></label>
+          </div>
+        </fieldset>
+        <p id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
+        <button id="create" class="primary" type="button" disabled>作成する <span aria-hidden="true">↗</span></button>
+        <section id="adjustments" hidden aria-labelledby="adjust-title">
+          <div class="section-heading adjust-heading"><h2 id="adjust-title">空への、なじみ具合。</h2><button id="reset" class="text-button" type="button">調整を戻す</button></div>
+          <div class="slider-row"><label for="size">顔サイズ</label><output for="size" id="size-value">72%</output><input id="size" type="range" min="35" max="110" value="72"></div>
+          <div class="slider-row"><label for="opacity">透明度</label><output for="opacity" id="opacity-value">42%</output><input id="opacity" type="range" min="0" max="90" value="42"></div>
+          <div class="slider-row"><label for="position">縦位置</label><output for="position" id="position-value">44%</output><input id="position" type="range" min="20" max="75" value="44"></div>
+          <div class="slider-row"><label for="blur">ぼかし</label><output for="blur" id="blur-value">30%</output><input id="blur" type="range" min="0" max="100" value="30"></div>
+          <div class="slider-row"><label for="divinity">神々しさ</label><output for="divinity" id="divinity-value">45%</output><input id="divinity" type="range" min="0" max="100" value="45"></div>
+          <div class="result-actions"><button id="regenerate" class="secondary" type="button">↻ 再生成</button><button id="save" class="primary" type="button">PNGで保存 ↓</button></div>
+          <button id="replace" class="replace" type="button">別の画像を使う</button>
+        </section>
+        <p class="privacy"><span aria-hidden="true">◈</span> 写真の処理は、すべてこの端末の中で。<br><span>写真はサーバーに送信されません。</span></p>
+      </section>
+    </div>
+    <footer><span>空にいる</span><span>今日も、どこかの空に。</span></footer>
+  </main>
+  <dialog id="save-dialog"><h2>画像ができました</h2><p>画像を長押しして保存できます。</p><img id="save-image" alt="保存用の完成画像"><button id="close-dialog" class="secondary" type="button">閉じる</button></dialog>
+</body>
+</html>
