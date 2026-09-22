@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#151718">
+<meta name="description" content="今日、どこ鍛える？ルーレットでトレーニング部位と今日のメニューを決めよう。">
+<title>筋肉ルーレット</title>
+<link rel="stylesheet" href="/apps/2026-09-22/style.css">
+<script defer src="/apps/2026-09-22/script.js"></script>
+</head>
+<body>
+<main class="app">
+<header><div class="eyebrow"><span class="brand-mark">✳</span> MUSCLE ROULETTE <span class="edition">VOL. 0922</span></div><h1>筋肉ルーレット<span class="title-dot">.</span></h1></header>
+<section id="play" aria-label="トレーニング部位の抽選">
+<div class="question"><span class="mini">LET’S TRAIN</span><h2>今日、どこ鍛える？</h2></div>
+<div class="wheel-wrap"><div class="pointer" aria-hidden="true"></div><svg id="wheel" viewBox="0 0 360 360" role="img" aria-label="胸、背中、肩、腕、脚、全身、PUSH、PULLの8分割ルーレット"></svg><div class="hub" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M7 13v14m6-18v22m14-22v22m6-18v14M13 20h14"/></svg></div></div>
+<div class="spin-caption" id="spin-caption">運命の部位を、ひと回し。</div>
+<button id="spin" class="primary">回す <span aria-hidden="true">↗</span></button>
+</section>
+<section id="result" hidden aria-labelledby="result-part" tabindex="-1">
+<div class="result-heading"><span class="mini">YOUR WORKOUT</span><p>今日のトレーニング</p><h2 id="result-part"></h2><span class="result-badge">TODAY’S PICK</span></div>
+<div class="menu-top"><span>WORKOUT MENU</span><span id="exercise-count"></span></div>
+<ol id="menu"></ol>
+<div class="total"><span>TOTAL <small>今日のセット数</small></span><div><strong id="total"></strong><span> SET</span></div></div>
+<button id="again" class="primary">もう一度回す <span aria-hidden="true">↻</span></button>
+</section>
+<footer><span class="status-dot"></span> 9.22 フィットネスの日 <span class="footer-line"></span> MAKE YOUR MOVE.</footer>
+<div id="announcement" class="sr-only" aria-live="polite"></div>
+<noscript>JavaScriptを有効にするとルーレットで遊べます。</noscript>
+</main>
+</body>
+</html>
