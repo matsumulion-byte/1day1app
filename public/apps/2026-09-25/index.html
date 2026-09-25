@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#f3efe4">
+<meta name="description" content="その目利き、本物か。画像からお宝を見極める全10問の鑑定ゲーム。">
+<title>お宝鑑定団｜その目利き、本物か。</title>
+<link rel="stylesheet" href="/apps/2026-09-25/style.css">
+<script src="/apps/2026-09-25/script.js" defer></script>
+</head>
+<body>
+<header class="masthead"><a href="/apps/2026-09-25/" aria-label="お宝鑑定団 タイトルへ"><span class="mark">宝</span> お宝鑑定団</a><span class="edition">目利きの小さな試練</span></header>
+<main>
+<section id="title-screen" class="screen title-screen">
+<div class="eyebrow"><span></span> あなたの審美眼を、試そう <span></span></div>
+<h1>その目利き、<br><span>本物か。</span></h1>
+<div class="hero-art"><div class="halo"></div><div id="hero-object"></div><span class="vertical-note">価値は、見た目に宿るのか。</span><span class="seal">一品<br>入魂</span><a id="hero-source" class="art-caption" target="_blank" rel="noopener noreferrer">写真：The Metropolitan Museum of Art · CC0 ↗</a></div>
+<h2>お宝鑑定団</h2>
+<p class="intro">画像を見て、それが本物のお宝か、<br>ただの物かを見極めろ。</p>
+<div class="rules"><span>全 <b>10</b> 問</span><span>二択で鑑定</span><span>細部で鑑定</span></div>
+<button id="start" class="primary">はじめる <span aria-hidden="true">→</span></button>
+<p class="fine">直感を信じるか。細部を疑うか。</p>
+</section>
+<section id="quiz-screen" class="screen" hidden>
+<div class="quiz-top"><span id="difficulty-label" class="eyebrow">上級・細部鑑定</span><span><strong id="question-number">1</strong><span class="muted"> / 10</span></span></div>
+<progress id="progress" max="10" value="0" aria-label="回答済み問題数"></progress>
+<div class="exhibit"><span class="exhibit-label">出品番号 <span id="lot-number"></span></span><div id="question-art" class="question-art"></div><span id="image-note" class="image-note">実物写真</span></div>
+<h2 id="question-heading" tabindex="-1">これは、お宝？ ただの物？</h2>
+<p id="quiz-hint" class="hint">土肌・釉薬・絵付けを見て、鑑定を。</p>
+<div id="answers" class="answers"></div>
+<p class="fine">※ 美術館の収蔵品か、身近な日用品かを当てよう。</p>
+</section>
+<section id="result-screen" class="screen result-screen" hidden>
+<div id="result-difficulty" class="eyebrow">鑑定結果</div><h1>お疲れさまでした。</h1>
+<div class="score-ring"><span>あなたの目利き度</span><div><b id="score">0</b><span> / 10</span></div><span>問正解</span></div>
+<p class="rank-label">あなたの称号</p><h2 id="rank" tabindex="-1"></h2><p id="rank-comment" class="result-comment"></p>
+<div id="result-marks" class="result-marks" aria-label="各問題の結果"></div>
+<button id="restart" class="primary">もう一度遊ぶ <span aria-hidden="true">↻</span></button><p class="fine">次の十品で、新たな目利きの旅を。</p>
+</section>
+</main>
+<footer>お宝鑑定団 <span>｜</span> 遊び心で、ひと鑑定。<small>実物写真で遊ぶ鑑定クイズ · 価格・真贋の判定ではありません</small><details class="credits"><summary>写真の出典・利用ライセンス</summary><p>お宝は美術館の収蔵作品、ただの物は日用品・民芸品として分類しています。日用品にも歴史的・金銭的価値がある場合があります。上級の出題写真は中央付近を拡大して表示しています。回答後の全体写真は元の縦横比で表示します。</p><ul id="photo-credits"></ul></details></footer>
+<dialog id="feedback" aria-labelledby="feedback-title">
+<div class="feedback-inner"><div id="judgment-stamp" class="judgment-stamp"></div><p id="feedback-status" class="eyebrow"></p><h2 id="feedback-title"></h2><p class="correct-label">正解は <strong id="correct-label"></strong></p><figure class="reveal-photo"><img id="reveal-photo" alt="回答後に確認する品の全体写真"><figcaption>全体の姿を見る</figcaption></figure><div class="item-details"><h3 id="item-name"></h3><dl><dt>時代</dt><dd id="item-era"></dd><dt>所蔵 / 入手元</dt><dd id="item-location"></dd></dl><p id="item-description"></p><div class="photo-attribution"><a id="photo-source" target="_blank" rel="noopener noreferrer"></a><span id="photo-credit"></span><a id="photo-license" target="_blank" rel="noopener noreferrer"></a></div></div><button id="next" class="primary">次の問題へ →</button></div>
+</dialog>
+</body></html>
