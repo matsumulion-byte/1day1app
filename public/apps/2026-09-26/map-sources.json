@@ -1,0 +1,7 @@
+{
+  "source": "Natural Earth, 1:50m Admin 0 Countries",
+  "url": "https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_50m_admin_0_countries.geojson",
+  "license": "Public domain",
+  "terms": "https://www.naturalearthdata.com/about/terms-of-use/",
+  "processing": "Japan land polygons; north-up equirectangular projection with longitude scale correction; subpixel simplification. Minor remote islands outside the game viewport omitted."
+}

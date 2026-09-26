@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#071c2b">
+<meta name="description" content="長押しで迎撃、火力は無限に加速。巨大台風を吹き飛ばす爽快アーケードゲーム。">
+<title>台風撃退 | TYPHOON BREAKER</title>
+<link rel="stylesheet" href="/apps/2026-09-26/style.css">
+<script src="/apps/2026-09-26/japan-map.js" defer></script>
+<script src="/apps/2026-09-26/script.js" defer></script>
+</head>
+<body>
+<main id="game">
+<canvas tabindex="0" id="field" aria-label="台風迎撃エリア。タップまたは長押しで射撃。押したまま指を動かして台風の目を追ってください。PCはマウスで照準、スペースキーで射撃。"></canvas>
+<header><a href="/apps/2026-09-26/">TB<span> / TYPHOON BREAKER</span></a><button id="sound" aria-label="効果音をオンにする" aria-pressed="false">SOUND OFF</button></header>
+<section id="hud" hidden>
+<div class="hp-label"><span id="category">SUPER TYPHOON</span><b id="percent">100%</b></div>
+<div class="hp-track" role="progressbar" aria-label="台風HP" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="hp"></div></div>
+<div class="telemetry"><span>THREAT / <b id="timer">00.00</b>s</span><span>INTERCEPT SYSTEM <i>● ONLINE</i></span></div>
+<div class="combo"><strong id="combo">0</strong><span id="combo-label">COMBO ×1</span></div>
+<div id="skill-hud"><b id="score">0</b><small>SCORE</small></div>
+<div id="upgrade" aria-live="polite"></div>
+<div id="bottom-hud"><div class="lock-info"><span id="lock-state">目を狙ってロック</span><span>照準を0.65秒キープ → 火力×2</span></div><div class="lock-track"><i id="lock-fill"></i></div><div class="level-line"><span id="level">LV.01 / 迎撃システム</span><span id="next">NEXT : 10 COMBO</span></div><div id="levels"><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i></div><p id="hint">押したまま指を動かして、台風の目を追え</p></div>
+<button id="final" hidden><small>FINAL ATTACK READY</small>一斉射撃 <span>»</span></button>
+</section>
+<section id="title" class="overlay">
+<div class="edition"><span class="dot"></span> 09.26 / 台風襲来の日</div>
+<p class="kicker">JAPAN DEFENSE ARCADE</p>
+<h1>台風<span>撃退</span><small>TYPHOON BREAKER</small></h1>
+<div class="title-target"><span>◎</span><p>巨大台風が日本列島に接近中。<br><strong>迎撃して消滅させろ！</strong></p></div>
+<div class="title-bottom"><div class="pills"><span>目を追ってロック</span><span>コア破壊で覚醒</span></div><button id="start" class="primary">迎撃開始 <span>↗</span></button><p class="fine">長押し＋ドラッグで照準移動。目を狙うと高得点！</p><p class="fiction">架空の迎撃システムによるフィクションゲーム</p></div>
+</section>
+<section id="result" class="overlay" hidden><p class="kicker">MISSION COMPLETE / ALL CLEAR</p><h2>台風消滅<span>その一撃で、晴れにした。</span></h2><div class="result-grade"><strong id="r-rank">S</strong><div><b id="r-score">0</b><span>SCORE</span><small id="r-best"></small></div></div><dl><div><dt>撃破時間</dt><dd id="r-time"></dd></div><div><dt>最大COMBO</dt><dd id="r-combo"></dd></div><div><dt>総発射数</dt><dd id="r-shots"></dd></div><div><dt>CRITICAL / コア破壊</dt><dd id="r-critical"></dd></div></dl><button id="restart" class="primary">もう一度迎撃する <span>↗</span></button></section>
+<div id="cinematic" hidden aria-live="polite"></div>
+</main>
+</body></html>
