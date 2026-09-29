@@ -1,0 +1,5 @@
+export const lucky=['金運','幸運','商売繁盛','良縁','健康','仕事','福','大吉','臨時収入','千客万来','家内安全','おいしいごはん'];
+export const odd=['知らない親戚','鳩','湿気','月曜日','渋滞','謎の段ボール','去年なくした靴下','微妙な空気','隣のWi-Fi','締切','誰かのUSBメモリ','遠くの救急車の音','知らない犬','二度寝','消えたリモコン','ぬるい麦茶','片方だけの手袋','回覧板','実家の匂い','食後の眠気','レシートの山','よく似た他人','早すぎる宅配便','小さなため息','エレベーターの沈黙','全角スペース','冷蔵庫の奥の何か','使い道のないネジ','既読','未読','空のタッパー','終わらない前置き','微妙に長い信号','自分の残響','概念としての火曜日','架空の同窓会','遠慮のかたまり','名前のないフォルダ','賞味期限の気配','斜めの水平線','昨日の明日','誰かの伏線','三度目の初対面','見覚えのある虚無','存在しない六階','無言のアンコール','背景の人','常温の情熱','置き配の予感','大きめの余白','まだ来ていない過去','特に何も'];
+export function choose(count,random=Math.random){const p=count<=5?.98:count<=15?.58:.06;const pool=random()<p?lucky:odd;const item=pool[Math.floor(random()*pool.length)];return {text:item==='特に何も'?'特に何も招かなかった':`${item}を招いた`,lucky:pool===lucky};}
+export class Gesture{constructor(){this.armed=false}reset(){this.armed=false}sample(angle){if(angle>0.95)this.armed=true;if(this.armed&&angle<.28){this.armed=false;return true}return false}}
+export function interval(count){return count>50?.38:count>=30?3.6:count>=20?9:Infinity}
