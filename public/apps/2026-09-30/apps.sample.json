@@ -1,0 +1,200 @@
+[
+  {
+    "id": 1,
+    "date": "2025-10-01",
+    "title": "余白の時計",
+    "image": "/apps/2026-09-30/screenshots/sample-1.webp",
+    "url": "/apps/2026-09-30/sample.html?id=1",
+    "featured": true,
+    "aspect": 1.5,
+    "color": "#91bcb1",
+    "demo": true
+  },
+  {
+    "id": 2,
+    "date": "2025-10-18",
+    "title": "雨音の標本室",
+    "image": "/apps/2026-09-30/screenshots/sample-2.webp",
+    "url": "/apps/2026-09-30/sample.html?id=2",
+    "featured": false,
+    "aspect": 1.5,
+    "color": "#869baf",
+    "demo": true
+  },
+  {
+    "id": 3,
+    "date": "2025-11-08",
+    "title": "ことばの庭",
+    "image": "/apps/2026-09-30/screenshots/sample-3.webp",
+    "url": "/apps/2026-09-30/sample.html?id=3",
+    "featured": false,
+    "aspect": 1.5,
+    "color": "#ccbc74",
+    "demo": true
+  },
+  {
+    "id": 4,
+    "date": "2025-11-24",
+    "title": "夜の散歩地図",
+    "image": "/apps/2026-09-30/screenshots/sample-4.webp",
+    "url": "/apps/2026-09-30/sample.html?id=4",
+    "featured": false,
+    "aspect": 1.5,
+    "color": "#728b86",
+    "demo": true
+  },
+  {
+    "id": 5,
+    "date": "2025-12-15",
+    "title": "冬の色を集める",
+    "image": "/apps/2026-09-30/screenshots/sample-5.webp",
+    "url": "/apps/2026-09-30/sample.html?id=5",
+    "featured": false,
+    "aspect": 1.5,
+    "color": "#b4b8b2",
+    "demo": true
+  },
+  {
+    "id": 6,
+    "date": "2026-01-05",
+    "title": "小さな習慣帳",
+    "image": "/apps/2026-09-30/screenshots/sample-6.webp",
+    "url": "/apps/2026-09-30/sample.html?id=6",
+    "featured": false,
+    "aspect": 1.5,
+    "color": "#cc9476",
+    "demo": true
+  },
+  {
+    "id": 7,
+    "date": "2026-01-28",
+    "title": "星をつなぐ",
+    "image": "/apps/2026-09-30/screenshots/sample-7.webp",
+    "url": "/apps/2026-09-30/sample.html?id=7",
+    "featured": true,
+    "aspect": 1.5,
+    "color": "#8c9d9e",
+    "demo": true
+  },
+  {
+    "id": 8,
+    "date": "2026-02-14",
+    "title": "お茶の時間",
+    "image": "/apps/2026-09-30/screenshots/sample-8.webp",
+    "url": "/apps/2026-09-30/sample.html?id=8",
+    "featured": false,
+    "aspect": 1.5,
+    "color": "#b3b888",
+    "demo": true
+  },
+  {
+    "id": 9,
+    "date": "2026-03-21",
+    "title": "春の音風景",
+    "image": "/apps/2026-09-30/screenshots/sample-9.webp",
+    "url": "/apps/2026-09-30/sample.html?id=9",
+    "featured": false,
+    "aspect": 1.5,
+    "color": "#d8b093",
+    "demo": true
+  },
+  {
+    "id": 10,
+    "date": "2026-04-06",
+    "title": "気分のパレット",
+    "image": "/apps/2026-09-30/screenshots/sample-10.webp",
+    "url": "/apps/2026-09-30/sample.html?id=10",
+    "featured": false,
+    "aspect": 1.5,
+    "color": "#99b9a8",
+    "demo": true
+  },
+  {
+    "id": 11,
+    "date": "2026-04-25",
+    "title": "雲の観察ノート",
+    "image": "/apps/2026-09-30/screenshots/sample-11.webp",
+    "url": "/apps/2026-09-30/sample.html?id=11",
+    "featured": false,
+    "aspect": 1.5,
+    "color": "#95bfc8",
+    "demo": true
+  },
+  {
+    "id": 12,
+    "date": "2026-05-11",
+    "title": "一行日記",
+    "image": "/apps/2026-09-30/screenshots/sample-12.webp",
+    "url": "/apps/2026-09-30/sample.html?id=12",
+    "featured": false,
+    "aspect": 1.5,
+    "color": "#d8c7a1",
+    "demo": true
+  },
+  {
+    "id": 13,
+    "date": "2026-06-08",
+    "title": "波を描く",
+    "image": "/apps/2026-09-30/screenshots/sample-13.webp",
+    "url": "/apps/2026-09-30/sample.html?id=13",
+    "featured": true,
+    "aspect": 1.5,
+    "color": "#87aba8",
+    "demo": true
+  },
+  {
+    "id": 14,
+    "date": "2026-06-23",
+    "title": "光のカケラ",
+    "image": "/apps/2026-09-30/screenshots/sample-14.webp",
+    "url": "/apps/2026-09-30/sample.html?id=14",
+    "featured": false,
+    "aspect": 1.5,
+    "color": "#d8af71",
+    "demo": true
+  },
+  {
+    "id": 15,
+    "date": "2026-07-19",
+    "title": "夏の記憶装置",
+    "image": "/apps/2026-09-30/screenshots/sample-15.webp",
+    "url": "/apps/2026-09-30/sample.html?id=15",
+    "featured": false,
+    "aspect": 1.5,
+    "color": "#93b094",
+    "demo": true
+  },
+  {
+    "id": 16,
+    "date": "2026-08-12",
+    "title": "月を待つ",
+    "image": "/apps/2026-09-30/screenshots/sample-16.webp",
+    "url": "/apps/2026-09-30/sample.html?id=16",
+    "featured": false,
+    "aspect": 1.5,
+    "color": "#acaaa1",
+    "demo": true
+  },
+  {
+    "id": 17,
+    "date": "2026-09-10",
+    "title": "今日を編む",
+    "image": "/apps/2026-09-30/screenshots/sample-17.webp",
+    "url": "/apps/2026-09-30/sample.html?id=17",
+    "featured": false,
+    "aspect": 1.5,
+    "color": "#ba9979",
+    "demo": true
+  },
+  {
+    "id": 18,
+    "date": "2026-09-30",
+    "title": "世界のつづき",
+    "image": "/apps/2026-09-30/screenshots/sample-18.webp",
+    "url": "/apps/2026-09-30/sample.html?id=18",
+    "featured": true,
+    "aspect": 1.5,
+    "color": "#da8358",
+    "demo": true
+  }
+]
